@@ -60,6 +60,8 @@ export function ActiveTask({
           <StartAction
             waiting={waiting}
             poolEmpty={poolEmpty}
+            energy={energy}
+            energyMax={energyMax}
             energySecondsToNext={energySecondsToNext}
             rewardPoolSecondsToNext={rewardPoolSecondsToNext}
             onStart={onStart}
@@ -169,12 +171,16 @@ function Stat({
 function StartAction({
   waiting,
   poolEmpty,
+  energy,
+  energyMax,
   energySecondsToNext,
   rewardPoolSecondsToNext,
   onStart,
 }: {
   waiting: boolean
   poolEmpty: boolean
+  energy: number
+  energyMax: number
   energySecondsToNext: number | null
   rewardPoolSecondsToNext: number | null
   onStart: () => void
@@ -183,9 +189,14 @@ function StartAction({
     return (
       <TapAction
         compact
-        icon={<GlyphBolt className="size-4 text-primary-foreground/80" />}
         label="Mulai"
-        aria-label={`Mulai task dengan memakai ${formatCredits(energyCostPerTask())} energi`}
+        meta={
+          <span className="flex items-center gap-1">
+            <GlyphBolt className="size-3.5 shrink-0" aria-hidden="true" />
+            {formatCredits(energy)}/{formatCredits(energyMax)}
+          </span>
+        }
+        aria-label={`Mulai task dengan memakai ${formatCredits(energyCostPerTask())} energi, sisa ${formatCredits(energy)} dari ${formatCredits(energyMax)}`}
         onClick={() => {
           hapticTap()
           onStart()

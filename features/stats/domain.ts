@@ -13,6 +13,7 @@ interface DifficultyStat {
 }
 
 export interface UserStats {
+  joinedAt: number | null
   earnedCredits: number
   taskCredits: number
   referralCredits: number
@@ -51,6 +52,7 @@ export interface DifficultyTally {
 }
 
 interface StatsInput {
+  joinedAt: number | null
   completedCount: number
   todayCount: number
   totalStars: number
@@ -77,6 +79,7 @@ interface StatsInput {
 }
 
 export function getUserStats({
+  joinedAt,
   completedCount,
   todayCount,
   totalStars,
@@ -102,6 +105,7 @@ export function getUserStats({
   const progression = getProgression({ completedCount, streak, todayCount })
 
   return {
+    joinedAt,
     earnedCredits: taskCredits + referralCredits,
     taskCredits,
     referralCredits,

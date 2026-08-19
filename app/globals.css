@@ -18,11 +18,6 @@
   --color-primary-active: var(--primary-active);
   --color-star: var(--star);
   --color-scrim: var(--scrim);
-  --color-gauge-1: var(--gauge-1);
-  --color-gauge-2: var(--gauge-2);
-  --color-gauge-3: var(--gauge-3);
-  --color-gauge-4: var(--gauge-4);
-  --color-gauge-5: var(--gauge-5);
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
@@ -115,17 +110,13 @@
   --success: #16a34a;
   --star: #eab308;
   --scrim: oklch(0 0 0 / 0.28);
-  --gauge-1: #dc2626;
-  --gauge-2: #ea580c;
-  --gauge-3: #ca8a04;
-  --gauge-4: #65a30d;
-  --gauge-5: #16a34a;
   --shadow-bubble-near: oklch(0 0 0 / 0.07);
   --shadow-bubble-far: oklch(0 0 0 / 0.05);
   --radius: 0.625rem;
   --duration-ui: 150ms;
   --control-h: 2.75rem;
   --cta-h: 3.25rem;
+  --meter-h: 0.1875rem;
   --panel-gap: 0.75rem;
   --surface-p: 1rem;
   --cta-gap: 1rem;
@@ -181,11 +172,6 @@
   --success: #4ade80;
   --star: #facc15;
   --scrim: oklch(0 0 0 / 0.62);
-  --gauge-1: #f87171;
-  --gauge-2: #fb923c;
-  --gauge-3: #d8b528;
-  --gauge-4: #a3e635;
-  --gauge-5: #4ade80;
   --shadow-bubble-near: oklch(0 0 0 / 0.55);
   --shadow-bubble-far: oklch(0 0 0 / 0.4);
 }
@@ -254,6 +240,9 @@
   }
   .cta-h {
     height: var(--cta-h);
+  }
+  .meter-h {
+    height: var(--meter-h);
   }
   .tap-plate {
     box-shadow:

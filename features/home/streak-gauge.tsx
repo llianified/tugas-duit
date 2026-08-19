@@ -3,11 +3,11 @@
 import { cn } from '@/shared/lib/utils'
 
 const STREAK_STEPS = [
-  { minDays: 1, label: 'Baru mulai', fill: 'bg-gauge-1' },
-  { minDays: 3, label: 'Tumbuh', fill: 'bg-gauge-2' },
-  { minDays: 7, label: 'Kuat', fill: 'bg-gauge-3' },
-  { minDays: 14, label: 'Sangat kuat', fill: 'bg-gauge-4' },
-  { minDays: 30, label: 'Terkuat', fill: 'bg-gauge-5' },
+  { minDays: 1, label: 'Baru mulai' },
+  { minDays: 3, label: 'Tumbuh' },
+  { minDays: 7, label: 'Kuat' },
+  { minDays: 14, label: 'Sangat kuat' },
+  { minDays: 30, label: 'Terkuat' },
 ] as const
 
 function getStreakLevel(streak: number) {
@@ -47,8 +47,8 @@ export function StreakGauge({
         <div
           key={segment.minDays}
           className={cn(
-            'h-1.5 flex-1 rounded-full transition-colors duration-500 ease-out motion-reduce:transition-none',
-            index < filled ? (atRisk ? 'bg-gauge-1' : step.fill) : 'bg-border',
+            'meter-h flex-1 rounded-full transition-colors duration-500 ease-out motion-reduce:transition-none',
+            index < filled ? (atRisk ? 'bg-star' : 'bg-primary') : 'bg-border',
           )}
         />
       ))}

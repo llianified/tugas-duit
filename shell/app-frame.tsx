@@ -48,7 +48,7 @@ export function AppFrame({
           <div
             key={viewKey}
             style={{ '--view-offset': `${24 * direction}px` } as CSSProperties}
-            className="animate-view-slide flex flex-1 flex-col overflow-x-clip [&>*]:flex-1"
+            className="animate-view-slide view-slide-clip flex flex-1 flex-col [&>*]:flex-1"
           >
             {children}
           </div>

@@ -8,18 +8,30 @@ const REPORT_GROUP = 'csp'
 /**
  * Host Adsgram yang tercantum di sini hanya SDK-nya (`sad.adsgram.ai`), karena itu
  * satu-satunya host yang didokumentasikan. Domain kreatif iklannya tidak punya daftar
- * tetap, jadi **jangan menebak host tambahan**: jalankan deploy percobaan dengan
- * `CSP_REPORT_ONLY=1`, panen pelanggaran nyata dari `/api/csp-report`, baru tambahkan
- * host hasil panen itu ke `frame-src`, `img-src`, `media-src`, dan `connect-src`.
- * Urutannya ada di `docs/rencana-adsgram.md` §5.
+ * tetap, jadi **jangan menebak host tambahan**: panen pelanggaran nyata dari
+ * `/api/csp-report` seperti pada `docs/rencana-adsgram.md` §5.
  *
- * PENTING: `'strict-dynamic'` HANYA berlaku untuk `script-src`. Direktif itu tidak
- * berpengaruh apa pun pada `img-src`, `frame-src`, `media-src`, atau `connect-src` —
- * keempatnya tetap dinilai ketat per-host. Jadi walaupun SDK berhasil dimuat, kreatif
- * iklan (gambar/iframe/video) akan diblokir selama host-nya belum terdaftar di
- * keempat direktif itu, dan gejalanya: tombol iklan diklik tapi layar kosong,
- * impressions di dashboard Adsgram tetap nol. Selama panen §5 belum dijalankan,
- * deploy dengan `CSP_REPORT_ONLY=1` supaya iklan tetap render.
+ * HASIL PANEN §5 (dijalankan dengan `CSP_REPORT_ONLY=1`, ~6 jam pemakaian nyata):
+ * NOL pelanggaran `img-src`, `frame-src`, `media-src`, dan `connect-src`. Jadi kreatif
+ * Adsgram TIDAK memerlukan host tambahan: SDK menarik kreatif lewat `connect-src`
+ * ke `sad.adsgram.ai` (sudah diizinkan), lalu me-render-nya sebagai `blob:`/`data:`
+ * yang sudah tercakup `img-src`/`media-src`. Keempat direktif itu sengaja dibiarkan
+ * ketat — jangan ditambahi host spekulatif.
+ *
+ * Yang benar-benar memblokir iklan adalah STYLE, bukan host kreatif: satu-satunya
+ * pelanggaran yang muncul adalah `style-src-attr` (atribut `style` inline) dan
+ * `style-src-elem` (elemen `<style>` suntikan SDK, tanpa nonce). Karena itu:
+ *   - `style-src-attr` WAJIB `'unsafe-inline'`. Nonce dan hash tidak berlaku untuk
+ *     atribut style, jadi `'none'` memblokirnya total — termasuk atribut `style`
+ *     milik app sendiri di `shell/app-frame.tsx` (offset animasi transisi view).
+ *   - `style-src` tidak boleh memakai nonce. Per CSP3, begitu ada nonce/hash pada
+ *     sebuah direktif, `'unsafe-inline'` diabaikan — jadi `<style>` tanpa nonce dari
+ *     SDK tetap terblokir walau `'unsafe-inline'` ditulis bersama nonce.
+ * `script-src` tetap memakai nonce + `'strict-dynamic'`; proteksi yang penting utuh.
+ *
+ * Catatan: `'strict-dynamic'` HANYA berlaku untuk `script-src`. Direktif itu tidak
+ * menurunkan izin apa pun ke `img-src`, `frame-src`, `media-src`, `connect-src`,
+ * maupun `style-src` — semuanya tetap dinilai sendiri-sendiri.
  *
  * Soal `frame-ancestors`: app ini dibuka langsung dari browser, bukan cuma di dalam
  * Telegram. Membatasi frame-ancestors ke host Telegram membuat browser menolak
@@ -55,8 +67,8 @@ function buildCsp(nonce: string, isDev: boolean) {
   return [
     "default-src 'self'",
     scriptSrc,
-    `style-src 'self' ${isDev ? "'unsafe-inline'" : `'nonce-${nonce}'`}`,
-    "style-src-attr 'none'",
+    "style-src 'self' 'unsafe-inline'",
+    "style-src-attr 'unsafe-inline'",
     "img-src 'self' data: blob: https://t.me https://*.telegram.org",
     "media-src 'self' blob:",
     "frame-src 'self'",

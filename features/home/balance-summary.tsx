@@ -68,7 +68,6 @@ function HeroActionTile({
         // hero band to read, so the tiles borrow the palette's grey text tone
         // at low opacity for a visible outline in both themes.
         'border-muted-foreground/30 bg-card text-foreground',
-        'hover:border-primary hover:text-primary active:border-primary-active active:text-primary-active',
       )}
     >
       {icon}

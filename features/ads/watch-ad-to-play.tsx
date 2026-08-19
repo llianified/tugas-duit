@@ -1,6 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { adsMaxViewsPerDay } from '@/domain/ads'
+import { AdConfirmDialog } from '@/features/ads/ad-confirm-dialog'
 import { GlyphPlay, GlyphSpinner } from '@/shared/components/glyph'
 import { TapAction, TapActionWaiting } from '@/shared/components/tap-action'
 import { hapticTap } from '@/shell/haptic'
@@ -23,6 +25,8 @@ export function WatchAdToPlay({
   poolEmpty: boolean
   onWatch: () => void
 }) {
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
   if (!enabled || poolEmpty) return null
 
   if (watching)
@@ -72,21 +76,30 @@ export function WatchAdToPlay({
     )
 
   return (
-    <TapAction
-      compact
-      tone="neutral"
-      label="Mulai"
-      meta={
-        <span className="flex items-center gap-1">
-          <GlyphPlay className="size-3.5 shrink-0" aria-hidden="true" />
-          {formatCredits(viewsLeft)}/{formatCredits(adsMaxViewsPerDay())}
-        </span>
-      }
-      aria-label={`Nonton iklan untuk memulai task tanpa energi, sisa ${formatCredits(viewsLeft)} dari ${formatCredits(adsMaxViewsPerDay())} kali hari ini`}
-      onClick={() => {
-        hapticTap()
-        onWatch()
-      }}
-    />
+    <>
+      <TapAction
+        compact
+        tone="neutral"
+        label="Mulai"
+        meta={
+          <span className="flex items-center gap-1">
+            <GlyphPlay className="size-3.5 shrink-0" aria-hidden="true" />
+            {formatCredits(viewsLeft)}/{formatCredits(adsMaxViewsPerDay())}
+          </span>
+        }
+        aria-label={`Nonton iklan untuk memulai task tanpa energi, sisa ${formatCredits(viewsLeft)} dari ${formatCredits(adsMaxViewsPerDay())} kali hari ini`}
+        onClick={() => {
+          hapticTap()
+          setConfirmOpen(true)
+        }}
+      />
+
+      <AdConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        viewsLeft={viewsLeft}
+        onConfirm={onWatch}
+      />
+    </>
   )
 }

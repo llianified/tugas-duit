@@ -1,0 +1,98 @@
+'use client'
+
+import { setActiveEconomyConfig, type EconomyConfig } from '@/domain/economy-config'
+import type { EnergyState } from '@/domain/energy'
+import type { RewardPoolState } from '@/domain/reward-pool'
+import type { Challenge, HistoryEntry } from '@/features/captcha/domain'
+import type { LeaderboardBoard } from '@/features/leaderboard/domain'
+import type { UserStats } from '@/features/stats/domain'
+import type { Withdrawal } from '@/features/withdraw/domain'
+import { fetchJson, sendJson } from '@/shell/api-client'
+
+export type SessionResponse = {
+  economy?: EconomyConfig
+  user: {
+    id: string
+    firstName: string
+    photoUrl: string | null
+    balance: number
+    referralCode: string
+  } | null
+  breakdown?: { taskCredits: number; referralCredits: number; withdrawnCredits: number }
+  energy?: EnergyState & {
+    now: number
+    receivedAt: number
+  }
+  rewardPool?: RewardPoolState & {
+    now: number
+    receivedAt: number
+  }
+  botAppUrl?: string | null
+}
+
+export type SessionEnergy = NonNullable<SessionResponse['energy']>
+export type SessionRewardPool = NonNullable<SessionResponse['rewardPool']>
+
+export type TaskResponse = { challenge: Challenge }
+export type HistoryResponse = { entries: HistoryEntry[]; nextCursor: string | null }
+export type StatsResponse = { stats: UserStats }
+export type LeaderboardResponse = { board: LeaderboardBoard }
+export type ReferralResponse = {
+  code: string
+  shareUrl: string
+  pendingUnits: number
+  downlines: Array<{
+    id: string
+    displayName: string
+    joinedAt: number
+    taskCount: number
+    commissionUnits: number
+    lastActiveAt: number | null
+  }>
+}
+export type WithdrawalsResponse = {
+  withdrawals: Withdrawal[]
+  totals: { withdrawnCredits: number; processingCredits: number }
+}
+export type SubmitResponse =
+  | { ok: true; stars: 1 | 2 | 3; reward: number; balance: number; elapsedMs: number }
+  | { ok: false; reason: string; attemptsLeft?: number }
+
+export type StartTaskResponse = {
+  challenge: Challenge
+  elapsedMs: number
+  energy: EnergyState & { now: number }
+}
+
+async function fetchSession(): Promise<SessionResponse> {
+  const session = await fetchJson<SessionResponse>('/api/session')
+  if (session.economy) setActiveEconomyConfig(session.economy)
+
+  const receivedAt = Date.now()
+  return {
+    ...session,
+    energy: session.energy ? { ...session.energy, receivedAt } : undefined,
+    rewardPool: session.rewardPool ? { ...session.rewardPool, receivedAt } : undefined,
+  }
+}
+
+export async function loadSession(): Promise<SessionResponse> {
+  let session = await fetchSession()
+  if (session.user || typeof window === 'undefined') return session
+
+  const telegram = (window as Window & {
+    Telegram?: { WebApp?: { initData?: string; ready?: () => void; expand?: () => void } }
+  }).Telegram?.WebApp
+  const initData = telegram?.initData
+  if (!initData) {
+    if (process.env.NODE_ENV === 'production') return session
+    await sendJson('/api/dev/login', 'POST')
+    return fetchSession()
+  }
+
+  telegram?.ready?.()
+  telegram?.expand?.()
+  await sendJson('/api/auth/telegram', 'POST', { initData })
+  session = await fetchSession()
+  return session
+}

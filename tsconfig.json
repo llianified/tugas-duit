@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "target": "ES6",
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    // Skrip di `scripts/` dijalankan langsung oleh Node (`--experimental-strip-types`),
+    // dan resolusi ESM Node menuntut ekstensi eksplisit — `../server/db` tanpa `.ts`
+    // gagal dengan ERR_MODULE_NOT_FOUND. Aman dinyalakan karena `noEmit` sudah aktif:
+    // TypeScript di sini hanya memeriksa tipe, yang membangun tetap Next.
+    "allowImportingTsExtensions": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

@@ -34,6 +34,8 @@ interface TapActionProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, '
   tone?: TapActionTone
   size?: TapActionSize
   icon?: ReactNode
+  /** Centered content without a trailing chevron, for buttons placed side by side. */
+  compact?: boolean
 }
 
 export function TapAction({
@@ -42,6 +44,7 @@ export function TapAction({
   tone = 'primary',
   size = 'cta',
   icon,
+  compact = false,
   className,
   ...props
 }: TapActionProps) {
@@ -50,30 +53,34 @@ export function TapAction({
       type="button"
       {...props}
       className={cn(
-        'focus-ring transition-ui press-scale-soft group flex w-full items-center gap-3 rounded-xl px-4 text-left disabled:pointer-events-none',
+        'focus-ring transition-ui press-scale-soft group flex w-full items-center rounded-xl disabled:pointer-events-none',
+        compact ? 'justify-center gap-2 px-3 text-center' : 'gap-3 px-4 text-left',
         SIZE_CLASS[size],
         TONE_CLASS[tone],
         className,
       )}
     >
       {icon ? <span className="flex shrink-0 items-center">{icon}</span> : null}
-      <span className="min-w-0 flex-1 truncate text-sm font-semibold tracking-tight">{label}</span>
+      <span
+        className={cn(
+          'truncate text-sm font-semibold tracking-tight',
+          compact ? 'min-w-0' : 'min-w-0 flex-1',
+        )}
+      >
+        {label}
+      </span>
       {meta ? (
         <span className={cn('shrink-0 text-xs font-medium tabular-nums', META_CLASS[tone])}>
           {meta}
         </span>
       ) : null}
-      {tone === 'primary' ? (
-        <span
-          aria-hidden="true"
-          className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary-foreground/20 text-primary-foreground transition-transform duration-150 group-active:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-active:translate-x-0"
-        >
-          <GlyphChevron className="size-4" />
-        </span>
-      ) : (
+      {compact ? null : (
         <GlyphChevron
           aria-hidden="true"
-          className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 group-active:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-active:translate-x-0"
+          className={cn(
+            'size-4 shrink-0 transition-transform duration-150 group-active:translate-x-0.5 motion-reduce:transition-none motion-reduce:group-active:translate-x-0',
+            tone === 'primary' ? 'text-primary-foreground/80' : 'text-muted-foreground',
+          )}
         />
       )}
     </button>
@@ -87,6 +94,7 @@ export function TapActionWaiting({
   className,
   tone = 'primary',
   size = 'cta',
+  compact = false,
 }: {
   icon?: ReactNode
   label: string
@@ -94,20 +102,22 @@ export function TapActionWaiting({
   className?: string
   tone?: TapActionTone
   size?: TapActionSize
+  compact?: boolean
 }) {
   return (
     <div
       role="status"
       aria-live="polite"
       className={cn(
-        'flex w-full items-center gap-3 rounded-xl px-4 text-sm font-medium text-muted-foreground',
+        'flex w-full items-center rounded-xl text-sm font-medium text-muted-foreground',
+        compact ? 'justify-center gap-2 px-3 text-center' : 'gap-3 px-4',
         SIZE_CLASS[size],
         tone === 'neutral' ? 'border border-border' : 'bg-muted',
         className,
       )}
     >
       {icon ? <span className="flex shrink-0 items-center">{icon}</span> : null}
-      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <span className={cn('truncate', compact ? 'min-w-0' : 'min-w-0 flex-1')}>{label}</span>
       {meta ? <span className="shrink-0 text-xs tabular-nums">{meta}</span> : null}
     </div>
   )

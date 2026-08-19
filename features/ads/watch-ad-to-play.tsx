@@ -27,18 +27,20 @@ export function WatchAdToPlay({
   if (watching)
     return (
       <TapActionWaiting
+        compact
         tone="neutral"
         icon={<GlyphSpinner className="size-4 animate-spin text-muted-foreground" />}
-        label="Iklannya lagi diputar"
+        label="Muter iklan"
       />
     )
 
   if (passReady)
     return (
       <TapAction
+        compact
         tone="neutral"
         icon={<GlyphPlay className="size-4 text-muted-foreground" />}
-        label="Mulai pakai tiket iklan"
+        label="Pakai tiket"
         aria-label="Mulai task memakai tiket iklan"
         onClick={() => {
           hapticTap()
@@ -50,29 +52,32 @@ export function WatchAdToPlay({
   if (viewsLeft <= 0)
     return (
       <TapActionWaiting
+        compact
         tone="neutral"
         icon={<GlyphPlay className="size-4 text-muted-foreground" />}
-        label="Jatah iklan hari ini habis"
+        label="Jatah habis"
       />
     )
 
   if (cooldownSecondsLeft > 0)
     return (
       <TapActionWaiting
+        compact
         tone="neutral"
         icon={<GlyphPlay className="size-4 text-muted-foreground" />}
-        label="Iklan berikutnya belum siap"
+        label="Iklan belum siap"
         meta={formatCountdown(cooldownSecondsLeft)}
       />
     )
 
   return (
     <TapAction
+      compact
       tone="neutral"
       icon={<GlyphPlay className="size-4 text-muted-foreground" />}
-      label="Bayar pakai iklan"
-      meta={`sisa ${formatCredits(viewsLeft)}`}
-      aria-label="Nonton iklan untuk memulai task tanpa energi"
+      label="Pakai iklan"
+      meta={`${formatCredits(viewsLeft)}×`}
+      aria-label={`Nonton iklan untuk memulai task tanpa energi, sisa ${formatCredits(viewsLeft)} kali hari ini`}
       onClick={() => {
         hapticTap()
         onWatch()

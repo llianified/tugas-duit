@@ -1,13 +1,12 @@
 'use client'
 
-import { creditsToRupiah } from '@/domain/economy'
 import { IslandDivider, IslandPill, IslandStat } from '@/features/home/island-pill'
 import { ProfileAvatar } from '@/features/home/profile-avatar'
 import type { UserStats } from '@/features/stats/domain'
 import type { SessionResponse } from '@/shell/session-api'
 import { GlyphChart } from '@/shared/components/glyph'
 import { TapAction } from '@/shared/components/tap-action'
-import { formatCredits, formatCreditsDecimal, formatRupiah } from '@/shared/lib/format'
+import { formatCredits, formatCreditsDecimal } from '@/shared/lib/format'
 
 type SessionUser = NonNullable<SessionResponse['user']>
 
@@ -66,12 +65,6 @@ export function ProfileIsland({
       <IslandStat
         label="Rata-rata bintang"
         value={`${formatCreditsDecimal(stats.averageStars)} · ${formatCredits(Math.round(stats.perfectShare * 100))}% sempurna`}
-      />
-      <IslandDivider />
-      <IslandStat
-        label="Saldo"
-        tone="primary"
-        value={`${formatCredits(user.balance)} credit · ${formatRupiah(creditsToRupiah(user.balance))}`}
         footer={
           <TapAction
             tone="neutral"

@@ -35,7 +35,7 @@ export function WatchAdToPlay({
         compact
         tone="neutral"
         icon={<GlyphSpinner className="size-4 animate-spin text-muted-foreground" />}
-        label="Muter iklan"
+        label="Memuat"
       />
     )
 

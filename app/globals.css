@@ -112,6 +112,8 @@
   --scrim: oklch(0 0 0 / 0.28);
   --shadow-bubble-near: oklch(0 0 0 / 0.07);
   --shadow-bubble-far: oklch(0 0 0 / 0.05);
+  --hero-band: #f1f1f4;
+  --hero-curve: 1.5rem;
   --radius: 0.625rem;
   --duration-ui: 150ms;
   --control-h: 2.75rem;
@@ -171,6 +173,7 @@
   --ring: #918bff;
   --success: #4ade80;
   --star: #facc15;
+  --hero-band: #08080b;
   --scrim: oklch(0 0 0 / 0.62);
   --shadow-bubble-near: oklch(0 0 0 / 0.55);
   --shadow-bubble-far: oklch(0 0 0 / 0.4);
@@ -601,7 +604,28 @@
     margin-top: var(--block-gap);
   }
   .region-under-brand {
-    margin-top: var(--region-gap);
+  margin-top: var(--region-gap);
+  }
+  /* The hero sits on a slightly darker band that runs to the top of the screen
+  and closes with a downward arc, so the list section below reads as a separate
+  lighter surface without needing a divider rule. */
+  .hero-band {
+  position: relative;
+  isolation: isolate;
+  }
+  .hero-band::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset-inline: calc(var(--content-px) * -1);
+  top: calc((var(--content-inset-top) + var(--region-gap)) * -1);
+  bottom: calc(var(--region-gap) * -0.5);
+  background-color: var(--hero-band);
+  border-bottom-left-radius: 50% var(--hero-curve);
+  border-bottom-right-radius: 50% var(--hero-curve);
+  }
+  .region-t-flush {
+  border-top-color: transparent;
   }
   .region-gap-t {
     margin-top: var(--region-gap);

@@ -84,8 +84,14 @@ export async function getStats(userId: number, balance: number): Promise<UserSta
         where user_id = $1`,
       [userId],
     ),
-    query<{ referral_count: number; active_referral_count: number; downline_tasks: number }>(
-      `select (select count(*) from users where referred_by = $1)::int                  as referral_count,
+    query<{
+      referral_count: number
+      active_referral_count: number
+      downline_tasks: number
+      joined_at: Date | null
+    }>(
+      `select (select created_at from users where id = $1)                             as joined_at,
+              (select count(*) from users where referred_by = $1)::int                  as referral_count,
               (select count(distinct downline_id) from referral_commissions
                 where upline_id = $1)::int                                              as active_referral_count,
               (select count(*) from referral_commissions where upline_id = $1)::int      as downline_tasks`,
@@ -100,6 +106,7 @@ export async function getStats(userId: number, balance: number): Promise<UserSta
   }
 
   return getUserStats({
+    joinedAt: referrals[0].joined_at?.getTime() ?? null,
     completedCount: totalRow.completed_count,
     todayCount: totalRow.today_count,
     totalStars: totalRow.total_stars,

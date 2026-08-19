@@ -75,6 +75,15 @@ export function formatHistoryTime(timestamp: number, now: number = Date.now()): 
   return `${day} · ${time}`
 }
 
+export function formatShortDate(timestamp: number): string {
+  return new Date(timestamp).toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: TIME_ZONE,
+  })
+}
+
 export function formatCompact(value: number): string {
   const abs = Math.abs(value)
   if (abs < 10_000) return formatCredits(value)

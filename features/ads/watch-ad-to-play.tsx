@@ -1,6 +1,10 @@
 'use client'
 
+import { useState } from 'react'
+import { adsMaxViewsPerDay } from '@/domain/ads'
+import { AdConfirmDialog } from '@/features/ads/ad-confirm-dialog'
 import { GlyphPlay, GlyphSpinner } from '@/shared/components/glyph'
+import { MetaBadge } from '@/shared/components/meta-badge'
 import { TapAction, TapActionWaiting } from '@/shared/components/tap-action'
 import { hapticTap } from '@/shell/haptic'
 import { formatCountdown, formatCredits } from '@/shared/lib/format'
@@ -22,23 +26,27 @@ export function WatchAdToPlay({
   poolEmpty: boolean
   onWatch: () => void
 }) {
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
   if (!enabled || poolEmpty) return null
 
   if (watching)
     return (
       <TapActionWaiting
+        compact
         tone="neutral"
         icon={<GlyphSpinner className="size-4 animate-spin text-muted-foreground" />}
-        label="Iklannya lagi diputar"
+        label="Memuat"
       />
     )
 
   if (passReady)
     return (
       <TapAction
+        compact
         tone="neutral"
         icon={<GlyphPlay className="size-4 text-muted-foreground" />}
-        label="Mulai pakai tiket iklan"
+        label="Pakai tiket"
         aria-label="Mulai task memakai tiket iklan"
         onClick={() => {
           hapticTap()
@@ -50,33 +58,49 @@ export function WatchAdToPlay({
   if (viewsLeft <= 0)
     return (
       <TapActionWaiting
+        compact
         tone="neutral"
         icon={<GlyphPlay className="size-4 text-muted-foreground" />}
-        label="Jatah iklan hari ini habis"
+        label="Jatah habis"
       />
     )
 
   if (cooldownSecondsLeft > 0)
     return (
       <TapActionWaiting
+        compact
         tone="neutral"
         icon={<GlyphPlay className="size-4 text-muted-foreground" />}
-        label="Iklan berikutnya belum siap"
+        label="Iklan belum siap"
         meta={formatCountdown(cooldownSecondsLeft)}
       />
     )
 
   return (
-    <TapAction
-      tone="neutral"
-      icon={<GlyphPlay className="size-4 text-muted-foreground" />}
-      label="Bayar pakai iklan"
-      meta={`sisa ${formatCredits(viewsLeft)}`}
-      aria-label="Nonton iklan untuk memulai task tanpa energi"
-      onClick={() => {
-        hapticTap()
-        onWatch()
-      }}
-    />
+    <>
+      <TapAction
+        compact
+        tone="neutral"
+        label="Mulai"
+        meta={
+          <MetaBadge className="gap-1">
+            <GlyphPlay className="size-3 shrink-0" aria-hidden="true" />
+            {formatCredits(viewsLeft)}/{formatCredits(adsMaxViewsPerDay())}
+          </MetaBadge>
+        }
+        aria-label={`Nonton iklan untuk memulai task tanpa energi, sisa ${formatCredits(viewsLeft)} dari ${formatCredits(adsMaxViewsPerDay())} kali hari ini`}
+        onClick={() => {
+          hapticTap()
+          setConfirmOpen(true)
+        }}
+      />
+
+      <AdConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        viewsLeft={viewsLeft}
+        onConfirm={onWatch}
+      />
+    </>
   )
 }

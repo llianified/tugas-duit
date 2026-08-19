@@ -56,10 +56,12 @@ export function ActiveTask({
           energyEmpty={energyEmpty}
           energySecondsToNext={energySecondsToNext}
         />
-        <div className="cta-gap flex flex-col gap-2">
+        <div className="cta-gap flex items-stretch gap-2 [&>*]:min-w-0 [&>*]:flex-1">
           <StartAction
             waiting={waiting}
             poolEmpty={poolEmpty}
+            energy={energy}
+            energyMax={energyMax}
             energySecondsToNext={energySecondsToNext}
             rewardPoolSecondsToNext={rewardPoolSecondsToNext}
             onStart={onStart}
@@ -169,12 +171,16 @@ function Stat({
 function StartAction({
   waiting,
   poolEmpty,
+  energy,
+  energyMax,
   energySecondsToNext,
   rewardPoolSecondsToNext,
   onStart,
 }: {
   waiting: boolean
   poolEmpty: boolean
+  energy: number
+  energyMax: number
   energySecondsToNext: number | null
   rewardPoolSecondsToNext: number | null
   onStart: () => void
@@ -182,9 +188,9 @@ function StartAction({
   if (!waiting) {
     return (
       <TapAction
-        icon={<GlyphBolt className="size-4 text-primary-foreground/80" />}
-        label={`Mulai — bayar ${formatCredits(energyCostPerTask())} energi`}
-        aria-label="Mulai task dengan memakai energi"
+        compact
+        label="Mulai"
+        aria-label={`Mulai task dengan memakai ${formatCredits(energyCostPerTask())} energi, sisa ${formatCredits(energy)} dari ${formatCredits(energyMax)}`}
         onClick={() => {
           hapticTap()
           onStart()
@@ -195,11 +201,13 @@ function StartAction({
 
   return poolEmpty ? (
     <TapActionWaiting
-      label="Kolam reward kosong"
+      compact
+      label="Kolam kosong"
       meta={rewardPoolSecondsToNext === null ? undefined : formatCountdown(rewardPoolSecondsToNext)}
     />
   ) : (
     <TapActionWaiting
+      compact
       icon={<GlyphBolt className="size-4 text-primary" />}
       label="Energi habis"
       meta={energySecondsToNext === null ? undefined : formatCountdown(energySecondsToNext)}

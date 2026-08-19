@@ -42,7 +42,23 @@ export async function claimInitData(hash: string, authDate: number): Promise<boo
   return rows.length > 0
 }
 
-export async function sendTelegramMessage(chatId: string, text: string) {
-  const response = await fetch(`https://api.telegram.org/bot${env.botToken}/sendMessage`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }) })
+export const escapeTelegramHtml = (value: string) =>
+  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+type InlineButton = { text: string; url: string } | { text: string; web_app: { url: string } }
+export interface SendMessageOptions { replyMarkup?: { inline_keyboard: InlineButton[][] } }
+
+export async function sendTelegramMessage(chatId: string, text: string, options: SendMessageOptions = {}) {
+  const response = await fetch(`https://api.telegram.org/bot${env.botToken}/sendMessage`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text,
+      parse_mode: 'HTML',
+      link_preview_options: { is_disabled: true },
+      ...(options.replyMarkup ? { reply_markup: options.replyMarkup } : {}),
+    }),
+  })
   if (!response.ok) throw new Error(`Telegram API ${response.status}`)
 }

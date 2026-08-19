@@ -190,12 +190,6 @@ function StartAction({
       <TapAction
         compact
         label="Mulai"
-        meta={
-          <span className="flex items-center gap-1">
-            <GlyphBolt className="size-3.5 shrink-0" aria-hidden="true" />
-            {formatCredits(energy)}/{formatCredits(energyMax)}
-          </span>
-        }
         aria-label={`Mulai task dengan memakai ${formatCredits(energyCostPerTask())} energi, sisa ${formatCredits(energy)} dari ${formatCredits(energyMax)}`}
         onClick={() => {
           hapticTap()

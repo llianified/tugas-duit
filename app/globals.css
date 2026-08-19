@@ -514,21 +514,23 @@
     justify-content: center;
     pointer-events: auto;
   }
-  /* The control is anchored to the band, never to the pill row, so the pills
-     stay optically centred whether the control is shown or tucked away. */
+  /* The control rides inside the pill row so the tier pill and the theme pill
+     read as one centred cluster, matching the task view. When it tucks away it
+     collapses its own footprint so the remaining pills recentre. */
   .brand-band-control {
-    position: absolute;
-    top: calc(var(--brand-band-top) + var(--brand-control-inset));
-    right: var(--content-px);
+    position: relative;
+    margin-inline-start: 0.375rem;
     transition:
       color var(--duration-ui) ease-out,
       background-color var(--duration-ui) ease-out,
       border-color var(--duration-ui) ease-out,
+      margin-inline-start 260ms var(--ease-out-quart),
       translate 260ms var(--ease-out-quart);
   }
   .brand-band-control[data-aside] {
     pointer-events: none;
-    translate: calc(100% + var(--content-px) + 0.5rem);
+    margin-inline-start: calc(-1 * var(--brand-pill-h));
+    translate: calc(50vw + var(--content-px) + 0.5rem);
   }
   @media (prefers-reduced-motion: reduce) {
     .brand-band-control {

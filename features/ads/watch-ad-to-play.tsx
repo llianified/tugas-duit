@@ -27,7 +27,7 @@ export function WatchAdToPlay({
   if (watching)
     return (
       <TapActionWaiting
-        compact
+        tone="neutral"
         icon={<GlyphSpinner className="size-4 animate-spin text-muted-foreground" />}
         label="Iklannya lagi diputar"
       />
@@ -37,7 +37,7 @@ export function WatchAdToPlay({
     return (
       <TapAction
         tone="neutral"
-        icon={<GlyphPlay className="size-4" />}
+        icon={<GlyphPlay className="size-4 text-muted-foreground" />}
         label="Mulai pakai tiket iklan"
         aria-label="Mulai task memakai tiket iklan"
         onClick={() => {
@@ -50,8 +50,8 @@ export function WatchAdToPlay({
   if (viewsLeft <= 0)
     return (
       <TapActionWaiting
-        compact
-        icon={<GlyphPlay className="size-4" />}
+        tone="neutral"
+        icon={<GlyphPlay className="size-4 text-muted-foreground" />}
         label="Jatah iklan hari ini habis"
       />
     )
@@ -59,8 +59,8 @@ export function WatchAdToPlay({
   if (cooldownSecondsLeft > 0)
     return (
       <TapActionWaiting
-        compact
-        icon={<GlyphPlay className="size-4" />}
+        tone="neutral"
+        icon={<GlyphPlay className="size-4 text-muted-foreground" />}
         label="Iklan berikutnya belum siap"
         meta={formatCountdown(cooldownSecondsLeft)}
       />
@@ -69,7 +69,7 @@ export function WatchAdToPlay({
   return (
     <TapAction
       tone="neutral"
-      icon={<GlyphPlay className="size-4" />}
+      icon={<GlyphPlay className="size-4 text-muted-foreground" />}
       label="Bayar pakai iklan"
       meta={`sisa ${formatCredits(viewsLeft)}`}
       aria-label="Nonton iklan untuk memulai task tanpa energi"

@@ -13,6 +13,52 @@ export function IslandDivider() {
   return <div aria-hidden="true" className="h-px bg-border" />
 }
 
+const ISLAND_VALUE_TONE = {
+  foreground: 'text-foreground',
+  primary: 'text-primary',
+  success: 'text-success',
+  muted: 'text-muted-foreground',
+} as const
+
+/**
+ * Satu ritme baris untuk seluruh panel island: label 11px di kiri, nilai 12px
+ * semibold di kanan, meter opsional di bawahnya. Semua region memakai ini agar
+ * tinggi, padding, dan tipografinya presisi sama.
+ */
+export function IslandStat({
+  label,
+  value,
+  tone = 'foreground',
+  meter,
+  footer,
+}: {
+  label: ReactNode
+  value: ReactNode
+  tone?: keyof typeof ISLAND_VALUE_TONE
+  meter?: ReactNode
+  footer?: ReactNode
+}) {
+  return (
+    <div className="island-region">
+      <div className="island-row flex items-center justify-between gap-3">
+        <span className="min-w-0 truncate text-[11px] leading-none text-muted-foreground tabular-nums">
+          {label}
+        </span>
+        <span
+          className={cn(
+            'shrink-0 text-xs leading-none font-semibold tracking-tight tabular-nums',
+            ISLAND_VALUE_TONE[tone],
+          )}
+        >
+          {value}
+        </span>
+      </div>
+      {meter ? <div className="island-row">{meter}</div> : null}
+      {footer ? <div className="island-row">{footer}</div> : null}
+    </div>
+  )
+}
+
 export function IslandPill({
   panelId,
   pillLabel,

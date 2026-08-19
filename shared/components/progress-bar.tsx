@@ -29,7 +29,7 @@ export function ProgressBar({
       aria-valuemax={safeMax}
       aria-valuenow={clampedValue}
       aria-valuetext={accessibleValueText}
-      className={cn('h-1.5 w-full overflow-hidden rounded-full bg-border', className)}
+      className={cn('meter-h w-full overflow-hidden rounded-full bg-border', className)}
     >
       <div
         ref={fillRef}

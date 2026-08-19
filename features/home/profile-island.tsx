@@ -1,7 +1,7 @@
 'use client'
 
 import { creditsToRupiah } from '@/domain/economy'
-import { IslandDivider, IslandPill } from '@/features/home/island-pill'
+import { IslandDivider, IslandPill, IslandStat } from '@/features/home/island-pill'
 import { ProfileAvatar } from '@/features/home/profile-avatar'
 import type { UserStats } from '@/features/stats/domain'
 import type { SessionResponse } from '@/shell/session-api'
@@ -45,57 +45,43 @@ export function ProfileIsland({
       className="mr-1.5"
       pillClassName="w-[var(--brand-pill-h)] overflow-hidden p-0"
     >
-      <div className="island-region">
-        <div className="island-row flex items-center justify-between gap-3">
+      <IslandStat
+        label={
           <span className="flex min-w-0 items-center gap-2">
-            <ProfileAvatar photoUrl={user.photoUrl} className="size-8" glyphClassName="size-4" />
-            <span className="truncate text-xs font-semibold leading-none text-foreground">
+            <ProfileAvatar photoUrl={user.photoUrl} className="size-5" glyphClassName="size-3" />
+            <span className="truncate text-xs font-semibold text-foreground">
               {user.firstName}
             </span>
           </span>
-          <span className="shrink-0 text-[11px] leading-none text-muted-foreground">{handle}</span>
-        </div>
-      </div>
+        }
+        tone="muted"
+        value={handle}
+      />
       <IslandDivider />
-      <SummaryRegion
+      <IslandStat
         label="Task selesai"
         value={`${formatCredits(stats.completedCount)} · ${formatCredits(stats.activeDays)} hari aktif`}
       />
       <IslandDivider />
-      <SummaryRegion
+      <IslandStat
         label="Rata-rata bintang"
         value={`${formatCreditsDecimal(stats.averageStars)} · ${formatCredits(Math.round(stats.perfectShare * 100))}% sempurna`}
       />
       <IslandDivider />
-      <div className="island-region">
-        <div className="island-row flex items-center justify-between gap-3">
-          <span className="shrink-0 text-[11px] leading-none text-muted-foreground">Saldo</span>
-          <span className="shrink-0 text-xs font-semibold leading-none text-primary tabular-nums">
-            {formatCredits(user.balance)} credit ·{' '}
-            {formatRupiah(creditsToRupiah(user.balance))}
-          </span>
-        </div>
-        <TapAction
-          className="island-row"
-          tone="neutral"
-          label="Lihat statistik"
-          icon={<GlyphChart className="size-4 text-muted-foreground" />}
-          onClick={onOpenStats}
-        />
-      </div>
+      <IslandStat
+        label="Saldo"
+        tone="primary"
+        value={`${formatCredits(user.balance)} credit · ${formatRupiah(creditsToRupiah(user.balance))}`}
+        footer={
+          <TapAction
+            tone="neutral"
+            size="control"
+            label="Lihat statistik"
+            icon={<GlyphChart className="size-4 text-muted-foreground" />}
+            onClick={onOpenStats}
+          />
+        }
+      />
     </IslandPill>
-  )
-}
-
-function SummaryRegion({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="island-region">
-      <div className="island-row flex items-center justify-between gap-3">
-        <span className="shrink-0 text-[11px] leading-none text-muted-foreground">{label}</span>
-        <span className="shrink-0 text-xs font-semibold leading-none text-foreground tabular-nums">
-          {value}
-        </span>
-      </div>
-    </div>
   )
 }

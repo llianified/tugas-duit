@@ -23,6 +23,7 @@ export function AppFrame({
   showThemeToggle = true,
   hideThemeToggle = false,
   pendingThemeToggle = false,
+  heroBand = false,
 }: {
   badges?: ReactNode
   nav?: ReactNode
@@ -32,11 +33,17 @@ export function AppFrame({
   showThemeToggle?: boolean
   hideThemeToggle?: boolean
   pendingThemeToggle?: boolean
+  heroBand?: boolean
 }) {
   useDocumentScrollLock()
 
   return (
-    <div className="mx-auto flex h-[100dvh] w-full max-w-md flex-col bg-background">
+    <div
+      className={cn(
+        'mx-auto flex h-[100dvh] w-full max-w-md flex-col bg-background',
+        heroBand && '[--brand-band-tint:var(--hero-band)]',
+      )}
+    >
       <BrandBand control={showThemeToggle ? <ThemeToggle hidden={hideThemeToggle} /> : null}>
         {badges}
       </BrandBand>

@@ -92,6 +92,7 @@ function AppShellInner() {
       direction={depthTracker.direction}
       showThemeToggle={themeToggleVisible}
       hideThemeToggle={progressionPanelOpen || effectiveView === 'captcha'}
+      heroBand={session.loading || (!activeChallenge && effectiveView === 'home')}
       badges={
         badgesVisible ? (
           <ProgressionBadges

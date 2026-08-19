@@ -63,8 +63,10 @@ function HeroActionTile({
       type="button"
       {...props}
       className={cn(
-        'focus-ring transition-ui press-scale-soft control-h flex flex-1 items-center justify-center gap-2 rounded-lg border border-border px-3',
-        'text-foreground hover:border-primary hover:text-primary active:border-primary-active active:text-primary-active',
+        'focus-ring transition-ui press-scale-soft control-h flex flex-1 items-center justify-center gap-2 rounded-lg border px-3',
+        // No fill at all: the tiles sit directly on the hero band so only the
+        // hairline edge outlines them, and the label carries the contrast.
+        'border-border bg-transparent text-foreground',
       )}
     >
       {icon}

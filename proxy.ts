@@ -13,8 +13,13 @@ const REPORT_GROUP = 'csp'
  * host hasil panen itu ke `frame-src`, `img-src`, `media-src`, dan `connect-src`.
  * Urutannya ada di `docs/rencana-adsgram.md` §5.
  *
- * `'strict-dynamic'` sudah mengizinkan SDK bernonce memuat turunannya di browser modern;
- * entri host tetap ditulis sebagai jaring untuk browser yang mengabaikannya.
+ * PENTING: `'strict-dynamic'` HANYA berlaku untuk `script-src`. Direktif itu tidak
+ * berpengaruh apa pun pada `img-src`, `frame-src`, `media-src`, atau `connect-src` —
+ * keempatnya tetap dinilai ketat per-host. Jadi walaupun SDK berhasil dimuat, kreatif
+ * iklan (gambar/iframe/video) akan diblokir selama host-nya belum terdaftar di
+ * keempat direktif itu, dan gejalanya: tombol iklan diklik tapi layar kosong,
+ * impressions di dashboard Adsgram tetap nol. Selama panen §5 belum dijalankan,
+ * deploy dengan `CSP_REPORT_ONLY=1` supaya iklan tetap render.
  *
  * Soal `frame-ancestors`: app ini dibuka langsung dari browser, bukan cuma di dalam
  * Telegram. Membatasi frame-ancestors ke host Telegram membuat browser menolak

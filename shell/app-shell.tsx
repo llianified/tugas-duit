@@ -1,0 +1,131 @@
+'use client'
+
+import { MotionConfig } from 'motion/react'
+import { useEffect, useState } from 'react'
+import { getProgression } from '@/features/home/progression'
+import { ProgressionBadges } from '@/features/home/progression-badges'
+import { NavPill } from '@/navigation/nav-pill'
+import { AppFrame } from '@/shell/app-frame'
+import { AppViewRouter } from '@/shell/app-view-router'
+import { ThemeProvider, useTheme } from '@/shell/theme'
+import { ToastProvider, useToast } from '@/shell/toast'
+import { useTelegramChromeColor, useTelegramViewport } from '@/shell/telegram-viewport'
+import { useRewardSession } from '@/shell/use-reward-session'
+
+export function AppShell() {
+  return (
+    <MotionConfig reducedMotion="user">
+      <ThemeProvider>
+        <ToastProvider>
+          <AppShellInner />
+        </ToastProvider>
+      </ThemeProvider>
+    </MotionConfig>
+  )
+}
+
+function AppShellInner() {
+  useTelegramViewport()
+  const { resolved: resolvedTheme } = useTheme()
+  useTelegramChromeColor(resolvedTheme)
+  const showError = useToast()
+  const session = useRewardSession({ onError: showError })
+  const [progressionPanelOpen, setProgressionPanelOpen] = useState(false)
+  const [liveTaskReward, setLiveTaskReward] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (!session.sessionFailed) return
+    showError(
+      session.error ?? 'Koneksinya putus. Cek internet kamu terus muat ulang ya.',
+    )
+  }, [session.sessionFailed, session.error, showError])
+
+  useEffect(() => {
+    if (!session.unauthenticated) return
+    showError('Kami belum kenal sesi kamu. Buka Tugas Duit dari Telegram dulu ya.')
+  }, [session.unauthenticated, showError])
+
+  const activeChallenge = session.view === 'captcha' ? session.activeChallenge : null
+  const effectiveView = session.view === 'captcha' && !activeChallenge ? 'home' : session.view
+
+  useEffect(() => {
+    setLiveTaskReward(null)
+  }, [activeChallenge?.id])
+
+  const shellReady =
+    !session.loading &&
+    !session.sessionFailed &&
+    !session.unauthenticated &&
+    session.stats !== null
+
+  const badgesVisible = shellReady
+
+  const navVisible = shellReady && effectiveView !== 'captcha'
+
+  const themeToggleVisible = shellReady || session.sessionFailed || session.unauthenticated
+
+  const viewKey = session.loading
+    ? 'loading'
+    : session.sessionFailed
+      ? 'session-failed'
+      : session.unauthenticated
+        ? 'unauthenticated'
+        : activeChallenge
+          ? `captcha-${activeChallenge.id}`
+          : effectiveView
+
+  const [depthTracker, setDepthTracker] = useState<{ depth: number; direction: 1 | -1 }>({
+    depth: session.viewDepth,
+    direction: 1,
+  })
+
+  if (session.viewDepth !== depthTracker.depth) {
+    setDepthTracker({
+      depth: session.viewDepth,
+      direction: session.viewDepth > depthTracker.depth ? 1 : -1,
+    })
+  }
+
+  return (
+    <AppFrame
+      viewKey={viewKey}
+      direction={depthTracker.direction}
+      showThemeToggle={themeToggleVisible}
+      hideThemeToggle={progressionPanelOpen || effectiveView === 'captcha'}
+      badges={
+        badgesVisible ? (
+          <ProgressionBadges
+            progression={getProgression({
+              completedCount: session.completedCount,
+              streak: session.stats?.streak ?? 0,
+              todayCount: session.stats?.todayCount ?? 0,
+            })}
+            taskDifficulty={activeChallenge?.difficulty ?? null}
+            taskReward={liveTaskReward}
+            energy={session.energy}
+            energyMax={session.energyMax}
+            energySecondsToNext={session.energySecondsToNext}
+            rewardPoolCredits={session.rewardPoolCredits}
+            rewardPoolMax={session.rewardPoolMax}
+            rewardPoolRegenCredits={session.rewardPoolRegenCredits}
+            rewardPoolSecondsToNext={session.rewardPoolSecondsToNext}
+            onPanelOpenChange={setProgressionPanelOpen}
+          />
+        ) : null
+      }
+      nav={
+        navVisible ? (
+          <NavPill activeView={effectiveView} onSelect={session.selectView} />
+        ) : null
+      }
+    >
+      <AppViewRouter
+        session={session}
+        activeChallenge={activeChallenge}
+        effectiveView={effectiveView}
+        showError={showError}
+        onTaskRewardChange={setLiveTaskReward}
+      />
+    </AppFrame>
+  )
+}

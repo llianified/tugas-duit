@@ -1,0 +1,74 @@
+'use client'
+
+import type { ReactNode } from 'react'
+import { hapticSelect } from '@/shell/haptic'
+import {
+  GlyphChart,
+  GlyphHistory,
+  GlyphHome,
+  GlyphTrophy,
+  GlyphUsers,
+} from '@/shared/components/glyph'
+import { cn } from '@/shared/lib/utils'
+import { ROOT_VIEW, type AppView } from '@/navigation/app-view'
+
+type NavSlot = {
+  view: AppView
+  label: string
+  icon: ReactNode
+}
+
+const NAV_SLOTS: readonly NavSlot[] = [
+  { view: ROOT_VIEW, label: 'Beranda', icon: <GlyphHome className="glyph-md" /> },
+  { view: 'stats', label: 'Statistik', icon: <GlyphChart className="glyph-md" /> },
+  { view: 'leaderboard', label: 'Peringkat', icon: <GlyphTrophy className="glyph-md" /> },
+  { view: 'history', label: 'Riwayat', icon: <GlyphHistory className="glyph-md" /> },
+  { view: 'referral', label: 'Teman', icon: <GlyphUsers className="glyph-md" /> },
+]
+
+export function NavPill({
+  activeView,
+  onSelect,
+}: {
+  activeView: AppView
+  onSelect: (view: AppView) => void
+}) {
+  return (
+    <nav aria-label="Navigasi utama" className="nav-pill">
+      <div className="nav-pill-row">
+        {NAV_SLOTS.map((slot) => (
+          <NavPillItem key={slot.view} slot={slot} activeView={activeView} onSelect={onSelect} />
+        ))}
+      </div>
+    </nav>
+  )
+}
+
+function NavPillItem({
+  slot,
+  activeView,
+  onSelect,
+}: {
+  slot: NavSlot
+  activeView: AppView
+  onSelect: (view: AppView) => void
+}) {
+  const active = slot.view === activeView
+
+  function handleClick() {
+    hapticSelect()
+    onSelect(slot.view)
+  }
+
+  return (
+    <button
+      type="button"
+      aria-current={active ? 'page' : undefined}
+      onClick={handleClick}
+      className={cn('focus-ring transition-ui press-scale nav-pill-item')}
+    >
+      {slot.icon}
+      <span className="nav-pill-label">{slot.label}</span>
+    </button>
+  )
+}

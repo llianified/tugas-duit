@@ -524,9 +524,7 @@
   }
   .brand-band-control[data-aside] {
     pointer-events: none;
-    translate: calc(50vw + var(--brand-pill-h) + 0.5rem);
-    position: absolute;
-    right: 0;
+    translate: calc(100vw + 0.5rem);
   }
   @media (prefers-reduced-motion: reduce) {
     .brand-band-control {

@@ -100,6 +100,10 @@ function AppShellInner() {
               streak: session.stats?.streak ?? 0,
               todayCount: session.stats?.todayCount ?? 0,
             })}
+            user={session.user}
+            stats={session.stats}
+            showProfile={effectiveView !== 'captcha'}
+            onOpenStats={session.openStats}
             taskDifficulty={activeChallenge?.difficulty ?? null}
             taskReward={liveTaskReward}
             energy={session.energy}

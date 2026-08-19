@@ -37,6 +37,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const nonce = (await headers()).get('x-nonce') ?? undefined
+  const adsgramEnabled = Boolean(process.env.NEXT_PUBLIC_ADSGRAM_BLOCK_ID)
 
   return (
     <html lang="id" className={`${geistSans.variable} bg-background`} suppressHydrationWarning>
@@ -49,6 +50,9 @@ export default async function RootLayout({
           strategy="beforeInteractive"
           nonce={nonce}
         />
+        {adsgramEnabled && (
+          <Script src="https://sad.adsgram.ai/js/sad.min.js" strategy="lazyOnload" nonce={nonce} />
+        )}
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

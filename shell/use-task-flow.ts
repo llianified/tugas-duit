@@ -13,6 +13,7 @@ import type {
   StartTaskResponse,
   StatsResponse,
   SubmitResponse,
+  TaskPayment,
   TaskResponse,
 } from '@/shell/session-api'
 import { formatCountdown } from '@/shared/lib/format'
@@ -54,9 +55,10 @@ export function useTaskFlow({
   const [submitting, setSubmitting] = useState(false)
 
   const beginChallenge = useCallback(
-    async (candidate: Challenge) => {
+    async (candidate: Challenge, payWith: TaskPayment = 'energy') => {
       const started = await sendJson<StartTaskResponse>('/api/task/start', 'POST', {
         challengeId: candidate.id,
+        payWith,
       })
       setTaskElapsedMs(started.elapsedMs)
       setActiveChallenge(started.challenge)
@@ -71,60 +73,65 @@ export function useTaskFlow({
     [mutateSession],
   )
 
-  const startTask = useCallback(() => {
-    if (!task || startingTask) return
-    if (energy < 1) {
-      notifyError(
-        energySecondsToNext === null
-          ? 'Energi kamu habis. Tunggu energi berikutnya ya.'
-          : `Energi habis. Energi berikutnya dalam ${formatCountdown(energySecondsToNext)}.`,
-      )
-      return
-    }
-    if (rewardPoolCredits === 0) {
-      notifyError(
-        rewardPoolSecondsToNext === null
-          ? 'Kolam reward kamu kosong. Tunggu terisi lagi ya, energi kamu tidak terpakai.'
-          : `Kolam reward kamu kosong. Isi berikutnya dalam ${formatCountdown(rewardPoolSecondsToNext)}, energi kamu tidak terpakai.`,
-      )
-      return
-    }
-    setStartingTask(true)
-    void (async () => {
-      try {
-        try {
-          await beginChallenge(task)
-        } catch (cause) {
-          if (cause instanceof ApiError && cause.code !== 'CHALLENGE_NOT_STARTABLE') throw cause
-          const refreshed = (await mutateTask())?.challenge
-          if (!refreshed || refreshed.id === task.id) throw cause
-          await beginChallenge(refreshed)
-        }
-        selectView('captcha')
-      } catch (cause) {
-        notifyError(userFacingMessage(cause))
-        if (
-          cause instanceof ApiError &&
-          (cause.code === 'ENERGY_EMPTY' || cause.code === 'REWARD_POOL_EMPTY')
+  const startTask = useCallback(
+    (payWith: TaskPayment = 'energy') => {
+      if (!task || startingTask) return
+      if (payWith === 'energy' && energy < 1) {
+        notifyError(
+          energySecondsToNext === null
+            ? 'Energi kamu habis. Tunggu energi berikutnya ya.'
+            : `Energi habis. Energi berikutnya dalam ${formatCountdown(energySecondsToNext)}.`,
         )
-          void mutateSession()
-      } finally {
-        setStartingTask(false)
+        return
       }
-    })()
-  }, [
-    beginChallenge,
-    rewardPoolCredits,
-    rewardPoolSecondsToNext,
-    energy,
-    energySecondsToNext,
-    mutateSession,
-    mutateTask,
-    notifyError,
-    selectView,
-    startingTask,
-    task,
-  ])
+      if (rewardPoolCredits === 0) {
+        notifyError(
+          rewardPoolSecondsToNext === null
+            ? 'Kolam reward kamu kosong. Tunggu terisi lagi ya, tiket dan energi kamu tidak terpakai.'
+            : `Kolam reward kamu kosong. Isi berikutnya dalam ${formatCountdown(rewardPoolSecondsToNext)}, tiket dan energi kamu tidak terpakai.`,
+        )
+        return
+      }
+      setStartingTask(true)
+      void (async () => {
+        try {
+          try {
+            await beginChallenge(task, payWith)
+          } catch (cause) {
+            if (cause instanceof ApiError && cause.code !== 'CHALLENGE_NOT_STARTABLE') throw cause
+            const refreshed = (await mutateTask())?.challenge
+            if (!refreshed || refreshed.id === task.id) throw cause
+            await beginChallenge(refreshed, payWith)
+          }
+          selectView('captcha')
+        } catch (cause) {
+          notifyError(userFacingMessage(cause))
+          if (
+            cause instanceof ApiError &&
+            (cause.code === 'ENERGY_EMPTY' ||
+              cause.code === 'REWARD_POOL_EMPTY' ||
+              cause.code === 'AD_PASS_MISSING')
+          )
+            void mutateSession()
+        } finally {
+          setStartingTask(false)
+        }
+      })()
+    },
+    [
+      beginChallenge,
+      rewardPoolCredits,
+      rewardPoolSecondsToNext,
+      energy,
+      energySecondsToNext,
+      mutateSession,
+      mutateTask,
+      notifyError,
+      selectView,
+      startingTask,
+      task,
+    ],
+  )
 
   const completeTask = useCallback(
     async (answer: string): Promise<TaskSubmission | null> => {

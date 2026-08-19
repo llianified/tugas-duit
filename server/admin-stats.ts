@@ -19,6 +19,14 @@ export interface AdminDashboard {
     rejectedCount: number
   }
   flaggedUsers: number
+  ads: {
+    ticketsOpened: number
+    ticketsReady: number
+    passesConsumed: number
+    tasksPaidByAd: number
+    tasksPaidByEnergy: number
+    creditsOnAdTasks: number
+  }
 }
 
 export async function readAdminDashboard(): Promise<AdminDashboard> {
@@ -62,7 +70,30 @@ export async function readAdminDashboard(): Promise<AdminDashboard> {
        (select count(*) from withdrawals where state='rejected')::text as wd_rejected_count,
 
        (select count(distinct user_id) from fraud_signals
-         where created_at > now() - interval '7 days')::text as flagged`,
+         where created_at > now() - interval '7 days')::text as flagged,
+
+       -- Iklan, 7 hari terakhir. Jarak dibuka -> siap adalah fill rate; jarak siap ->
+       -- terpakai adalah pass yang terbuang. Baris terakhir yang menentukan fase 2 layak
+       -- atau tidak: credit yang benar-benar dibayarkan pada task berbayar iklan, untuk
+       -- dibandingkan dengan pendapatan Adsgram dari dashboard partner.
+       (select count(*) from ad_views
+         where created_at > now() - interval '7 days')::text as ads_opened,
+       (select count(*) from ad_views
+         where ready_at > now() - interval '7 days')::text as ads_ready,
+       (select count(*) from ad_views
+         where consumed_at > now() - interval '7 days')::text as ads_consumed,
+       (select count(*) from challenges c
+         join task_completions t on t.challenge_id = c.id
+         where c.ad_view_id is not null
+           and t.completed_at > now() - interval '7 days')::text as ads_tasks,
+       (select count(*) from challenges c
+         join task_completions t on t.challenge_id = c.id
+         where c.ad_view_id is null and c.energy_spent_at is not null
+           and t.completed_at > now() - interval '7 days')::text as energy_tasks,
+       (select coalesce(sum(t.reward),0) from challenges c
+         join task_completions t on t.challenge_id = c.id
+         where c.ad_view_id is not null
+           and t.completed_at > now() - interval '7 days')::text as ads_credits`,
   )
   const row = rows[0]
   const n = (key: string) => Number(row[key])
@@ -81,6 +112,14 @@ export async function readAdminDashboard(): Promise<AdminDashboard> {
       rejectedCount: n('wd_rejected_count'),
     },
     flaggedUsers: n('flagged'),
+    ads: {
+      ticketsOpened: n('ads_opened'),
+      ticketsReady: n('ads_ready'),
+      passesConsumed: n('ads_consumed'),
+      tasksPaidByAd: n('ads_tasks'),
+      tasksPaidByEnergy: n('energy_tasks'),
+      creditsOnAdTasks: n('ads_credits'),
+    },
   }
 }
 

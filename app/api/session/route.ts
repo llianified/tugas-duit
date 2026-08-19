@@ -1,5 +1,6 @@
 import { economyConfig } from '@/domain/economy-config'
 import { loadEconomyConfig } from '@/server/economy-config'
+import { readAdsState } from '@/server/ads'
 import { query } from '@/server/db'
 import { readEnergy } from '@/server/energy'
 import { env } from '@/server/env'
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
       })
     }
 
-    const [breakdown, energy, rewardPool] = await Promise.all([
+    const [breakdown, energy, rewardPool, ads] = await Promise.all([
       query<{
         task_credits: string
         referral_credits: string
@@ -41,6 +42,7 @@ export async function GET(request: Request) {
       }>(BREAKDOWN_SQL, [user.id]),
       readEnergy(user.id),
       readRewardPool(user.id),
+      readAdsState(user.id),
     ])
 
     return Response.json({
@@ -61,6 +63,7 @@ export async function GET(request: Request) {
       },
       energy,
       rewardPool,
+      ads,
     })
   } catch (error) {
     return handleRouteError(error)

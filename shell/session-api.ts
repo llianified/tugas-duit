@@ -27,8 +27,29 @@ export type SessionResponse = {
     now: number
     receivedAt: number
   }
+  ads?: AdsState
   botAppUrl?: string | null
 }
+
+export type TaskPayment = 'energy' | 'ad'
+
+export type AdsState = {
+  enabled: boolean
+  blockId: string | null
+  debug: boolean
+  viewsLeft: number
+  cooldownSecondsLeft: number
+  pass: { expiresAt: number } | null
+}
+
+export type AdTicketResponse = {
+  ticketId: string
+  blockId: string
+  debug: boolean
+  expiresAt: number
+}
+
+export type AdClaimResponse = { pass: { expiresAt: number } }
 
 export type SessionEnergy = NonNullable<SessionResponse['energy']>
 export type SessionRewardPool = NonNullable<SessionResponse['rewardPool']>
@@ -62,6 +83,7 @@ export type StartTaskResponse = {
   challenge: Challenge
   elapsedMs: number
   energy: EnergyState & { now: number }
+  paidBy: TaskPayment
 }
 
 async function fetchSession(): Promise<SessionResponse> {

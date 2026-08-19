@@ -1,7 +1,9 @@
 # Rencana integrasi iklan Adsgram
 
-Status: **usulan, belum disetujui, belum ada kode.** Dokumen ini yang dikonfirmasi dulu
-(aturan keras #1), baru implementasi jalan per fase.
+Status: **fase 1 sudah dikerjakan** (migrasi `0024`, `domain/ads.ts`, `server/ads.ts`, dua
+route, blok `ads` di `/api/session`, dua tombol di kartu task, metrik admin). Fase 0 (akun
+Adsgram + panen host CSP), fase 2, dan fase 3 belum. Keputusan §9 sudah dijawab pemilik
+repo — jawabannya dicatat di bawah, termasuk yang menggeser isi dokumen ini.
 
 Tujuan: menambah sumber pendapatan (iklan) tanpa menyentuh bentuk ekonomi yang sudah ada.
 Yang dijaga dokumen ini bukan "iklannya tampil", tapi: **iklan tidak boleh menjadi cara
@@ -86,10 +88,10 @@ klien                                  server
   │  ◀─── { pass: { expiresAt } }        state='ready', ready_at=now()
   │
   │  POST /api/task/start ────────────▶ transaction (satu-satunya tempat biaya dibayar):
-  │       { challengeId }                 1. reward pool kosong? → tolak, tiket utuh
-  │                                       2. ada tiket 'ready'?  → pakai itu: state='consumed',
-  │                                          challenges.ad_view_id = tiket
-  │  ◀─── { challenge, energy, paidBy }   3. kalau tidak ada     → spendEnergy() seperti sekarang
+  │       { challengeId, payWith }        1. reward pool kosong? → tolak, tiket utuh
+  │                                       2. payWith='ad'     → consumeAdPass: state='consumed',
+  │                                          challenges.ad_view_id = tiket; tanpa pass → tolak
+  │  ◀─── { challenge, energy, paidBy }   3. payWith='energy' → spendEnergy() seperti sekarang
 ```
 
 Kenapa tiket dua tahap (`pending` → `ready`), bukan satu endpoint: tanpa tiket,
@@ -103,24 +105,34 @@ sekarang dibayar di satu blok `transaction()` yang juga memegang `for update` at
 challenge. Menambah jalur start kedua berarti dua tempat yang boleh memulai task, dan
 itu jalan pintas favorit untuk double-spend.
 
-### Urutan pemakaian: tiket dulu, energi belakangan
+### Urutan pemakaian: user yang memilih, bukan server
 
-Kalau user punya tiket **dan** energi, tiket yang dipakai. Alasannya: tiket punya
-kedaluwarsa dan plafon harian, energi terisi sendiri — membiarkan tiket kedaluwarsa berarti
-membuang hasil tontonan user. Konsekuensinya tombol iklan **hanya ditawarkan saat
-`energy < energyCostPerTask`**, supaya user tidak menukar iklan dengan sesuatu yang
-sebenarnya sudah ia punya.
+Keputusan §9.1 mengubah bagian ini dari rencana awalnya. Kartu task menawarkan **dua tombol
+berdampingan** — `Mulai — bayar N energi` dan `Bayar pakai iklan` — dan tombol iklan tampil
+kapan saja, bukan hanya saat energi kurang.
+
+Konsekuensinya cara bayar tidak boleh ditebak server: `POST /api/task/start` menerima
+`payWith: 'energy' | 'ad'`, dan `startChallenge` mengerjakan persis yang diminta. Menekan
+tombol energi tidak pernah diam-diam menghabiskan tiket yang sedang dipegang, dan menekan
+tombol iklan tanpa pass yang sah ditolak `AD_PASS_MISSING` — tidak jatuh diam-diam ke
+energi. Pass yang menganggur hangus lewat `adsPassTtlMinutes`, bukan lewat pemakaian yang
+tidak diminta.
+
+Nilai bawaan `payWith` tetap `'energy'`, jadi jalur lama (`nextTask`, klien versi lama)
+berperilaku persis seperti sebelum fitur ini ada.
 
 ### Pengembalian saat task hangus
 
-`refundEnergy` sekarang dipanggil dari tiga tempat (`issueChallenge` saat menutup challenge
+`refundEntry` (dulu `refundEnergy`, §9.3) dipanggil dari tiga tempat (`issueChallenge` saat menutup challenge
 kedaluwarsa tanpa percobaan, `submitAnswer` saat `expired`, dan saat `pool_empty`). Ketiganya
 harus mengembalikan **apa pun yang dipakai untuk masuk**, bukan selalu energi:
 
 - `challenges.energy_spent_at is not null` → `grantEnergy` (perilaku sekarang).
 - `challenges.ad_view_id is not null` → tiketnya dihidupkan kembali: `state='ready'`,
   `expires_at` diperpanjang dari `now()`, dan tayangan itu **tidak** dihitung ulang ke kuota
-  harian (kuota dihitung dari `created_at`, bukan dari pemakaian).
+  harian (kuota dihitung dari `created_at`, bukan dari pemakaian). Kalau user sudah terlanjur
+  memegang pass lain yang siap, tiket ini dibiarkan `consumed` — indeks `ad_views_one_ready`
+  yang menolak stok ganda, dan user tidak dirugikan karena ia tetap punya satu pass.
 
 Penanda idempotensinya tetap `challenges.energy_refunded_at` — satu kolom, artinya
 diperluas menjadi "ongkos masuk sudah dikembalikan". Fungsinya lebih tepat dinamai
@@ -134,12 +146,12 @@ diperluas menjadi "ongkos masuk sudah dikembalikan". Fungsinya lebih tepat dinam
 | `domain/ads.ts` (+ `ads.test.ts`) | aturan murni: boleh menawarkan iklan atau tidak, alasan penolakan, hitung kedaluwarsa. Tanpa I/O |
 | `server/ads.ts` | `openAdTicket`, `claimAdTicket`, `consumeAdPass`, `restoreAdPass` |
 | `server/energy.ts` | `refundEnergy` → `refundEntry`; percabangan energi vs tiket; `grantEnergy` tetap privat |
-| `server/challenge.ts` | `startChallenge`: coba `consumeAdPass` sebelum `spendEnergy`; simpan `ad_view_id`; kembalikan `paidBy: 'energy' \| 'ad'` |
+| `server/challenge.ts` | `startChallenge`: terima `payWith`; `consumeAdPass` atau `spendEnergy` sesuai pilihan; simpan `ad_view_id`; kembalikan `paidBy: 'energy' \| 'ad'` |
 | `app/api/ads/ticket/route.ts`, `app/api/ads/claim/route.ts` | handler; `assertSameOrigin` + `checkRateLimit` seperti `task/start` |
 | `app/api/session/route.ts` | blok `ads: { enabled, blockId, viewsLeft, cooldownSecondsLeft, pass }` |
 | `shell/session-api.ts`, `shell/use-ad-pass.ts` | tipe respons + hook: load SDK, `init` sekali per `blockId`, `destroy` saat unmount |
-| `features/ads/watch-ad-to-play.tsx` | tombol; dirender di tempat pesan energi habis, bukan di dekat pips |
-| `shell/use-task-flow.ts` | saat `ENERGY_EMPTY`: tawarkan iklan; setelah `claim` sukses, ulangi `start` yang sama |
+| `features/ads/watch-ad-to-play.tsx` | tombol kedua di kartu task, berdampingan dengan tombol energi |
+| `shell/use-task-flow.ts` | `startTask(payWith)`; `beginChallenge` mengirim `payWith` ke `/api/task/start` |
 | `app/layout.tsx` | `next/script` SDK Adsgram dengan `nonce`, `strategy="lazyOnload"` |
 | `proxy.ts` | pelonggaran CSP (lihat §5) |
 | `app/admin/(panel)/dashboard/page.tsx` | metrik iklan (lihat §7) |
@@ -158,8 +170,17 @@ create table ad_views (
   ready_at timestamptz,
   consumed_at timestamptz,
   constraint ad_views_state_valid check (state in ('pending','ready','consumed','expired')),
-  constraint ad_views_ready_needs_time check ((state = 'pending') = (ready_at is null)),
-  constraint ad_views_consumed_needs_time check ((state = 'consumed') = (consumed_at is not null))
+  -- Ditulis per state, bukan sebagai satu kesetaraan. Bentuk `(state='pending') = (ready_at
+  -- is null)` yang ditulis di draf sebelumnya menolak tiket yang kedaluwarsa sebelum pernah
+  -- diklaim — state 'expired' dengan ready_at masih null, yang justru kasus paling lumrah.
+  constraint ad_views_pending_shape
+    check (state <> 'pending' or (ready_at is null and consumed_at is null)),
+  constraint ad_views_ready_shape
+    check (state <> 'ready' or (ready_at is not null and consumed_at is null)),
+  constraint ad_views_consumed_shape
+    check (state <> 'consumed' or (ready_at is not null and consumed_at is not null)),
+  constraint ad_views_expired_shape
+    check (state <> 'expired' or consumed_at is null)
 );
 
 -- maksimum satu pass siap pakai per user: tidak bisa menumpuk stok
@@ -168,7 +189,14 @@ create unique index ad_views_one_pending on ad_views(user_id) where state = 'pen
 create index ad_views_user_idx on ad_views(user_id, created_at desc);
 
 alter table challenges add column ad_view_id uuid references ad_views(id);
-create unique index challenges_ad_view_unique on challenges(ad_view_id) where ad_view_id is not null;
+create unique index challenges_ad_view_unique on challenges(ad_view_id)
+  where ad_view_id is not null and energy_refunded_at is null;
+
+-- Penjaga migrasi 0009 diperluas, bukan dilepas: dari "refund butuh energi yang dipotong"
+-- menjadi "refund butuh ongkos masuk yang pernah dibayar".
+alter table challenges drop constraint challenges_energy_refund_needs_spend;
+alter table challenges add constraint challenges_entry_refund_needs_entry
+  check (energy_refunded_at is null or energy_spent_at is not null or ad_view_id is not null);
 ```
 
 Dua indeks unik parsial itu yang menjaga aturan "satu iklan = satu task": satu tiket
@@ -176,9 +204,15 @@ menganggur, satu pass siap, dan satu pass tidak bisa membayar dua challenge. Kuo
 dihitung dari tabel ini dengan batas hari WIB `(now() at time zone 'Asia/Jakarta')::date`
 (aturan keras #6); `daily_quotas` tidak ditambah kolom.
 
-Satu catatan pada `challenges_ad_view_unique`: saat pass dihidupkan ulang oleh
-`refundEntry`, `challenges.ad_view_id` pada challenge yang hangus **dikosongkan** supaya
-tiket yang sama boleh dipakai lagi. Riwayat pemakaiannya tetap terbaca di `ad_views`.
+Satu catatan pada `challenges_ad_view_unique`, dan ini koreksi terhadap draf sebelumnya:
+`challenges.ad_view_id` **tidak** dikosongkan saat `refundEntry` menghidupkan ulang pass-nya.
+Yang membebaskan tiket itu adalah filter `energy_refunded_at is null` pada indeksnya. Alasan
+kolomnya dipertahankan: migrasi `0009` punya `challenges_energy_refund_needs_spend` yang
+menolak `energy_refunded_at` tanpa `energy_spent_at`, dan task berbayar iklan memang tidak
+punya `energy_spent_at`. Mengosongkan `ad_view_id` berarti tidak ada satu pun kolom yang
+membuktikan ongkos masuknya pernah dibayar, sehingga constraint itu harus dilepas seluruhnya
+— dan hilang bersamanya penjaga "energi dicetak dari udara". Menyempitkan indeksnya menjaga
+dua-duanya sekaligus, plus jejak challenge mana yang dibayar iklan.
 
 ---
 
@@ -280,7 +314,7 @@ bukan revert.
 **Fase 0 — akun & pengukuran (tanpa kode produksi).** Daftar `partner.adsgram.ai`, buat blok
 Reward, catat `blockId`. Deploy percobaan report-only untuk memanen daftar host CSP (§5).
 
-**Fase 1 — tiket masuk berhadiah iklan.** Migrasi `0024`; `domain/ads.ts` + tesnya;
+**Fase 1 — tiket masuk berhadiah iklan (selesai).** Migrasi `0024`; `domain/ads.ts` + tesnya;
 `refundEnergy` → `refundEntry`; `server/ads.ts`; percabangan pembayaran di `startChallenge`;
 dua route; blok `ads` di `/api/session`; hook + tombol di titik `ENERGY_EMPTY`; metrik admin;
 CSP dilonggarkan sesuai temuan; `docs/keputusan-desain.md` ditambah barisnya.
@@ -309,16 +343,26 @@ Sebelum tiap fase dinyatakan selesai: `pnpm exec tsc --noEmit`, `pnpm lint`, `pn
 
 ---
 
-## 9. Yang masih harus diputuskan pemilik repo
+## 9. Keputusan pemilik repo
 
-1. Setuju tiket masuk (opsi A) dengan aturan "hanya ditawarkan saat energi kurang dari
-   `energyCostPerTask`"? Atau tombolnya boleh muncul kapan saja supaya user bisa menyimpan
-   satu pass di depan?
-2. Angka awal §4 — dipakai apa adanya atau disetel lain? Khususnya `adsPassTtlMinutes`:
-   makin panjang, makin banyak pass menganggur; makin pendek, makin sering user merasa
-   hasil tontonannya hilang.
-3. Rename `refundEnergy` → `refundEntry` sekarang (satu fase, satu diff besar), atau tetap
-   `refundEnergy` dengan percabangan di dalamnya?
-4. Interstitial ditunda ke fase 2, atau dicoret sama sekali?
-5. Blok Task (`task-xxx`, subscribe channel) di halaman `referral` — dibahas nanti atau
-   dicoret? Hadiahnya per akun dan sekali pakai, profil fraudnya berbeda dari Reward.
+1. **Tombol iklan tampil kapan saja.** Kartu task dirombak jadi dua tombol berdampingan:
+   `Mulai — bayar N energi` dan `Bayar pakai iklan`. Konsekuensi teknisnya ada di §3
+   ("Urutan pemakaian"): cara bayar dikirim eksplisit lewat `payWith`, server tidak menebak.
+2. **Angka §4 dipakai apa adanya** — `10 / 120 / 300 / 30`. Semuanya bisa disetel dari panel
+   admin grup "Iklan" tanpa deploy, jadi ini titik mulai, bukan komitmen.
+3. **`refundEnergy` di-rename jadi `refundEntry` sekarang.** Tiga pemanggilnya semua di
+   `server/challenge.ts`.
+4. Interstitial tetap di fase 2, belum dikerjakan.
+5. Blok Task (`task-xxx`, subscribe channel) di halaman `referral` belum dibahas.
+
+Satu sudut kasar yang sengaja dibiarkan apa adanya, dicatat supaya tidak ditemukan ulang
+sebagai "bug": kalau `show()` gagal karena `onBannerNotFound`, tiket `pending` tetap ada
+sampai `adsTicketTtlSeconds` habis, dan selama itu tombol iklan menjawab "masih ada iklan
+yang belum selesai ditonton". Rencana ini memang tidak punya endpoint pembatalan tiket, dan
+menambahnya berarti satu permukaan API lagi. Penawarnya sudah ada tanpa deploy: turunkan
+`adsTicketTtlSeconds` dari panel admin kalau angka `onBannerNotFound` di §7 ternyata tinggi.
+
+Yang masih terbuka setelah fase 1: fase 0 belum jalan, jadi `NEXT_PUBLIC_ADSGRAM_BLOCK_ID`
+masih kosong dan fiturnya belum menyala di mana pun. CSP baru melonggarkan `script-src` dan
+`connect-src` untuk `sad.adsgram.ai` — host kreatifnya menunggu panen report-only (§5), dan
+tanpa itu iklannya akan diblokir browser meski kodenya sudah siap.

@@ -21,6 +21,8 @@ const HISTORIC: EconomyConfig = {
   parTimeHardMs: 28_000, rewardEasy1: 1, rewardEasy2: 2, rewardEasy3: 3, rewardMedium1: 2,
   rewardMedium2: 3, rewardMedium3: 5, rewardHard1: 3, rewardHard2: 6, rewardHard3: 9,
   maxEnergy: 5, energyRegenMinutes: 60, energyCostPerTask: 1,
+  adsMaxViewsPerDay: 10, adsCooldownSeconds: 120,
+  adsTicketTtlSeconds: 300, adsPassTtlMinutes: 30,
   withdrawalMinimumIdr: 10_000,
   maxPayoutIdr: 2_000_000_000, referralCommissionPercent: 10, dailyCommissionCapIdr: 6_000,
   rankTier2Tasks: 100, rankTier3Tasks: 300, rankTier4Tasks: 700, rankTier5Tasks: 1_500,

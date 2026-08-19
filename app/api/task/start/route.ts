@@ -1,5 +1,5 @@
 import { loadEconomyConfig } from '@/server/economy-config'
-import { startChallenge } from '@/server/challenge'
+import { startChallenge, type TaskPayment } from '@/server/challenge'
 import { apiError, assertSameOrigin, handleRouteError, rateLimited } from '@/server/http'
 import { checkRateLimit } from '@/server/ratelimit'
 import { requireUser } from '@/server/session'
@@ -15,8 +15,9 @@ export async function POST(request: Request) {
     const user = await requireUser()
     const limit = await checkRateLimit(`task:start:${user.id}`, 30, 60)
     if (!limit.allowed) return rateLimited(limit.retryAfter)
-    const body = (await request.json()) as { challengeId?: string }
-    const started = await startChallenge(user.id, body.challengeId ?? '')
+    const body = (await request.json()) as { challengeId?: string; payWith?: string }
+    const payWith: TaskPayment = body.payWith === 'ad' ? 'ad' : 'energy'
+    const started = await startChallenge(user.id, body.challengeId ?? '', payWith)
     if (!started.ok) {
       if (started.reason === 'energy_empty')
         return Response.json(
@@ -29,6 +30,12 @@ export async function POST(request: Request) {
           },
           { status: 409, headers: { 'Cache-Control': 'no-store' } },
         )
+      if (started.reason === 'ad_pass_missing')
+        return apiError(
+          'AD_PASS_MISSING',
+          'Tiket iklan kamu sudah tidak berlaku. Nonton iklannya lagi ya.',
+          409,
+        )
       if (started.reason === 'pool_empty')
         return apiError(
           'REWARD_POOL_EMPTY',
@@ -38,7 +45,12 @@ export async function POST(request: Request) {
       return apiError('CHALLENGE_NOT_STARTABLE', 'Soalnya nggak bisa dimulai. Ambil soal baru ya.', 409)
     }
     return Response.json(
-      { challenge: started.challenge, elapsedMs: started.elapsedMs, energy: started.energy },
+      {
+        challenge: started.challenge,
+        elapsedMs: started.elapsedMs,
+        energy: started.energy,
+        paidBy: started.paidBy,
+      },
       { headers: { 'Cache-Control': 'no-store' } },
     )
   } catch (error) {

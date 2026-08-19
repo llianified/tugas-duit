@@ -3,7 +3,7 @@
 import { useEffect, type CSSProperties, type ReactNode } from 'react'
 import { BrandBand } from '@/shared/components/brand-band'
 import { cn } from '@/shared/lib/utils'
-import { ThemeToggle } from '@/shell/theme'
+import { ThemeToggle, ThemeToggleSkeleton } from '@/shell/theme'
 
 function useDocumentScrollLock() {
   useEffect(() => {
@@ -22,6 +22,7 @@ export function AppFrame({
   direction = 1,
   showThemeToggle = true,
   hideThemeToggle = false,
+  pendingThemeToggle = false,
 }: {
   badges?: ReactNode
   nav?: ReactNode
@@ -30,6 +31,7 @@ export function AppFrame({
   direction?: 1 | -1
   showThemeToggle?: boolean
   hideThemeToggle?: boolean
+  pendingThemeToggle?: boolean
 }) {
   useDocumentScrollLock()
 

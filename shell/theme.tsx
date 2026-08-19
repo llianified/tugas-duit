@@ -82,6 +82,15 @@ export function useTheme() {
   return value
 }
 
+export function ThemeToggleSkeleton() {
+  return (
+    <div
+      aria-hidden
+      className="brand-band-control ml-1.5 flex aspect-square h-[var(--brand-pill-h)] shrink-0 animate-pulse items-center justify-center rounded-[calc(var(--brand-pill-h)/2)] bg-muted"
+    />
+  )
+}
+
 export function ThemeToggle({ hidden = false }: { hidden?: boolean }) {
   const { resolved, toggle } = useTheme()
 

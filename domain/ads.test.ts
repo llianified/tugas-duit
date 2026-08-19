@@ -14,6 +14,7 @@ const state = (patch: Partial<Parameters<typeof adOpenRefusal>[0]> = {}) => ({
   lastOpenedAt: null,
   hasPending: false,
   hasReady: false,
+  hasEntryOpen: false,
   ...patch,
 })
 
@@ -59,5 +60,13 @@ describe('ADS-3 — stok tidak boleh menumpuk', () => {
 
   it('menolak tiket baru selama pass yang siap belum dipakai', () => {
     expect(adOpenRefusal(state({ hasReady: true }), NOW)).toBe('pass_ready')
+  })
+
+  it('menolak tiket baru selama task yang dibayar tiket masih berjalan', () => {
+    expect(adOpenRefusal(state({ hasEntryOpen: true }), NOW)).toBe('entry_open')
+  })
+
+  it('mendahulukan task berjalan daripada tiket menganggur', () => {
+    expect(adOpenRefusal(state({ hasEntryOpen: true, hasPending: true }), NOW)).toBe('entry_open')
   })
 })

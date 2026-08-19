@@ -115,8 +115,18 @@ const SELECT_ITEMS: { label: string; key: ShapeKey }[] = [
   { label: 'Palang', key: 'cross' },
 ]
 
+const UINT32_RANGE = 4_294_967_296
+
 function randomInt(max: number): number {
-  return Math.floor(Math.random() * max)
+  if (max <= 1) return 0
+  const ceiling = Math.floor(UINT32_RANGE / max) * max
+  const buffer = new Uint32Array(1)
+  let draw = ceiling
+  while (draw >= ceiling) {
+    crypto.getRandomValues(buffer)
+    draw = buffer[0]
+  }
+  return draw % max
 }
 
 function randomBetween(min: number, max: number): number {

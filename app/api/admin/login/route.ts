@@ -24,6 +24,8 @@ const FAILURE: Record<AdminLoginFailure, { status: number; message: string }> = 
 }
 
 const FAILURE_BUCKET = 'admin-login-failures'
+const FAILURE_LIMIT = 500
+const FAILURE_PER_IP_LIMIT = 20
 
 export async function POST(request: Request) {
   const origin = assertSameOrigin(request)
@@ -33,7 +35,9 @@ export async function POST(request: Request) {
   try {
     const perIp = await checkRateLimit(`admin-login:${ip}`, 10, 600)
     if (!perIp.allowed) return rateLimited(perIp.retryAfter)
-    const failures = await peekRateLimit(FAILURE_BUCKET, 60, 3_600)
+    const failuresFromIp = await peekRateLimit(`${FAILURE_BUCKET}:${ip}`, FAILURE_PER_IP_LIMIT, 3_600)
+    if (!failuresFromIp.allowed) return rateLimited(failuresFromIp.retryAfter)
+    const failures = await peekRateLimit(FAILURE_BUCKET, FAILURE_LIMIT, 3_600)
     if (!failures.allowed) return rateLimited(failures.retryAfter)
 
     const body = await readJsonBody<{ password?: unknown }>(request)
@@ -44,7 +48,10 @@ export async function POST(request: Request) {
 
     const result = await loginAdminWithPassword(password, userAgent)
     if (!result.ok) {
-      if (result.reason === 'INVALID_PASSWORD') await recordRateLimitHit(FAILURE_BUCKET, 3_600)
+      if (result.reason === 'INVALID_PASSWORD') {
+        await recordRateLimitHit(`${FAILURE_BUCKET}:${ip}`, 3_600)
+        await recordRateLimitHit(FAILURE_BUCKET, 3_600)
+      }
       console.warn('[admin-login] gagal (%s) dari %s — %s', result.reason, ip, userAgent ?? 'ua tidak diketahui')
       const failure = FAILURE[result.reason]
       return apiError(result.reason, failure.message, failure.status)

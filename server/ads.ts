@@ -17,11 +17,16 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 const PG_UNIQUE_VIOLATION = '23505'
 
 const STATE_SQL = `select
-    count(*) filter (where (created_at at time zone 'Asia/Jakarta')::date = ${TODAY})::int as views_today,
-    max(created_at) as last_opened_at,
+    count(*) filter (
+      where (created_at at time zone 'Asia/Jakarta')::date = ${TODAY} and ready_at is not null
+    )::int as views_today,
+    max(created_at) filter (where ready_at is not null) as last_opened_at,
     count(*) filter (where state='pending')::int as pending_count,
     count(*) filter (where state='ready')::int as ready_count,
     max(expires_at) filter (where state='ready') as pass_expires_at,
+    (select count(*) from challenges c
+      where c.user_id=$1 and c.submitted_at is null and c.ad_view_id is not null)::int
+      as entry_open_count,
     now() as now
   from ad_views where user_id=$1`
 
@@ -31,6 +36,7 @@ type StateRow = {
   pending_count: number
   ready_count: number
   pass_expires_at: Date | null
+  entry_open_count: number
   now: Date
 }
 
@@ -52,6 +58,7 @@ async function readState(userId: number, tx?: PoolClient) {
     lastOpenedAt: row?.last_opened_at ? row.last_opened_at.getTime() : null,
     hasPending: Boolean(row && Number(row.pending_count) > 0),
     hasReady: Boolean(row && Number(row.ready_count) > 0),
+    hasEntryOpen: Boolean(row && Number(row.entry_open_count) > 0),
     passExpiresAt: row?.pass_expires_at ? row.pass_expires_at.getTime() : null,
   }
 }
@@ -94,13 +101,29 @@ export async function openAdTicket(userId: number): Promise<OpenTicketResult> {
   return transaction(async (tx) => {
     const state = await readState(userId, tx)
     const refusal = adOpenRefusal(state, state.now)
-    if (refusal)
+    if (refusal && refusal !== 'ticket_open')
       return {
         ok: false as const,
         reason: refusal,
         cooldownSecondsLeft: adCooldownSecondsLeft(state.lastOpenedAt, state.now),
         viewsLeft: adViewsLeft(state.viewsToday),
       }
+
+    if (refusal === 'ticket_open') {
+      const open = await tx.query<{ id: string; expires_at: Date }>(
+        "select id, expires_at from ad_views where user_id=$1 and state='pending' limit 1",
+        [userId],
+      )
+      const pending = open.rows[0]
+      if (pending)
+        return {
+          ok: true as const,
+          ticketId: pending.id,
+          blockId,
+          debug: env.adsgramDebug,
+          expiresAt: pending.expires_at.getTime(),
+        }
+    }
 
     try {
       const inserted = await tx.query<{ id: string; expires_at: Date }>(

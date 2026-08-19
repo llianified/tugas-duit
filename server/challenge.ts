@@ -187,6 +187,7 @@ type SubmitResult =
         | 'already_submitted'
         | 'too_many_attempts'
         | 'pool_empty'
+        | 'daily_task_cap'
     }
 export async function submitAnswer(
   userId: number,
@@ -235,13 +236,11 @@ export async function submitAnswer(
     )
     const elapsedMs = marked.rows[0].elapsed_ms
     const stars = getStars(elapsedMs, c.difficulty),
-      reward = getStarReward(c.difficulty, stars)
-    if (reward > c.max_reward)
-      throw new Error(`Reward ${reward} melewati max_reward ${c.max_reward} pada challenge ${id}`)
+      reward = Math.min(getStarReward(c.difficulty, stars), c.max_reward)
     const quota = await consumeQuota(tx, userId, reward)
-    if (quota.exceeded) {
+    if (quota.refusal) {
       await refundEntry(tx, userId, id)
-      return { ok: false, reason: 'pool_empty' }
+      return { ok: false, reason: quota.refusal === 'pool_empty' ? 'pool_empty' : 'daily_task_cap' }
     }
     const paidReward = quota.paidReward
     const completion = await tx.query<{ id: string }>(

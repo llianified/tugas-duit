@@ -202,14 +202,14 @@ function RewardPoolRegion({
   const poolLeft = Math.max(0, Math.min(rewardPoolMax, rewardPoolCredits))
   const poolFull = rewardPoolSecondsToNext === null
   const poolStatus = poolFull
-    ? 'Kolam penuh'
+    ? 'Penuh'
     : `+${formatCredits(rewardPoolRegenCredits)} · ${formatUnitCountdown(rewardPoolSecondsToNext)}`
 
   return (
     <div className="island-region">
       <div className="island-row flex items-center justify-between gap-3">
-        <span className="shrink-0 text-[11px] leading-none text-muted-foreground tabular-nums">
-          Kolam {formatCredits(poolLeft)}/{formatCredits(rewardPoolMax)}
+        <span className="shrink-0 text-[11px] leading-none text-muted-foreground">
+          Limit harian
         </span>
         <span
           className={cn(
@@ -217,7 +217,7 @@ function RewardPoolRegion({
             poolFull ? 'text-success' : 'text-primary',
           )}
         >
-          <span className="sr-only">Kolam reward </span>
+          <span className="sr-only">Limit harian </span>
           <span className="tabular-nums">{poolStatus}</span>
         </span>
       </div>
@@ -243,16 +243,12 @@ function EnergyRegion({
   isOpen: boolean
 }) {
   const energyFull = energySecondsToNext === null
-  const energyStatus = energyFull
-    ? 'Energi penuh'
-    : `+1 · ${formatUnitCountdown(energySecondsToNext)}`
+  const energyStatus = energyFull ? 'Penuh' : `+1 · ${formatUnitCountdown(energySecondsToNext)}`
 
   return (
     <div className="island-region">
       <div className="island-row flex items-center justify-between gap-3">
-        <span className="shrink-0 text-[11px] leading-none text-muted-foreground tabular-nums">
-          Energi {formatCredits(energy)}/{formatCredits(energyMax)}
-        </span>
+        <span className="shrink-0 text-[11px] leading-none text-muted-foreground">Energi</span>
         <span
           className={cn(
             'flex shrink-0 items-center gap-1.5 text-xs font-semibold leading-none',

@@ -328,7 +328,14 @@
     left: 0;
     right: 0;
     height: calc(var(--brand-band-top) + var(--brand-band-h) + 0.75rem);
-    background-color: color-mix(in oklab, var(--background) 72%, transparent);
+    /* Views that open with the hero band raise --brand-band-tint to the hero
+    colour, so the fade dissolves into the surface right below it instead of
+    leaving a lighter strip. */
+    background-color: color-mix(
+      in oklab,
+      var(--brand-band-tint, var(--background)) 72%,
+      transparent
+    );
     backdrop-filter: saturate(180%) blur(12px);
     mask-image: linear-gradient(
       to bottom,

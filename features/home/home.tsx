@@ -63,34 +63,34 @@ export function HomeView({
     <div className="view-min-h flex flex-col">
       <h1 className="sr-only">Beranda Tugas Duit</h1>
 
-      <div className="region-under-brand relative z-10">
+      <div className="hero-band region-under-brand relative z-10">
         <BalanceSummary
           balance={balance}
           onWithdraw={() => setWithdrawOpen(true)}
           onHistory={onOpenHistory}
         />
-      </div>
 
-      <div className={`animate-view-in region-gap-t ${ENTER_STEP_CLASS[1]}`}>
-        <ActiveTask
-          task={task}
-          energy={energy}
-          energyMax={energyMax}
-          energySecondsToNext={energySecondsToNext}
-          rewardPoolCredits={rewardPoolCredits}
-          rewardPoolSecondsToNext={rewardPoolSecondsToNext}
-          adsEnabled={adsEnabled}
-          adViewsLeft={adViewsLeft}
-          adCooldownSecondsLeft={adCooldownSecondsLeft}
-          adPassReady={adPassReady}
-          watchingAd={watchingAd}
-          onStart={onStart}
-          onStartWithAd={onStartWithAd}
-        />
+        <div className={`animate-view-in region-gap-t ${ENTER_STEP_CLASS[1]}`}>
+          <ActiveTask
+            task={task}
+            energy={energy}
+            energyMax={energyMax}
+            energySecondsToNext={energySecondsToNext}
+            rewardPoolCredits={rewardPoolCredits}
+            rewardPoolSecondsToNext={rewardPoolSecondsToNext}
+            adsEnabled={adsEnabled}
+            adViewsLeft={adViewsLeft}
+            adCooldownSecondsLeft={adCooldownSecondsLeft}
+            adPassReady={adPassReady}
+            watchingAd={watchingAd}
+            onStart={onStart}
+            onStartWithAd={onStartWithAd}
+          />
+        </div>
       </div>
 
       <div
-        className={`animate-view-in region-t view-trim-b [--view-trim-b:var(--list-row-py)] ${ENTER_STEP_CLASS[2]}`}
+        className={`animate-view-in region-t region-t-flush view-trim-b [--view-trim-b:var(--list-row-py)] ${ENTER_STEP_CLASS[2]}`}
       >
         <RecentTransactions history={history} completedCount={completedCount} />
       </div>

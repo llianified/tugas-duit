@@ -39,7 +39,7 @@ export function AppViewSkeleton() {
   return (
     <div className="animate-fade-in view-min-h flex flex-col" aria-hidden>
 
-      <div className="region-under-brand">
+      <div className="hero-band region-under-brand">
         <Bar className="h-12 w-44" />
         <Bar className="stack-gap-t h-3.5 w-24" />
 
@@ -47,10 +47,9 @@ export function AppViewSkeleton() {
           <Bar className="control-h flex-1 rounded-lg" />
           <Bar className="control-h flex-1 rounded-lg" />
         </div>
-      </div>
 
-      <div className="region-gap-t">
-        <div className="task-card">
+        <div className="region-gap-t">
+          <div className="task-card">
           <div className="flex h-7 items-center justify-between gap-3">
             <Bar className="h-5 w-40" />
             <Bar className="h-5 w-16 rounded-full" />
@@ -70,11 +69,12 @@ export function AppViewSkeleton() {
               </div>
             ))}
           </div>
-          <Bar className="cta-gap cta-h w-full rounded-xl" />
+            <Bar className="cta-gap cta-h w-full rounded-xl" />
+          </div>
         </div>
       </div>
 
-      <div className="region-t view-trim-b [--view-trim-b:var(--list-row-py)]">
+      <div className="region-t region-t-flush view-trim-b [--view-trim-b:var(--list-row-py)]">
         <div className="flex items-center justify-between gap-3">
           <Bar className="h-3 w-36" />
           <Bar className="h-5 w-16 rounded-full" />

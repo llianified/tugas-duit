@@ -64,10 +64,9 @@ function HeroActionTile({
       {...props}
       className={cn(
         'focus-ring transition-ui press-scale-soft control-h flex flex-1 items-center justify-center gap-2 rounded-lg border px-3',
-        // Card fill with the palette's default hairline edge: the tiles read as
-        // quiet containers, so the outline stays faint and the label carries the
-        // contrast.
-        'border-border bg-card text-foreground',
+        // No fill at all: the tiles sit directly on the hero band so only the
+        // hairline edge outlines them, and the label carries the contrast.
+        'border-border bg-transparent text-foreground',
       )}
     >
       {icon}

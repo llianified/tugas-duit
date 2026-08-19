@@ -64,7 +64,9 @@ function HeroActionTile({
       {...props}
       className={cn(
         'focus-ring transition-ui press-scale-soft control-h flex flex-1 items-center justify-center gap-2 rounded-lg border border-border px-3',
-        'text-foreground hover:border-primary hover:text-primary active:border-primary-active active:text-primary-active',
+        // Filled with the card surface so the tiles stay legible against the
+        // darker hero band, where a transparent fill made them disappear.
+        'bg-card text-foreground hover:border-primary hover:text-primary active:border-primary-active active:text-primary-active',
       )}
     >
       {icon}

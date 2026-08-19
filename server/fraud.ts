@@ -7,6 +7,9 @@ type FraudSignal =
   | 'identical_timing'
   | 'no_wrong_attempts'
   | 'referral_burst'
+  | 'ad_claim_without_ticket'
+  | 'ad_claim_too_fast'
+  | 'ad_claim_burst'
 
 type Severity = 1 | 2 | 3 | 4 | 5
 
@@ -59,6 +62,24 @@ export async function recordSubmitWithoutStart(
          and f.created_at > now() - interval '1 day'
      )`,
     [userId, JSON.stringify(detail)],
+  )
+}
+
+export async function recordAdClaimSignal(
+  tx: PoolClient,
+  userId: number,
+  signal: 'ad_claim_without_ticket' | 'ad_claim_too_fast' | 'ad_claim_burst',
+  detail: unknown,
+): Promise<void> {
+  await tx.query(
+    `insert into fraud_signals(user_id,signal,severity,detail)
+     select $1,$2,3,$3::jsonb
+     where not exists (
+       select 1 from fraud_signals f
+       where f.user_id=$1 and f.signal=$2
+         and f.created_at > now() - interval '1 day'
+     )`,
+    [userId, signal, JSON.stringify(detail)],
   )
 }
 

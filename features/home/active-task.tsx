@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { WatchAdToPlay } from '@/features/ads/watch-ad-to-play'
 import { DifficultyBadge } from '@/features/captcha/components/difficulty-badge'
 import { GlyphBolt } from '@/shared/components/glyph'
 import { TapAction, TapActionWaiting } from '@/shared/components/tap-action'
@@ -18,7 +19,13 @@ export function ActiveTask({
   energySecondsToNext,
   rewardPoolCredits,
   rewardPoolSecondsToNext,
+  adsEnabled,
+  adViewsLeft,
+  adCooldownSecondsLeft,
+  adPassReady,
+  watchingAd,
   onStart,
+  onStartWithAd,
 }: {
   task: Challenge
   energy: number
@@ -26,7 +33,13 @@ export function ActiveTask({
   energySecondsToNext: number | null
   rewardPoolCredits: number | null
   rewardPoolSecondsToNext: number | null
+  adsEnabled: boolean
+  adViewsLeft: number
+  adCooldownSecondsLeft: number
+  adPassReady: boolean
+  watchingAd: boolean
   onStart: () => void
+  onStartWithAd: () => void
 }) {
   const poolEmpty = rewardPoolCredits === 0
   const energyEmpty = energy < energyCostPerTask()
@@ -43,13 +56,24 @@ export function ActiveTask({
           energyEmpty={energyEmpty}
           energySecondsToNext={energySecondsToNext}
         />
-        <StartAction
-          waiting={waiting}
-          poolEmpty={poolEmpty}
-          energySecondsToNext={energySecondsToNext}
-          rewardPoolSecondsToNext={rewardPoolSecondsToNext}
-          onStart={onStart}
-        />
+        <div className="cta-gap flex flex-col gap-2">
+          <StartAction
+            waiting={waiting}
+            poolEmpty={poolEmpty}
+            energySecondsToNext={energySecondsToNext}
+            rewardPoolSecondsToNext={rewardPoolSecondsToNext}
+            onStart={onStart}
+          />
+          <WatchAdToPlay
+            enabled={adsEnabled}
+            viewsLeft={adViewsLeft}
+            cooldownSecondsLeft={adCooldownSecondsLeft}
+            passReady={adPassReady}
+            watching={watchingAd}
+            poolEmpty={poolEmpty}
+            onWatch={onStartWithAd}
+          />
+        </div>
       </div>
     </section>
   )
@@ -158,9 +182,9 @@ function StartAction({
   if (!waiting) {
     return (
       <TapAction
-        className="cta-gap"
-        label="Mulai task"
-        aria-label="Mulai task"
+        icon={<GlyphBolt className="size-4 text-primary-foreground/80" />}
+        label={`Mulai — bayar ${formatCredits(energyCostPerTask())} energi`}
+        aria-label="Mulai task dengan memakai energi"
         onClick={() => {
           hapticTap()
           onStart()
@@ -171,13 +195,11 @@ function StartAction({
 
   return poolEmpty ? (
     <TapActionWaiting
-      className="cta-gap"
       label="Kolam reward kosong"
       meta={rewardPoolSecondsToNext === null ? undefined : formatCountdown(rewardPoolSecondsToNext)}
     />
   ) : (
     <TapActionWaiting
-      className="cta-gap"
       icon={<GlyphBolt className="size-4 text-primary" />}
       label="Energi habis"
       meta={energySecondsToNext === null ? undefined : formatCountdown(energySecondsToNext)}

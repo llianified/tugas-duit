@@ -7,8 +7,9 @@ import {
 } from '@/features/captcha/domain'
 import { getStarReward, getStars, type StarCount } from '@/domain/stars'
 import { economyConfig } from '@/domain/economy-config'
+import { consumeAdPass } from './ads'
 import { query, transaction } from './db'
-import { readEnergy, refundEnergy, spendEnergy, type EnergyView } from './energy'
+import { readEnergy, refundEntry, spendEnergy, type EnergyView } from './energy'
 import { recordSubmitSignals, recordSubmitWithoutStart } from './fraud'
 import { appendLedger } from './ledger'
 import { accrueCommission } from './referral'
@@ -29,6 +30,7 @@ type Row = {
   expires_at: Date
   attempts: number
   submitted_at: Date | null
+  ad_view_id: string | null
 }
 const hashAnswer = (id: string, answer: string) =>
   createHash('sha256').update(`${id}:${answer.trim().toUpperCase()}`).digest()
@@ -56,7 +58,7 @@ export async function issueChallenge(userId: number): Promise<PublicChallenge> {
     )
     for (const row of closed.rows) {
       if (Number(row.attempts) === 0) {
-        await refundEnergy(tx, userId, row.id)
+        await refundEntry(tx, userId, row.id)
         inheritedDifficulty ??= row.difficulty
       }
     }
@@ -87,24 +89,33 @@ export async function issueChallenge(userId: number): Promise<PublicChallenge> {
   }
 }
 
+export type TaskPayment = 'energy' | 'ad'
+
 type StartChallengeResult =
-  | { ok: true; challenge: PublicChallenge; elapsedMs: number; energy: EnergyView }
+  | {
+      ok: true
+      challenge: PublicChallenge
+      elapsedMs: number
+      energy: EnergyView
+      paidBy: TaskPayment
+    }
   | {
       ok: false
-      reason: 'not_startable' | 'energy_empty' | 'pool_empty'
+      reason: 'not_startable' | 'energy_empty' | 'pool_empty' | 'ad_pass_missing'
       energy: EnergyView
     }
 
 export async function startChallenge(
   userId: number,
   id: string,
+  payWith: TaskPayment = 'energy',
 ): Promise<StartChallengeResult> {
   if (!id || !UUID_PATTERN.test(id))
     return { ok: false, reason: 'not_startable', energy: await readEnergy(userId) }
 
   return transaction(async (tx) => {
     const locked = await tx.query<Row>(
-      'select id,type,difficulty,payload,issued_at,started_at,expires_at,submitted_at from challenges where id=$1 and user_id=$2 for update',
+      'select id,type,difficulty,payload,issued_at,started_at,expires_at,submitted_at,ad_view_id from challenges where id=$1 and user_id=$2 for update',
       [id, userId],
     )
     const existing = locked.rows[0]
@@ -120,6 +131,7 @@ export async function startChallenge(
       }
 
     const fresh = existing.started_at === null
+    let adViewId: string | null = existing.ad_view_id
     if (fresh) {
       if ((await readRewardPool(userId, tx)).current <= 0)
         return {
@@ -127,19 +139,31 @@ export async function startChallenge(
           reason: 'pool_empty' as const,
           energy: await readEnergy(userId, tx),
         }
-      const spent = await spendEnergy(tx, userId)
-      if (!spent.ok)
-        return { ok: false as const, reason: 'energy_empty' as const, energy: spent.state }
+      if (payWith === 'ad') {
+        const pass = await consumeAdPass(tx, userId)
+        if (!pass)
+          return {
+            ok: false as const,
+            reason: 'ad_pass_missing' as const,
+            energy: await readEnergy(userId, tx),
+          }
+        adViewId = pass.id
+      } else {
+        const spent = await spendEnergy(tx, userId)
+        if (!spent.ok)
+          return { ok: false as const, reason: 'energy_empty' as const, energy: spent.state }
+      }
     }
 
     const rows = await tx.query<Row & { elapsed_ms: number }>(
       `update challenges
          set started_at=coalesce(started_at,now()),
              expires_at=case when started_at is null then now()+($3::int * interval '1 second') else expires_at end,
-             energy_spent_at=case when started_at is null then now() else energy_spent_at end
+             energy_spent_at=case when started_at is null and $4::uuid is null then now() else energy_spent_at end,
+             ad_view_id=case when started_at is null then $4::uuid else ad_view_id end
        where id=$1 and user_id=$2
        returning id,type,difficulty,payload,issued_at,started_at,expires_at,(extract(epoch from(now()-started_at))*1000)::int elapsed_ms`,
-      [id, userId, economyConfig().taskWindowSeconds],
+      [id, userId, economyConfig().taskWindowSeconds, adViewId],
     )
     const row = rows.rows[0]
     return {
@@ -147,6 +171,7 @@ export async function startChallenge(
       challenge: toPublic(row),
       elapsedMs: Math.max(0, row.elapsed_ms),
       energy: await readEnergy(userId, tx),
+      paidBy: (adViewId === null ? 'energy' : 'ad') as TaskPayment,
     }
   })
 }
@@ -184,7 +209,7 @@ export async function submitAnswer(
     }
     if (c.expires_at <= new Date()) {
       await tx.query('update challenges set submitted_at=now() where id=$1', [id])
-      if (Number(c.attempts) === 0) await refundEnergy(tx, userId, id)
+      if (Number(c.attempts) === 0) await refundEntry(tx, userId, id)
       return { ok: false, reason: 'expired' }
     }
     const maxAttempts = economyConfig().maxAttemptsPerTask
@@ -215,7 +240,7 @@ export async function submitAnswer(
       throw new Error(`Reward ${reward} melewati max_reward ${c.max_reward} pada challenge ${id}`)
     const quota = await consumeQuota(tx, userId, reward)
     if (quota.exceeded) {
-      await refundEnergy(tx, userId, id)
+      await refundEntry(tx, userId, id)
       return { ok: false, reason: 'pool_empty' }
     }
     const paidReward = quota.paidReward

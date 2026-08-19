@@ -177,6 +177,14 @@ export function GlyphBolt({ className }: { className?: string }) {
   )
 }
 
+export function GlyphPlay({ className }: { className?: string }) {
+  return (
+    <GlyphSvg className={className}>
+      <path d="M7 4v16l13 -8z" />
+    </GlyphSvg>
+  )
+}
+
 export function GlyphHelp({ className }: { className?: string }) {
   return (
     <GlyphSvg className={className}>

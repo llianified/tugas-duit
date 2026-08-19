@@ -139,7 +139,13 @@ export function AppViewRouter({
       energySecondsToNext={session.energySecondsToNext}
       rewardPoolCredits={session.rewardPoolCredits}
       rewardPoolSecondsToNext={session.rewardPoolSecondsToNext}
+      adsEnabled={session.adsEnabled}
+      adViewsLeft={session.adViewsLeft}
+      adCooldownSecondsLeft={session.adCooldownSecondsLeft}
+      adPassReady={session.adPassReady}
+      watchingAd={session.watchingAd}
       onStart={session.startTask}
+      onStartWithAd={session.startTaskWithAd}
       withdrawals={session.withdrawals}
       onSubmitWithdrawal={session.submitWithdrawal}
       onOpenHistory={session.openHistory}

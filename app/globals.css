@@ -514,8 +514,12 @@
     justify-content: center;
     pointer-events: auto;
   }
+  /* The control is anchored to the band, never to the pill row, so the pills
+     stay optically centred whether the control is shown or tucked away. */
   .brand-band-control {
-    position: relative;
+    position: absolute;
+    top: calc(var(--brand-band-top) + var(--brand-control-inset));
+    right: var(--content-px);
     transition:
       color var(--duration-ui) ease-out,
       background-color var(--duration-ui) ease-out,
@@ -524,9 +528,7 @@
   }
   .brand-band-control[data-aside] {
     pointer-events: none;
-    translate: calc(50vw + var(--brand-pill-h) + 0.5rem);
-    position: absolute;
-    right: 0;
+    translate: calc(100% + var(--content-px) + 0.5rem);
   }
   @media (prefers-reduced-motion: reduce) {
     .brand-band-control {

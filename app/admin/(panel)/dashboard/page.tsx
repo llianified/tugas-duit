@@ -52,6 +52,17 @@ export default async function AdminDashboardPage() {
           hint={formatRupiah(creditsToRupiah(stats.paid.todayCredits))} />
       </Section>
 
+      <Section title="Iklan (7 hari)">
+        <Metric label="Tiket dibuka" value={formatCompact(stats.ads.ticketsOpened)}
+          hint={`${formatCredits(stats.ads.ticketsReady)} jadi siap pakai`} />
+        <Metric label="Tiket terpakai" value={formatCompact(stats.ads.passesConsumed)}
+          hint={`${formatCredits(stats.ads.ticketsReady - stats.ads.passesConsumed)} pass terbuang`} />
+        <Metric label="Task dibayar iklan" value={formatCompact(stats.ads.tasksPaidByAd)}
+          hint={`${formatCompact(stats.ads.tasksPaidByEnergy)} dibayar energi`} />
+        <Metric label="Credit di task iklan" value={formatCompact(stats.ads.creditsOnAdTasks)}
+          hint={`${formatRupiah(creditsToRupiah(stats.ads.creditsOnAdTasks))} · bandingkan dengan pendapatan Adsgram`} />
+      </Section>
+
       <Section title="Uang">
         <Metric label="Saldo beredar" value={formatCompact(stats.outstandingCredits)}
           hint={`${formatRupiah(creditsToRupiah(stats.outstandingCredits))} · belum ditarik`} />

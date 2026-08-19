@@ -6,6 +6,7 @@ import type { Referral, ReferralSummary } from '@/features/referral/domain'
 import type { Withdrawal, WithdrawalDraft } from '@/features/withdraw/domain'
 import { useViewStack } from '@/navigation/use-view-stack'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
+import { useAdPass } from '@/shell/use-ad-pass'
 import { useEnergyProjection } from '@/shell/use-energy-projection'
 import { useRewardPoolProjection } from '@/shell/use-reward-pool-projection'
 import { useSessionQueries } from '@/shell/use-session-queries'
@@ -91,6 +92,17 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     mutateStats,
     mutateReferral,
   })
+
+  const { watchAd, watchingAd, hasPass } = useAdPass({
+    ads: session?.ads ?? null,
+    notifyError,
+    refreshSession: mutateSession,
+  })
+
+  const startTaskWithAd = useCallback(async () => {
+    if (!hasPass && !(await watchAd())) return
+    startTask('ad')
+  }, [hasPass, startTask, watchAd])
 
   const history = useMemo(
     () => (historyPages ?? []).flatMap((page) => page.entries),
@@ -196,6 +208,12 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     rewardPoolRegenCredits,
     rewardPoolSecondsToNext,
     startTask,
+    startTaskWithAd,
+    adsEnabled: session?.ads?.enabled ?? false,
+    adViewsLeft: session?.ads?.viewsLeft ?? 0,
+    adCooldownSecondsLeft: session?.ads?.cooldownSecondsLeft ?? 0,
+    adPassReady: hasPass,
+    watchingAd,
     completeTask,
     nextTask,
     openStats,

@@ -160,7 +160,6 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     void mutateReferral()
     pushView('referral')
   }, [mutateReferral, pushView])
-  const openStats = useCallback(() => pushView('stats'), [pushView])
 
   return {
     view,
@@ -216,7 +215,6 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     watchingAd,
     completeTask,
     nextTask,
-    openStats,
     submitWithdrawal,
   }
 }

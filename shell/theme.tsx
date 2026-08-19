@@ -86,7 +86,7 @@ export function ThemeToggleSkeleton() {
   return (
     <div
       aria-hidden
-      className="brand-band-control ml-1.5 flex aspect-square h-[var(--brand-pill-h)] shrink-0 animate-pulse items-center justify-center rounded-[calc(var(--brand-pill-h)/2)] bg-muted"
+      className="brand-band-control flex aspect-square h-[var(--brand-pill-h)] shrink-0 animate-pulse items-center justify-center rounded-[calc(var(--brand-pill-h)/2)] bg-muted"
     />
   )
 }
@@ -106,7 +106,7 @@ export function ThemeToggle({ hidden = false }: { hidden?: boolean }) {
       tabIndex={hidden ? -1 : undefined}
       data-aside={hidden ? '' : undefined}
       className={cn(
-        'focus-ring brand-band-control h-[var(--brand-pill-h)] aspect-square rounded-[calc(var(--brand-pill-h)/2)] ml-1.5 flex shrink-0 items-center justify-center bg-muted text-muted-foreground hover:text-foreground active:text-foreground',
+        'focus-ring brand-band-control h-[var(--brand-pill-h)] aspect-square rounded-[calc(var(--brand-pill-h)/2)] flex shrink-0 items-center justify-center bg-muted text-muted-foreground hover:text-foreground active:text-foreground',
       )}
     >
       <span

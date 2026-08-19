@@ -125,6 +125,15 @@ export function GlyphHistory({ className }: { className?: string }) {
   )
 }
 
+export function GlyphUser({ className }: { className?: string }) {
+  return (
+    <GlyphSvg className={className}>
+      <path d="M8 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+      <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+    </GlyphSvg>
+  )
+}
+
 export function GlyphUsers({ className }: { className?: string }) {
   return (
     <GlyphSvg className={className}>

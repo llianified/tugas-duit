@@ -14,9 +14,11 @@ export type SessionResponse = {
   user: {
     id: string
     firstName: string
+    username: string | null
     photoUrl: string | null
     balance: number
     referralCode: string
+    banned?: boolean
   } | null
   breakdown?: { taskCredits: number; referralCredits: number; withdrawnCredits: number }
   energy?: EnergyState & {

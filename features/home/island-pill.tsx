@@ -25,6 +25,7 @@ export function IslandPill({
   onToggle,
   onClose,
   className,
+  pillClassName,
   children,
 }: {
   panelId: string
@@ -38,6 +39,7 @@ export function IslandPill({
   onToggle: () => void
   onClose: () => void
   className?: string
+  pillClassName?: string
   children: ReactNode
 }) {
   const { islandRef, contentRef } = useIslandGeometry()
@@ -67,6 +69,7 @@ export function IslandPill({
           ISLAND_PILL_BOX,
           ISLAND_PILL_RADIUS,
           "island-pill relative inline-flex items-center justify-center gap-2.5 whitespace-nowrap border border-border bg-muted font-semibold outline-none after:absolute after:-inset-y-2 after:inset-x-0 after:content-[''] focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
+          pillClassName,
         )}
       >
         {pillLabel}

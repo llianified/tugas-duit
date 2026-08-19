@@ -4,7 +4,6 @@ import { IslandDivider, IslandPill, IslandStat } from '@/features/home/island-pi
 import { ProfileAvatar } from '@/features/home/profile-avatar'
 import type { UserStats } from '@/features/stats/domain'
 import type { SessionResponse } from '@/shell/session-api'
-import { GlyphChart } from '@/shared/components/glyph'
 import { formatCredits, formatCreditsDecimal, formatShortDate } from '@/shared/lib/format'
 
 type SessionUser = NonNullable<SessionResponse['user']>
@@ -16,7 +15,6 @@ export function ProfileIsland({
   slideOutTo,
   onToggle,
   onClose,
-  onOpenStats,
 }: {
   user: SessionUser
   stats: UserStats
@@ -24,7 +22,6 @@ export function ProfileIsland({
   slideOutTo?: 'left' | 'right'
   onToggle: () => void
   onClose: () => void
-  onOpenStats: () => void
 }) {
   const handle = user.username ? `@${user.username}` : user.id
 
@@ -79,19 +76,6 @@ export function ProfileIsland({
           stats.referralCount === 0
             ? 'Belum ada'
             : `${formatCredits(stats.referralCount)} · +${formatCredits(stats.referralCredits)} credit`
-        }
-        footer={
-          <button
-            type="button"
-            onClick={onOpenStats}
-            className="focus-ring -mx-1 flex w-full items-center gap-1.5 rounded px-1 text-[11px] leading-none text-muted-foreground"
-          >
-            <GlyphChart className="size-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">Statistik lengkap</span>
-            <span aria-hidden="true" className="ml-auto shrink-0">
-              ›
-            </span>
-          </button>
         }
       />
     </IslandPill>

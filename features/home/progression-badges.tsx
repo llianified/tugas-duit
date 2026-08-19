@@ -15,7 +15,6 @@ export function ProgressionBadges({
   user = null,
   stats = null,
   showProfile = false,
-  onOpenStats,
   taskDifficulty = null,
   taskReward = null,
   energy,
@@ -31,7 +30,6 @@ export function ProgressionBadges({
   user?: SessionResponse['user']
   stats?: UserStats | null
   showProfile?: boolean
-  onOpenStats?: () => void
   taskDifficulty?: Difficulty | null
   taskReward?: number | null
   energy: number
@@ -72,10 +70,6 @@ export function ProgressionBadges({
           slideOutTo={rankOpen || difficultyOpen ? 'left' : undefined}
           onToggle={() => setOpenPanel(profileOpen ? null : 'profile')}
           onClose={closePanel}
-          onOpenStats={() => {
-            closePanel()
-            onOpenStats?.()
-          }}
         />
       ) : null}
 

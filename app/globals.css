@@ -267,6 +267,11 @@
       0 1px 2px color-mix(in oklab, var(--primary) 22%, transparent),
       0 4px 12px -8px color-mix(in oklab, var(--primary) 40%, transparent);
   }
+  .view-slide-clip {
+    margin-inline: calc(var(--content-px) * -1);
+    padding-inline: var(--content-px);
+    overflow-x: clip;
+  }
   .task-card {
     border-radius: calc(var(--radius) + 0.375rem);
     background-color: var(--card);

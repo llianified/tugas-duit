@@ -44,6 +44,23 @@ export function NavPill({
   )
 }
 
+const NAV_LABEL_W = ['w-11', 'w-12', 'w-12', 'w-11', 'w-9'] as const
+
+export function NavPillSkeleton() {
+  return (
+    <div aria-hidden className="nav-pill">
+      <div className="nav-pill-row">
+        {NAV_SLOTS.map((slot, index) => (
+          <div className="nav-pill-item" key={slot.view}>
+            <div className="glyph-md animate-pulse rounded-md bg-muted" />
+            <div className={cn('h-2.5 animate-pulse rounded-sm bg-muted', NAV_LABEL_W[index])} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function NavPillItem({
   slot,
   activeView,

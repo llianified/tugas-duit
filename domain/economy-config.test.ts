@@ -51,6 +51,17 @@ describe('default config', () => {
       expect(value).toBeLessThanOrEqual(field.max)
     }
   })
+
+  it('arah risiko sejalan dengan kalimat dampaknya', () => {
+    const menyimpang = ECONOMY_FIELDS.filter((field) => {
+      if (field.riskyWhen === 'never') return false
+      if (field.impact.startsWith('Menaikkannya')) return field.riskyWhen !== 'higher'
+      if (field.impact.startsWith('Menurunkannya')) return field.riskyWhen !== 'lower'
+      return false
+    }).map((field) => field.key)
+
+    expect(menyimpang).toEqual([])
+  })
 })
 
 describe('validation — nilai absurd ditolak', () => {
@@ -84,6 +95,16 @@ describe('validation — nilai absurd ditolak', () => {
 })
 
 describe('validation — aturan antar-field', () => {
+  it('menolak biaya energi per task yang melampaui kapasitas energi', () => {
+    const result = validateEconomyConfig(withField({ maxEnergy: 3, energyCostPerTask: 5 }))
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.energyCostPerTask).toBeTruthy()
+  })
+
+  it('menerima biaya energi yang persis sebesar kapasitasnya', () => {
+    expect(validateEconomyConfig(withField({ maxEnergy: 3, energyCostPerTask: 3 })).ok).toBe(true)
+  })
+
   it('menolak nominal Rupiah yang tidak habis dibagi kurs', () => {
     const result = validateEconomyConfig(withField({ creditValueIdr: 700 }))
     expect(result.ok).toBe(false)

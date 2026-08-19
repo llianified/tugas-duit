@@ -1,0 +1,12 @@
+-- Panel admin bisa mengoreksi nama dan username, tapi koreksinya tidak pernah
+-- bertahan: upsert login di `app/api/auth/telegram/route.ts` menimpa keduanya
+-- dengan isi `initData` setiap kali user membuka Mini App. Hasilnya koreksi yang
+-- kelihatan berhasil di panel, lalu hilang diam-diam beberapa menit kemudian.
+--
+-- Kolom ini penandanya, bukan salinan datanya: begitu admin menyunting profil,
+-- Telegram berhenti jadi sumber kebenaran untuk `first_name` dan `username` pada
+-- baris itu saja. User lain tetap ikut Telegram seperti sebelumnya.
+--
+-- `photo_url` sengaja tidak ikut dikunci — ia bukan sesuatu yang dikoreksi lewat
+-- panel, dan foto basi terlihat seperti bug tanpa memberi manfaat apa pun.
+alter table users add column profile_overridden_at timestamptz;

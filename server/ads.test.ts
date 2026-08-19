@@ -212,3 +212,93 @@ describe('ADS-DB-6 — pass kedaluwarsa tidak membayar apa pun', () => {
     expect(await readEnergyValue(userId)).toBe(4)
   })
 })
+
+describe('ADS-DB-7 — tiket tidak bisa ditumpuk di atas task yang sedang dibayarinya', () => {
+  it('menolak membuka tiket baru selama challenge berbayar iklan belum ditutup', async () => {
+    withConfig({})
+    const { openAdTicket } = await import('./ads')
+    const { issueChallenge, startChallenge } = await import('./challenge')
+    const userId = await makeUser(5)
+    await grantPass(userId)
+    const challenge = await issueChallenge(userId)
+    await startChallenge(userId, challenge.id, 'ad')
+
+    expect(await openAdTicket(userId)).toMatchObject({ ok: false, reason: 'entry_open' })
+  })
+
+  it('mengembalikan tiketnya utuh saat task itu hangus tanpa percobaan', async () => {
+    withConfig({})
+    const { openAdTicket } = await import('./ads')
+    const { transaction } = await import('./db')
+    const { issueChallenge, startChallenge } = await import('./challenge')
+    const { refundEntry } = await import('./energy')
+    const userId = await makeUser(5)
+    const ticketId = await grantPass(userId)
+    const challenge = await issueChallenge(userId)
+    await startChallenge(userId, challenge.id, 'ad')
+
+    expect(await transaction((tx) => refundEntry(tx, userId, challenge.id))).toEqual({
+      refunded: true,
+    })
+    expect((await readAdView(ticketId)).state).toBe('ready')
+    expect(await openAdTicket(userId)).toMatchObject({ ok: false, reason: 'pass_ready' })
+  })
+
+  it('tidak menghanguskan tiket saat pass lain sudah siap — utangnya tetap tercatat', async () => {
+    withConfig({})
+    const { query, transaction } = await import('./db')
+    const { issueChallenge, startChallenge } = await import('./challenge')
+    const { refundEntry } = await import('./energy')
+    const userId = await makeUser(5)
+    const ticketId = await grantPass(userId)
+    const challenge = await issueChallenge(userId)
+    await startChallenge(userId, challenge.id, 'ad')
+    await query(
+      `insert into ad_views(user_id,block_id,state,expires_at,ready_at)
+       values($1,'uji-block','ready',now()+interval '30 minutes',now())`,
+      [userId],
+    )
+
+    expect(await transaction((tx) => refundEntry(tx, userId, challenge.id))).toEqual({
+      refunded: false,
+    })
+    expect((await readAdView(ticketId)).state).toBe('consumed')
+    const rows = await query<{ energy_refunded_at: Date | null }>(
+      'select energy_refunded_at from challenges where id=$1',
+      [challenge.id],
+    )
+    expect(rows[0].energy_refunded_at).toBeNull()
+  })
+})
+
+describe('ADS-DB-8 — tayangan yang tidak pernah diklaim tidak memotong jatah', () => {
+  it('menyerahkan kembali tiket yang sama, tanpa menambah baris maupun memotong jatah', async () => {
+    withConfig({ adsMaxViewsPerDay: 2 })
+    const { query } = await import('./db')
+    const { openAdTicket, readAdsState } = await import('./ads')
+    const userId = await makeUser(5)
+
+    const first = await openAdTicket(userId)
+    expect(first.ok).toBe(true)
+    const second = await openAdTicket(userId)
+    expect(second).toMatchObject({ ok: true })
+    if (!first.ok || !second.ok) return
+    expect(second.ticketId).toBe(first.ticketId)
+
+    const counted = await query<{ jumlah: number }>(
+      'select count(*)::int as jumlah from ad_views where user_id=$1',
+      [userId],
+    )
+    expect(Number(counted[0].jumlah)).toBe(1)
+    expect((await readAdsState(userId)).viewsLeft).toBe(2)
+  })
+
+  it('memotong jatah begitu tiketnya diklaim', async () => {
+    withConfig({ adsMaxViewsPerDay: 2 })
+    const { readAdsState } = await import('./ads')
+    const userId = await makeUser(5)
+    await grantPass(userId)
+
+    expect((await readAdsState(userId)).viewsLeft).toBe(1)
+  })
+})

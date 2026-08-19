@@ -136,7 +136,7 @@ describe('ECON-4 — batas task harian mengikuti konfigurasi, bukan angka tetap'
 
       const beyond = await consumeQuota(tx, userId, 1)
       expect(beyond.paidReward).toBe(0)
-      expect(beyond.exceeded).toBe(true)
+      expect(beyond.refusal).toBe('daily_task_cap')
     })
   })
 
@@ -150,7 +150,43 @@ describe('ECON-4 — batas task harian mengikuti konfigurasi, bukan angka tetap'
       for (let i = 0; i < 5; i += 1) {
         expect((await consumeQuota(tx, userId, 1)).paidReward).toBe(1)
       }
-      expect((await consumeQuota(tx, userId, 1)).exceeded).toBe(true)
+      expect((await consumeQuota(tx, userId, 1)).refusal).toBe('daily_task_cap')
     })
   })
 })
+
+describe('ECON-5 — reward tidak pernah melewati plafon yang dijanjikan saat soal terbit', () => {
+  it('membayar sebesar max_reward soal itu, bukan angka baru yang lebih tinggi', async () => {
+    setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
+    const { query } = await import('./db')
+    const { issueChallenge, startChallenge, submitAnswer } = await import('./challenge')
+    const userId = await makeUser()
+
+    let challenge = await issueChallenge(userId)
+    let percobaan = 0
+    while (challenge.type !== 'text' && percobaan < 40) {
+      await query('update challenges set submitted_at=now() where id=$1', [challenge.id])
+      challenge = await issueChallenge(userId)
+      percobaan += 1
+    }
+    if (challenge.type !== 'text') throw new Error('tidak dapat soal Ketik Ulang')
+
+    const dijanjikan = (
+      await query<{ max_reward: number }>('select max_reward from challenges where id=$1', [
+        challenge.id,
+      ])
+    )[0].max_reward
+
+    await startChallenge(userId, challenge.id)
+    setActiveEconomyConfig({
+      ...DEFAULT_ECONOMY_CONFIG,
+      rewardEasy1: 40, rewardEasy2: 45, rewardEasy3: 50,
+      rewardMedium1: 40, rewardMedium2: 45, rewardMedium3: 50,
+      rewardHard1: 40, rewardHard2: 45, rewardHard3: 50,
+    })
+
+    const hasil = await submitAnswer(userId, challenge.id, challenge.display)
+    expect(hasil).toMatchObject({ ok: true, reward: Number(dijanjikan) })
+  })
+})
+

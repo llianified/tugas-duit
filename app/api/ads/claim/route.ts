@@ -22,7 +22,11 @@ export async function POST(request: Request) {
     const limit = await checkRateLimit(`ads:claim:${user.id}`, 20, 60)
     if (!limit.allowed) return rateLimited(limit.retryAfter)
 
-    const body = (await request.json()) as { ticketId?: string }
+    const body = (await request.json().catch(() => null)) as { ticketId?: string } | null
+    if (!body || typeof body !== 'object') {
+      return apiError('VALIDATION_FAILED', 'Body tidak valid.', 400)
+    }
+
     const claimed = await claimAdTicket(user.id, body.ticketId ?? '')
     if (!claimed.ok)
       return apiError('AD_CLAIM_REFUSED', REFUSAL_MESSAGE[claimed.reason], 409)

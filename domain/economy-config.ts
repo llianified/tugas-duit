@@ -274,7 +274,7 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     key: 'maxEnergy', group: 'energy', label: 'Kapasitas energi', unit: 'energi',
     description: 'Stok energi maksimum yang bisa ditampung satu user.',
     impact: 'Menaikkannya memperbanyak task yang bisa dikerjakan sekaligus.',
-    min: 1, max: 10, riskyWhen: 'lower',
+    min: 1, max: 10, riskyWhen: 'higher',
   },
   {
     key: 'energyRegenMinutes', group: 'energy', label: 'Interval regen energi', unit: 'menit',
@@ -322,7 +322,7 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     key: 'maxPayoutIdr', group: 'withdrawal', label: 'Maksimum penarikan', unit: 'Rp/pengajuan',
     description: 'Langit-langit satu pengajuan. Lantai kewarasan, bukan batas harian — saldo membatasi lebih dulu.',
     impact: 'Menaikkannya memperbesar nominal terbesar yang bisa diajukan sekali kirim.',
-    min: 10_000, max: 2_000_000_000, riskyWhen: 'lower',
+    min: 10_000, max: 2_000_000_000, riskyWhen: 'higher',
   },
   {
     key: 'referralCommissionPercent', group: 'referral', label: 'Komisi referral', unit: '%',
@@ -418,6 +418,11 @@ export function validateEconomyConfig(input: unknown): {
       errors[ceiling] =
         `Batas hasil Hitung ${label} harus minimal ${smallest} supaya muat ${config[digits]} digit.`
     }
+  }
+
+  if (config.energyCostPerTask > config.maxEnergy) {
+    errors.energyCostPerTask =
+      `Biaya energi per task tidak boleh melebihi kapasitas energi (${config.maxEnergy}).`
   }
 
   if (config.maxPayoutIdr < config.withdrawalMinimumIdr) {

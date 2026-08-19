@@ -60,16 +60,25 @@ export async function refundEntry(
   userId: number,
   challengeId: string,
 ): Promise<{ refunded: boolean }> {
-  const claimed = await tx.query<{ ad_view_id: string | null }>(
-    `update challenges set energy_refunded_at=now()
+  const owed = await tx.query<{ ad_view_id: string | null }>(
+    `select ad_view_id from challenges
      where id=$1 and user_id=$2 and energy_refunded_at is null
        and (energy_spent_at is not null or ad_view_id is not null)
-     returning ad_view_id`,
+     for update`,
     [challengeId, userId],
   )
-  const row = claimed.rows[0]
+  const row = owed.rows[0]
   if (!row) return { refunded: false }
-  if (row.ad_view_id !== null) return { refunded: await restoreAdPass(tx, userId, row.ad_view_id) }
+  if (row.ad_view_id !== null && !(await restoreAdPass(tx, userId, row.ad_view_id))) {
+    return { refunded: false }
+  }
+
+  const claimed = await tx.query(
+    'update challenges set energy_refunded_at=now() where id=$1 and energy_refunded_at is null',
+    [challengeId],
+  )
+  if (claimed.rowCount === 0) return { refunded: false }
+  if (row.ad_view_id !== null) return { refunded: true }
 
   return { refunded: (await grantEnergy(tx, userId)).granted }
 }

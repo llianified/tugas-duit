@@ -335,7 +335,7 @@ export async function updateAdminUserProfile(input: {
   }
 
   const rows = await query<{ first_name: string; username: string | null }>(
-    `update users set first_name=$2,username=$3,updated_at=now()
+    `update users set first_name=$2,username=$3,profile_overridden_at=now(),updated_at=now()
      where public_id=$1 returning first_name,username`,
     [input.publicId.trim(), firstName, username],
   )

@@ -13,6 +13,7 @@ const REFUSAL_MESSAGE: Record<string, string> = {
   cooling_down: 'Tunggu sebentar sebelum nonton iklan berikutnya ya.',
   ticket_open: 'Masih ada iklan yang belum selesai ditonton.',
   pass_ready: 'Kamu sudah punya tiket iklan yang siap dipakai.',
+  entry_open: 'Selesaikan dulu task yang dibayar tiket iklan sebelumnya ya.',
 }
 
 export async function POST(request: Request) {

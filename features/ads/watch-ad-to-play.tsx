@@ -1,5 +1,6 @@
 'use client'
 
+import { adsMaxViewsPerDay } from '@/domain/ads'
 import { GlyphPlay, GlyphSpinner } from '@/shared/components/glyph'
 import { TapAction, TapActionWaiting } from '@/shared/components/tap-action'
 import { hapticTap } from '@/shell/haptic'
@@ -74,10 +75,14 @@ export function WatchAdToPlay({
     <TapAction
       compact
       tone="neutral"
-      icon={<GlyphPlay className="size-4 text-muted-foreground" />}
-      label="Pakai iklan"
-      meta={`${formatCredits(viewsLeft)}×`}
-      aria-label={`Nonton iklan untuk memulai task tanpa energi, sisa ${formatCredits(viewsLeft)} kali hari ini`}
+      label="Mulai"
+      meta={
+        <span className="flex items-center gap-1">
+          <GlyphPlay className="size-3.5 shrink-0" aria-hidden="true" />
+          {formatCredits(viewsLeft)}/{formatCredits(adsMaxViewsPerDay())}
+        </span>
+      }
+      aria-label={`Nonton iklan untuk memulai task tanpa energi, sisa ${formatCredits(viewsLeft)} dari ${formatCredits(adsMaxViewsPerDay())} kali hari ini`}
       onClick={() => {
         hapticTap()
         onWatch()

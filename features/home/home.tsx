@@ -22,7 +22,13 @@ interface HomeViewProps {
   energySecondsToNext: number | null
   rewardPoolCredits: number | null
   rewardPoolSecondsToNext: number | null
+  adsEnabled: boolean
+  adViewsLeft: number
+  adCooldownSecondsLeft: number
+  adPassReady: boolean
+  watchingAd: boolean
   onStart: () => void
+  onStartWithAd: () => void
   withdrawals: Withdrawal[]
   onSubmitWithdrawal: (input: WithdrawalSubmitInput) => Promise<Withdrawal | null>
   onOpenHistory: () => void
@@ -40,7 +46,13 @@ export function HomeView({
   energySecondsToNext,
   rewardPoolCredits,
   rewardPoolSecondsToNext,
+  adsEnabled,
+  adViewsLeft,
+  adCooldownSecondsLeft,
+  adPassReady,
+  watchingAd,
   onStart,
+  onStartWithAd,
   withdrawals,
   onSubmitWithdrawal,
   onOpenHistory,
@@ -67,7 +79,13 @@ export function HomeView({
           energySecondsToNext={energySecondsToNext}
           rewardPoolCredits={rewardPoolCredits}
           rewardPoolSecondsToNext={rewardPoolSecondsToNext}
+          adsEnabled={adsEnabled}
+          adViewsLeft={adViewsLeft}
+          adCooldownSecondsLeft={adCooldownSecondsLeft}
+          adPassReady={adPassReady}
+          watchingAd={watchingAd}
           onStart={onStart}
+          onStartWithAd={onStartWithAd}
         />
       </div>
 

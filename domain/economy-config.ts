@@ -41,6 +41,10 @@ export interface EconomyConfig {
   maxEnergy: number
   energyRegenMinutes: number
   energyCostPerTask: number
+  adsMaxViewsPerDay: number
+  adsCooldownSeconds: number
+  adsTicketTtlSeconds: number
+  adsPassTtlMinutes: number
   withdrawalMinimumIdr: number
   maxPayoutIdr: number
   referralCommissionPercent: number
@@ -92,6 +96,10 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   maxEnergy: 5,
   energyRegenMinutes: 60,
   energyCostPerTask: 1,
+  adsMaxViewsPerDay: 0,
+  adsCooldownSeconds: 120,
+  adsTicketTtlSeconds: 300,
+  adsPassTtlMinutes: 30,
   withdrawalMinimumIdr: 10_000,
   maxPayoutIdr: 2_000_000_000,
   referralCommissionPercent: 10,
@@ -108,6 +116,7 @@ export type EconomyGroup =
   | 'task'
   | 'difficulty'
   | 'energy'
+  | 'ads'
   | 'withdrawal'
   | 'referral'
   | 'progression'
@@ -278,6 +287,30 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     description: 'Energi yang dipotong saat memulai satu task.',
     impact: 'Menurunkannya memperbanyak task yang bisa dikerjakan dari stok yang sama.',
     min: 1, max: 10, riskyWhen: 'lower',
+  },
+  {
+    key: 'adsMaxViewsPerDay', group: 'ads', label: 'Batas iklan harian', unit: 'tayangan',
+    description: 'Berapa kali user boleh menukar tontonan iklan dengan satu tiket masuk task per hari WIB. 0 mematikan fitur iklan sepenuhnya, tanpa deploy.',
+    impact: 'Menaikkannya memperbanyak task yang bisa dimulai tanpa energi, sehingga plafon kolam reward dihabiskan lebih cepat.',
+    min: 0, max: 100, riskyWhen: 'higher',
+  },
+  {
+    key: 'adsCooldownSeconds', group: 'ads', label: 'Jarak antar iklan', unit: 'detik',
+    description: 'Waktu tunggu minimum sebelum tiket iklan berikutnya boleh dibuka.',
+    impact: 'Menurunkannya mempercepat pengumpulan tiket, sehingga batas harian tercapai lebih cepat.',
+    min: 0, max: 3_600, riskyWhen: 'lower',
+  },
+  {
+    key: 'adsTicketTtlSeconds', group: 'ads', label: 'Umur tiket iklan', unit: 'detik',
+    description: 'Batas waktu sejak tiket dibuka sampai tontonan harus dilaporkan. Lewat dari itu klaimnya ditolak.',
+    impact: 'Menaikkannya memberi lebih banyak waktu untuk menyelesaikan tontonan, sehingga lebih sedikit tiket terbuang.',
+    min: 30, max: 1_800, riskyWhen: 'higher',
+  },
+  {
+    key: 'adsPassTtlMinutes', group: 'ads', label: 'Umur tiket siap pakai', unit: 'menit',
+    description: 'Berapa lama tiket yang sudah didapat bertahan sebelum hangus. Memaksa tiket dipakai, bukan ditimbun.',
+    impact: 'Menaikkannya memperpanjang masa simpan tiket; menurunkannya membuat user lebih sering merasa hasil tontonannya hilang.',
+    min: 1, max: 1_440, riskyWhen: 'higher',
   },
   {
     key: 'withdrawalMinimumIdr', group: 'withdrawal', label: 'Minimum penarikan', unit: 'Rp',

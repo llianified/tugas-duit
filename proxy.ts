@@ -15,12 +15,41 @@ const REPORT_GROUP = 'csp'
  *
  * `'strict-dynamic'` sudah mengizinkan SDK bernonce memuat turunannya di browser modern;
  * entri host tetap ditulis sebagai jaring untuk browser yang mengabaikannya.
- * `frame-ancestors` sengaja tidak disentuh — app tetap hanya boleh di-embed Telegram.
+ *
+ * Soal `frame-ancestors`: app ini dibuka langsung dari browser, bukan cuma di dalam
+ * Telegram. Membatasi frame-ancestors ke host Telegram membuat browser menolak
+ * me-render app di host lain (termasuk iframe preview), dan host itu memuat ulang
+ * terus sampai tampilannya kedip-kedip. Jadi `'self'` selalu diizinkan, host Telegram
+ * tetap dipertahankan supaya Mini App yang lama belum putus, dan di development
+ * origin preview ikut diizinkan.
+ *
+ * Di development `script-src` sengaja memakai `'unsafe-inline'` tanpa nonce: harness
+ * preview menyuntikkan inline script tanpa nonce, dan kalau diblokir preview-nya ikut
+ * reload-loop. Nonce + `'strict-dynamic'` tetap dipakai penuh di production.
  */
+const DEV_FRAME_ANCESTORS = [
+  'https://*.vusercontent.net',
+  'https://*.v0.build',
+  'https://*.vercel.run',
+  'https://v0.app',
+  'http://localhost:*',
+]
+
 function buildCsp(nonce: string, isDev: boolean) {
+  const frameAncestors = [
+    "'self'",
+    'https://web.telegram.org',
+    'https://telegram.org',
+    ...(isDev ? DEV_FRAME_ANCESTORS : []),
+  ].join(' ')
+
+  const scriptSrc = isDev
+    ? "script-src 'self' https://telegram.org https://sad.adsgram.ai 'unsafe-inline' 'unsafe-eval'"
+    : `script-src 'self' https://telegram.org https://sad.adsgram.ai 'nonce-${nonce}' 'strict-dynamic'`
+
   return [
     "default-src 'self'",
-    `script-src 'self' https://telegram.org https://sad.adsgram.ai 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
+    scriptSrc,
     `style-src 'self' ${isDev ? "'unsafe-inline'" : `'nonce-${nonce}'`}`,
     "style-src-attr 'none'",
     "img-src 'self' data: blob: https://t.me https://*.telegram.org",
@@ -28,12 +57,12 @@ function buildCsp(nonce: string, isDev: boolean) {
     "frame-src 'self'",
     "worker-src 'self' blob:",
     "font-src 'self'",
-    "connect-src 'self' https://sad.adsgram.ai",
+    `connect-src 'self' https://sad.adsgram.ai${isDev ? ' ws: wss:' : ''}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors https://web.telegram.org https://telegram.org",
-    'upgrade-insecure-requests',
+    `frame-ancestors ${frameAncestors}`,
+    ...(isDev ? [] : ['upgrade-insecure-requests']),
     `report-uri ${REPORT_PATH}`,
     `report-to ${REPORT_GROUP}`,
   ].join('; ')

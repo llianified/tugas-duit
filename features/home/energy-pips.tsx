@@ -29,8 +29,8 @@ export function EnergyPips({
         <div
           key={index}
           className={cn(
-            'h-1.5 flex-1 origin-center rounded-full transition-[background-color,transform,opacity] duration-300 ease-out motion-reduce:transition-none',
-            index < filled ? 'scale-y-100 bg-primary opacity-100' : 'scale-y-[0.7] bg-border opacity-85',
+            'meter-h flex-1 rounded-full transition-colors duration-300 ease-out motion-reduce:transition-none',
+            index < filled ? 'bg-primary' : 'bg-border',
           )}
         />
       ))}

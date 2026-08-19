@@ -1,13 +1,12 @@
 'use client'
 
 import { EnergyPips } from '@/features/home/energy-pips'
-import { IslandDivider, IslandPill } from '@/features/home/island-pill'
+import { IslandDivider, IslandPill, IslandStat } from '@/features/home/island-pill'
 import { StreakGauge } from '@/features/home/streak-gauge'
 import { TierGlyph } from '@/features/home/tier-glyph'
 import type { Progression } from '@/features/home/progression'
 import { ProgressBar } from '@/shared/components/progress-bar'
 import { formatCredits, formatUnitCountdown } from '@/shared/lib/format'
-import { cn } from '@/shared/lib/utils'
 
 export function RankIsland({
   progression,
@@ -117,29 +116,31 @@ function RankProgressRegion({
     : `${formatCredits(rankProgress)} dari ${formatCredits(rankSpan)} task menuju rank ${nextRank.name}`
 
   return (
-    <div className="island-region">
-      <div className="island-row flex items-center justify-between gap-3">
-        <span className="shrink-0 text-[11px] leading-none text-muted-foreground tabular-nums">
-          {isMaxRank
-            ? `Bonus plafon +${formatCredits((rank.tier - 1) * 3)}`
-            : `${formatCredits(tasksToNextRank)} lagi`}
-        </span>
-        <span className="flex min-w-0 items-center gap-1.5 text-xs font-semibold leading-none text-primary">
+    <IslandStat
+      label={
+        isMaxRank
+          ? `Bonus plafon +${formatCredits((rank.tier - 1) * 3)}`
+          : `${formatCredits(tasksToNextRank)} task lagi`
+      }
+      tone="primary"
+      value={
+        <span className="flex min-w-0 items-center gap-1.5">
           <TierGlyph tier={nextRank?.tier ?? rank.tier} className="size-3.5 shrink-0" />
           <span className="truncate">
             <span className="sr-only">{isMaxRank ? 'Rank ' : 'rank tujuan '}</span>
             {isMaxRank ? rank.name : nextRank.name}
           </span>
         </span>
-      </div>
-      <ProgressBar
-        className="island-row"
-        value={isOpen ? progressValue : 0}
-        max={progressMax}
-        valueText={progressText}
-        tone={isMaxRank ? 'success' : 'primary'}
-      />
-    </div>
+      }
+      meter={
+        <ProgressBar
+          value={isOpen ? progressValue : 0}
+          max={progressMax}
+          valueText={progressText}
+          tone={isMaxRank ? 'success' : 'primary'}
+        />
+      }
+    />
   )
 }
 
@@ -152,37 +153,23 @@ function StreakRegion({
   streakSecured: boolean
   isOpen: boolean
 }) {
-  const streakStatus = streakSecured ? 'Aman' : 'Selesaikan 1 task'
+  const bonusWeeks = Math.floor(streak / 7)
 
   return (
-    <div className="island-region">
-      <div className="island-row flex items-center justify-between gap-3">
-        <span className="shrink-0 text-[11px] leading-none text-muted-foreground tabular-nums">
-          {Math.floor(streak / 7) > 0 ? (
-            <>
-              Streak {formatCredits(streak)} · bonus +
-              {formatCredits(Math.min(4, Math.floor(streak / 7)))}
-            </>
-          ) : (
-            <>Streak {formatCredits(streak)} · bonus hari ke-7</>
-          )}
-        </span>
-        <span
-          className={cn(
-            'flex shrink-0 items-center gap-1 text-xs font-semibold leading-none',
-            streakSecured ? 'text-success' : 'text-muted-foreground',
-          )}
-        >
-          {streakStatus}
-        </span>
-      </div>
-      <StreakGauge
-        className="island-row"
-        streak={streak}
-        atRisk={!streakSecured}
-        active={isOpen}
-      />
-    </div>
+    <IslandStat
+      label={
+        bonusWeeks > 0 ? (
+          <>
+            Streak {formatCredits(streak)} · bonus +{formatCredits(Math.min(4, bonusWeeks))}
+          </>
+        ) : (
+          <>Streak {formatCredits(streak)} · bonus hari ke-7</>
+        )
+      }
+      tone={streakSecured ? 'success' : 'muted'}
+      value={streakSecured ? 'Aman' : 'Selesaikan 1 task'}
+      meter={<StreakGauge streak={streak} atRisk={!streakSecured} active={isOpen} />}
+    />
   )
 }
 
@@ -201,33 +188,24 @@ function RewardPoolRegion({
 }) {
   const poolLeft = Math.max(0, Math.min(rewardPoolMax, rewardPoolCredits))
   const poolFull = rewardPoolSecondsToNext === null
-  const poolStatus = poolFull
-    ? 'Penuh'
-    : `+${formatCredits(rewardPoolRegenCredits)} · ${formatUnitCountdown(rewardPoolSecondsToNext)}`
 
   return (
-    <div className="island-region">
-      <div className="island-row flex items-center justify-between gap-3">
-        <span className="shrink-0 text-[11px] leading-none text-muted-foreground">
-          Limit harian
-        </span>
-        <span
-          className={cn(
-            'flex shrink-0 items-center gap-1 text-xs font-semibold leading-none',
-            poolFull ? 'text-success' : 'text-primary',
-          )}
-        >
-          <span className="sr-only">Limit harian </span>
-          <span className="tabular-nums">{poolStatus}</span>
-        </span>
-      </div>
-      <ProgressBar
-        className="island-row"
-        value={isOpen ? poolLeft : 0}
-        max={rewardPoolMax}
-        valueText={`${formatCredits(poolLeft)} dari ${formatCredits(rewardPoolMax)} credit kolam reward tersisa`}
-      />
-    </div>
+    <IslandStat
+      label="Limit harian"
+      tone={poolFull ? 'success' : 'primary'}
+      value={
+        poolFull
+          ? 'Penuh'
+          : `+${formatCredits(rewardPoolRegenCredits)} · ${formatUnitCountdown(rewardPoolSecondsToNext)}`
+      }
+      meter={
+        <ProgressBar
+          value={isOpen ? poolLeft : 0}
+          max={rewardPoolMax}
+          valueText={`${formatCredits(poolLeft)} dari ${formatCredits(rewardPoolMax)} credit kolam reward tersisa`}
+        />
+      }
+    />
   )
 }
 
@@ -243,22 +221,13 @@ function EnergyRegion({
   isOpen: boolean
 }) {
   const energyFull = energySecondsToNext === null
-  const energyStatus = energyFull ? 'Penuh' : `+1 · ${formatUnitCountdown(energySecondsToNext)}`
 
   return (
-    <div className="island-region">
-      <div className="island-row flex items-center justify-between gap-3">
-        <span className="shrink-0 text-[11px] leading-none text-muted-foreground">Energi</span>
-        <span
-          className={cn(
-            'flex shrink-0 items-center gap-1.5 text-xs font-semibold leading-none',
-            energyFull ? 'text-success' : 'text-primary',
-          )}
-        >
-          <span className="tabular-nums">{energyStatus}</span>
-        </span>
-      </div>
-      <EnergyPips className="island-row" energy={energy} max={energyMax} active={isOpen} />
-    </div>
+    <IslandStat
+      label="Energi"
+      tone={energyFull ? 'success' : 'primary'}
+      value={energyFull ? 'Penuh' : `+1 · ${formatUnitCountdown(energySecondsToNext)}`}
+      meter={<EnergyPips energy={energy} max={energyMax} active={isOpen} />}
+    />
   )
 }

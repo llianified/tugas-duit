@@ -8,32 +8,78 @@ const REPORT_GROUP = 'csp'
 /**
  * Host Adsgram yang tercantum di sini hanya SDK-nya (`sad.adsgram.ai`), karena itu
  * satu-satunya host yang didokumentasikan. Domain kreatif iklannya tidak punya daftar
- * tetap, jadi **jangan menebak host tambahan**: jalankan deploy percobaan dengan
- * `CSP_REPORT_ONLY=1`, panen pelanggaran nyata dari `/api/csp-report`, baru tambahkan
- * host hasil panen itu ke `frame-src`, `img-src`, `media-src`, dan `connect-src`.
- * Urutannya ada di `docs/rencana-adsgram.md` §5.
+ * tetap, jadi **jangan menebak host tambahan**: panen pelanggaran nyata dari
+ * `/api/csp-report` seperti pada `docs/rencana-adsgram.md` §5.
  *
- * `'strict-dynamic'` sudah mengizinkan SDK bernonce memuat turunannya di browser modern;
- * entri host tetap ditulis sebagai jaring untuk browser yang mengabaikannya.
- * `frame-ancestors` sengaja tidak disentuh — app tetap hanya boleh di-embed Telegram.
+ * HASIL PANEN §5 (dijalankan dengan `CSP_REPORT_ONLY=1`, ~6 jam pemakaian nyata):
+ * NOL pelanggaran `img-src`, `frame-src`, `media-src`, dan `connect-src`. Jadi kreatif
+ * Adsgram TIDAK memerlukan host tambahan: SDK menarik kreatif lewat `connect-src`
+ * ke `sad.adsgram.ai` (sudah diizinkan), lalu me-render-nya sebagai `blob:`/`data:`
+ * yang sudah tercakup `img-src`/`media-src`. Keempat direktif itu sengaja dibiarkan
+ * ketat — jangan ditambahi host spekulatif.
+ *
+ * Yang benar-benar memblokir iklan adalah STYLE, bukan host kreatif: satu-satunya
+ * pelanggaran yang muncul adalah `style-src-attr` (atribut `style` inline) dan
+ * `style-src-elem` (elemen `<style>` suntikan SDK, tanpa nonce). Karena itu:
+ *   - `style-src-attr` WAJIB `'unsafe-inline'`. Nonce dan hash tidak berlaku untuk
+ *     atribut style, jadi `'none'` memblokirnya total — termasuk atribut `style`
+ *     milik app sendiri di `shell/app-frame.tsx` (offset animasi transisi view).
+ *   - `style-src` tidak boleh memakai nonce. Per CSP3, begitu ada nonce/hash pada
+ *     sebuah direktif, `'unsafe-inline'` diabaikan — jadi `<style>` tanpa nonce dari
+ *     SDK tetap terblokir walau `'unsafe-inline'` ditulis bersama nonce.
+ * `script-src` tetap memakai nonce + `'strict-dynamic'`; proteksi yang penting utuh.
+ *
+ * Catatan: `'strict-dynamic'` HANYA berlaku untuk `script-src`. Direktif itu tidak
+ * menurunkan izin apa pun ke `img-src`, `frame-src`, `media-src`, `connect-src`,
+ * maupun `style-src` — semuanya tetap dinilai sendiri-sendiri.
+ *
+ * Soal `frame-ancestors`: app ini dibuka langsung dari browser, bukan cuma di dalam
+ * Telegram. Membatasi frame-ancestors ke host Telegram membuat browser menolak
+ * me-render app di host lain (termasuk iframe preview), dan host itu memuat ulang
+ * terus sampai tampilannya kedip-kedip. Jadi `'self'` selalu diizinkan, host Telegram
+ * tetap dipertahankan supaya Mini App yang lama belum putus, dan di development
+ * origin preview ikut diizinkan.
+ *
+ * Di development `script-src` sengaja memakai `'unsafe-inline'` tanpa nonce: harness
+ * preview menyuntikkan inline script tanpa nonce, dan kalau diblokir preview-nya ikut
+ * reload-loop. Nonce + `'strict-dynamic'` tetap dipakai penuh di production.
  */
+const DEV_FRAME_ANCESTORS = [
+  'https://*.vusercontent.net',
+  'https://*.v0.build',
+  'https://*.vercel.run',
+  'https://v0.app',
+  'http://localhost:*',
+]
+
 function buildCsp(nonce: string, isDev: boolean) {
+  const frameAncestors = [
+    "'self'",
+    'https://web.telegram.org',
+    'https://telegram.org',
+    ...(isDev ? DEV_FRAME_ANCESTORS : []),
+  ].join(' ')
+
+  const scriptSrc = isDev
+    ? "script-src 'self' https://telegram.org https://sad.adsgram.ai 'unsafe-inline' 'unsafe-eval'"
+    : `script-src 'self' https://telegram.org https://sad.adsgram.ai 'nonce-${nonce}' 'strict-dynamic'`
+
   return [
     "default-src 'self'",
-    `script-src 'self' https://telegram.org https://sad.adsgram.ai 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
-    `style-src 'self' ${isDev ? "'unsafe-inline'" : `'nonce-${nonce}'`}`,
-    "style-src-attr 'none'",
+    scriptSrc,
+    "style-src 'self' 'unsafe-inline'",
+    "style-src-attr 'unsafe-inline'",
     "img-src 'self' data: blob: https://t.me https://*.telegram.org",
     "media-src 'self' blob:",
     "frame-src 'self'",
     "worker-src 'self' blob:",
     "font-src 'self'",
-    "connect-src 'self' https://sad.adsgram.ai",
+    `connect-src 'self' https://sad.adsgram.ai${isDev ? ' ws: wss:' : ''}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors https://web.telegram.org https://telegram.org",
-    'upgrade-insecure-requests',
+    `frame-ancestors ${frameAncestors}`,
+    ...(isDev ? [] : ['upgrade-insecure-requests']),
     `report-uri ${REPORT_PATH}`,
     `report-to ${REPORT_GROUP}`,
   ].join('; ')

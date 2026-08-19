@@ -4,6 +4,14 @@ import { readRewardPool, spendRewardPool, type RewardPoolView } from './reward-p
 
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
 
+export type QuotaRefusal = 'daily_task_cap' | 'pool_empty'
+
+interface QuotaResult {
+  refusal: QuotaRefusal | null
+  paidReward: number
+  pool: RewardPoolView
+}
+
 /**
  * Yang tersisa di `daily_quotas` sekarang cuma dua hal yang memang harian: `tasks_completed`
  * sebagai jaring anti-bot, dan `commission_credits` sebagai plafon komisi referral.
@@ -14,7 +22,7 @@ export async function consumeQuota(
   tx: PoolClient,
   userId: number,
   reward: number,
-): Promise<{ exceeded: boolean; paidReward: number; pool: RewardPoolView }> {
+): Promise<QuotaResult> {
   const maxTasks = maxTasksPerDay()
   const counted = await tx.query<{ tasks_completed: number }>(
     `insert into daily_quotas(user_id,quota_date,tasks_completed)
@@ -25,18 +33,18 @@ export async function consumeQuota(
     [userId],
   )
   if (Number(counted.rows[0].tasks_completed) > maxTasks) {
-    return { exceeded: true, paidReward: 0, pool: await readRewardPool(userId, tx) }
+    return { refusal: 'daily_task_cap', paidReward: 0, pool: await readRewardPool(userId, tx) }
   }
 
   const spent = await spendRewardPool(tx, userId, reward)
-  if (spent.paid <= 0) return { exceeded: true, paidReward: 0, pool: spent.state }
+  if (spent.paid <= 0) return { refusal: 'pool_empty', paidReward: 0, pool: spent.state }
 
   await tx.query(
     `update daily_quotas set credits_earned=credits_earned+$2
       where user_id=$1 and quota_date=${TODAY}`,
     [userId, spent.paid],
   )
-  return { exceeded: false, paidReward: spent.paid, pool: spent.state }
+  return { refusal: null, paidReward: spent.paid, pool: spent.state }
 }
 
 export async function consumeCommissionQuota(

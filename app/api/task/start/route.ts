@@ -15,7 +15,13 @@ export async function POST(request: Request) {
     const user = await requireUser()
     const limit = await checkRateLimit(`task:start:${user.id}`, 30, 60)
     if (!limit.allowed) return rateLimited(limit.retryAfter)
-    const body = (await request.json()) as { challengeId?: string; payWith?: string }
+    const body = (await request.json().catch(() => null)) as {
+      challengeId?: string
+      payWith?: string
+    } | null
+    if (!body || typeof body !== 'object') {
+      return apiError('VALIDATION_FAILED', 'Body tidak valid.', 400)
+    }
     const payWith: TaskPayment = body.payWith === 'ad' ? 'ad' : 'energy'
     const started = await startChallenge(user.id, body.challengeId ?? '', payWith)
     if (!started.ok) {

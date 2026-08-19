@@ -17,14 +17,28 @@ export async function POST(request: Request) {
     const limit = await checkRateLimit(`task:submit:${user.id}`, 30, 60)
     if (!limit.allowed) return rateLimited(limit.retryAfter)
 
-    const body = (await request.json()) as { challengeId?: string; answer?: string }
+    const body = (await request.json().catch(() => null)) as {
+      challengeId?: string
+      answer?: string
+    } | null
+    if (!body || typeof body !== 'object') {
+      return apiError('VALIDATION_FAILED', 'Body tidak valid.', 400)
+    }
+
     const result = await submitAnswer(user.id, body.challengeId ?? '', body.answer ?? '')
     if (result.ok) return Response.json(result)
 
+    if (result.reason === 'daily_task_cap') {
+      return apiError(
+        'DAILY_TASK_LIMIT',
+        'Batas task harian kamu sudah tercapai. Ongkos masuknya dikembalikan, balik lagi besok ya.',
+        429,
+      )
+    }
     if (result.reason === 'pool_empty') {
       return apiError(
         'REWARD_POOL_EMPTY',
-        'Kolam reward kamu kosong. Energi kamu dikembalikan, tunggu kolamnya terisi lagi ya.',
+        'Kolam reward kamu kosong. Ongkos masuknya dikembalikan, tunggu kolamnya terisi lagi ya.',
         429,
       )
     }

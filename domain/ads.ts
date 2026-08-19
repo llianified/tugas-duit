@@ -17,6 +17,7 @@ export interface AdOpenState {
   lastOpenedAt: number | null
   hasPending: boolean
   hasReady: boolean
+  hasEntryOpen: boolean
 }
 
 export type AdRefusal =
@@ -25,6 +26,7 @@ export type AdRefusal =
   | 'cooling_down'
   | 'ticket_open'
   | 'pass_ready'
+  | 'entry_open'
 
 export function adViewsLeft(viewsToday: number): number {
   return Math.max(0, adsMaxViewsPerDay() - Math.max(0, viewsToday))
@@ -38,6 +40,7 @@ export function adCooldownSecondsLeft(lastOpenedAt: number | null, now: number):
 export function adOpenRefusal(state: AdOpenState, now: number): AdRefusal | null {
   if (!adsConfigured()) return 'ads_disabled'
   if (state.hasReady) return 'pass_ready'
+  if (state.hasEntryOpen) return 'entry_open'
   if (state.hasPending) return 'ticket_open'
   if (adViewsLeft(state.viewsToday) <= 0) return 'daily_limit'
   if (adCooldownSecondsLeft(state.lastOpenedAt, now) > 0) return 'cooling_down'

@@ -56,11 +56,12 @@ export function useTaskFlow({
 
   const beginChallenge = useCallback(
     async (candidate: Challenge, payWith: TaskPayment = 'energy') => {
+      const sentAt = performance.now()
       const started = await sendJson<StartTaskResponse>('/api/task/start', 'POST', {
         challengeId: candidate.id,
         payWith,
       })
-      setTaskElapsedMs(started.elapsedMs)
+      setTaskElapsedMs(started.elapsedMs + (performance.now() - sentAt))
       setActiveChallenge(started.challenge)
       void mutateSession(
         (previous) =>
@@ -98,7 +99,7 @@ export function useTaskFlow({
           try {
             await beginChallenge(task, payWith)
           } catch (cause) {
-            if (cause instanceof ApiError && cause.code !== 'CHALLENGE_NOT_STARTABLE') throw cause
+            if (!(cause instanceof ApiError) || cause.code !== 'CHALLENGE_NOT_STARTABLE') throw cause
             const refreshed = (await mutateTask())?.challenge
             if (!refreshed || refreshed.id === task.id) throw cause
             await beginChallenge(refreshed, payWith)
@@ -162,8 +163,6 @@ export function useTaskFlow({
           mutateTask(),
         ])
         return outcome
-      } catch (error) {
-        throw error
       } finally {
         setSubmitting(false)
       }

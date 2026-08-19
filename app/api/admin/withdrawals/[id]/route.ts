@@ -21,10 +21,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!admin.isAdmin) return new Response(null, { status: 404 })
 
     const { id } = await params
-    const body = (await request.json()) as {
+    const body = (await request.json().catch(() => null)) as {
       action?: 'paid' | 'rejected'
       note?: string
       reason?: string
+    } | null
+    if (!body || typeof body !== 'object') {
+      return apiError('VALIDATION_FAILED', 'Body tidak valid.', 400)
     }
     if (body.action !== 'paid' && body.action !== 'rejected') {
       return apiError('VALIDATION_FAILED', 'Aksi tidak valid.', 400)

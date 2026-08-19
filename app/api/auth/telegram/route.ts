@@ -15,7 +15,9 @@ async function upsertUser(tx: PoolClient, tg: { id: number; username?: string; f
   const inserted = await tx.query<{ id: string; is_new: boolean; banned_at: Date | null }>(
     `insert into users(telegram_id,username,first_name,photo_url,referral_code)
      values($1,$2,$3,$4,$5)
-     on conflict(telegram_id) do update set username=excluded.username,first_name=excluded.first_name,
+     on conflict(telegram_id) do update set
+       username=case when users.profile_overridden_at is null then excluded.username else users.username end,
+       first_name=case when users.profile_overridden_at is null then excluded.first_name else users.first_name end,
        photo_url=excluded.photo_url,updated_at=now()
      returning id,(xmax=0) is_new,banned_at`,
     [tg.id, tg.username ?? null, tg.first_name ?? '', tg.photo_url ?? null, generateReferralCode()],

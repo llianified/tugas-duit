@@ -11,7 +11,6 @@ import {
 import { economyConfig } from '@/domain/economy-config'
 import { resolveAdProvider } from './ad-provider'
 import { query, transaction } from './db'
-import { env } from './env'
 import { recordAdClaimSignal } from './fraud'
 
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
@@ -69,7 +68,6 @@ export interface AdsSessionState {
   enabled: boolean
   provider: AdProvider | null
   unitId: string | null
-  debug: boolean
   viewsLeft: number
   cooldownSecondsLeft: number
   pass: { expiresAt: number } | null
@@ -83,7 +81,6 @@ export async function readAdsState(userId: number): Promise<AdsSessionState> {
       enabled: false,
       provider: null,
       unitId: null,
-      debug: false,
       viewsLeft: 0,
       cooldownSecondsLeft: 0,
       pass: null,
@@ -94,7 +91,6 @@ export async function readAdsState(userId: number): Promise<AdsSessionState> {
     enabled: true,
     provider: resolved.provider,
     unitId: resolved.unitId,
-    debug: env.adsDebug,
     viewsLeft: adViewsLeft(state.viewsToday),
     cooldownSecondsLeft: adCooldownSecondsLeft(state.lastOpenedAt, state.now),
     pass: state.hasReady && state.passExpiresAt !== null ? { expiresAt: state.passExpiresAt } : null,
@@ -107,7 +103,6 @@ export type OpenTicketResult =
       ticketId: string
       provider: AdProvider
       unitId: string
-      debug: boolean
       expiresAt: number
     }
   | { ok: false; reason: AdRefusal; cooldownSecondsLeft: number; viewsLeft: number }
@@ -141,7 +136,6 @@ export async function openAdTicket(userId: number): Promise<OpenTicketResult> {
           ticketId: pending.id,
           provider,
           unitId,
-          debug: env.adsDebug,
           expiresAt: pending.expires_at.getTime(),
         }
     }
@@ -159,7 +153,6 @@ export async function openAdTicket(userId: number): Promise<OpenTicketResult> {
         ticketId: row.id,
         provider,
         unitId,
-        debug: env.adsDebug,
         expiresAt: row.expires_at.getTime(),
       }
     } catch (error) {

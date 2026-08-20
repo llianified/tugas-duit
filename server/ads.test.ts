@@ -7,10 +7,9 @@ import {
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  // GigaPub adalah provider aktif, jadi itu yang diuji. `unitId` di sini menempati
-  // kolom `ad_views.block_id` yang sama seperti blockId Adsgram dulu.
-  process.env.NEXT_PUBLIC_GIGAPUB_PROJECT_ID = 'uji-block'
-  delete process.env.NEXT_PUBLIC_ADSGRAM_BLOCK_ID
+  // Monetag adalah satu-satunya provider. `unitId` di sini menempati kolom
+  // `ad_views.block_id` yang sama seperti blockId Adsgram dan project ID GigaPub dulu.
+  process.env.NEXT_PUBLIC_MONETAG_ZONE_ID = 'uji-block'
   const { query } = await import('./db')
   await query('select 1')
 }, 120_000)

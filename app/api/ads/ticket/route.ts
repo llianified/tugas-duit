@@ -45,7 +45,6 @@ export async function POST(request: Request) {
         ticketId: opened.ticketId,
         provider: opened.provider,
         unitId: opened.unitId,
-        debug: opened.debug,
         expiresAt: opened.expiresAt,
       },
       { headers: { 'Cache-Control': 'no-store' } },

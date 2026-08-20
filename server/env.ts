@@ -1,3 +1,5 @@
+import { MONETAG_DEFAULT_ZONE_ID } from '@/domain/ads'
+
 function required(name: string): string {
   const value = process.env[name]
   if (!value) throw new Error(`Env var ${name} belum diset`)
@@ -14,12 +16,12 @@ export const env = {
   get appOriginOrNull() { return process.env.APP_ORIGIN ?? null },
   get adminPasswordOrNull() { return process.env.ADMIN_PASSWORD || null },
   get adminTelegramIdOrNull() { return process.env.ADMIN_TELEGRAM_ID?.trim() || null },
-  get gigapubProjectIdOrNull() { return process.env.NEXT_PUBLIC_GIGAPUB_PROJECT_ID?.trim() || null },
-  get adsgramBlockIdOrNull() { return process.env.NEXT_PUBLIC_ADSGRAM_BLOCK_ID?.trim() || null },
-  get adsDebug() {
-    return (
-      process.env.NEXT_PUBLIC_ADS_DEBUG === 'true' ||
-      process.env.NEXT_PUBLIC_ADSGRAM_DEBUG === 'true'
-    )
+  /**
+   * Zone Monetag. Tidak pernah null: kalau env-nya kosong, dipakai zone default dari
+   * `domain/ads.ts` supaya iklan tetap jalan tanpa env tambahan. Mematikan fitur
+   * iklannya lewat panel admin (`adsMaxViewsPerDay=0`), bukan lewat env ini.
+   */
+  get monetagZoneId() {
+    return process.env.NEXT_PUBLIC_MONETAG_ZONE_ID?.trim() || MONETAG_DEFAULT_ZONE_ID
   },
 }

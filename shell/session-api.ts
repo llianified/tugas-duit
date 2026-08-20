@@ -40,7 +40,6 @@ export type AdsState = {
   enabled: boolean
   provider: AdProvider | null
   unitId: string | null
-  debug: boolean
   viewsLeft: number
   cooldownSecondsLeft: number
   pass: { expiresAt: number } | null
@@ -50,7 +49,6 @@ export type AdTicketResponse = {
   ticketId: string
   provider: AdProvider
   unitId: string
-  debug: boolean
   expiresAt: number
 }
 

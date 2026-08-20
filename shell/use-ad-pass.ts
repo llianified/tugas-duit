@@ -1,29 +1,26 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import type { AdProvider } from '@/domain/ads'
+import { useCallback, useState } from 'react'
+import { monetagSdkName } from '@/domain/ads'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
 import type { AdClaimResponse, AdsState, AdTicketResponse } from '@/shell/session-api'
 
-interface AdController {
-  show: () => Promise<unknown>
-  destroy?: () => void
-}
-
-interface AdsgramSdk {
-  init: (options: { blockId: string; debug?: boolean }) => AdController
-}
+/**
+ * SDK Monetag hanya menempel satu fungsi global per zone — namanya diambil dari atribut
+ * `data-sdk` di script tag (lihat `app/layout.tsx`), jadi bentuknya `show_<zone>`. Tidak
+ * ada `init`, tidak ada instance yang perlu di-cache atau di-`destroy`: zone-nya sudah
+ * menempel di script tag, dan fungsinya boleh dipanggil berulang.
+ */
+type MonetagShow = (params?: unknown) => Promise<unknown>
 
 /**
- * Dua SDK dengan bentuk yang berbeda jauh. GigaPub hanya menempel satu fungsi global
- * `showGiga()` — tidak ada `init`, tidak ada instance yang perlu di-cache atau
- * di-`destroy`, dan unit iklannya sudah menempel di URL script (lihat `app/layout.tsx`).
- * Adsgram sebaliknya: `init({ blockId })` mengembalikan controller yang harus dipakai
- * ulang, karena `init` berulang untuk blockId yang sama membocorkan instance.
+ * Nama fungsinya baru diketahui saat runtime (`show_<zone>`), jadi pembacaannya lewat
+ * indeks — bukan properti bernama pada `Window`. `unknown` dulu, baru dipastikan callable,
+ * supaya SDK yang belum termuat atau berubah bentuk tidak lolos jadi `TypeError`.
  */
-type AdWindow = Window & {
-  showGiga?: (params?: unknown) => Promise<unknown>
-  Adsgram?: AdsgramSdk
+function readShow(name: string): MonetagShow | undefined {
+  const candidate = (globalThis as unknown as Record<string, unknown>)[name]
+  return typeof candidate === 'function' ? (candidate as MonetagShow) : undefined
 }
 
 const SDK_WAIT_MS = 8_000
@@ -52,41 +49,18 @@ export function useAdPass({
   refreshSession: () => Promise<unknown>
 }) {
   const [watchingAd, setWatchingAd] = useState(false)
-  const adsgram = useRef<{ blockId: string; instance: AdController } | null>(null)
-
-  useEffect(
-    () => () => {
-      adsgram.current?.instance.destroy?.()
-      adsgram.current = null
-    },
-    [],
-  )
 
   /**
-   * Mengembalikan fungsi tayang, bukan controller: cuma Adsgram yang punya controller,
-   * jadi bentuk bersama yang paling jujur adalah "sesuatu yang bisa dipanggil".
+   * Mengembalikan fungsi tayang, bukan SDK-nya: `ticketId` ikut dikirim sebagai `ymid`
+   * supaya satu tayangan Monetag bisa dicocokkan dengan barisnya di `ad_views` kalau
+   * suatu saat postback server-ke-server mereka dipakai.
    */
-  const getPlayer = useCallback(
-    async (provider: AdProvider, unitId: string, debug: boolean) => {
-      if (provider === 'gigapub') {
-        const showGiga = await waitFor(() => (window as AdWindow).showGiga)
-        if (!showGiga) return null
-        return () => showGiga()
-      }
-
-      if (adsgram.current?.blockId === unitId) {
-        const cached = adsgram.current.instance
-        return () => cached.show()
-      }
-      const sdk = await waitFor(() => (window as AdWindow).Adsgram)
-      if (!sdk) return null
-      adsgram.current?.instance.destroy?.()
-      const instance = sdk.init({ blockId: unitId, debug })
-      adsgram.current = { blockId: unitId, instance }
-      return () => instance.show()
-    },
-    [],
-  )
+  const getPlayer = useCallback(async (unitId: string, ticketId: string) => {
+    const name = monetagSdkName(unitId)
+    const show = await waitFor(() => readShow(name))
+    if (!show) return null
+    return () => show({ ymid: ticketId })
+  }, [])
 
   const hasPass = Boolean(ads?.pass)
 
@@ -96,7 +70,7 @@ export function useAdPass({
     setWatchingAd(true)
     try {
       const ticket = await sendJson<AdTicketResponse>('/api/ads/ticket', 'POST')
-      const play = await getPlayer(ticket.provider, ticket.unitId, ticket.debug)
+      const play = await getPlayer(ticket.unitId, ticket.ticketId)
       if (!play) {
         notifyError(SDK_MISSING_MESSAGE)
         return false

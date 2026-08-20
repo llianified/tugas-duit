@@ -37,7 +37,11 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const nonce = (await headers()).get('x-nonce') ?? undefined
-  const adsgramEnabled = Boolean(process.env.NEXT_PUBLIC_ADSGRAM_BLOCK_ID)
+  // Cerminan `resolveAdProvider()`: GigaPub menang kalau project ID-nya diset, jadi
+  // hanya satu SDK yang pernah dimuat — tidak ada dua jaringan iklan berebut di halaman.
+  const gigapubProjectId = process.env.NEXT_PUBLIC_GIGAPUB_PROJECT_ID?.trim()
+  const adsgramBlockId = process.env.NEXT_PUBLIC_ADSGRAM_BLOCK_ID?.trim()
+  const adsgramEnabled = !gigapubProjectId && Boolean(adsgramBlockId)
 
   return (
     <html lang="id" className={`${geistSans.variable} bg-background`} suppressHydrationWarning>
@@ -50,6 +54,13 @@ export default async function RootLayout({
           strategy="beforeInteractive"
           nonce={nonce}
         />
+        {gigapubProjectId && (
+          <Script
+            src={`https://ad.gigapub.tech/script?id=${encodeURIComponent(gigapubProjectId)}`}
+            strategy="lazyOnload"
+            nonce={nonce}
+          />
+        )}
         {adsgramEnabled && (
           <Script src="https://sad.adsgram.ai/js/sad.min.js" strategy="lazyOnload" nonce={nonce} />
         )}

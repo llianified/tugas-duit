@@ -5,9 +5,11 @@ import {
   adOpenRefusal,
   adViewsLeft,
   adsConfigured,
+  type AdProvider,
   type AdRefusal,
 } from '@/domain/ads'
 import { economyConfig } from '@/domain/economy-config'
+import { resolveAdProvider } from './ad-provider'
 import { query, transaction } from './db'
 import { env } from './env'
 import { recordAdClaimSignal } from './fraud'
@@ -65,7 +67,8 @@ async function readState(userId: number, tx?: PoolClient) {
 
 export interface AdsSessionState {
   enabled: boolean
-  blockId: string | null
+  provider: AdProvider | null
+  unitId: string | null
   debug: boolean
   viewsLeft: number
   cooldownSecondsLeft: number
@@ -73,16 +76,25 @@ export interface AdsSessionState {
 }
 
 export async function readAdsState(userId: number): Promise<AdsSessionState> {
-  const blockId = env.adsgramBlockIdOrNull
-  const enabled = Boolean(blockId) && adsConfigured()
-  if (!enabled) {
-    return { enabled: false, blockId: null, debug: false, viewsLeft: 0, cooldownSecondsLeft: 0, pass: null }
+  const resolved = resolveAdProvider()
+  const enabled = Boolean(resolved) && adsConfigured()
+  if (!resolved || !enabled) {
+    return {
+      enabled: false,
+      provider: null,
+      unitId: null,
+      debug: false,
+      viewsLeft: 0,
+      cooldownSecondsLeft: 0,
+      pass: null,
+    }
   }
   const state = await readState(userId)
   return {
     enabled: true,
-    blockId,
-    debug: env.adsgramDebug,
+    provider: resolved.provider,
+    unitId: resolved.unitId,
+    debug: env.adsDebug,
     viewsLeft: adViewsLeft(state.viewsToday),
     cooldownSecondsLeft: adCooldownSecondsLeft(state.lastOpenedAt, state.now),
     pass: state.hasReady && state.passExpiresAt !== null ? { expiresAt: state.passExpiresAt } : null,
@@ -90,13 +102,21 @@ export async function readAdsState(userId: number): Promise<AdsSessionState> {
 }
 
 export type OpenTicketResult =
-  | { ok: true; ticketId: string; blockId: string; debug: boolean; expiresAt: number }
+  | {
+      ok: true
+      ticketId: string
+      provider: AdProvider
+      unitId: string
+      debug: boolean
+      expiresAt: number
+    }
   | { ok: false; reason: AdRefusal; cooldownSecondsLeft: number; viewsLeft: number }
 
 export async function openAdTicket(userId: number): Promise<OpenTicketResult> {
-  const blockId = env.adsgramBlockIdOrNull
-  if (!blockId)
+  const resolved = resolveAdProvider()
+  if (!resolved)
     return { ok: false, reason: 'ads_disabled', cooldownSecondsLeft: 0, viewsLeft: 0 }
+  const { provider, unitId } = resolved
 
   return transaction(async (tx) => {
     const state = await readState(userId, tx)
@@ -119,8 +139,9 @@ export async function openAdTicket(userId: number): Promise<OpenTicketResult> {
         return {
           ok: true as const,
           ticketId: pending.id,
-          blockId,
-          debug: env.adsgramDebug,
+          provider,
+          unitId,
+          debug: env.adsDebug,
           expiresAt: pending.expires_at.getTime(),
         }
     }
@@ -130,14 +151,15 @@ export async function openAdTicket(userId: number): Promise<OpenTicketResult> {
         `insert into ad_views(user_id,block_id,expires_at)
          values($1,$2,now()+($3::int * interval '1 second'))
          returning id, expires_at`,
-        [userId, blockId, economyConfig().adsTicketTtlSeconds],
+        [userId, unitId, economyConfig().adsTicketTtlSeconds],
       )
       const row = inserted.rows[0]
       return {
         ok: true as const,
         ticketId: row.id,
-        blockId,
-        debug: env.adsgramDebug,
+        provider,
+        unitId,
+        debug: env.adsDebug,
         expiresAt: row.expires_at.getTime(),
       }
     } catch (error) {

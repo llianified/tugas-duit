@@ -14,6 +14,12 @@ export const env = {
   get appOriginOrNull() { return process.env.APP_ORIGIN ?? null },
   get adminPasswordOrNull() { return process.env.ADMIN_PASSWORD || null },
   get adminTelegramIdOrNull() { return process.env.ADMIN_TELEGRAM_ID?.trim() || null },
+  get gigapubProjectIdOrNull() { return process.env.NEXT_PUBLIC_GIGAPUB_PROJECT_ID?.trim() || null },
   get adsgramBlockIdOrNull() { return process.env.NEXT_PUBLIC_ADSGRAM_BLOCK_ID?.trim() || null },
-  get adsgramDebug() { return process.env.NEXT_PUBLIC_ADSGRAM_DEBUG === 'true' },
+  get adsDebug() {
+    return (
+      process.env.NEXT_PUBLIC_ADS_DEBUG === 'true' ||
+      process.env.NEXT_PUBLIC_ADSGRAM_DEBUG === 'true'
+    )
+  },
 }

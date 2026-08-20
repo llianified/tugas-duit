@@ -1,1 +1,1 @@
-export const LEADERBOARD_ENABLED = false
+export const LEADERBOARD_ENABLED = true

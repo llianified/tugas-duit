@@ -43,7 +43,8 @@ export async function POST(request: Request) {
     return Response.json(
       {
         ticketId: opened.ticketId,
-        blockId: opened.blockId,
+        provider: opened.provider,
+        unitId: opened.unitId,
         debug: opened.debug,
         expiresAt: opened.expiresAt,
       },

@@ -75,7 +75,7 @@ export async function readAdminDashboard(): Promise<AdminDashboard> {
        -- Iklan, 7 hari terakhir. Jarak dibuka -> siap adalah fill rate; jarak siap ->
        -- terpakai adalah pass yang terbuang. Baris terakhir yang menentukan fase 2 layak
        -- atau tidak: credit yang benar-benar dibayarkan pada task berbayar iklan, untuk
-       -- dibandingkan dengan pendapatan Adsgram dari dashboard partner.
+       -- dibandingkan dengan pendapatan GigaPub dari dashboard partner.
        (select count(*) from ad_views
          where created_at > now() - interval '7 days')::text as ads_opened,
        (select count(*) from ad_views

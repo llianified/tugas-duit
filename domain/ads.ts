@@ -12,6 +12,13 @@ export function adsConfigured(): boolean {
   return adsMaxViewsPerDay() > 0
 }
 
+/**
+ * Jaringan iklan yang dipakai. GigaPub adalah yang aktif; Adsgram sengaja dipertahankan
+ * di kode sebagai jalan pulang kalau GigaPub mengecewakan — dipilih lewat env, bukan
+ * deploy ulang (lihat `server/ad-provider.ts`).
+ */
+export type AdProvider = 'gigapub' | 'adsgram'
+
 export interface AdOpenState {
   viewsToday: number
   lastOpenedAt: number | null

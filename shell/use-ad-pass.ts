@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { AdProvider } from '@/domain/ads'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
 import type { AdClaimResponse, AdsState, AdTicketResponse } from '@/shell/session-api'
 
@@ -13,16 +14,26 @@ interface AdsgramSdk {
   init: (options: { blockId: string; debug?: boolean }) => AdController
 }
 
-type AdsgramWindow = Window & { Adsgram?: AdsgramSdk }
+/**
+ * Dua SDK dengan bentuk yang berbeda jauh. GigaPub hanya menempel satu fungsi global
+ * `showGiga()` — tidak ada `init`, tidak ada instance yang perlu di-cache atau
+ * di-`destroy`, dan unit iklannya sudah menempel di URL script (lihat `app/layout.tsx`).
+ * Adsgram sebaliknya: `init({ blockId })` mengembalikan controller yang harus dipakai
+ * ulang, karena `init` berulang untuk blockId yang sama membocorkan instance.
+ */
+type AdWindow = Window & {
+  showGiga?: (params?: unknown) => Promise<unknown>
+  Adsgram?: AdsgramSdk
+}
 
 const SDK_WAIT_MS = 8_000
 const SDK_POLL_MS = 200
 
-async function waitForSdk(): Promise<AdsgramSdk | null> {
+async function waitFor<T>(read: () => T | undefined): Promise<T | null> {
   const deadline = Date.now() + SDK_WAIT_MS
   while (Date.now() < deadline) {
-    const sdk = (window as AdsgramWindow).Adsgram
-    if (sdk) return sdk
+    const value = read()
+    if (value) return value
     await new Promise((resolve) => setTimeout(resolve, SDK_POLL_MS))
   }
   return null
@@ -41,25 +52,41 @@ export function useAdPass({
   refreshSession: () => Promise<unknown>
 }) {
   const [watchingAd, setWatchingAd] = useState(false)
-  const controller = useRef<{ blockId: string; instance: AdController } | null>(null)
+  const adsgram = useRef<{ blockId: string; instance: AdController } | null>(null)
 
   useEffect(
     () => () => {
-      controller.current?.instance.destroy?.()
-      controller.current = null
+      adsgram.current?.instance.destroy?.()
+      adsgram.current = null
     },
     [],
   )
 
-  const getController = useCallback(async (blockId: string, debug: boolean) => {
-    if (controller.current?.blockId === blockId) return controller.current.instance
-    const sdk = await waitForSdk()
-    if (!sdk) return null
-    controller.current?.instance.destroy?.()
-    const instance = sdk.init({ blockId, debug })
-    controller.current = { blockId, instance }
-    return instance
-  }, [])
+  /**
+   * Mengembalikan fungsi tayang, bukan controller: cuma Adsgram yang punya controller,
+   * jadi bentuk bersama yang paling jujur adalah "sesuatu yang bisa dipanggil".
+   */
+  const getPlayer = useCallback(
+    async (provider: AdProvider, unitId: string, debug: boolean) => {
+      if (provider === 'gigapub') {
+        const showGiga = await waitFor(() => (window as AdWindow).showGiga)
+        if (!showGiga) return null
+        return () => showGiga()
+      }
+
+      if (adsgram.current?.blockId === unitId) {
+        const cached = adsgram.current.instance
+        return () => cached.show()
+      }
+      const sdk = await waitFor(() => (window as AdWindow).Adsgram)
+      if (!sdk) return null
+      adsgram.current?.instance.destroy?.()
+      const instance = sdk.init({ blockId: unitId, debug })
+      adsgram.current = { blockId: unitId, instance }
+      return () => instance.show()
+    },
+    [],
+  )
 
   const hasPass = Boolean(ads?.pass)
 
@@ -69,13 +96,13 @@ export function useAdPass({
     setWatchingAd(true)
     try {
       const ticket = await sendJson<AdTicketResponse>('/api/ads/ticket', 'POST')
-      const instance = await getController(ticket.blockId, ticket.debug)
-      if (!instance) {
+      const play = await getPlayer(ticket.provider, ticket.unitId, ticket.debug)
+      if (!play) {
         notifyError(SDK_MISSING_MESSAGE)
         return false
       }
       try {
-        await instance.show()
+        await play()
       } catch {
         notifyError(SHOW_FAILED_MESSAGE)
         return false
@@ -89,7 +116,7 @@ export function useAdPass({
       setWatchingAd(false)
       await refreshSession()
     }
-  }, [getController, hasPass, notifyError, refreshSession, watchingAd])
+  }, [getPlayer, hasPass, notifyError, refreshSession, watchingAd])
 
   return { watchAd, watchingAd, hasPass }
 }

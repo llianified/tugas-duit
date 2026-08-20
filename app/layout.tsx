@@ -55,7 +55,10 @@ export default async function RootLayout({
         />
         <Script
           src="https://libtl.com/sdk.js"
-          strategy="lazyOnload"
+          // `lazyOnload` menunda SDK sampai window `load`; di jaringan seluler dalam
+          // WebView Telegram itu sering lewat dari jendela tunggu 8s di `useAdPass`,
+          // jadi fungsi `show_<zone>` belum ada saat tombol ditekan.
+          strategy="afterInteractive"
           nonce={nonce}
           data-zone={monetagZoneId}
           data-sdk={monetagSdkName(monetagZoneId)}

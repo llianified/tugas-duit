@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22.9.0"
   },
   "scripts": {
     "dev": "next dev",
@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:migrate": "node --env-file-if-exists=.env.development.local --experimental-strip-types scripts/migrate.ts",
+    "db:migrate:boot": "node --env-file-if-exists=.env.development.local --experimental-strip-types scripts/migrate.ts --allow-failure",
     "db:cleanup": "node --env-file-if-exists=.env.development.local --experimental-strip-types scripts/maintenance.ts",
     "db:grant-admin": "node --env-file-if-exists=.env.development.local --experimental-strip-types scripts/grant-admin.ts",
     "db:ban-user": "node --env-file-if-exists=.env.development.local --experimental-strip-types scripts/ban-user.ts"

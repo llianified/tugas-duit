@@ -78,17 +78,33 @@ function buildCsp(nonce: string, isDev: boolean) {
     ? `script-src 'self' https://telegram.org ${adHosts} 'unsafe-inline' 'unsafe-eval'`
     : `script-src 'self' https://telegram.org ${adHosts} 'nonce-${nonce}' 'strict-dynamic'`
 
+  /**
+   * Direktif RENDER kreatif (bukan eksekusi script) dilonggarkan ke `https:` sejak
+   * migrasi ke Monetag. Alasannya konkret: berbeda dari Adsgram — yang menarik kreatif
+   * lewat `connect-src` ke satu host lalu me-render-nya sebagai `blob:` — Monetag
+   * membuka rewarded interstitial-nya sebagai iframe ke host kreatif pihak ketiga yang
+   * BERGANTI-GANTI (bukan hanya subdomain `libtl.com`), lalu iframe itu memuat gambar,
+   * video, dan beacon dari host lain lagi. Selama host-host itu diblokir, `show_<zone>()`
+   * gagal memuat dan Promise-nya reject — persis gejala "iklannya belum selesai ditonton".
+   *
+   * Yang TIDAK dilonggarkan: `script-src` tetap nonce + `'strict-dynamic'`, plus
+   * `object-src 'none'`, `base-uri`, `form-action`, dan `frame-ancestors` tetap ketat.
+   * Jadi eksekusi kode di dokumen utama tetap terkunci; yang diizinkan hanya memuat
+   * media dan membuka iframe pihak ketiga lewat HTTPS.
+   */
+  const adRenderHosts = 'https:'
+
   return [
     "default-src 'self'",
     scriptSrc,
     "style-src 'self' 'unsafe-inline'",
     "style-src-attr 'unsafe-inline'",
-    "img-src 'self' data: blob: https://t.me https://*.telegram.org",
-    "media-src 'self' blob:",
-    `frame-src 'self' ${adHosts}`,
+    `img-src 'self' data: blob: ${adRenderHosts}`,
+    `media-src 'self' blob: ${adRenderHosts}`,
+    `frame-src 'self' blob: ${adRenderHosts}`,
     "worker-src 'self' blob:",
     "font-src 'self'",
-    `connect-src 'self' ${adHosts}${isDev ? ' ws: wss:' : ''}`,
+    `connect-src 'self' ${adRenderHosts}${isDev ? ' ws: wss:' : ''}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

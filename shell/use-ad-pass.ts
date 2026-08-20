@@ -39,6 +39,29 @@ async function waitFor<T>(read: () => T | undefined): Promise<T | null> {
 const SHOW_FAILED_MESSAGE = 'Iklannya belum selesai ditonton, jadi tiketnya belum bisa dipakai.'
 const SDK_MISSING_MESSAGE = 'Iklannya gagal dimuat. Coba lagi sebentar lagi ya.'
 
+/**
+ * `show_<zone>()` bisa reject karena dua hal yang tampak sama di UI tapi beda akarnya:
+ * penonton menutup iklan lebih awal (wajar), atau kreatifnya memang tidak pernah termuat
+ * (stok kosong / diblokir). Monetag tidak menjanjikan bentuk error tertentu — kadang
+ * string, kadang `Error`, kadang objek — jadi alasannya diringkas apa adanya dan
+ * ditempelkan ke pesan. Tanpa ini satu-satunya petunjuk yang tersisa cuma "belum selesai
+ * ditonton", yang menyesatkan saat penyebabnya iklan gagal muat.
+ */
+function showFailureReason(error: unknown): string {
+  if (typeof error === 'string') return error
+  if (error instanceof Error) return error.message
+  if (error && typeof error === 'object') {
+    const message = (error as { message?: unknown }).message
+    if (typeof message === 'string') return message
+  }
+  return ''
+}
+
+function showFailureMessage(error: unknown): string {
+  const reason = showFailureReason(error).trim().slice(0, 80)
+  return reason ? `${SHOW_FAILED_MESSAGE} (${reason})` : SHOW_FAILED_MESSAGE
+}
+
 export function useAdPass({
   ads,
   notifyError,
@@ -77,8 +100,9 @@ export function useAdPass({
       }
       try {
         await play()
-      } catch {
-        notifyError(SHOW_FAILED_MESSAGE)
+      } catch (error) {
+        console.warn('[ads] show_<zone>() reject', error)
+        notifyError(showFailureMessage(error))
         return false
       }
       await sendJson<AdClaimResponse>('/api/ads/claim', 'POST', { ticketId: ticket.ticketId })

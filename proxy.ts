@@ -6,10 +6,19 @@ const REPORT_PATH = '/api/csp-report'
 const REPORT_GROUP = 'csp'
 
 /**
- * Host Adsgram yang tercantum di sini hanya SDK-nya (`sad.adsgram.ai`), karena itu
- * satu-satunya host yang didokumentasikan. Domain kreatif iklannya tidak punya daftar
- * tetap, jadi **jangan menebak host tambahan**: panen pelanggaran nyata dari
- * `/api/csp-report` seperti pada `docs/rencana-adsgram.md` §5.
+ * PENTING setelah pindah ke Monetag: hasil panen §5 di bawah ini diambil saat jaringan
+ * iklannya masih Adsgram, jadi kesimpulan "kreatif tidak butuh host tambahan" BELUM
+ * terbukti untuk Monetag. Yang diizinkan di sini baru host SDK-nya (`libtl.com`) di
+ * `script-src` dan `connect-src`. Monetag me-render rewarded interstitial-nya di dalam
+ * iframe dan sering memindahkan host kreatif, jadi kalau iklannya tampil kosong/hitam
+ * atau tombolnya diam saja, jangan menebak host: jalankan ulang panen §5 dengan
+ * `CSP_REPORT_ONLY=1`, pakai app-nya beberapa jam, lalu tambahkan host yang benar-benar
+ * muncul di `/api/csp-report` (kemungkinan besar di `frame-src` dan `img-src`).
+ *
+ * Host Adsgram/GigaPub sudah dicabut bersama SDK-nya; jejaknya tetap ditulis di sini
+ * supaya alasan daftar host ini pendek tidak hilang. Domain kreatif jaringan iklan tidak
+ * punya daftar tetap, jadi **jangan menebak host tambahan**: panen pelanggaran nyata
+ * dari `/api/csp-report` seperti pada `docs/rencana-adsgram.md` §5.
  *
  * HASIL PANEN §5 (dijalankan dengan `CSP_REPORT_ONLY=1`, ~6 jam pemakaian nyata):
  * NOL pelanggaran `img-src`, `frame-src`, `media-src`, dan `connect-src`. Jadi kreatif
@@ -60,9 +69,14 @@ function buildCsp(nonce: string, isDev: boolean) {
     ...(isDev ? DEV_FRAME_ANCESTORS : []),
   ].join(' ')
 
+  // Host SDK Monetag beserta subdomainnya. Wildcard-nya sengaja dibatasi ke keluarga
+  // domain SDK-nya sendiri — bukan tebakan host kreatif pihak ketiga — karena SDK-nya
+  // memuat modul lanjutan dan iframe rewarded dari subdomain libtl.com yang berganti.
+  const adHosts = 'https://libtl.com https://*.libtl.com'
+
   const scriptSrc = isDev
-    ? "script-src 'self' https://telegram.org https://sad.adsgram.ai 'unsafe-inline' 'unsafe-eval'"
-    : `script-src 'self' https://telegram.org https://sad.adsgram.ai 'nonce-${nonce}' 'strict-dynamic'`
+    ? `script-src 'self' https://telegram.org ${adHosts} 'unsafe-inline' 'unsafe-eval'`
+    : `script-src 'self' https://telegram.org ${adHosts} 'nonce-${nonce}' 'strict-dynamic'`
 
   return [
     "default-src 'self'",
@@ -71,10 +85,10 @@ function buildCsp(nonce: string, isDev: boolean) {
     "style-src-attr 'unsafe-inline'",
     "img-src 'self' data: blob: https://t.me https://*.telegram.org",
     "media-src 'self' blob:",
-    "frame-src 'self'",
+    `frame-src 'self' ${adHosts}`,
     "worker-src 'self' blob:",
     "font-src 'self'",
-    `connect-src 'self' https://sad.adsgram.ai${isDev ? ' ws: wss:' : ''}`,
+    `connect-src 'self' ${adHosts}${isDev ? ' ws: wss:' : ''}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

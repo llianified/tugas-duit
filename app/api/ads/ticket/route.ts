@@ -43,8 +43,8 @@ export async function POST(request: Request) {
     return Response.json(
       {
         ticketId: opened.ticketId,
-        blockId: opened.blockId,
-        debug: opened.debug,
+        provider: opened.provider,
+        unitId: opened.unitId,
         expiresAt: opened.expiresAt,
       },
       { headers: { 'Cache-Control': 'no-store' } },

@@ -22,13 +22,12 @@ export function adsConfigured(): boolean {
 export type AdProvider = 'monetag'
 
 /**
- * Zone rewarded interstitial default dari dashboard Monetag. Dipakai kalau
- * NEXT_PUBLIC_MONETAG_ZONE_ID tidak diset, supaya dev lokal dan deploy lama tetap
- * punya iklan yang jalan tanpa menambah env baru. Nilai ini juga yang menentukan nama
- * fungsi global SDK-nya (`show_<zone>`), jadi angkanya harus sama di script tag dan
- * di pemanggilnya.
+ * Nilai aslinya ada di `domain/monetag-zone.ts` — modul daun tanpa import, supaya
+ * `server/env.ts` bisa memakainya tanpa menyeret alias `@/...` ke script CLI di
+ * `scripts/`. Di-re-export di sini supaya pemakai lama tetap bisa mengimpornya
+ * dari `@/domain/ads`.
  */
-export const MONETAG_DEFAULT_ZONE_ID = '11615417'
+export { MONETAG_DEFAULT_ZONE_ID } from './monetag-zone'
 
 /** Nama fungsi global yang disuntikkan SDK Monetag untuk satu zone. */
 export function monetagSdkName(zoneId: string): string {

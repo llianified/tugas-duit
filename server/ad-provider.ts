@@ -4,25 +4,24 @@ import { env } from './env'
 export interface ResolvedAdProvider {
   provider: AdProvider
   /**
-   * Identitas unit iklan di jaringan yang dipilih: project ID untuk GigaPub, blockId
-   * untuk Adsgram. Nilai ini yang tersimpan di kolom `ad_views.block_id`, jadi baris
-   * lama tetap terbaca apa adanya dan asal setiap tayangan bisa dilacak setelah pindah
-   * jaringan.
+   * Identitas unit iklan di jaringan yang dipilih: zone ID untuk Monetag. Nilai ini yang
+   * tersimpan di kolom `ad_views.block_id`, jadi baris lama (blockId Adsgram, project ID
+   * GigaPub) tetap terbaca apa adanya dan asal setiap tayangan bisa dilacak setelah
+   * pindah jaringan.
    */
   unitId: string
 }
 
 /**
- * GigaPub menang kalau project ID-nya diset; Adsgram jadi jalan pulang yang cukup
- * diaktifkan lewat env tanpa menyentuh kode. Kalau dua-duanya kosong, fitur iklan mati
- * total dan `ads.enabled` dari `/api/session` bernilai false.
+ * Monetag adalah satu-satunya jaringan sejak migrasi, dan zone-nya punya default di
+ * `domain/ads.ts`, jadi fungsi ini praktis tidak pernah mengembalikan null. Bentuk
+ * "boleh null" tetap dipertahankan karena `readAdsState`/`openAdTicket` sudah punya
+ * jalur `ads_disabled` yang benar, dan itulah pintu yang dipakai kalau nanti ada
+ * jaringan yang perlu benar-benar dimatikan dari env.
  */
 export function resolveAdProvider(): ResolvedAdProvider | null {
-  const gigapub = env.gigapubProjectIdOrNull
-  if (gigapub) return { provider: 'gigapub', unitId: gigapub }
-
-  const adsgram = env.adsgramBlockIdOrNull
-  if (adsgram) return { provider: 'adsgram', unitId: adsgram }
+  const zoneId = env.monetagZoneId
+  if (zoneId) return { provider: 'monetag', unitId: zoneId }
 
   return null
 }

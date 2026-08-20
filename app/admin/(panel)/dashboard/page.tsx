@@ -60,7 +60,7 @@ export default async function AdminDashboardPage() {
         <Metric label="Task dibayar iklan" value={formatCompact(stats.ads.tasksPaidByAd)}
           hint={`${formatCompact(stats.ads.tasksPaidByEnergy)} dibayar energi`} />
         <Metric label="Credit di task iklan" value={formatCompact(stats.ads.creditsOnAdTasks)}
-          hint={`${formatRupiah(creditsToRupiah(stats.ads.creditsOnAdTasks))} · bandingkan dengan pendapatan GigaPub`} />
+          hint={`${formatRupiah(creditsToRupiah(stats.ads.creditsOnAdTasks))} · bandingkan dengan pendapatan Monetag`} />
       </Section>
 
       <Section title="Uang">

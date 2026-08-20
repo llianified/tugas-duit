@@ -13,11 +13,27 @@ export function adsConfigured(): boolean {
 }
 
 /**
- * Jaringan iklan yang dipakai. GigaPub adalah yang aktif; Adsgram sengaja dipertahankan
- * di kode sebagai jalan pulang kalau GigaPub mengecewakan — dipilih lewat env, bukan
- * deploy ulang (lihat `server/ad-provider.ts`).
+ * Jaringan iklan yang dipakai. Sejak migrasi ke Monetag hanya ada satu, dan sengaja
+ * tetap ditulis sebagai union bernilai satu: nilainya ikut terkirim di `/api/session`
+ * dan `/api/ads/ticket`, jadi kalau nanti ada jaringan kedua yang perlu dicoba,
+ * penambahannya cukup di sini dan compiler yang menunjuk semua tempat yang harus
+ * ikut berubah (lihat `server/ad-provider.ts`).
  */
-export type AdProvider = 'gigapub' | 'adsgram'
+export type AdProvider = 'monetag'
+
+/**
+ * Zone rewarded interstitial default dari dashboard Monetag. Dipakai kalau
+ * NEXT_PUBLIC_MONETAG_ZONE_ID tidak diset, supaya dev lokal dan deploy lama tetap
+ * punya iklan yang jalan tanpa menambah env baru. Nilai ini juga yang menentukan nama
+ * fungsi global SDK-nya (`show_<zone>`), jadi angkanya harus sama di script tag dan
+ * di pemanggilnya.
+ */
+export const MONETAG_DEFAULT_ZONE_ID = '11615417'
+
+/** Nama fungsi global yang disuntikkan SDK Monetag untuk satu zone. */
+export function monetagSdkName(zoneId: string): string {
+  return `show_${zoneId}`
+}
 
 export interface AdOpenState {
   viewsToday: number

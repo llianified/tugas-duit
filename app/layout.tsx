@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { headers } from 'next/headers'
 import { Geist } from 'next/font/google'
 import Script from 'next/script'
+import { MONETAG_DEFAULT_ZONE_ID, monetagSdkName } from '@/domain/ads'
 import { THEME_INIT_SCRIPT } from '@/shell/theme-init'
 import './globals.css'
 
@@ -37,11 +38,9 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const nonce = (await headers()).get('x-nonce') ?? undefined
-  // Cerminan `resolveAdProvider()`: GigaPub menang kalau project ID-nya diset, jadi
-  // hanya satu SDK yang pernah dimuat — tidak ada dua jaringan iklan berebut di halaman.
-  const gigapubProjectId = process.env.NEXT_PUBLIC_GIGAPUB_PROJECT_ID?.trim()
-  const adsgramBlockId = process.env.NEXT_PUBLIC_ADSGRAM_BLOCK_ID?.trim()
-  const adsgramEnabled = !gigapubProjectId && Boolean(adsgramBlockId)
+  // Cerminan `resolveAdProvider()`: zone yang sama harus dipakai di script tag dan di
+  // `useAdPass`, karena nama fungsi global SDK-nya diturunkan dari zone itu.
+  const monetagZoneId = process.env.NEXT_PUBLIC_MONETAG_ZONE_ID?.trim() || MONETAG_DEFAULT_ZONE_ID
 
   return (
     <html lang="id" className={`${geistSans.variable} bg-background`} suppressHydrationWarning>
@@ -54,16 +53,13 @@ export default async function RootLayout({
           strategy="beforeInteractive"
           nonce={nonce}
         />
-        {gigapubProjectId && (
-          <Script
-            src={`https://ad.gigapub.tech/script?id=${encodeURIComponent(gigapubProjectId)}`}
-            strategy="lazyOnload"
-            nonce={nonce}
-          />
-        )}
-        {adsgramEnabled && (
-          <Script src="https://sad.adsgram.ai/js/sad.min.js" strategy="lazyOnload" nonce={nonce} />
-        )}
+        <Script
+          src="https://libtl.com/sdk.js"
+          strategy="lazyOnload"
+          nonce={nonce}
+          data-zone={monetagZoneId}
+          data-sdk={monetagSdkName(monetagZoneId)}
+        />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

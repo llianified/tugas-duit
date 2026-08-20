@@ -7,7 +7,10 @@ import {
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  process.env.NEXT_PUBLIC_ADSGRAM_BLOCK_ID = 'uji-block'
+  // GigaPub adalah provider aktif, jadi itu yang diuji. `unitId` di sini menempati
+  // kolom `ad_views.block_id` yang sama seperti blockId Adsgram dulu.
+  process.env.NEXT_PUBLIC_GIGAPUB_PROJECT_ID = 'uji-block'
+  delete process.env.NEXT_PUBLIC_ADSGRAM_BLOCK_ID
   const { query } = await import('./db')
   await query('select 1')
 }, 120_000)

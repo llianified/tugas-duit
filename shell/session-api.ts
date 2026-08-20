@@ -1,5 +1,6 @@
 'use client'
 
+import type { AdProvider } from '@/domain/ads'
 import { setActiveEconomyConfig, type EconomyConfig } from '@/domain/economy-config'
 import type { EnergyState } from '@/domain/energy'
 import type { RewardPoolState } from '@/domain/reward-pool'
@@ -37,7 +38,8 @@ export type TaskPayment = 'energy' | 'ad'
 
 export type AdsState = {
   enabled: boolean
-  blockId: string | null
+  provider: AdProvider | null
+  unitId: string | null
   debug: boolean
   viewsLeft: number
   cooldownSecondsLeft: number
@@ -46,7 +48,8 @@ export type AdsState = {
 
 export type AdTicketResponse = {
   ticketId: string
-  blockId: string
+  provider: AdProvider
+  unitId: string
   debug: boolean
   expiresAt: number
 }

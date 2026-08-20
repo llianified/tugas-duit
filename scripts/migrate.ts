@@ -6,8 +6,39 @@ const directory = path.join(process.cwd(), 'db/migrations')
 
 const LOCK_KEY = 8_421_207
 
+// Dipakai saat migrasi jalan sebagai bagian dari startCommand: kegagalan hanya
+// dilaporkan, tidak mematikan proses, supaya `next start` tetap menyala dan
+// /api/health bisa melaporkan sebab aslinya.
+const allowFailure = process.argv.includes('--allow-failure')
+
+// Jaringan privat Railway (*.railway.internal) kadang belum resolve tepat saat
+// container baru naik, jadi kegagalan konek pertama sering cuma soal timing.
+const CONNECT_ATTEMPTS = 5
+const RETRYABLE = new Set(['ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT'])
+
+function isRetryable(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code
+  return typeof code === 'string' && RETRYABLE.has(code)
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+async function connectWithRetry() {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await pool.connect()
+    } catch (error) {
+      if (attempt >= CONNECT_ATTEMPTS || !isRetryable(error)) throw error
+      const delay = 500 * 2 ** (attempt - 1)
+      const code = (error as { code?: string }).code
+      console.warn(`[migrate] database belum siap (${code}), coba lagi ${attempt}/${CONNECT_ATTEMPTS - 1} dalam ${delay}ms`)
+      await sleep(delay)
+    }
+  }
+}
+
 async function main() {
-  const client = await pool.connect()
+  const client = await connectWithRetry()
   try {
     await client.query('select pg_advisory_lock($1)', [LOCK_KEY])
     try {
@@ -36,7 +67,16 @@ async function main() {
   }
 }
 
-main().catch((error) => {
+main().catch(async (error) => {
   console.error('[migrate] gagal', error)
+  try {
+    await pool.end()
+  } catch {
+    // pool mungkin belum pernah terbentuk; abaikan.
+  }
+  if (allowFailure) {
+    console.error('[migrate] --allow-failure aktif: start tetap dilanjutkan, skema BISA JADI belum lengkap.')
+    return
+  }
   process.exit(1)
 })

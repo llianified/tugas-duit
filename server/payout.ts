@@ -6,6 +6,7 @@ import {
   sanitizeAccountNumber,
   validateWithdrawalDraft,
 } from '@/features/withdraw/domain'
+import type { PoolClient } from 'pg'
 import { query, transaction } from './db'
 import { appendLedger } from './ledger'
 import { requireAdmin, UnauthorizedError } from './session'
@@ -25,6 +26,39 @@ export class PayoutError extends Error {
 }
 
 const PG_UNIQUE_VIOLATION = '23505'
+export const REQUIRED_ACTIVE_REFERRALS = 5
+export const WITHDRAWAL_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000
+
+interface PayoutEligibility {
+  activeReferralCount: number
+  requiredActiveReferrals: number
+  cooldownEndsAt: number | null
+}
+
+async function getPayoutEligibilityInTransaction(
+  executor: PoolClient,
+  userId: number,
+): Promise<PayoutEligibility> {
+  const result = await executor.query<{
+    active_referral_count: string
+    last_requested_at: Date | null
+  }>(
+    `select
+       (select count(distinct downline_id) from referral_commissions where upline_id=$1) active_referral_count,
+       (select max(requested_at) from withdrawals where user_id=$1) last_requested_at`,
+    [userId],
+  )
+  const row = result.rows[0]
+  const cooldownEndsAt = row.last_requested_at
+    ? row.last_requested_at.getTime() + WITHDRAWAL_COOLDOWN_MS
+    : null
+
+  return {
+    activeReferralCount: Number(row.active_referral_count),
+    requiredActiveReferrals: REQUIRED_ACTIVE_REFERRALS,
+    cooldownEndsAt: cooldownEndsAt && cooldownEndsAt > Date.now() ? cooldownEndsAt : null,
+  }
+}
 
 interface PayoutRow {
   id: string
@@ -94,6 +128,19 @@ export async function createPayout(
     if (!isDraftValid(errors)) throw new PayoutError('VALIDATION_FAILED', 400, { ...errors })
     if (body.credits < withdrawalMinimumCredits()) throw new PayoutError('BELOW_MINIMUM', 400)
     if (body.credits > balance) throw new PayoutError('INSUFFICIENT_BALANCE', 400)
+
+    const eligibility = await getPayoutEligibilityInTransaction(tx, userId)
+    if (eligibility.activeReferralCount < eligibility.requiredActiveReferrals) {
+      throw new PayoutError('ACTIVE_REFERRALS_REQUIRED', 403, {
+        activeReferralCount: String(eligibility.activeReferralCount),
+        requiredActiveReferrals: String(eligibility.requiredActiveReferrals),
+      })
+    }
+    if (eligibility.cooldownEndsAt) {
+      throw new PayoutError('WITHDRAWAL_COOLDOWN', 429, {
+        cooldownEndsAt: String(eligibility.cooldownEndsAt),
+      })
+    }
 
     const destination = sanitizeAccountNumber(body.accountNumber)
     const taken = await tx.query(
@@ -181,21 +228,39 @@ export async function getPublicPayouts(limit = PUBLIC_PAYOUT_LIMIT) {
 }
 
 export async function getPayouts(userId: number) {
-  const rows = await query<PayoutRow>(
-    'select * from withdrawals where user_id=$1 order by requested_at desc limit 20',
-    [userId],
-  )
-  const totals = await query<{ withdrawn_credits: string; processing_credits: string }>(
-    `select coalesce(sum(credits) filter(where state='paid'),0) withdrawn_credits,
-            coalesce(sum(credits) filter(where state='processing'),0) processing_credits
-     from withdrawals where user_id=$1`,
-    [userId],
-  )
+  const [rows, totals, eligibilityRows] = await Promise.all([
+    query<PayoutRow>('select * from withdrawals where user_id=$1 order by requested_at desc limit 20', [
+      userId,
+    ]),
+    query<{ withdrawn_credits: string; processing_credits: string }>(
+      `select coalesce(sum(credits) filter(where state='paid'),0) withdrawn_credits,
+              coalesce(sum(credits) filter(where state='processing'),0) processing_credits
+       from withdrawals where user_id=$1`,
+      [userId],
+    ),
+    query<{ active_referral_count: string; last_requested_at: Date | null }>(
+      `select
+         (select count(distinct downline_id) from referral_commissions where upline_id=$1) active_referral_count,
+         (select max(requested_at) from withdrawals where user_id=$1) last_requested_at`,
+      [userId],
+    ),
+  ])
+  const eligibilityRow = eligibilityRows[0]
+  const rawCooldownEndsAt = eligibilityRow.last_requested_at
+    ? eligibilityRow.last_requested_at.getTime() + WITHDRAWAL_COOLDOWN_MS
+    : null
+
   return {
     withdrawals: rows.map(view),
     totals: {
       withdrawnCredits: Number(totals[0].withdrawn_credits),
       processingCredits: Number(totals[0].processing_credits),
+    },
+    eligibility: {
+      activeReferralCount: Number(eligibilityRow.active_referral_count),
+      requiredActiveReferrals: REQUIRED_ACTIVE_REFERRALS,
+      cooldownEndsAt:
+        rawCooldownEndsAt && rawCooldownEndsAt > Date.now() ? rawCooldownEndsAt : null,
     },
   }
 }

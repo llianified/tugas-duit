@@ -26,6 +26,8 @@ const MESSAGE: Record<string, string> = {
   INVALID_CHANNEL: 'Tujuan transfernya nggak dikenal.',
   ABOVE_MAXIMUM: 'Jumlahnya kelewat besar dari batas maksimal.',
   ACCOUNT_NUMBER_IN_USE: 'Nomor ini udah dipakai akun lain. Pakai nomor punya kamu sendiri ya.',
+  ACTIVE_REFERRALS_REQUIRED: 'Kamu perlu 5 referral aktif sebelum bisa tarik dana.',
+  WITHDRAWAL_COOLDOWN: 'Kamu masih dalam cooldown 7 hari sejak penarikan terakhir.',
 }
 
 export async function POST(request: Request) {

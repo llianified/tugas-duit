@@ -147,6 +147,7 @@ export function AppViewRouter({
       onStart={session.startTask}
       onStartWithAd={session.startTaskWithAd}
       withdrawals={session.withdrawals}
+      withdrawalEligibility={session.withdrawalEligibility}
       onSubmitWithdrawal={session.submitWithdrawal}
       onOpenHistory={session.openHistory}
     />

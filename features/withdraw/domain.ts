@@ -72,6 +72,12 @@ export function getPayoutChannel(id: string): PayoutChannel {
 
 type WithdrawalState = 'processing' | 'paid' | 'rejected'
 
+export interface WithdrawalEligibility {
+  activeReferralCount: number
+  requiredActiveReferrals: number
+  cooldownEndsAt: number | null
+}
+
 export interface Withdrawal {
   id: string
   channelId: string

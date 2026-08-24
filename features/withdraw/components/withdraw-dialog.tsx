@@ -10,6 +10,7 @@ import {
   type WithdrawalSubmitInput,
   type WithdrawStep,
 } from '@/features/withdraw/components/withdraw-form'
+import { PublicPayoutList } from '@/features/withdraw/components/public-payout-list'
 import { WithdrawReceipt } from '@/features/withdraw/components/withdraw-receipt'
 import { WithdrawalList } from '@/features/withdraw/components/withdrawal-list'
 import { getWithdrawalStatus } from '@/domain/economy'
@@ -93,31 +94,37 @@ function WithdrawDialogBody({
       <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-y-auto px-content pb-[var(--content-px)]">
         {receipt ? (
           <WithdrawReceipt withdrawal={receipt} />
-        ) : !gatingReason ? (
-          <WithdrawForm
-            balance={balance}
-            step={step}
-            onStepChange={setStep}
-            onSubmit={handleSubmit}
-          />
         ) : (
           <>
-            <AvailableBalance balance={balance} />
-
-            <div className="mt-[var(--region-gap)]">
-              <NotEligibleNote
-                reason={gatingReason}
-                activeReferralCount={eligibility?.activeReferralCount}
-                requiredActiveReferrals={eligibility?.requiredActiveReferrals}
-                cooldownEndsAt={eligibility?.cooldownEndsAt}
+            {!gatingReason ? (
+              <WithdrawForm
+                balance={balance}
+                step={step}
+                onStepChange={setStep}
+                onSubmit={handleSubmit}
               />
-            </div>
+            ) : (
+              <>
+                <AvailableBalance balance={balance} />
 
-            {withdrawals.length > 0 ? (
-              <div className="mt-[var(--region-gap)]">
-                <WithdrawalList withdrawals={withdrawals} />
-              </div>
-            ) : null}
+                <div className="mt-[var(--region-gap)]">
+                  <NotEligibleNote
+                    reason={gatingReason}
+                    activeReferralCount={eligibility?.activeReferralCount}
+                    requiredActiveReferrals={eligibility?.requiredActiveReferrals}
+                    cooldownEndsAt={eligibility?.cooldownEndsAt}
+                  />
+                </div>
+
+                {withdrawals.length > 0 ? (
+                  <div className="mt-[var(--region-gap)]">
+                    <WithdrawalList withdrawals={withdrawals} />
+                  </div>
+                ) : null}
+              </>
+            )}
+
+            <PublicPayoutList />
           </>
         )}
       </div>

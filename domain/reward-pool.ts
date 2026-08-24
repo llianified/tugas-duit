@@ -1,4 +1,4 @@
-import { economyConfig } from './economy-config'
+import { economyConfig } from './economy-config.ts'
 
 /**
  * Kolam reward: plafon penghasilan yang mengisi ulang bertahap, bukan reset tengah malam.

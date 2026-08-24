@@ -15,7 +15,10 @@ async function makeUser(balance = 0): Promise<{ id: number; publicId: string }> 
      values($1,$2,$3,$4) returning id,public_id`,
     [700_000_000_000_000 + suffix, 'Uji', generateReferralCode(), balance],
   )
-  return { id: Number(rows[0].id), publicId: rows[0].public_id }
+  const user = { id: Number(rows[0].id), publicId: rows[0].public_id }
+  const { seedActiveReferrals } = await import('./payout-fixtures')
+  await seedActiveReferrals(user.id)
+  return user
 }
 
 describe('WD-1 — idempotensi appendLedger', () => {

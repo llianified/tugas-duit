@@ -88,8 +88,8 @@ export function useTaskFlow({
       if (rewardPoolCredits === 0) {
         notifyError(
           rewardPoolSecondsToNext === null
-            ? 'Kolam reward kamu kosong. Tunggu terisi lagi ya, tiket dan energi kamu tidak terpakai.'
-            : `Kolam reward kamu kosong. Isi berikutnya dalam ${formatCountdown(rewardPoolSecondsToNext)}, tiket dan energi kamu tidak terpakai.`,
+            ? 'Stok reward kamu lagi kosong. Tunggu keisi lagi ya, tiket dan energi kamu nggak kepakai.'
+            : `Stok reward kamu lagi kosong. Nambah lagi dalam ${formatCountdown(rewardPoolSecondsToNext)}, tiket dan energi kamu nggak kepakai.`,
         )
         return
       }

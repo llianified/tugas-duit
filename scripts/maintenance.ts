@@ -1,4 +1,5 @@
 import { pool } from '../server/db.ts'
+import { runEngagementNotifications } from '../server/engagement.ts'
 import { sweepFraudSignals } from '../server/fraud.ts'
 
 const CHALLENGE_RETENTION = '7 days'
@@ -10,6 +11,8 @@ const SESSION_RETENTION = '30 days'
 const INIT_DATA_RETENTION = '1 hour'
 
 const FRAUD_SIGNAL_RETENTION = '180 days'
+
+const BOT_NOTIFICATION_RETENTION = '90 days'
 
 async function main() {
   const client = await pool.connect()
@@ -63,12 +66,27 @@ async function main() {
       console.log('[maintenance] rekonsiliasi saldo: cocok')
     }
 
+    const notices = await client.query(
+      `delete from bot_notifications where sent_at < now() - interval '${BOT_NOTIFICATION_RETENTION}'`,
+    )
+    console.log(`[maintenance] ${notices.rowCount ?? 0} penanda pesan bot dihapus`)
+
     const swept = await sweepFraudSignals(client)
     for (const [signal, count] of Object.entries(swept)) {
       if (count > 0) console.log(`[maintenance] sinyal ${signal}: ${count} user baru ditandai`)
     }
   } finally {
     client.release()
+  }
+
+  try {
+    const sent = await runEngagementNotifications()
+    for (const [kind, count] of Object.entries(sent)) {
+      console.log(`[maintenance] pesan ${kind}: ${count} terkirim`)
+    }
+  } catch (error) {
+    console.error('[maintenance] pesan bot gagal dijalankan', error)
+  } finally {
     await pool.end()
   }
 }

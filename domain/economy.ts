@@ -1,6 +1,6 @@
 
-import { economyConfig } from './economy-config'
-import { rewardPoolCreditsPerDay } from './reward-pool'
+import { economyConfig } from './economy-config.ts'
+import { rewardPoolCreditsPerDay } from './reward-pool.ts'
 
 export function withdrawalMinimumCredits(): number {
   const config = economyConfig()

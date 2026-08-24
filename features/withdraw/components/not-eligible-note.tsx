@@ -16,12 +16,19 @@ export function NotEligibleNote({
   requiredActiveReferrals = 5,
   cooldownEndsAt = null,
 }: {
-  reason?: 'balance' | 'referrals' | 'cooldown'
+  reason?: 'balance' | 'referrals' | 'cooldown' | 'loading'
   activeReferralCount?: number
   requiredActiveReferrals?: number
   cooldownEndsAt?: number | null
 }) {
-  const title = reason === 'balance' ? 'Belum bisa ditarik' : reason === 'referrals' ? 'Referral belum cukup' : 'Masih cooldown'
+  const title =
+    reason === 'balance'
+      ? 'Belum bisa ditarik'
+      : reason === 'loading'
+        ? 'Lagi ngecek syaratnya'
+        : reason === 'referrals'
+          ? 'Referral belum cukup'
+          : 'Masih cooldown'
 
   return (
     <Surface as="section" aria-label={title}>
@@ -36,17 +43,20 @@ export function NotEligibleNote({
         {reason === 'balance' ? (
           <>
             Nabung dulu sampai {formatRupiah(creditsToRupiah(withdrawalMinimumCredits()))} ya, baru
-            penarikannya kebuka. Dengan plafon dasar harian, penarikan pertama bisa tercapai sekitar{' '}
-            {firstWithdrawalEstimateDays()} hari aktif; bonus rank dan streak bisa mempercepatnya.
+            penarikannya kebuka. Dengan laju isi ulang stok reward sekarang, penarikan pertama
+            biasanya kekejar sekitar {firstWithdrawalEstimateDays()} hari aktif — bonus rank sama
+            streak bisa mempercepat.
           </>
+        ) : reason === 'loading' ? (
+          <>Bentar ya, kami lagi ngecek syarat penarikan kamu.</>
         ) : reason === 'referrals' ? (
           <>
             Kamu punya {formatCredits(activeReferralCount)} dari {formatCredits(requiredActiveReferrals)}{' '}
-            referral aktif. Ajak teman menyelesaikan minimal 1 task agar dihitung aktif.
+            referral aktif. Teman kamu baru kehitung aktif setelah dia ngerjain minimal 1 task.
           </>
         ) : (
           <>
-            Kamu bisa tarik dana lagi {cooldownEndsAt ? formatHistoryTime(cooldownEndsAt) : 'setelah cooldown selesai'}. Cooldown berlangsung 7 hari sejak pengajuan terakhir, termasuk jika ditolak.
+            Kamu bisa tarik dana lagi {cooldownEndsAt ? formatHistoryTime(cooldownEndsAt) : 'setelah cooldown-nya kelar'}. Cooldown-nya 7 hari dihitung dari pengajuan terakhir — tetap jalan walau pengajuannya ditolak.
           </>
         )}
       </p>

@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
     const body = (await request.json().catch(() => null)) as { ticketId?: string } | null
     if (!body || typeof body !== 'object') {
-      return apiError('VALIDATION_FAILED', 'Body tidak valid.', 400)
+      return apiError('VALIDATION_FAILED', 'Datanya nggak kebaca. Coba lagi ya.', 400)
     }
 
     const claimed = await claimAdTicket(user.id, body.ticketId ?? '')

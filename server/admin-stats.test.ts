@@ -122,8 +122,11 @@ describe('agregat dashboard', () => {
     const admin = await makeUser({ admin: true })
     await signIn(admin.id)
 
-    const before = await readAdminDashboard()
     const payer = await makeUser({ balance: 500 })
+    const { seedActiveReferrals } = await import('./payout-fixtures')
+    await seedActiveReferrals(payer.id)
+
+    const before = await readAdminDashboard()
     const { withdrawal } = await createPayout(payer.id, {
       channelId: 'dana',
       accountNumber: `08${Math.floor(Math.random() * 1_000_000_000)}`,

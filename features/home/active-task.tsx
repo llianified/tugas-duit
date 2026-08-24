@@ -117,7 +117,7 @@ function TaskStats({
         label="Maks"
         value={`+${formatCredits(maxReward)}`}
         note={formatRupiah(creditsToRupiah(maxReward))}
-        hint="Reward tertinggi untuk task ini. Nilainya turun kalau pengerjaannya lebih lama, dan dibatasi sisa kolam reward kamu."
+        hint="Reward tertinggi untuk task ini. Nilainya turun kalau pengerjaannya lebih lama, dan dibatasi sisa stok reward kamu."
       />
       <Stat
         label="Biaya"
@@ -202,7 +202,7 @@ function StartAction({
   return poolEmpty ? (
     <TapActionWaiting
       compact
-      label="Kolam kosong"
+      label="Stok habis"
       meta={rewardPoolSecondsToNext === null ? undefined : formatCountdown(rewardPoolSecondsToNext)}
     />
   ) : (

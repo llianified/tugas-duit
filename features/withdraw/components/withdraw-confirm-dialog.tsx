@@ -52,8 +52,8 @@ export function WithdrawConfirmDialog({
             </Surface>
 
             <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
-              Setelah diajukan, kamu tidak bisa withdraw lagi selama 7 hari. Cooldown tetap berlaku
-              meskipun pengajuan ini ditolak.
+              Sekali diajukan, penarikan berikutnya baru kebuka 7 hari lagi. Cooldown-nya tetap
+              jalan walau pengajuan ini nanti ditolak.
             </p>
 
             <div className="flex flex-col gap-1">

@@ -1,0 +1,2 @@
+export const REQUIRED_ACTIVE_REFERRALS = 5
+export const WITHDRAWAL_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000

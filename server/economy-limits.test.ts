@@ -20,7 +20,10 @@ async function makeUser(balance = 0): Promise<number> {
      values($1,$2,$3,$4) returning id`,
     [800_000_000_000_000 + suffix, 'Uji', generateReferralCode(), balance],
   )
-  return Number(rows[0].id)
+  const userId = Number(rows[0].id)
+  const { seedActiveReferrals } = await import('./payout-fixtures')
+  await seedActiveReferrals(userId)
+  return userId
 }
 
 describe('ECON-2 — plafon komisi referral harian', () => {
@@ -115,6 +118,8 @@ describe('ECON-1 — satu tujuan pembayaran milik satu akun', () => {
 
     const { withdrawal } = await createPayout(userId, draft(destination))
     await settlePayout(admin, withdrawal.id, 'paid', '', null)
+    const { clearWithdrawalCooldown } = await import('./payout-fixtures')
+    await clearWithdrawalCooldown(userId)
 
     await expect(createPayout(userId, draft(destination))).resolves.toBeTruthy()
   })

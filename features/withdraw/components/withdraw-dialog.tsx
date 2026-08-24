@@ -64,11 +64,13 @@ function WithdrawDialogBody({
   const status = getWithdrawalStatus(balance)
   const gatingReason = !status.eligible
     ? 'balance'
-    : eligibility && eligibility.activeReferralCount < eligibility.requiredActiveReferrals
-      ? 'referrals'
-      : eligibility?.cooldownEndsAt
-        ? 'cooldown'
-        : null
+    : !eligibility
+      ? 'loading'
+      : eligibility.activeReferralCount < eligibility.requiredActiveReferrals
+        ? 'referrals'
+        : eligibility.cooldownEndsAt
+          ? 'cooldown'
+          : null
 
   async function handleSubmit(input: WithdrawalSubmitInput) {
     const created = await onSubmit(input)

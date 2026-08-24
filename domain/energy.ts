@@ -1,4 +1,4 @@
-import { economyConfig } from './economy-config'
+import { economyConfig } from './economy-config.ts'
 
 export function maxEnergy(): number {
   return economyConfig().maxEnergy

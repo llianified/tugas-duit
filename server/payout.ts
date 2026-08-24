@@ -9,6 +9,7 @@ import {
 import type { PoolClient } from 'pg'
 import { query, transaction } from './db'
 import { appendLedger } from './ledger'
+import { REQUIRED_ACTIVE_REFERRALS, WITHDRAWAL_COOLDOWN_MS } from './payout-rules'
 import { requireAdmin, UnauthorizedError } from './session'
 
 export class PayoutError extends Error {
@@ -26,8 +27,7 @@ export class PayoutError extends Error {
 }
 
 const PG_UNIQUE_VIOLATION = '23505'
-export const REQUIRED_ACTIVE_REFERRALS = 5
-export const WITHDRAWAL_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000
+export { REQUIRED_ACTIVE_REFERRALS, WITHDRAWAL_COOLDOWN_MS }
 
 interface PayoutEligibility {
   activeReferralCount: number

@@ -7,7 +7,7 @@ import type { RewardPoolState } from '@/domain/reward-pool'
 import type { Challenge, HistoryEntry } from '@/features/captcha/domain'
 import type { LeaderboardBoard } from '@/features/leaderboard/domain'
 import type { UserStats } from '@/features/stats/domain'
-import type { Withdrawal } from '@/features/withdraw/domain'
+import type { Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
 import { fetchJson, sendJson } from '@/shell/api-client'
 
 export type SessionResponse = {
@@ -77,6 +77,7 @@ export type ReferralResponse = {
 export type WithdrawalsResponse = {
   withdrawals: Withdrawal[]
   totals: { withdrawnCredits: number; processingCredits: number }
+  eligibility: WithdrawalEligibility
 }
 export type SubmitResponse =
   | { ok: true; stars: 1 | 2 | 3; reward: number; balance: number; elapsedMs: number }

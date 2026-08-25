@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       answer?: string
     } | null
     if (!body || typeof body !== 'object') {
-      return apiError('VALIDATION_FAILED', 'Body tidak valid.', 400)
+      return apiError('VALIDATION_FAILED', 'Datanya nggak kebaca. Coba lagi ya.', 400)
     }
 
     const result = await submitAnswer(user.id, body.challengeId ?? '', body.answer ?? '')
@@ -31,14 +31,14 @@ export async function POST(request: Request) {
     if (result.reason === 'daily_task_cap') {
       return apiError(
         'DAILY_TASK_LIMIT',
-        'Batas task harian kamu sudah tercapai. Ongkos masuknya dikembalikan, balik lagi besok ya.',
+        'Jatah task kamu hari ini udah abis. Ongkos masuknya dibalikin, balik lagi besok ya.',
         429,
       )
     }
     if (result.reason === 'pool_empty') {
       return apiError(
         'REWARD_POOL_EMPTY',
-        'Kolam reward kamu kosong. Ongkos masuknya dikembalikan, tunggu kolamnya terisi lagi ya.',
+        'Stok reward kamu lagi kosong. Ongkos masuknya dibalikin, tunggu stoknya keisi lagi ya.',
         429,
       )
     }

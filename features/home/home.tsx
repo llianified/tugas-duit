@@ -7,7 +7,7 @@ import { RecentTransactions } from '@/features/home/recent-transactions'
 import type { Challenge, HistoryEntry } from '@/features/captcha/domain'
 import { WithdrawDialog } from '@/features/withdraw/components/withdraw-dialog'
 import type { WithdrawalSubmitInput } from '@/features/withdraw/components/withdraw-form'
-import type { Withdrawal } from '@/features/withdraw/domain'
+import type { Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
 
 interface HomeViewProps {
   balance: number
@@ -30,6 +30,7 @@ interface HomeViewProps {
   onStart: () => void
   onStartWithAd: () => void
   withdrawals: Withdrawal[]
+  withdrawalEligibility: WithdrawalEligibility | null
   onSubmitWithdrawal: (input: WithdrawalSubmitInput) => Promise<Withdrawal | null>
   onOpenHistory: () => void
 }
@@ -54,6 +55,7 @@ export function HomeView({
   onStart,
   onStartWithAd,
   withdrawals,
+  withdrawalEligibility,
   onSubmitWithdrawal,
   onOpenHistory,
 }: HomeViewProps) {
@@ -100,6 +102,7 @@ export function HomeView({
         onOpenChange={setWithdrawOpen}
         balance={balance}
         withdrawals={withdrawals}
+        eligibility={withdrawalEligibility}
         onSubmit={onSubmitWithdrawal}
       />
     </div>

@@ -13,19 +13,21 @@ import {
 import { WithdrawReceipt } from '@/features/withdraw/components/withdraw-receipt'
 import { WithdrawalList } from '@/features/withdraw/components/withdrawal-list'
 import { getWithdrawalStatus } from '@/domain/economy'
-import type { Withdrawal } from '@/features/withdraw/domain'
+import type { Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
 
 export function WithdrawDialog({
   open,
   onOpenChange,
   balance,
   withdrawals,
+  eligibility,
   onSubmit,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   balance: number
   withdrawals: Withdrawal[]
+  eligibility: WithdrawalEligibility | null
   onSubmit: (input: WithdrawalSubmitInput) => Promise<Withdrawal | null>
 }) {
   return (
@@ -34,7 +36,12 @@ export function WithdrawDialog({
         <Dialog.Backdrop className="animate-in fade-in data-[ending-style]:animate-out data-[ending-style]:fade-out fixed inset-0 z-40 bg-scrim duration-150" />
 
         <Dialog.Popup className="animate-in fade-in zoom-in-95 data-[ending-style]:animate-out data-[ending-style]:fade-out data-[ending-style]:zoom-out-95 fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg bg-card outline-none duration-150">
-          <WithdrawDialogBody balance={balance} withdrawals={withdrawals} onSubmit={onSubmit} />
+          <WithdrawDialogBody
+            balance={balance}
+            withdrawals={withdrawals}
+            eligibility={eligibility}
+            onSubmit={onSubmit}
+          />
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
@@ -44,15 +51,26 @@ export function WithdrawDialog({
 function WithdrawDialogBody({
   balance,
   withdrawals,
+  eligibility,
   onSubmit,
 }: {
   balance: number
   withdrawals: Withdrawal[]
+  eligibility: WithdrawalEligibility | null
   onSubmit: (input: WithdrawalSubmitInput) => Promise<Withdrawal | null>
 }) {
   const [receipt, setReceipt] = useState<Withdrawal | null>(null)
   const [step, setStep] = useState<WithdrawStep>('amount')
   const status = getWithdrawalStatus(balance)
+  const gatingReason = !status.eligible
+    ? 'balance'
+    : !eligibility
+      ? 'loading'
+      : eligibility.activeReferralCount < eligibility.requiredActiveReferrals
+        ? 'referrals'
+        : eligibility.cooldownEndsAt
+          ? 'cooldown'
+          : null
 
   async function handleSubmit(input: WithdrawalSubmitInput) {
     const created = await onSubmit(input)
@@ -75,26 +93,35 @@ function WithdrawDialogBody({
       <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-y-auto px-content pb-[var(--content-px)]">
         {receipt ? (
           <WithdrawReceipt withdrawal={receipt} />
-        ) : status.eligible ? (
-          <WithdrawForm
-            balance={balance}
-            step={step}
-            onStepChange={setStep}
-            onSubmit={handleSubmit}
-          />
         ) : (
           <>
-            <AvailableBalance balance={balance} />
+            {!gatingReason ? (
+              <WithdrawForm
+                balance={balance}
+                step={step}
+                onStepChange={setStep}
+                onSubmit={handleSubmit}
+              />
+            ) : (
+              <>
+                <AvailableBalance balance={balance} />
 
-            <div className="mt-[var(--region-gap)]">
-              <NotEligibleNote />
-            </div>
+                <div className="mt-[var(--region-gap)]">
+                  <NotEligibleNote
+                    reason={gatingReason}
+                    activeReferralCount={eligibility?.activeReferralCount}
+                    requiredActiveReferrals={eligibility?.requiredActiveReferrals}
+                    cooldownEndsAt={eligibility?.cooldownEndsAt}
+                  />
+                </div>
 
-            {withdrawals.length > 0 ? (
-              <div className="mt-[var(--region-gap)]">
-                <WithdrawalList withdrawals={withdrawals} />
-              </div>
-            ) : null}
+                {withdrawals.length > 0 ? (
+                  <div className="mt-[var(--region-gap)]">
+                    <WithdrawalList withdrawals={withdrawals} />
+                  </div>
+                ) : null}
+              </>
+            )}
           </>
         )}
       </div>

@@ -49,6 +49,30 @@ Satu batas datang dari database, bukan dari selera: `maxAttemptsPerTask`
 maksimal 5, karena `challenges.attempts` punya `check (attempts between 0 and
 5)`. Menaikkan batasnya berarti satu migrasi lebih dulu.
 
+## Pesan bot
+
+| Yang terlihat janggal | Kenapa memang begitu | Ditegakkan di |
+| --- | --- | --- |
+| Pesan ajakan dikirim dari cron tiap jam, bukan dari alur yang memicunya | Mengirim HTTP ke Telegram di dalam transaksi yang memegang `for update` pada baris `users` menahan kunci selama panggilan jaringan — di jalur uang itu tidak boleh. Cron juga yang membuat "komisi masuk" jadi satu ringkasan harian, bukan belasan pesan per hari. | `server/engagement.ts`; `scripts/maintenance.ts` |
+| Penanda `bot_notifications` ditulis **sebelum** pesannya dikirim | `bot_notifications_once` cuma menjamin sesuatu kalau barisnya sudah commit sebelum panggilan Telegram. Kirim yang gagal menghapus penandanya lagi, jadi cron berikutnya boleh mencoba ulang — telat sejam lebih baik daripada hilang diam-diam, dan dua-duanya lebih baik daripada satu pesan berangkat dua kali. | `deliver`; test `ENG-9` |
+| Satu user paling banyak menerima **satu** pesan per putaran cron | Semua syarat bisa terpenuhi berbarengan (energi penuh + stok penuh + streak sore). Mengirim semuanya membuat bot terbaca sebagai spam dan mengundang laporan. Urutan prioritasnya tetap: penarikan → rank → streak → komisi → referral → winback → stok → energi. | `pickMessage` |
+| `rank_up` menengok jumlah task 24 jam lalu, bukan cuma rank sekarang | Tanpa pembanding itu, putaran cron pertama setelah deploy mengucapkan selamat naik rank ke setiap user yang sudah lama di rank-nya. `dedupe_key`-nya tingkat rank, jadi pesannya tetap sekali per tingkat. | `completed_count_before`; test `ENG-5` |
+| Streak di `engagement.ts` dihitung sampai **kemarin**, bukan sampai hari ini seperti `STREAK_EXPRESSION` | Pesannya justru untuk user yang belum menyentuh task hari ini, jadi hari ini tidak boleh ikut menambah angkanya. Batas harinya tetap WIB dan bentuk querinya tetap sama. | `STREAK_SQL`; test `ENG-3` |
+| `/stop` tidak mematikan notifikasi penarikan | Yang dimatikan promosi, bukan kabar uang. User yang mengajukan penarikan berhak tahu hasilnya. | migrasi `0026`; `server/notify.ts` |
+| `server/engagement.ts` memakai impor relatif ber-`.ts`, bukan alias `@/` | Ia dimuat cron lewat `node --experimental-strip-types`, dan Node tidak mengerti alias `@/...` dari tsconfig. Impor **tipe** boleh tetap beralias karena dihapus saat strip. Alasan yang sama membuat `payout-rules.ts` dipisah dari `payout.ts`: yang terakhir menyeret `next/headers` lewat `./session`. | `server/engagement.ts`; `server/payout-rules.ts` |
+
+## Nama "kolam" tinggal di kode, tidak di layar
+
+`reward_pool`, `rewardPoolCapacity`, dan seluruh nama fungsi tetap memakai "pool"/"kolam".
+Yang dilihat user memakai **"stok reward"** — dikonfirmasi pemilik repo, karena "kolam"
+terbaca seperti kolam renang. Jangan menyamakan keduanya dengan rename massal: nama kode
+sudah dipakai di migrasi, kolom DB, dan test. Label panel admin masih memakai "kolam" dan
+itu belum diputuskan; admin panel dibaca pemilik repo, bukan user.
+
+Sebelumnya pill kolam di header berlabel **"Limit harian"** — sisa dari plafon harian yang
+sudah diganti migrasi `0023`. Sekarang "Stok reward", karena tidak ada lagi yang reset
+tengah malam.
+
 ## Batas hari
 
 Seluruh konsep "hari" memakai WIB dan harus sama persis dengan

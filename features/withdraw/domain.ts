@@ -72,6 +72,21 @@ export function getPayoutChannel(id: string): PayoutChannel {
 
 type WithdrawalState = 'processing' | 'paid' | 'rejected'
 
+export interface WithdrawalEligibility {
+  activeReferralCount: number
+  requiredActiveReferrals: number
+  cooldownEndsAt: number | null
+}
+
+/** Satu penarikan yang benar-benar sudah dibayar, nama penerimanya sudah dimask di server. */
+export interface PublicPayout {
+  recipient: string
+  channelId: string
+  credits: number
+  amountIdr: number
+  paidAt: number
+}
+
 export interface Withdrawal {
   id: string
   channelId: string

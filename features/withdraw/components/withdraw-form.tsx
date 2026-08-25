@@ -5,6 +5,7 @@ import { useMemo, useRef, useState } from 'react'
 import { stepVariants } from '@/shared/lib/motion'
 import { AccountStep } from '@/features/withdraw/components/account-step'
 import { AmountStep } from '@/features/withdraw/components/amount-step'
+import { WithdrawConfirmDialog } from '@/features/withdraw/components/withdraw-confirm-dialog'
 import {
   DEFAULT_PAYOUT_CHANNEL_ID,
   getPayoutChannel,
@@ -51,6 +52,8 @@ export function WithdrawForm({
   const [amountSubmitted, setAmountSubmitted] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [pendingInput, setPendingInput] = useState<WithdrawalSubmitInput | null>(null)
   const submittingRef = useRef(false)
 
   const channel = getPayoutChannel(draft.channelId)
@@ -67,7 +70,7 @@ export function WithdrawForm({
     onStepChange('account')
   }
 
-  async function handleSubmit() {
+  function handleSubmit() {
     if (submittingRef.current) return
     setSubmitted(true)
 
@@ -79,20 +82,28 @@ export function WithdrawForm({
 
     if (!isDraftValid(errors)) return
 
-    submittingRef.current = true
-    setIsSubmitting(true)
-    await onSubmit({
+    setPendingInput({
       channelId: draft.channelId,
       accountNumber: draft.accountNumber,
       accountName: draft.accountName,
       credits,
     })
+    setConfirmOpen(true)
+  }
+
+  async function handleConfirm() {
+    if (submittingRef.current || !pendingInput) return
+    submittingRef.current = true
+    setIsSubmitting(true)
+    const created = await onSubmit(pendingInput)
+    if (created) setConfirmOpen(false)
     submittingRef.current = false
     setIsSubmitting(false)
   }
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <>
+      <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={step}
         variants={stepVariants(step === 'account' ? 1 : -1)}
@@ -124,7 +135,15 @@ export function WithdrawForm({
             onSubmit={handleSubmit}
           />
         )}
-      </motion.div>
-    </AnimatePresence>
+        </motion.div>
+      </AnimatePresence>
+      <WithdrawConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        input={pendingInput}
+        isSubmitting={isSubmitting}
+        onConfirm={handleConfirm}
+      />
+    </>
   )
 }

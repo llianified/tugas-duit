@@ -183,6 +183,7 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     withdrawnCredits: payoutData?.totals.withdrawnCredits ?? session?.breakdown?.withdrawnCredits ?? 0,
     processingCredits: payoutData?.totals.processingCredits ?? 0,
     withdrawals,
+    withdrawalEligibility: payoutData?.eligibility ?? null,
     referrals,
     referralSummary,
     referralCode: referralData?.code ?? session?.user?.referralCode ?? '',

@@ -8,22 +8,57 @@ import {
   firstWithdrawalEstimateDays,
   withdrawalMinimumCredits,
 } from '@/domain/economy'
-import { formatRupiah } from '@/shared/lib/format'
+import { formatCredits, formatHistoryTime, formatRupiah } from '@/shared/lib/format'
 
-export function NotEligibleNote() {
+export function NotEligibleNote({
+  reason = 'balance',
+  activeReferralCount = 0,
+  requiredActiveReferrals = 5,
+  cooldownEndsAt = null,
+}: {
+  reason?: 'balance' | 'referrals' | 'cooldown' | 'loading'
+  activeReferralCount?: number
+  requiredActiveReferrals?: number
+  cooldownEndsAt?: number | null
+}) {
+  const title =
+    reason === 'balance'
+      ? 'Belum bisa ditarik'
+      : reason === 'loading'
+        ? 'Lagi ngecek syaratnya'
+        : reason === 'referrals'
+          ? 'Referral belum cukup'
+          : 'Masih cooldown'
+
   return (
-    <Surface as="section" aria-label="Saldo belum bisa ditarik">
+    <Surface as="section" aria-label={title}>
       <div className="flex items-center gap-3">
         <IconCircle tone="card">
           <GlyphWallet className="glyph-md" />
         </IconCircle>
-        <p className="min-w-0 text-sm font-semibold tracking-tight">Belum bisa ditarik</p>
+        <p className="min-w-0 text-sm font-semibold tracking-tight">{title}</p>
       </div>
 
       <p className="stack-gap-t text-xs leading-relaxed text-muted-foreground text-pretty">
-        Nabung dulu sampai {formatRupiah(creditsToRupiah(withdrawalMinimumCredits()))} ya, baru
-        penarikannya kebuka. Dengan plafon dasar harian, penarikan pertama bisa tercapai sekitar{' '}
-        {firstWithdrawalEstimateDays()} hari aktif; bonus rank dan streak bisa mempercepatnya.
+        {reason === 'balance' ? (
+          <>
+            Nabung dulu sampai {formatRupiah(creditsToRupiah(withdrawalMinimumCredits()))} ya, baru
+            penarikannya kebuka. Dengan laju isi ulang stok reward sekarang, penarikan pertama
+            biasanya kekejar sekitar {firstWithdrawalEstimateDays()} hari aktif — bonus rank sama
+            streak bisa mempercepat.
+          </>
+        ) : reason === 'loading' ? (
+          <>Bentar ya, kami lagi ngecek syarat penarikan kamu.</>
+        ) : reason === 'referrals' ? (
+          <>
+            Kamu punya {formatCredits(activeReferralCount)} dari {formatCredits(requiredActiveReferrals)}{' '}
+            referral aktif. Teman kamu baru kehitung aktif setelah dia ngerjain minimal 1 task.
+          </>
+        ) : (
+          <>
+            Kamu bisa tarik dana lagi {cooldownEndsAt ? formatHistoryTime(cooldownEndsAt) : 'setelah cooldown-nya kelar'}. Cooldown-nya 7 hari dihitung dari pengajuan terakhir — tetap jalan walau pengajuannya ditolak.
+          </>
+        )}
       </p>
     </Surface>
   )

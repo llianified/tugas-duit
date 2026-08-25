@@ -191,7 +191,7 @@ function RewardPoolRegion({
 
   return (
     <IslandStat
-      label="Limit harian"
+      label="Stok reward"
       tone={poolFull ? 'success' : 'primary'}
       value={
         poolFull
@@ -202,7 +202,7 @@ function RewardPoolRegion({
         <ProgressBar
           value={isOpen ? poolLeft : 0}
           max={rewardPoolMax}
-          valueText={`${formatCredits(poolLeft)} dari ${formatCredits(rewardPoolMax)} credit kolam reward tersisa`}
+          valueText={`${formatCredits(poolLeft)} dari ${formatCredits(rewardPoolMax)} credit stok reward tersisa`}
         />
       }
     />

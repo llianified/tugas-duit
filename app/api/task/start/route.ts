@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       payWith?: string
     } | null
     if (!body || typeof body !== 'object') {
-      return apiError('VALIDATION_FAILED', 'Body tidak valid.', 400)
+      return apiError('VALIDATION_FAILED', 'Datanya nggak kebaca. Coba lagi ya.', 400)
     }
     const payWith: TaskPayment = body.payWith === 'ad' ? 'ad' : 'energy'
     const started = await startChallenge(user.id, body.challengeId ?? '', payWith)
@@ -39,13 +39,13 @@ export async function POST(request: Request) {
       if (started.reason === 'ad_pass_missing')
         return apiError(
           'AD_PASS_MISSING',
-          'Tiket iklan kamu sudah tidak berlaku. Nonton iklannya lagi ya.',
+          'Tiket iklan kamu udah kedaluwarsa. Nonton iklannya sekali lagi ya.',
           409,
         )
       if (started.reason === 'pool_empty')
         return apiError(
           'REWARD_POOL_EMPTY',
-          'Kolam reward kamu kosong. Tunggu terisi lagi ya, energi kamu tidak terpakai.',
+          'Stok reward kamu lagi kosong. Tunggu keisi lagi ya, energi kamu nggak kepakai.',
           409,
         )
       return apiError('CHALLENGE_NOT_STARTABLE', 'Soalnya nggak bisa dimulai. Ambil soal baru ya.', 409)

@@ -1,6 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
-import { query } from './db'
-import { env } from './env'
+import { query } from './db.ts'
+import { env } from './env.ts'
 
 const MAX_AUTH_AGE_SECONDS = 900
 interface TelegramUser { id: number; first_name: string; username?: string; photo_url?: string }
@@ -61,4 +61,10 @@ export async function sendTelegramMessage(chatId: string, text: string, options:
     }),
   })
   if (!response.ok) throw new Error(`Telegram API ${response.status}`)
+}
+
+export function openAppMarkup(label: string): SendMessageOptions {
+  const bot = env.botUsernameOrNull
+  if (!bot) return {}
+  return { replyMarkup: { inline_keyboard: [[{ text: label, url: `https://t.me/${bot}/app` }]] } }
 }

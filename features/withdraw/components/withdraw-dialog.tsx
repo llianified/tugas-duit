@@ -10,7 +10,6 @@ import {
   type WithdrawalSubmitInput,
   type WithdrawStep,
 } from '@/features/withdraw/components/withdraw-form'
-import { PublicPayoutList } from '@/features/withdraw/components/public-payout-list'
 import { WithdrawReceipt } from '@/features/withdraw/components/withdraw-receipt'
 import { WithdrawalList } from '@/features/withdraw/components/withdrawal-list'
 import { getWithdrawalStatus } from '@/domain/economy'
@@ -123,8 +122,6 @@ function WithdrawDialogBody({
                 ) : null}
               </>
             )}
-
-            <PublicPayoutList />
           </>
         )}
       </div>

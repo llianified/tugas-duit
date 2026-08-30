@@ -48,10 +48,12 @@ async function readEnergyValue(userId: number): Promise<number> {
 
 async function readAdView(id: string) {
   const { query } = await import('./db')
-  const rows = await query<{ state: string; consumed_at: Date | null; ready_at: Date | null }>(
-    'select state, consumed_at, ready_at from ad_views where id=$1',
-    [id],
-  )
+  const rows = await query<{
+    state: string
+    consumed_at: Date | null
+    ready_at: Date | null
+    expires_at: Date
+  }>('select state, consumed_at, ready_at, expires_at from ad_views where id=$1', [id])
   return rows[0]
 }
 
@@ -302,5 +304,39 @@ describe('ADS-DB-8 — tayangan yang tidak pernah diklaim tidak memotong jatah',
     await grantPass(userId)
 
     expect((await readAdsState(userId)).viewsLeft).toBe(1)
+  })
+})
+
+describe('ADS-DB-9 — pass yang dihidupkan ulang memakai tenggat aslinya', () => {
+  it('tidak memperpanjang umur pass dan menolak menghidupkan pass yang sudah lewat tenggat', async () => {
+    withConfig({})
+    const ttlMs = DEFAULT_ECONOMY_CONFIG.adsPassTtlMinutes * 60_000
+    const { query, transaction } = await import('./db')
+    const { issueChallenge, startChallenge } = await import('./challenge')
+    const { refundEntry } = await import('./energy')
+    const userId = await makeUser(5)
+    const ticketId = await grantPass(userId)
+
+    const first = await issueChallenge(userId)
+    expect((await startChallenge(userId, first.id, 'ad')).ok).toBe(true)
+    await query("update ad_views set ready_at=now()-interval '29 minutes' where id=$1", [ticketId])
+
+    expect(await transaction((tx) => refundEntry(tx, userId, first.id))).toEqual({ refunded: true })
+    const revived = await readAdView(ticketId)
+    expect(revived.state).toBe('ready')
+    expect(revived.ready_at).not.toBeNull()
+    expect(revived.expires_at.getTime() - (revived.ready_at as Date).getTime()).toBe(ttlMs)
+    expect(revived.expires_at.getTime() - Date.now()).toBeLessThan(ttlMs)
+
+    await query('update challenges set submitted_at=now() where id=$1', [first.id])
+    const second = await issueChallenge(userId)
+    expect((await startChallenge(userId, second.id, 'ad')).ok).toBe(true)
+    await query("update ad_views set ready_at=now()-interval '31 minutes' where id=$1", [ticketId])
+
+    expect(await transaction((tx) => refundEntry(tx, userId, second.id))).toEqual({
+      refunded: false,
+    })
+    expect((await readAdView(ticketId)).state).toBe('consumed')
+    expect(await readEnergyValue(userId)).toBe(5)
   })
 })

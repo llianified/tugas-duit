@@ -1,5 +1,6 @@
 import { creditsToRupiah, maxPayoutCredits, withdrawalMinimumCredits } from '@/domain/economy'
 import {
+  getPayoutChannel,
   isDraftValid,
   maskAccountNumber,
   PAYOUT_CHANNELS,
@@ -88,6 +89,14 @@ const view = (row: PayoutRow) => ({
   rejectReason: row.reject_reason,
 })
 
+function sharedDestinationChannels(channelId: string): string[] {
+  const channel = getPayoutChannel(channelId)
+  if (channel.kind !== 'ewallet') return [channel.id]
+  return PAYOUT_CHANNELS.filter((candidate) => candidate.kind === 'ewallet').map(
+    (candidate) => candidate.id,
+  )
+}
+
 export async function createPayout(
   userId: number,
   body: { channelId: string; accountNumber: string; accountName: string; credits: number },
@@ -144,8 +153,8 @@ export async function createPayout(
 
     const destination = sanitizeAccountNumber(body.accountNumber)
     const taken = await tx.query(
-      'select 1 from withdrawals where channel_id=$1 and account_number=$2 and user_id<>$3 limit 1',
-      [body.channelId, destination, userId],
+      'select 1 from withdrawals where channel_id=any($1::text[]) and account_number=$2 and user_id<>$3 limit 1',
+      [sharedDestinationChannels(body.channelId), destination, userId],
     )
     if (taken.rows.length) throw new PayoutError('ACCOUNT_NUMBER_IN_USE', 409)
 

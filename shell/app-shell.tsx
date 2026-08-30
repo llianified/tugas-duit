@@ -10,6 +10,7 @@ import { AppViewRouter } from '@/shell/app-view-router'
 import { ThemeProvider, useTheme } from '@/shell/theme'
 import { ToastProvider, useToast } from '@/shell/toast'
 import { useTelegramChromeColor, useTelegramViewport } from '@/shell/telegram-viewport'
+import { inAppZoneId, useInAppAds } from '@/shell/use-in-app-ads'
 import { useRewardSession } from '@/shell/use-reward-session'
 
 export function AppShell() {
@@ -32,6 +33,14 @@ function AppShellInner() {
   const session = useRewardSession({ onError: showError })
   const [progressionPanelOpen, setProgressionPanelOpen] = useState(false)
   const [liveTaskReward, setLiveTaskReward] = useState<number | null>(null)
+
+  /**
+   * Interstitial otomatis ikut satu saklar dengan iklan berhadiah: `ads.enabled` di
+   * `/api/session` diturunkan dari `adsMaxViewsPerDay`, jadi mengisi 0 di panel ekonomi
+   * mematikan keduanya tanpa deploy. Dipasang di sini, bukan di `app/layout.tsx`, karena
+   * saklarnya baru diketahui setelah sesi termuat.
+   */
+  useInAppAds({ enabled: session.adsEnabled, zoneId: inAppZoneId() })
 
   useEffect(() => {
     if (!session.sessionFailed) return

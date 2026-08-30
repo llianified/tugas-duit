@@ -2,39 +2,10 @@
 
 import { useCallback, useState } from 'react'
 import { monetagSdkName } from '@/domain/ads'
+import { beginRewarded, endRewarded, waitForInAppIdle } from '@/shell/ad-gate'
+import { showFailureReason, waitForShow } from '@/shell/monetag-sdk'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
 import type { AdClaimResponse, AdsState, AdTicketResponse } from '@/shell/session-api'
-
-/**
- * SDK Monetag hanya menempel satu fungsi global per zone — namanya diambil dari atribut
- * `data-sdk` di script tag (lihat `app/layout.tsx`), jadi bentuknya `show_<zone>`. Tidak
- * ada `init`, tidak ada instance yang perlu di-cache atau di-`destroy`: zone-nya sudah
- * menempel di script tag, dan fungsinya boleh dipanggil berulang.
- */
-type MonetagShow = (params?: unknown) => Promise<unknown>
-
-/**
- * Nama fungsinya baru diketahui saat runtime (`show_<zone>`), jadi pembacaannya lewat
- * indeks — bukan properti bernama pada `Window`. `unknown` dulu, baru dipastikan callable,
- * supaya SDK yang belum termuat atau berubah bentuk tidak lolos jadi `TypeError`.
- */
-function readShow(name: string): MonetagShow | undefined {
-  const candidate = (globalThis as unknown as Record<string, unknown>)[name]
-  return typeof candidate === 'function' ? (candidate as MonetagShow) : undefined
-}
-
-const SDK_WAIT_MS = 8_000
-const SDK_POLL_MS = 200
-
-async function waitFor<T>(read: () => T | undefined): Promise<T | null> {
-  const deadline = Date.now() + SDK_WAIT_MS
-  while (Date.now() < deadline) {
-    const value = read()
-    if (value) return value
-    await new Promise((resolve) => setTimeout(resolve, SDK_POLL_MS))
-  }
-  return null
-}
 
 const SHOW_FAILED_MESSAGE = 'Iklannya belum selesai ditonton, jadi tiketnya belum bisa dipakai.'
 const SDK_MISSING_MESSAGE = 'Iklannya gagal dimuat. Coba lagi sebentar lagi ya.'
@@ -42,21 +13,10 @@ const SDK_MISSING_MESSAGE = 'Iklannya gagal dimuat. Coba lagi sebentar lagi ya.'
 /**
  * `show_<zone>()` bisa reject karena dua hal yang tampak sama di UI tapi beda akarnya:
  * penonton menutup iklan lebih awal (wajar), atau kreatifnya memang tidak pernah termuat
- * (stok kosong / diblokir). Monetag tidak menjanjikan bentuk error tertentu — kadang
- * string, kadang `Error`, kadang objek — jadi alasannya diringkas apa adanya dan
+ * (stok kosong / diblokir). Alasan mentahnya diringkas oleh `showFailureReason` lalu
  * ditempelkan ke pesan. Tanpa ini satu-satunya petunjuk yang tersisa cuma "belum selesai
  * ditonton", yang menyesatkan saat penyebabnya iklan gagal muat.
  */
-function showFailureReason(error: unknown): string {
-  if (typeof error === 'string') return error
-  if (error instanceof Error) return error.message
-  if (error && typeof error === 'object') {
-    const message = (error as { message?: unknown }).message
-    if (typeof message === 'string') return message
-  }
-  return ''
-}
-
 function showFailureMessage(error: unknown): string {
   const reason = showFailureReason(error).trim().slice(0, 80)
   return reason ? `${SHOW_FAILED_MESSAGE} (${reason})` : SHOW_FAILED_MESSAGE
@@ -79,8 +39,7 @@ export function useAdPass({
    * suatu saat postback server-ke-server mereka dipakai.
    */
   const getPlayer = useCallback(async (unitId: string, ticketId: string) => {
-    const name = monetagSdkName(unitId)
-    const show = await waitFor(() => readShow(name))
+    const show = await waitForShow(monetagSdkName(unitId))
     if (!show) return null
     return () => show({ ymid: ticketId })
   }, [])
@@ -91,6 +50,13 @@ export function useAdPass({
     if (watchingAd) return false
     if (hasPass) return true
     setWatchingAd(true)
+    /**
+     * Palang dinaikkan sebelum tiket dibuat, bukan sebelum `play()`: sejak tiket ada,
+     * ada credit yang dipertaruhkan, dan interstitial otomatis harus sudah menahan
+     * jadwalnya. Menurunkannya di `finally` supaya kegagalan di tengah tidak
+     * mengunci jadwal interstitial selamanya.
+     */
+    beginRewarded()
     try {
       const ticket = await sendJson<AdTicketResponse>('/api/ads/ticket', 'POST')
       const play = await getPlayer(ticket.unitId, ticket.ticketId)
@@ -98,6 +64,9 @@ export function useAdPass({
         notifyError(SDK_MISSING_MESSAGE)
         return false
       }
+      // Kalau interstitial keburu tayang sebelum palangnya naik, tunggu selesai dulu
+      // supaya dua iklan tidak bertumpuk di layar yang sama.
+      await waitForInAppIdle()
       try {
         await play()
       } catch (error) {
@@ -111,6 +80,7 @@ export function useAdPass({
       notifyError(userFacingMessage(error))
       return false
     } finally {
+      endRewarded()
       setWatchingAd(false)
       await refreshSession()
     }

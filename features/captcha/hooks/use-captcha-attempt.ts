@@ -21,6 +21,8 @@ export function useCaptchaAttempt(
   const [verifying, setVerifying] = useState(false)
   const [outcome, setOutcome] = useState<TaskOutcome | null>(null)
   const startedAt = useRef<number | null>(null)
+  // Captured once: later changes must not shift the clock mid-attempt.
+  const initialElapsedRef = useRef(initialElapsedMs)
   const [liveElapsedMs, setLiveElapsedMs] = useState(initialElapsedMs)
   const onErrorRef = useRef(onError)
   useEffect(() => {
@@ -29,7 +31,7 @@ export function useCaptchaAttempt(
   const notifyError = useCallback((message: string) => onErrorRef.current(message), [])
 
   useEffect(() => {
-    startedAt.current = performance.now() - initialElapsedMs
+    startedAt.current = performance.now() - initialElapsedRef.current
   }, [])
 
   useEffect(() => {

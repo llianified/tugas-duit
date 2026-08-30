@@ -3,14 +3,17 @@
 import { IslandDivider, IslandPill, IslandStat } from '@/features/home/island-pill'
 import { ProfileAvatar } from '@/features/home/profile-avatar'
 import type { UserStats } from '@/features/stats/domain'
-import type { SessionResponse } from '@/shell/session-api'
+import type { PremiumState, SessionResponse } from '@/shell/session-api'
+import { GlyphCrown } from '@/shared/components/glyph'
 import { formatCredits, formatCreditsDecimal, formatShortDate } from '@/shared/lib/format'
+import { cn } from '@/shared/lib/utils'
 
 type SessionUser = NonNullable<SessionResponse['user']>
 
 export function ProfileIsland({
   user,
   stats,
+  premium = null,
   isOpen,
   slideOutTo,
   onToggle,
@@ -18,12 +21,14 @@ export function ProfileIsland({
 }: {
   user: SessionUser
   stats: UserStats
+  premium?: PremiumState | null
   isOpen: boolean
   slideOutTo?: 'left' | 'right'
   onToggle: () => void
   onClose: () => void
 }) {
   const handle = user.username ? `@${user.username}` : user.id
+  const isPremium = Boolean(premium?.active)
 
   return (
     <IslandPill
@@ -38,7 +43,10 @@ export function ProfileIsland({
       onToggle={onToggle}
       onClose={onClose}
       className="mr-1.5"
-      pillClassName="w-[var(--brand-pill-h)] overflow-hidden p-0"
+      pillClassName={cn(
+        'w-[var(--brand-pill-h)] overflow-hidden p-0',
+        isPremium && 'shadow-[0_0_0_1.5px_var(--premium)]',
+      )}
     >
       <IslandStat
         label={
@@ -47,12 +55,23 @@ export function ProfileIsland({
             <span className="truncate text-xs font-semibold text-foreground">
               {user.firstName}
             </span>
+            {isPremium ? <GlyphCrown className="size-3.5 shrink-0 text-premium" /> : null}
           </span>
         }
         tone="muted"
         value={handle}
       />
       <IslandDivider />
+      {isPremium && premium ? (
+        <>
+          <IslandStat
+            label="Premium"
+            tone="success"
+            value={`Aktif · ${formatCredits(premium.daysLeft)} hari lagi`}
+          />
+          <IslandDivider />
+        </>
+      ) : null}
       <IslandStat
         label="Gabung"
         tone="muted"

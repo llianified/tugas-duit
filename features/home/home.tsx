@@ -4,7 +4,11 @@ import { useState } from 'react'
 import { ActiveTask } from '@/features/home/active-task'
 import { BalanceSummary } from '@/features/home/balance-summary'
 import { RecentTransactions } from '@/features/home/recent-transactions'
+import { ChannelBonusCard } from '@/features/channel/channel-card'
+import { PremiumCard } from '@/features/premium/components/premium-card'
+import { PremiumDialog } from '@/features/premium/components/premium-dialog'
 import type { Challenge, HistoryEntry } from '@/features/captcha/domain'
+import type { ChannelBonusState, PremiumState } from '@/shell/session-api'
 import { WithdrawDialog } from '@/features/withdraw/components/withdraw-dialog'
 import type { WithdrawalSubmitInput } from '@/features/withdraw/components/withdraw-form'
 import type { Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
@@ -33,6 +37,9 @@ interface HomeViewProps {
   withdrawalEligibility: WithdrawalEligibility | null
   onSubmitWithdrawal: (input: WithdrawalSubmitInput) => Promise<Withdrawal | null>
   onOpenHistory: () => void
+  premium: PremiumState | null
+  channelBonus: ChannelBonusState | null
+  onRefreshSession: () => Promise<unknown>
 }
 
 const ENTER_STEP_CLASS = ['enter-step-0', 'enter-step-1', 'enter-step-2'] as const
@@ -58,8 +65,12 @@ export function HomeView({
   withdrawalEligibility,
   onSubmitWithdrawal,
   onOpenHistory,
+  premium,
+  channelBonus,
+  onRefreshSession,
 }: HomeViewProps) {
   const [withdrawOpen, setWithdrawOpen] = useState(false)
+  const [premiumOpen, setPremiumOpen] = useState(false)
 
   return (
     <div className="view-min-h flex flex-col">
@@ -91,6 +102,17 @@ export function HomeView({
         </div>
       </div>
 
+      {channelBonus || premium ? (
+        <div className={`animate-view-in region-t space-y-[var(--region-gap)] ${ENTER_STEP_CLASS[2]}`}>
+          {channelBonus ? (
+            <ChannelBonusCard bonus={channelBonus} onClaimed={onRefreshSession} />
+          ) : null}
+          {premium ? (
+            <PremiumCard premium={premium} onOpen={() => setPremiumOpen(true)} />
+          ) : null}
+        </div>
+      ) : null}
+
       <div
         className={`animate-view-in region-t region-t-flush view-trim-b [--view-trim-b:var(--list-row-py)] ${ENTER_STEP_CLASS[2]}`}
       >
@@ -105,6 +127,15 @@ export function HomeView({
         eligibility={withdrawalEligibility}
         onSubmit={onSubmitWithdrawal}
       />
+
+      {premium ? (
+        <PremiumDialog
+          open={premiumOpen}
+          onOpenChange={setPremiumOpen}
+          premium={premium}
+          onRefresh={onRefreshSession}
+        />
+      ) : null}
     </div>
   )
 }

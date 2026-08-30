@@ -22,6 +22,8 @@ const GROUP_LABEL: Record<EconomyGroup, string> = {
   withdrawal: 'Penarikan',
   referral: 'Referral',
   progression: 'Rank',
+  channel: 'Channel',
+  premium: 'Premium',
 }
 
 const GROUP_ORDER: EconomyGroup[] = [
@@ -34,6 +36,8 @@ const GROUP_ORDER: EconomyGroup[] = [
   'withdrawal',
   'referral',
   'progression',
+  'channel',
+  'premium',
 ]
 
 type Draft = Record<EconomyConfigKey, string>

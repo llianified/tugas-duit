@@ -150,6 +150,9 @@ export function AppViewRouter({
       withdrawalEligibility={session.withdrawalEligibility}
       onSubmitWithdrawal={session.submitWithdrawal}
       onOpenHistory={session.openHistory}
+      premium={session.premium}
+      channelBonus={session.channelBonus}
+      onRefreshSession={session.refreshSession}
     />
   )
 }

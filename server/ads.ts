@@ -259,9 +259,8 @@ export async function restoreAdPass(
   const restored = await tx.query<{ id: string }>(
     `update ad_views
         set state='ready', consumed_at=null,
-            expires_at=ready_at+($3::int * interval '1 minute')
+            expires_at=now()+($3::int * interval '1 minute')
       where id=$1 and user_id=$2 and state='consumed'
-        and ready_at+($3::int * interval '1 minute') > now()
         and not exists (
           select 1 from ad_views other
            where other.user_id=$2 and other.state='ready'

@@ -53,6 +53,15 @@ export interface EconomyConfig {
   rankTier3Tasks: number
   rankTier4Tasks: number
   rankTier5Tasks: number
+  channelJoinBonusCredits: number
+  premiumPrice1Idr: number
+  premiumPrice2Idr: number
+  premiumPrice3Idr: number
+  premiumMaxEnergy: number
+  premiumEnergyRegenMinutes: number
+  premiumPoolCapBonus: number
+  premiumMaxTasksPerDay: number
+  premiumWithdrawalCooldownDays: number
 }
 
 export type EconomyConfigKey = keyof EconomyConfig
@@ -108,6 +117,15 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   rankTier3Tasks: 300,
   rankTier4Tasks: 700,
   rankTier5Tasks: 1_500,
+  channelJoinBonusCredits: 25,
+  premiumPrice1Idr: 19_900,
+  premiumPrice2Idr: 34_900,
+  premiumPrice3Idr: 44_900,
+  premiumMaxEnergy: 10,
+  premiumEnergyRegenMinutes: 25,
+  premiumPoolCapBonus: 15,
+  premiumMaxTasksPerDay: 1_000,
+  premiumWithdrawalCooldownDays: 3,
 }
 
 export type EconomyGroup =
@@ -120,6 +138,8 @@ export type EconomyGroup =
   | 'withdrawal'
   | 'referral'
   | 'progression'
+  | 'channel'
+  | 'premium'
 
 export interface EconomyFieldMeta {
   key: EconomyConfigKey
@@ -347,6 +367,60 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     impact: 'Menurunkannya mempercepat user mencapai rank tinggi, sehingga bonus kapasitas kolam datang lebih cepat.',
     min: 1, max: 1_000_000, riskyWhen: 'lower',
   })),
+  {
+    key: 'channelJoinBonusCredits', group: 'channel', label: 'Bonus join channel', unit: 'credit',
+    description: 'Credit sekali seumur akun untuk user yang terbukti jadi anggota channel Telegram. Keanggotaannya diperiksa ke Telegram, bukan dipercaya dari klik. Isi 0 untuk mematikan kartunya tanpa deploy.',
+    impact: 'Menaikkannya menaikkan biaya akuisisi setiap akun baru yang join channel.',
+    min: 0, max: 1_000, riskyWhen: 'higher',
+  },
+  {
+    key: 'premiumPrice1Idr', group: 'premium', label: 'Harga premium 1 bulan', unit: 'Rp',
+    description: 'Harga paket premium satu bulan sebelum kode unik dari QRIS ditambahkan.',
+    impact: 'Menurunkannya menurunkan pendapatan langganan per pembeli.',
+    min: 1_000, max: 10_000_000, riskyWhen: 'lower',
+  },
+  {
+    key: 'premiumPrice2Idr', group: 'premium', label: 'Harga premium 2 bulan', unit: 'Rp',
+    description: 'Harga paket dua bulan. Harus lebih murah per bulan daripada paket satu bulan.',
+    impact: 'Menurunkannya menurunkan pendapatan langganan per pembeli.',
+    min: 1_000, max: 10_000_000, riskyWhen: 'lower',
+  },
+  {
+    key: 'premiumPrice3Idr', group: 'premium', label: 'Harga premium 3 bulan', unit: 'Rp',
+    description: 'Harga paket tiga bulan. Harus lebih murah per bulan daripada paket dua bulan.',
+    impact: 'Menurunkannya menurunkan pendapatan langganan per pembeli.',
+    min: 1_000, max: 10_000_000, riskyWhen: 'lower',
+  },
+  {
+    key: 'premiumMaxEnergy', group: 'premium', label: 'Kapasitas energi premium', unit: 'energi',
+    description: 'Stok energi maksimum user premium. Tidak boleh di bawah kapasitas energi biasa, dan batas 10 datang dari constraint users_energy_range.',
+    impact: 'Menaikkannya memperbanyak task yang bisa dikerjakan sekaligus oleh user premium.',
+    min: 1, max: 10, riskyWhen: 'higher',
+  },
+  {
+    key: 'premiumEnergyRegenMinutes', group: 'premium', label: 'Interval regen energi premium', unit: 'menit',
+    description: 'Berapa menit sekali satu energi user premium terisi kembali. Tidak boleh lebih lambat daripada interval biasa.',
+    impact: 'Menurunkannya mempercepat regen energi premium, sehingga plafon kolam habis lebih cepat.',
+    min: 1, max: 1_440, riskyWhen: 'lower',
+  },
+  {
+    key: 'premiumPoolCapBonus', group: 'premium', label: 'Bonus kapasitas kolam premium', unit: 'credit',
+    description: 'Tambahan daya tampung kolam reward untuk user premium. Menambah yang bisa ditumpuk sebelum kolam penuh, bukan laju isi ulangnya — jadi penghasilan maksimum per hari tidak ikut naik.',
+    impact: 'Menaikkannya memperbesar kolam user premium.',
+    min: 0, max: 100, riskyWhen: 'higher',
+  },
+  {
+    key: 'premiumMaxTasksPerDay', group: 'premium', label: 'Batas task harian premium', unit: 'task',
+    description: 'Jaring anti-bot untuk user premium. Tidak boleh di bawah batas task harian biasa.',
+    impact: 'Menaikkannya melonggarkan jaring anti-bot premium; tidak menaikkan payout karena kolam reward tetap mengikat.',
+    min: 1, max: 100_000, riskyWhen: 'never',
+  },
+  {
+    key: 'premiumWithdrawalCooldownDays', group: 'premium', label: 'Jeda penarikan premium', unit: 'hari',
+    description: 'Jarak minimum antara dua pengajuan penarikan user premium. Menggantikan jeda 7 hari yang berlaku untuk user biasa.',
+    impact: 'Menurunkannya membuat user premium menarik lebih sering, sehingga biaya transfer per rupiah naik.',
+    min: 1, max: 365, riskyWhen: 'lower',
+  },
 ]
 
 export type EconomyValidationErrors = Partial<Record<EconomyConfigKey, string>> & { _?: string }
@@ -423,6 +497,29 @@ export function validateEconomyConfig(input: unknown): {
   if (config.energyCostPerTask > config.maxEnergy) {
     errors.energyCostPerTask =
       `Biaya energi per task tidak boleh melebihi kapasitas energi (${config.maxEnergy}).`
+  }
+
+  if (config.premiumMaxEnergy < config.maxEnergy) {
+    errors.premiumMaxEnergy =
+      `Kapasitas energi premium tidak boleh di bawah kapasitas biasa (${config.maxEnergy}).`
+  }
+
+  if (config.premiumEnergyRegenMinutes > config.energyRegenMinutes) {
+    errors.premiumEnergyRegenMinutes =
+      `Regen energi premium tidak boleh lebih lambat daripada regen biasa (${config.energyRegenMinutes} menit).`
+  }
+
+  if (config.premiumMaxTasksPerDay < config.maxTasksPerDay) {
+    errors.premiumMaxTasksPerDay =
+      `Batas task harian premium tidak boleh di bawah batas biasa (${config.maxTasksPerDay}).`
+  }
+
+  if (config.premiumPrice2Idr >= config.premiumPrice1Idr * 2) {
+    errors.premiumPrice2Idr = 'Paket 2 bulan harus lebih murah per bulan daripada paket 1 bulan.'
+  }
+
+  if (config.premiumPrice3Idr * 2 >= config.premiumPrice2Idr * 3) {
+    errors.premiumPrice3Idr = 'Paket 3 bulan harus lebih murah per bulan daripada paket 2 bulan.'
   }
 
   if (config.maxPayoutIdr < config.withdrawalMinimumIdr) {

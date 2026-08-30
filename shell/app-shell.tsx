@@ -112,6 +112,7 @@ function AppShellInner() {
             })}
             user={session.user}
             stats={session.stats}
+            premium={session.premium}
             showProfile={effectiveView !== 'captcha'}
             taskDifficulty={activeChallenge?.difficulty ?? null}
             taskReward={liveTaskReward}

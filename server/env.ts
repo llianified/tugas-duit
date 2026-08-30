@@ -27,4 +27,17 @@ export const env = {
   get monetagZoneId() {
     return process.env.NEXT_PUBLIC_MONETAG_ZONE_ID?.trim() || MONETAG_DEFAULT_ZONE_ID
   },
+  get klikqrisApiKey() { return required('KLIKQRIS_API_KEY') },
+  get klikqrisApiKeyOrNull() { return process.env.KLIKQRIS_API_KEY?.trim() || null },
+  get klikqrisMerchantId() { return required('KLIKQRIS_MERCHANT_ID') },
+  get klikqrisMerchantIdOrNull() { return process.env.KLIKQRIS_MERCHANT_ID?.trim() || null },
+  get klikqrisBaseUrl() {
+    return process.env.KLIKQRIS_BASE_URL?.trim() || 'https://klikqris.com/api'
+  },
+  get telegramChannelId() {
+    return process.env.TELEGRAM_CHANNEL_ID?.trim() || '@tugasduit'
+  },
+  get telegramChannelUrl() {
+    return process.env.TELEGRAM_CHANNEL_URL?.trim() || 'https://t.me/tugasduit'
+  },
 }

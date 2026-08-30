@@ -12,8 +12,17 @@ export function maxPayoutCredits(): number {
   return config.maxPayoutIdr / config.creditValueIdr
 }
 
-export function maxTasksPerDay(): number {
-  return economyConfig().maxTasksPerDay
+export function maxTasksPerDay(premium = false): number {
+  const config = economyConfig()
+  return premium ? config.premiumMaxTasksPerDay : config.maxTasksPerDay
+}
+
+export function channelJoinBonusCredits(): number {
+  return economyConfig().channelJoinBonusCredits
+}
+
+export function channelBonusEnabled(): boolean {
+  return channelJoinBonusCredits() > 0
 }
 
 export function dailyCommissionCreditCap(): number {

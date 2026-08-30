@@ -30,10 +30,15 @@ export function rewardPoolCreditsPerDay(): number {
 interface CapacityInput {
   rankTier: number
   streak: number
+  premium?: boolean
 }
 
-/** Rank dan streak menambah daya tampung kolam, bukan kecepatan isi ulangnya. */
-export function rewardPoolCapacity({ rankTier, streak }: CapacityInput): number {
+/**
+ * Rank, streak, dan premium menambah daya tampung kolam, bukan kecepatan isi ulangnya —
+ * jadi penghasilan maksimum per hari tidak ikut naik, hanya berapa yang bisa ditumpuk
+ * sebelum kolam berhenti mengisi.
+ */
+export function rewardPoolCapacity({ rankTier, streak, premium = false }: CapacityInput): number {
   const config = economyConfig()
   const normalizedTier = Math.min(5, Math.max(1, Math.floor(rankTier)))
   const rankBonus = (normalizedTier - 1) * config.rankPoolCapBonus
@@ -41,7 +46,8 @@ export function rewardPoolCapacity({ rankTier, streak }: CapacityInput): number 
     config.maxStreakCapBonus,
     Math.floor(Math.max(0, streak) / config.streakCapStepDays),
   )
-  return baseRewardPoolCredits() + rankBonus + streakBonus
+  const premiumBonus = premium ? config.premiumPoolCapBonus : 0
+  return baseRewardPoolCredits() + rankBonus + streakBonus + premiumBonus
 }
 
 export interface RewardPoolSnapshot {

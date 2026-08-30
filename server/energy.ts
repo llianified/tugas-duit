@@ -6,19 +6,29 @@ import {
   type EnergySnapshot,
   type EnergyState,
 } from '@/domain/energy'
+import { isPremiumActive } from '@/domain/premium'
 import { restoreAdPass } from './ads'
 import { query } from './db'
 
 export type EnergyView = EnergyState & { now: number }
 
-type EnergyRow = { energy: number; energy_updated_at: Date; now: Date }
+type EnergyRow = {
+  energy: number
+  energy_updated_at: Date
+  premium_until: Date | null
+  now: Date
+}
 
 const snapshotOf = (row: EnergyRow): EnergySnapshot => ({
   energy: Number(row.energy),
   updatedAt: row.energy_updated_at.getTime(),
 })
 
-const ENERGY_SELECT = 'select energy, energy_updated_at, now() as now from users where id=$1'
+const premiumOf = (row: EnergyRow): boolean =>
+  isPremiumActive(row.premium_until ? row.premium_until.getTime() : null, row.now.getTime())
+
+const ENERGY_SELECT =
+  'select energy, energy_updated_at, premium_until, now() as now from users where id=$1'
 
 export async function readEnergy(userId: number, tx?: PoolClient): Promise<EnergyView> {
   const rows = tx
@@ -27,7 +37,7 @@ export async function readEnergy(userId: number, tx?: PoolClient): Promise<Energ
   const row = rows[0]
   if (!row) return emptyView()
   const now = row.now.getTime()
-  return { ...projectEnergy(snapshotOf(row), now), now }
+  return { ...projectEnergy(snapshotOf(row), now, premiumOf(row)), now }
 }
 
 function emptyView(): EnergyView {
@@ -44,7 +54,7 @@ export async function spendEnergy(
   if (!row) return { ok: false, state: emptyView() }
 
   const now = row.now.getTime()
-  const change = applyEnergySpend(snapshotOf(row), now)
+  const change = applyEnergySpend(snapshotOf(row), now, premiumOf(row))
   if (!change.ok) return { ok: false, state: { ...change.state, now } }
 
   await tx.query('update users set energy=$2, energy_updated_at=$3 where id=$1', [
@@ -93,7 +103,7 @@ async function grantEnergy(
   if (!row) return { granted: false, state: emptyView() }
 
   const now = row.now.getTime()
-  const change = applyEnergyGrant(snapshotOf(row), now, amount)
+  const change = applyEnergyGrant(snapshotOf(row), now, premiumOf(row), amount)
   await tx.query('update users set energy=$2, energy_updated_at=$3 where id=$1', [
     userId,
     change.snapshot.energy,

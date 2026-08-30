@@ -42,6 +42,34 @@ export async function claimInitData(hash: string, authDate: number): Promise<boo
   return rows.length > 0
 }
 
+const JOINED_STATUSES = new Set(['creator', 'administrator', 'member', 'restricted'])
+
+/**
+ * `null` berarti **tidak bisa dipastikan** — bot belum jadi admin channel, token salah,
+ * atau Telegram sedang tidak menjawab. Dibedakan dari `false` supaya pemanggilnya tidak
+ * pernah menerjemahkan kegagalan pemeriksaan menjadi "user tidak join", dan sebaliknya
+ * tidak pernah memberi bonus atas dasar tebakan.
+ */
+export async function readChannelMembership(telegramId: string): Promise<boolean | null> {
+  const url = new URL(`https://api.telegram.org/bot${env.botToken}/getChatMember`)
+  url.searchParams.set('chat_id', env.telegramChannelId)
+  url.searchParams.set('user_id', telegramId)
+
+  let response: Response
+  try {
+    response = await fetch(url, { signal: AbortSignal.timeout(10_000) })
+  } catch {
+    return null
+  }
+
+  const body = (await response.json().catch(() => null)) as {
+    ok?: boolean
+    result?: { status?: string }
+  } | null
+  if (!body?.ok || typeof body.result?.status !== 'string') return null
+  return JOINED_STATUSES.has(body.result.status)
+}
+
 export const escapeTelegramHtml = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 

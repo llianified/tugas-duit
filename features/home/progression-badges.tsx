@@ -8,12 +8,13 @@ import type { Progression } from '@/features/home/progression'
 import { ProfileIsland } from '@/features/home/profile-island'
 import { RankIsland } from '@/features/home/rank-island'
 import type { UserStats } from '@/features/stats/domain'
-import type { SessionResponse } from '@/shell/session-api'
+import type { PremiumState, SessionResponse } from '@/shell/session-api'
 
 export function ProgressionBadges({
   progression,
   user = null,
   stats = null,
+  premium = null,
   showProfile = false,
   taskDifficulty = null,
   taskReward = null,
@@ -29,6 +30,7 @@ export function ProgressionBadges({
   progression: Progression
   user?: SessionResponse['user']
   stats?: UserStats | null
+  premium?: PremiumState | null
   showProfile?: boolean
   taskDifficulty?: Difficulty | null
   taskReward?: number | null
@@ -66,6 +68,7 @@ export function ProgressionBadges({
         <ProfileIsland
           user={user}
           stats={stats}
+          premium={premium}
           isOpen={profileOpen}
           slideOutTo={rankOpen || difficultyOpen ? 'left' : undefined}
           onToggle={() => setOpenPanel(profileOpen ? null : 'profile')}

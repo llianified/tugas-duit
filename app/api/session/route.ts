@@ -1,9 +1,13 @@
+import { channelBonusEnabled, channelJoinBonusCredits } from '@/domain/economy'
 import { economyConfig } from '@/domain/economy-config'
+import { isPremiumActive, premiumDaysLeft, premiumPerks, premiumPlans } from '@/domain/premium'
 import { loadEconomyConfig } from '@/server/economy-config'
 import { readAdsState } from '@/server/ads'
 import { query } from '@/server/db'
 import { readEnergy } from '@/server/energy'
 import { env } from '@/server/env'
+import { klikqrisConfigured } from '@/server/klikqris'
+import { readPendingInvoice } from '@/server/premium-payment'
 import { assertSameOrigin, clientIp, handleRouteError, rateLimited } from '@/server/http'
 import { readRewardPool } from '@/server/reward-pool'
 import { checkRateLimit } from '@/server/ratelimit'
@@ -34,7 +38,7 @@ export async function GET(request: Request) {
       })
     }
 
-    const [breakdown, energy, rewardPool, ads] = await Promise.all([
+    const [breakdown, energy, rewardPool, ads, invoice] = await Promise.all([
       query<{
         task_credits: string
         referral_credits: string
@@ -43,7 +47,11 @@ export async function GET(request: Request) {
       readEnergy(user.id),
       readRewardPool(user.id),
       readAdsState(user.id),
+      readPendingInvoice(user.id),
     ])
+
+    const premiumUntil = user.premiumUntil ? user.premiumUntil.getTime() : null
+    const now = Date.now()
 
     return Response.json({
       user: {
@@ -64,6 +72,21 @@ export async function GET(request: Request) {
       energy,
       rewardPool,
       ads,
+      premium: {
+        active: isPremiumActive(premiumUntil, now),
+        until: premiumUntil,
+        daysLeft: premiumDaysLeft(premiumUntil, now),
+        paymentEnabled: klikqrisConfigured(),
+        plans: premiumPlans(),
+        perks: premiumPerks(),
+        invoice,
+      },
+      channelBonus: {
+        enabled: channelBonusEnabled(),
+        url: env.telegramChannelUrl,
+        credits: channelJoinBonusCredits(),
+        claimed: Boolean(user.channelBonusClaimedAt),
+      },
     })
   } catch (error) {
     return handleRouteError(error)

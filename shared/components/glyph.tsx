@@ -186,6 +186,22 @@ export function GlyphBolt({ className }: { className?: string }) {
   )
 }
 
+export function GlyphCrown({ className }: { className?: string }) {
+  return (
+    <GlyphSvg className={className}>
+      <path d="M12 6l4 6l5 -4l-2 10h-14l-2 -10l5 4z" />
+    </GlyphSvg>
+  )
+}
+
+export function GlyphTelegram({ className }: { className?: string }) {
+  return (
+    <GlyphSvg className={className}>
+      <path d="M15 10l-4 4l6 6l4 -16l-18 7l4 2l2 6l3 -4" />
+    </GlyphSvg>
+  )
+}
+
 export function GlyphPlay({ className }: { className?: string }) {
   return (
     <GlyphSvg className={className}>

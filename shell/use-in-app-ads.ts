@@ -4,7 +4,6 @@ import { useEffect } from 'react'
 import { MONETAG_DEFAULT_ZONE_ID, monetagSdkName } from '@/domain/ads'
 import {
   DEFAULT_IN_APP_ADS_SETTINGS,
-  IN_APP_SINGLE_SHOT_SETTINGS,
   msUntilInAppWindowReset,
   newInAppSession,
   nextInAppDelayMs,
@@ -14,7 +13,13 @@ import {
   type InAppAdsSession,
   type InAppAdsSettings,
 } from '@/domain/in-app-ads'
-import { beginInApp, endInApp, isRewardedActive, subscribeAdGate } from '@/shell/ad-gate'
+import {
+  beginInApp,
+  endInApp,
+  isInAppActive,
+  isRewardedActive,
+  subscribeAdGate,
+} from '@/shell/ad-gate'
 import { readShow, showFailureReason, waitForShow } from '@/shell/monetag-sdk'
 
 /**
@@ -100,13 +105,18 @@ export function useInAppAds({
         schedule(msUntilInAppWindowReset(session, settings, now) + 250)
         return
       }
-      if (isRewardedActive() || document.hidden) return
+      if (isRewardedActive() || isInAppActive() || document.hidden) return
       schedule(delay)
     }
 
     const run = async () => {
       if (cancelled || showing) return
-      if (isRewardedActive() || document.hidden) return
+      // `showing` hanya berlaku untuk instance efek ini. `isInAppActive()` palang modul
+      // yang ikut terlihat oleh instance lain — tanpa itu efek yang jalan ulang (mis.
+      // `enabled` berubah saat sesi dimuat ulang) bisa menayangkan iklan kedua di atas
+      // iklan yang masih di layar. Yang membangunkannya lagi `subscribeAdGate`, sama
+      // seperti jalur berhadiah di bawah.
+      if (isRewardedActive() || isInAppActive() || document.hidden) return
 
       const now = Date.now()
       session = rollInAppSession(session, settings, now)
@@ -127,7 +137,7 @@ export function useInAppAds({
       showing = true
       beginInApp()
       try {
-        await show(IN_APP_SINGLE_SHOT_SETTINGS)
+        await show()
       } catch (error) {
         // Reject di sini tidak merugikan siapa pun — tidak ada tiket dan tidak ada credit
         // yang bergantung padanya, beda dengan sisi berhadiah. Cukup dicatat.

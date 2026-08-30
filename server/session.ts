@@ -17,6 +17,8 @@ interface SessionUser {
   referralCode: string
   bannedAt: Date | null
   isAdmin: boolean
+  premiumUntil: Date | null
+  channelBonusClaimedAt: Date | null
 }
 
 export class UnauthorizedError extends Error {}
@@ -56,8 +58,10 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     referral_code: string
     banned_at: Date | null
     is_admin: boolean
+    premium_until: Date | null
+    channel_bonus_claimed_at: Date | null
   }>(
-    `update sessions s set last_seen_at=now() from users u where s.token_hash=$1 and s.user_id=u.id and s.revoked_at is null and s.expires_at>now() returning u.id,u.public_id,u.telegram_id,u.first_name,u.username,u.photo_url,u.balance_credits,u.referral_code,u.banned_at,u.is_admin`,
+    `update sessions s set last_seen_at=now() from users u where s.token_hash=$1 and s.user_id=u.id and s.revoked_at is null and s.expires_at>now() returning u.id,u.public_id,u.telegram_id,u.first_name,u.username,u.photo_url,u.balance_credits,u.referral_code,u.banned_at,u.is_admin,u.premium_until,u.channel_bonus_claimed_at`,
     [hashToken(token)],
   )
   const row = rows[0]
@@ -73,6 +77,8 @@ export async function getSessionUser(): Promise<SessionUser | null> {
         referralCode: row.referral_code,
         bannedAt: row.banned_at,
         isAdmin: isAdminUser(row.telegram_id, row.is_admin),
+        premiumUntil: row.premium_until,
+        channelBonusClaimedAt: row.channel_bonus_claimed_at,
       }
     : null
 }

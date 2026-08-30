@@ -1,11 +1,12 @@
 import { creditsToRupiah, withdrawalMinimumCredits } from '../domain/economy.ts'
 import { validateEconomyConfig, setActiveEconomyConfig } from '../domain/economy-config.ts'
 import { maxEnergy, projectEnergy } from '../domain/energy.ts'
+import { isPremiumActive, withdrawalCooldownMs } from '../domain/premium.ts'
 import { projectRewardPool, rewardPoolCapacity } from '../domain/reward-pool.ts'
 import { getRank } from '../features/home/progression.ts'
 import { formatCredits, formatRupiah } from '../shared/lib/format.ts'
 import { query } from './db.ts'
-import { REQUIRED_ACTIVE_REFERRALS, WITHDRAWAL_COOLDOWN_MS } from './payout-rules.ts'
+import { REQUIRED_ACTIVE_REFERRALS } from './payout-rules.ts'
 import { escapeTelegramHtml as escapeHtml, openAppMarkup, sendTelegramMessage } from './telegram.ts'
 
 export type EngagementKind =
@@ -38,6 +39,7 @@ const CANDIDATE_SQL = `select
     u.energy_updated_at,
     u.reward_pool,
     u.reward_pool_updated_at,
+    u.premium_until,
     (select count(*) from task_completions tc where tc.user_id=u.id)::int completed_count,
     (select count(*) from task_completions tc
       where tc.user_id=u.id and tc.completed_at <= now() - interval '24 hours')::int
@@ -95,6 +97,7 @@ export type CandidateRow = {
   energy_updated_at: Date
   reward_pool: number
   reward_pool_updated_at: Date
+  premium_until: Date | null
   completed_count: number
   completed_count_before: number
   last_task_at: Date | null
@@ -140,12 +143,12 @@ async function loadConfig(): Promise<boolean> {
   return true
 }
 
-function withdrawReady(row: CandidateRow, balance: number): boolean {
+function withdrawReady(row: CandidateRow, balance: number, premium: boolean): boolean {
   if (balance < withdrawalMinimumCredits()) return false
   if (row.processing_withdrawals > 0) return false
   if (row.active_referrals < REQUIRED_ACTIVE_REFERRALS) return false
   if (!row.last_withdrawal_at) return true
-  return row.last_withdrawal_at.getTime() + WITHDRAWAL_COOLDOWN_MS <= row.now.getTime()
+  return row.last_withdrawal_at.getTime() + withdrawalCooldownMs(premium) <= row.now.getTime()
 }
 
 export function pickMessage(row: CandidateRow, streak: number): Message | null {
@@ -155,18 +158,23 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
   const balance = Number(row.balance_credits)
   const idleHours = hoursSince(row.last_task_at, now)
   const rank = getRank(row.completed_count)
+  const premium = isPremiumActive(
+    row.premium_until ? row.premium_until.getTime() : null,
+    now.getTime(),
+  )
 
   const energy = projectEnergy(
     { energy: Number(row.energy), updatedAt: row.energy_updated_at.getTime() },
     now.getTime(),
+    premium,
   )
   const pool = projectRewardPool(
     { credits: Number(row.reward_pool), updatedAt: row.reward_pool_updated_at.getTime() },
-    rewardPoolCapacity({ rankTier: rank.tier, streak }),
+    rewardPoolCapacity({ rankTier: rank.tier, streak, premium }),
     now.getTime(),
   )
 
-  if (withdrawReady(row, balance)) {
+  if (withdrawReady(row, balance, premium)) {
     return {
       kind: 'withdraw_ready',
       dedupeKey: today,
@@ -176,7 +184,7 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
         '',
         `Sekarang ada ${money(balance)} di akun kamu, dan syaratnya udah kelar semua. Tinggal ajukan.`,
         '',
-        'Catatan: sekali diajukan, penarikan berikutnya baru kebuka 7 hari lagi — jadi pikirin dulu mau narik berapa.',
+        `Catatan: sekali diajukan, penarikan berikutnya baru kebuka ${formatCredits(Math.round(withdrawalCooldownMs(premium) / 86_400_000))} hari lagi — jadi pikirin dulu mau narik berapa.`,
       ].join('\n'),
     }
   }
@@ -280,7 +288,7 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
     }
   }
 
-  if (energy.current >= maxEnergy() && idleHours >= ENERGY_IDLE_HOURS) {
+  if (energy.current >= maxEnergy(premium) && idleHours >= ENERGY_IDLE_HOURS) {
     return {
       kind: 'energy_full',
       dedupeKey: today,

@@ -168,3 +168,39 @@ describe('WD-7 — satu nomor tujuan hanya untuk satu akun', () => {
     ).resolves.toHaveProperty('withdrawal')
   })
 })
+
+describe('WD-8 — premium memakai jeda penarikan yang lebih pendek', () => {
+  it('membuka pengajuan berikutnya setelah jeda premium, bukan jeda tujuh hari', async () => {
+    const { createPayout } = await import('./payout')
+    const { DEFAULT_ECONOMY_CONFIG } = await import('@/domain/economy-config')
+    const { query } = await import('./db')
+    const credits = withdrawalMinimumCredits()
+    const userId = await makeUser(credits * 2)
+    const input = {
+      channelId: PAYOUT_CHANNELS[0].id,
+      accountNumber: accountFor(PAYOUT_CHANNELS[0]),
+      accountName: 'Uji Premium',
+      credits,
+    }
+
+    const first = await createPayout(userId, input)
+    await query(
+      "update withdrawals set state='rejected',rejected_at=now(),reject_reason='Ditolak untuk tes' where id=$1",
+      [first.withdrawal.id],
+    )
+
+    const elapsedDays = DEFAULT_ECONOMY_CONFIG.premiumWithdrawalCooldownDays + 1
+    await query(
+      "update withdrawals set requested_at=now()-($2::int * interval '1 day') where id=$1",
+      [first.withdrawal.id, elapsedDays],
+    )
+
+    await expect(createPayout(userId, input)).rejects.toMatchObject({
+      code: 'WITHDRAWAL_COOLDOWN',
+      status: 429,
+    })
+
+    await query("update users set premium_until=now()+interval '30 days' where id=$1", [userId])
+    await expect(createPayout(userId, input)).resolves.toHaveProperty('withdrawal')
+  })
+})

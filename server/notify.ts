@@ -1,5 +1,5 @@
 import { getPayoutChannel, maskAccountNumber, PAYOUT_ETA_TEXT } from '@/features/withdraw/domain'
-import { formatCredits, formatRupiah } from '@/shared/lib/format'
+import { formatCredits, formatRupiah, formatShortDate } from '@/shared/lib/format'
 import { WITHDRAWAL_COOLDOWN_MS } from './payout-rules'
 import {
   escapeTelegramHtml as escapeHtml,
@@ -81,6 +81,25 @@ export async function notifyWithdrawalRejected(notice: WithdrawalNotice & { reas
     ].join('\n'),
     'rejected',
     openAppMarkup('🎮 Balik ke app'),
+  )
+}
+
+export async function notifyPremiumActivated(
+  telegramId: string,
+  months: number,
+  premiumUntil: number,
+) {
+  await send(
+    telegramId,
+    [
+      '<b>Premium kamu aktif 👑</b>',
+      '',
+      `Paket ${formatCredits(months)} bulan udah nyala. Berlaku sampai ${formatShortDate(premiumUntil)}.`,
+      '',
+      'Energi kamu sekarang lebih besar dan ngisi lebih cepat, stok reward muat lebih banyak, iklan hilang, dan penarikan bisa lebih sering.',
+    ].join('\n'),
+    'premium-activated',
+    openAppMarkup('👑 Buka app'),
   )
 }
 

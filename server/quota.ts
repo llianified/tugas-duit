@@ -1,5 +1,6 @@
 import type { PoolClient } from 'pg'
 import { dailyCommissionCreditCap, maxTasksPerDay } from '@/domain/economy'
+import { isPremium } from './premium'
 import { readRewardPool, spendRewardPool, type RewardPoolView } from './reward-pool'
 
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
@@ -23,7 +24,7 @@ export async function consumeQuota(
   userId: number,
   reward: number,
 ): Promise<QuotaResult> {
-  const maxTasks = maxTasksPerDay()
+  const maxTasks = maxTasksPerDay(await isPremium(userId, tx))
   const counted = await tx.query<{ tasks_completed: number }>(
     `insert into daily_quotas(user_id,quota_date,tasks_completed)
      values($1,${TODAY},1)

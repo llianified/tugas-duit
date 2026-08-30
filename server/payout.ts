@@ -1,4 +1,5 @@
 import { creditsToRupiah, maxPayoutCredits, withdrawalMinimumCredits } from '@/domain/economy'
+import { isPremiumActive, withdrawalCooldownMs } from '@/domain/premium'
 import {
   getPayoutChannel,
   isDraftValid,
@@ -43,15 +44,21 @@ async function getPayoutEligibilityInTransaction(
   const result = await executor.query<{
     active_referral_count: string
     last_requested_at: Date | null
+    premium_until: Date | null
   }>(
     `select
        (select count(distinct downline_id) from referral_commissions where upline_id=$1) active_referral_count,
-       (select max(requested_at) from withdrawals where user_id=$1) last_requested_at`,
+       (select max(requested_at) from withdrawals where user_id=$1) last_requested_at,
+       (select premium_until from users where id=$1) premium_until`,
     [userId],
   )
   const row = result.rows[0]
+  const premium = isPremiumActive(
+    row.premium_until ? row.premium_until.getTime() : null,
+    Date.now(),
+  )
   const cooldownEndsAt = row.last_requested_at
-    ? row.last_requested_at.getTime() + WITHDRAWAL_COOLDOWN_MS
+    ? row.last_requested_at.getTime() + withdrawalCooldownMs(premium)
     : null
 
   return {

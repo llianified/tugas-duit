@@ -30,6 +30,7 @@ function candidate(overrides: Partial<CandidateRow> = {}): CandidateRow {
     energy_updated_at: new Date(now.getTime() - 12 * HOURS),
     reward_pool: 0,
     reward_pool_updated_at: new Date(now.getTime()),
+    premium_until: null,
     completed_count: 10,
     completed_count_before: 10,
     last_task_at: new Date(now.getTime() - 4 * HOURS),

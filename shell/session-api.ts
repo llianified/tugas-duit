@@ -3,6 +3,7 @@
 import type { AdProvider } from '@/domain/ads'
 import { setActiveEconomyConfig, type EconomyConfig } from '@/domain/economy-config'
 import type { EnergyState } from '@/domain/energy'
+import type { PremiumMonths, PremiumPerks, PremiumPlan } from '@/domain/premium'
 import type { RewardPoolState } from '@/domain/reward-pool'
 import type { Challenge, HistoryEntry } from '@/features/captcha/domain'
 import type { LeaderboardBoard } from '@/features/leaderboard/domain'
@@ -31,7 +32,49 @@ export type SessionResponse = {
     receivedAt: number
   }
   ads?: AdsState
+  premium?: PremiumState
+  channelBonus?: ChannelBonusState
   botAppUrl?: string | null
+}
+
+export type PremiumInvoice = {
+  orderId: string
+  months: PremiumMonths
+  amountIdr: number
+  totalAmountIdr: number
+  qrisUrl: string | null
+  expiresAt: number
+}
+
+export type PremiumState = {
+  active: boolean
+  until: number | null
+  daysLeft: number
+  paymentEnabled: boolean
+  plans: PremiumPlan[]
+  perks: PremiumPerks
+  invoice: PremiumInvoice | null
+}
+
+export type ChannelBonusState = {
+  enabled: boolean
+  url: string
+  credits: number
+  claimed: boolean
+}
+
+export type PremiumCheckoutResponse =
+  | { settled: true; premiumUntil: number }
+  | { settled: false; invoice: PremiumInvoice }
+
+export type ChannelClaimResponse = { credits: number; balance: number }
+
+export async function startPremiumCheckout(months: PremiumMonths) {
+  return sendJson<PremiumCheckoutResponse>('/api/premium/checkout', 'POST', { months })
+}
+
+export async function claimChannelBonus() {
+  return sendJson<ChannelClaimResponse>('/api/channel/claim', 'POST')
 }
 
 export type TaskPayment = 'energy' | 'ad'

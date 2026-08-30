@@ -6,16 +6,22 @@ import {
   type RewardPoolSnapshot,
   type RewardPoolState,
 } from '@/domain/reward-pool'
+import { isPremiumActive } from '@/domain/premium'
 import { getRank } from '@/features/home/progression'
 import { query } from './db'
 import { STREAK_EXPRESSION } from './streak-sql'
 
 export type RewardPoolView = RewardPoolState & { now: number }
 
-type PoolRow = { reward_pool: number; reward_pool_updated_at: Date; now: Date }
+type PoolRow = {
+  reward_pool: number
+  reward_pool_updated_at: Date
+  premium_until: Date | null
+  now: Date
+}
 
 const POOL_SELECT =
-  'select reward_pool, reward_pool_updated_at, now() as now from users where id=$1'
+  'select reward_pool, reward_pool_updated_at, premium_until, now() as now from users where id=$1'
 
 /**
  * Kapasitas dibaca terpisah dari stoknya karena ia bukan milik user, melainkan turunan rank
@@ -33,7 +39,9 @@ const CAPACITY_SQL = `with active_days as (
     select day,(row_number() over(order by day desc))::int as rn from streak_days
   )
   select (select count(*) from task_completions where user_id=$1)::int as completed_count,
-         ${STREAK_EXPRESSION} as streak`
+         ${STREAK_EXPRESSION} as streak,
+         (select premium_until from users where id=$1) as premium_until,
+         now() as now`
 
 const snapshotOf = (row: PoolRow): RewardPoolSnapshot => ({
   credits: Number(row.reward_pool),
@@ -49,12 +57,21 @@ async function run<T extends Record<string, unknown>>(
 }
 
 export async function readRewardPoolCapacity(userId: number, tx?: PoolClient): Promise<number> {
-  const rows = await run<{ completed_count: number; streak: number }>(CAPACITY_SQL, userId, tx)
+  const rows = await run<{
+    completed_count: number
+    streak: number
+    premium_until: Date | null
+    now: Date
+  }>(CAPACITY_SQL, userId, tx)
   const row = rows[0]
   if (!row) return rewardPoolCapacity({ rankTier: 1, streak: 0 })
   return rewardPoolCapacity({
     rankTier: getRank(Number(row.completed_count)).tier,
     streak: Number(row.streak),
+    premium: isPremiumActive(
+      row.premium_until ? row.premium_until.getTime() : null,
+      row.now.getTime(),
+    ),
   })
 }
 

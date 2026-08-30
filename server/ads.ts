@@ -12,6 +12,7 @@ import { economyConfig } from '@/domain/economy-config'
 import { resolveAdProvider } from './ad-provider'
 import { query, transaction } from './db'
 import { recordAdClaimSignal } from './fraud'
+import { isPremium } from './premium'
 
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -73,9 +74,24 @@ export interface AdsSessionState {
   pass: { expiresAt: number } | null
 }
 
+const ADS_OFF: AdsSessionState = {
+  enabled: false,
+  provider: null,
+  unitId: null,
+  viewsLeft: 0,
+  cooldownSecondsLeft: 0,
+  pass: null,
+}
+
+/**
+ * Premium membeli "bebas iklan", jadi tiketnya dimatikan di dua tempat: state yang
+ * dibaca klien supaya tombolnya tidak dirender, dan `openAdTicket` supaya permintaan
+ * yang tetap dikirim tangan tetap ditolak.
+ */
 export async function readAdsState(userId: number): Promise<AdsSessionState> {
   const resolved = resolveAdProvider()
   const enabled = Boolean(resolved) && adsConfigured()
+  if (await isPremium(userId)) return ADS_OFF
   if (!resolved || !enabled) {
     return {
       enabled: false,
@@ -109,7 +125,7 @@ export type OpenTicketResult =
 
 export async function openAdTicket(userId: number): Promise<OpenTicketResult> {
   const resolved = resolveAdProvider()
-  if (!resolved)
+  if (!resolved || (await isPremium(userId)))
     return { ok: false, reason: 'ads_disabled', cooldownSecondsLeft: 0, viewsLeft: 0 }
   const { provider, unitId } = resolved
 

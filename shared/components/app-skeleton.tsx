@@ -25,10 +25,12 @@ function DataRowSkeleton({
   showDivider,
   titleWidth,
   marker,
+  markerClass,
 }: {
   showDivider: boolean
   titleWidth: string
   marker?: boolean
+  markerClass: string
 }) {
   return (
     <div
@@ -39,7 +41,7 @@ function DataRowSkeleton({
         .filter(Boolean)
         .join(' ')}
     >
-      {marker ? <Bar className="size-9 shrink-0 rounded-full" /> : null}
+      {marker ? <Bar className={`${markerClass} shrink-0 rounded-full`} /> : null}
 
       <div className="min-w-0 flex-1">
         <div className="flex h-5 items-center">
@@ -63,16 +65,26 @@ function DataRowSkeleton({
 export function DataListSkeleton({
   rows = 6,
   marker = false,
+  markerClass = 'size-9',
+  badge = false,
 }: {
   rows?: number
   marker?: boolean
+  /** Diameter penanda baris. `DataList` biasa memakai lingkaran 36px, papan
+   *  peringkat memakai avatar 40px (`BoardFrame`). */
+  markerClass?: string
+  /** `MetaBadge` di sisi kanan label: `px-1.5 py-1 text-[11px]` ≈ 24px. */
+  badge?: boolean
 }) {
   return (
     <div
       className="animate-fade-in view-trim-b [--view-trim-b:var(--list-row-py)]"
       aria-hidden
     >
-      <Bar className="h-3 w-36" />
+      <div className="flex items-center justify-between gap-3">
+        <Bar className="h-3 w-36" />
+        {badge ? <Bar className="h-6 w-32 rounded-md" /> : null}
+      </div>
       <div className="label-gap-t [--label-trim:var(--list-row-py)] flex flex-col">
         {Array.from({ length: rows }, (_, index) => (
           <DataRowSkeleton
@@ -80,6 +92,7 @@ export function DataListSkeleton({
             showDivider={index !== rows - 1}
             titleWidth={ROW_TITLE_W[index % ROW_TITLE_W.length]}
             marker={marker}
+            markerClass={markerClass}
           />
         ))}
       </div>
@@ -96,12 +109,18 @@ export function DataListSkeleton({
  * terangkat karena `SegmentedTabs` selalu punya satu tab aktif — strip yang rata
  * seluruhnya akan tersentak begitu data masuk.
  */
-const PANEL_TAB_LABEL = ['Misi', 'Aktivitas'] as const
+const HOME_PANEL_TAB_LABEL = ['Misi', 'Aktivitas'] as const
 
-function PanelTabsSkeleton() {
+function PanelTabsSkeleton({
+  labels,
+  className,
+}: {
+  labels: readonly string[]
+  className?: string
+}) {
   return (
-    <div className="flex gap-1 rounded-lg bg-muted p-1">
-      {PANEL_TAB_LABEL.map((label, index) => (
+    <div className={['flex gap-1 rounded-lg bg-muted p-1', className].filter(Boolean).join(' ')}>
+      {labels.map((label, index) => (
         <div
           key={label}
           className={[
@@ -212,7 +231,7 @@ export function AppViewSkeleton() {
       </div>
 
       <div className="region-t">
-        <PanelTabsSkeleton />
+        <PanelTabsSkeleton labels={HOME_PANEL_TAB_LABEL} />
         <div className="region-gap-t">
           <MissionCardSkeleton />
         </div>
@@ -221,6 +240,140 @@ export function AppViewSkeleton() {
       {/* Sama seperti `HomeView`: panel berakhir dengan kartu, bukan baris list, jadi
           sisa jarak ke nav dibiarkan penuh satu region-gap. */}
       <div className="flex-1" />
+    </div>
+  )
+}
+
+/**
+ * `AppViewSkeleton` menggambar anatomi Beranda dan hanya boleh dipakai untuk Beranda.
+ *
+ * Peringkat, Statistik, dan Profil punya bentuk yang sama sekali lain — tidak ada hero
+ * saldo, tidak ada kartu task, tidak ada kartu misi. Memakai kerangka Beranda di sana
+ * lebih buruk daripada tidak memakai kerangka: ia menjanjikan tata letak yang tidak
+ * akan datang, lalu seluruh layar tersentak berganti begitu data masuk. Tiap view di
+ * bawah ini menggambar anatominya sendiri.
+ */
+
+const BOARD_SURFACE_LABEL = ['Papan', 'Aktivitas'] as const
+const BOARD_FILTER_LABEL = ['Semua', 'VIP'] as const
+
+/**
+ * Strip tab bergaris bawah milik Peringkat — bukan `SegmentedTabs`, jadi bentuknya
+ * beda dari `PanelTabsSkeleton`: teks 15px dengan `border-b-2` dan `pb-2.5`. Sama
+ * seperti strip yang lain, tingginya lahir dari line box label aslinya.
+ */
+function BoardSurfaceTabsSkeleton() {
+  return (
+    <div className="region-under-brand flex gap-5">
+      {BOARD_SURFACE_LABEL.map((label, index) => (
+        <div
+          key={label}
+          className={[
+            'border-b-2 px-1 pb-2.5',
+            index === 0 ? 'border-primary' : 'border-transparent',
+          ].join(' ')}
+        >
+          <span className="relative flex text-[15px] font-bold tracking-tight">
+            <span className="invisible">{label}</span>
+            <Bar className="absolute inset-x-0 top-1/2 h-3.5 -translate-y-1/2" />
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Blok angka besar yang dipakai Peringkat ("Posisi kamu") dan Statistik ("Total
+ * penghasilan"): eyebrow 13px, angka `CreditAmount` size 2xl — `text-5xl leading-none`,
+ * jadi tepat 48px — lalu satu baris ekor `text-sm leading-none`.
+ */
+function HeroFigureSkeleton({
+  labelWidth,
+  figureWidth,
+  tailWidth,
+}: {
+  labelWidth: string
+  figureWidth: string
+  tailWidth: string
+}) {
+  return (
+    <div className="region-under-brand">
+      <Bar className={`h-3 ${labelWidth}`} />
+      <Bar className={`label-gap-t h-12 ${figureWidth}`} />
+      <Bar className={`stack-gap-t h-3.5 ${tailWidth}`} />
+    </div>
+  )
+}
+
+export function LeaderboardSkeleton() {
+  return (
+    <div className="animate-fade-in view-min-h flex flex-col" aria-hidden>
+      <BoardSurfaceTabsSkeleton />
+
+      <HeroFigureSkeleton labelWidth="w-20" figureWidth="w-40" tailWidth="w-36" />
+
+      <PanelTabsSkeleton labels={BOARD_FILTER_LABEL} className="region-gap-t" />
+
+      {/* `BoardFrame` memakai avatar 40px, bukan lingkaran 36px milik `DataList`
+          biasa, dan label daftarnya membawa `MetaBadge` jumlah peserta. */}
+      <div className="region-t flex flex-1 flex-col">
+        <DataListSkeleton rows={6} marker markerClass="size-10" badge />
+      </div>
+
+      {/* Sama seperti `BoardPanel`: daftar berakhir dengan baris, jadi sisa jarak ke nav
+          dipangkas sebesar padding baris terakhir. */}
+      <div className="view-trim-b flex-1 [--view-trim-b:var(--list-row-py)]" />
+    </div>
+  )
+}
+
+const STATS_TAB_LABEL = ['Progres', 'Task', 'Saldo', 'Tarik'] as const
+const STAT_ROW_LABEL_W = ['w-28', 'w-36', 'w-24', 'w-32', 'w-28'] as const
+
+/**
+ * Baris `StatRow`: label dan nilai sejajar baseline dalam line box `text-sm` (20px),
+ * dipisah divider dengan padding `--list-row-py` seperti `DataList`.
+ */
+function StatRowsSkeleton({ rows }: { rows: number }) {
+  return (
+    <div className="label-gap-t [--label-trim:var(--list-row-py)] flex flex-col">
+      {Array.from({ length: rows }, (_, index) => (
+        <div
+          key={index}
+          className={[
+            'flex items-center justify-between gap-3 pt-[var(--list-row-py)]',
+            index !== rows - 1
+              ? 'border-b border-border/60 pb-[var(--list-row-py)]'
+              : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <div className="flex h-5 items-center">
+            <Bar className={`h-3 ${STAT_ROW_LABEL_W[index % STAT_ROW_LABEL_W.length]}`} />
+          </div>
+          <div className="flex h-5 items-center">
+            <Bar className="h-3 w-16 shrink-0" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function StatsSkeleton() {
+  return (
+    <div className="animate-fade-in view-min-h flex flex-col" aria-hidden>
+      <HeroFigureSkeleton labelWidth="w-32" figureWidth="w-44" tailWidth="w-24" />
+
+      <PanelTabsSkeleton labels={STATS_TAB_LABEL} className="region-gap-t" />
+
+      <div className="region-t flex flex-1 flex-col">
+        <Bar className="h-3 w-24" />
+        <StatRowsSkeleton rows={5} />
+        <div className="view-trim-b flex-1 [--view-trim-b:var(--list-row-py)]" />
+      </div>
     </div>
   )
 }

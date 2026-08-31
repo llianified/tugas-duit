@@ -3,10 +3,10 @@
 import type { ReactNode } from 'react'
 import { hapticSelect } from '@/shell/haptic'
 import {
-  GlyphChart,
   GlyphHistory,
   GlyphHome,
   GlyphTrophy,
+  GlyphUser,
   GlyphUsers,
 } from '@/shared/components/glyph'
 import { cn } from '@/shared/lib/utils'
@@ -20,7 +20,7 @@ type NavSlot = {
 
 const NAV_SLOTS: readonly NavSlot[] = [
   { view: ROOT_VIEW, label: 'Beranda', icon: <GlyphHome className="glyph-md" /> },
-  { view: 'stats', label: 'Statistik', icon: <GlyphChart className="glyph-md" /> },
+  { view: 'profile', label: 'Profil', icon: <GlyphUser className="glyph-md" /> },
   { view: 'leaderboard', label: 'Peringkat', icon: <GlyphTrophy className="glyph-md" /> },
   { view: 'history', label: 'Riwayat', icon: <GlyphHistory className="glyph-md" /> },
   { view: 'referral', label: 'Teman', icon: <GlyphUsers className="glyph-md" /> },
@@ -44,7 +44,7 @@ export function NavPill({
   )
 }
 
-const NAV_LABEL_W = ['w-11', 'w-12', 'w-12', 'w-11', 'w-9'] as const
+const NAV_LABEL_W = ['w-11', 'w-9', 'w-12', 'w-11', 'w-9'] as const
 
 export function NavPillSkeleton() {
   return (

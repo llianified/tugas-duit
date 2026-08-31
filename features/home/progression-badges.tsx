@@ -27,7 +27,7 @@ export function ProgressionBadges({
   rewardPoolRegenCredits,
   rewardPoolSecondsToNext,
   onPanelOpenChange,
-  onOpenProfile,
+  onOpenStats,
 }: {
   progression: Progression
   user?: SessionResponse['user']
@@ -44,7 +44,7 @@ export function ProgressionBadges({
   rewardPoolRegenCredits: number | null
   rewardPoolSecondsToNext: number | null
   onPanelOpenChange?: (open: boolean) => void
-  onOpenProfile?: () => void
+  onOpenStats?: () => void
 }) {
   const [openPanel, setOpenPanel] = useState<'profile' | 'rank' | 'difficulty' | null>(null)
   const closePanel = useCallback(() => setOpenPanel(null), [])
@@ -69,7 +69,7 @@ export function ProgressionBadges({
     <>
       {profileVisible ? (
         <ProfileIsland
-          onOpenProfile={onOpenProfile}
+          onOpenStats={onOpenStats}
           user={user}
           stats={stats}
           premium={premium}

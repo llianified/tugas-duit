@@ -39,6 +39,12 @@ const MESSAGE: Record<string, string> = {
  * premium diberi tahu angka yang salah. Yang dipakai nilai yang ikut dikirim `PayoutError`.
  */
 function messageFor(error: PayoutError): string {
+  if (error.code === 'ACTIVE_DAYS_REQUIRED') {
+    const required = Number(error.fields?.requiredActiveDays)
+    return Number.isFinite(required) && required > 0
+      ? `Kamu perlu ${formatCredits(required)} hari aktif sebelum bisa tarik dana. Satu hari kehitung aktif kalau ada minimal 1 task yang kelar.`
+      : 'Kamu perlu beberapa hari aktif dulu sebelum bisa tarik dana.'
+  }
   if (error.code === 'ACTIVE_REFERRALS_REQUIRED') {
     const required = Number(error.fields?.requiredActiveReferrals)
     return Number.isFinite(required) && required > 0

@@ -5,6 +5,7 @@ import { maxEnergy } from '@/domain/energy'
 import type { Referral, ReferralSummary } from '@/features/referral/domain'
 import type { Withdrawal, WithdrawalDraft } from '@/features/withdraw/domain'
 import { useViewStack } from '@/navigation/use-view-stack'
+import { rememberAdsHint } from '@/shell/ads-hint'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
 import { useAdPass } from '@/shell/use-ad-pass'
 import { useEnergyProjection } from '@/shell/use-energy-projection'
@@ -159,6 +160,17 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     [mutatePayouts, mutateSession, mutateStats, notifyError],
   )
 
+  /**
+   * Dicatat supaya kerangka pemuatan pada pembukaan BERIKUTNYA menggambar jumlah tombol
+   * yang benar di kartu task. Hanya petunjuk bentuk; keputusan sebenarnya tetap dari
+   * `session.ads.enabled` di render ini.
+   */
+  const adsEnabled = session?.ads?.enabled ?? false
+  useEffect(() => {
+    if (session === undefined) return
+    rememberAdsHint(adsEnabled)
+  }, [adsEnabled, session])
+
   const openHistory = useCallback(() => pushView('history'), [pushView])
   const openProfile = useCallback(() => pushView('profile'), [pushView])
   const openStats = useCallback(() => pushView('stats'), [pushView])
@@ -225,7 +237,7 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     channelGate: session?.channelGate ?? null,
     channelBlocked: Boolean(session?.channelGate?.required && !session.channelGate.member),
     refreshSession: mutateSession,
-    adsEnabled: session?.ads?.enabled ?? false,
+    adsEnabled,
     inAppAdsEnabled: session?.ads?.inAppEnabled ?? false,
     adViewsLeft: session?.ads?.viewsLeft ?? 0,
     adCooldownSecondsLeft: session?.ads?.cooldownSecondsLeft ?? 0,

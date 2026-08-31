@@ -5,6 +5,7 @@ import { headers } from 'next/headers'
 import { Geist } from 'next/font/google'
 import Script from 'next/script'
 import { MONETAG_DEFAULT_ZONE_ID, monetagSdkName } from '@/domain/ads'
+import { ADS_HINT_INIT_SCRIPT } from '@/shell/ads-hint'
 import { THEME_INIT_SCRIPT } from '@/shell/theme-init'
 import './globals.css'
 
@@ -48,6 +49,7 @@ export default async function RootLayout({
     <html lang="id" className={`${geistSans.variable} bg-background`} suppressHydrationWarning>
       <head>
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: ADS_HINT_INIT_SCRIPT }} />
       </head>
       <body className="antialiased font-sans">
         <Script

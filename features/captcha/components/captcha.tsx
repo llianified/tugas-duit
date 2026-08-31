@@ -99,7 +99,7 @@ export function CaptchaView({
         onRewardChange={onRewardChange}
       />
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="flex min-h-0 flex-1 flex-col justify-center gap-3">
         {challenge.type === 'text' && <ChallengeText display={challenge.display} />}
         {challenge.type === 'math' && <ChallengeMath expression={challenge.expression} />}
         {challenge.type === 'select' && <ChallengeSelectBoard instruction={challenge.instruction} />}
@@ -174,6 +174,7 @@ function VerifyButton({
   return (
     <ActionButton
       ref={ref}
+      size="cta"
       onClick={onVerify}
       disabled={disabled}
       className={!disabled && !verifying ? 'cta-sheen' : undefined}

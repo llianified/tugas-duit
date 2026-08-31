@@ -44,6 +44,16 @@ export interface PrestigeInput {
   premium: boolean
 }
 
+/**
+ * Urutannya urutan KELANGKAAN, bukan urutan cerita, karena pemanggil yang sempit
+ * ruangnya memotong dari belakang — baris papan peringkat hanya memberi dua slot.
+ *
+ * Presisi lebih dulu karena ia satu-satunya yang tidak bisa didapat dengan waktu:
+ * rata-rata segitu menuntut Sulit bintang tiga berulang kali. Perintis justru
+ * paling belakang meski paling langka pada akhirnya — selama pengguna masih di
+ * bawah `FOUNDER_MAX_USER_ID`, SEMUA orang memilikinya, dan lencana yang dipunyai
+ * semua orang adalah yang paling tidak layak memakai slot terakhir.
+ */
 export function prestigeBadges({
   taskCount,
   credits,
@@ -52,11 +62,11 @@ export function prestigeBadges({
 }: PrestigeInput): PrestigeBadge[] {
   const badges: PrestigeBadge[] = []
 
-  if (founder) {
+  if (hasPrecision(credits, taskCount)) {
     badges.push({
-      key: 'founder',
-      label: 'Perintis',
-      detail: `Termasuk ${FOUNDER_MAX_USER_ID} akun pertama Tugas Duit.`,
+      key: 'precision',
+      label: 'Presisi',
+      detail: `Rata-rata ${PRECISION_MIN_AVERAGE} credit ke atas per task sepanjang ${PRECISION_MIN_TASKS}+ task.`,
     })
   }
 
@@ -69,16 +79,16 @@ export function prestigeBadges({
     })
   }
 
-  if (hasPrecision(credits, taskCount)) {
-    badges.push({
-      key: 'precision',
-      label: 'Presisi',
-      detail: `Rata-rata ${PRECISION_MIN_AVERAGE} credit ke atas per task sepanjang ${PRECISION_MIN_TASKS}+ task.`,
-    })
-  }
-
   if (premium) {
     badges.push({ key: 'premium', label: 'Premium', detail: 'Anggota premium aktif.' })
+  }
+
+  if (founder) {
+    badges.push({
+      key: 'founder',
+      label: 'Perintis',
+      detail: `Termasuk ${FOUNDER_MAX_USER_ID} akun pertama Tugas Duit.`,
+    })
   }
 
   return badges

@@ -293,6 +293,11 @@ function BoardFrame({
  * `premium` sengaja tidak ikut dirender di sini: mahkotanya sudah berdiri di
  * sebelah nama, dan dua penanda untuk satu hal membuat barisnya berisik.
  */
+/** Nama, penanda "Kamu", dan chip berbagi satu baris selebar layar ponsel. Dua chip adalah
+ * batas sebelum nama mulai terpotong, dan `prestigeBadges` sudah mengurutkan dari yang
+ * paling langka jadi yang terpotong selalu yang paling murah. */
+const BOARD_CHIP_LIMIT = 2
+
 const CHIP_TONE: Record<PrestigeKey, string> = {
   founder: 'bg-foreground/10 text-foreground',
   milestone: 'bg-primary/10 text-primary',
@@ -306,7 +311,7 @@ function PrestigeChips({ entry }: { entry: LeaderboardEntry }) {
     credits: entry.credits,
     founder: entry.founder,
     premium: false,
-  })
+  }).slice(0, BOARD_CHIP_LIMIT)
   if (badges.length === 0) return null
 
   return (

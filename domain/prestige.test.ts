@@ -39,7 +39,7 @@ describe('PRESTIGE — gengsi tanpa credit', () => {
       founder: false,
       premium: false,
     })
-    expect(veteran.map((badge) => badge.key)).toEqual(['milestone', 'precision'])
+    expect(veteran.map((badge) => badge.key)).toEqual(['precision', 'milestone'])
 
     const perintis = prestigeBadges({
       taskCount: 5_000,
@@ -48,11 +48,12 @@ describe('PRESTIGE — gengsi tanpa credit', () => {
       premium: true,
     })
     expect(perintis.map((badge) => badge.key)).toEqual([
-      'founder',
-      'milestone',
       'precision',
+      'milestone',
       'premium',
+      'founder',
     ])
+    expect(perintis.at(-1)?.key).toBe('founder')
     expect(FOUNDER_MAX_USER_ID).toBeGreaterThan(0)
   })
 })

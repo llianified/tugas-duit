@@ -304,6 +304,12 @@
   .cta-gap {
     margin-top: var(--cta-gap);
   }
+  /* Slot tombol iklan di kerangka pemuatan. Lihat `shell/ads-hint.ts`: atributnya
+     dipasang script di <head> dari tontonan terakhir user, jadi HTML server selalu
+     memuat kedua tombol dan hanya CSS yang menyembunyikan satu. */
+  [data-ads-hint='off'] .skeleton-ad-slot {
+    display: none;
+  }
   .panel-t {
     margin-inline: calc(var(--content-px) * -1);
     padding-inline: var(--content-px);

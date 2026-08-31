@@ -10,6 +10,11 @@ import {
   type EconomyGroup,
   type EconomyValidationErrors,
 } from '@/domain/economy-config'
+import {
+  ECONOMY_PRESETS,
+  parseEconomyPatch,
+  type EconomyPatch,
+} from '@/domain/economy-presets'
 import type { EconomyAuditEntry, EconomyConfigSnapshot } from '@/server/economy-config'
 
 const GROUP_LABEL: Record<EconomyGroup, string> = {
@@ -84,6 +89,23 @@ export function EconomyForm({
         : false,
   )
 
+  function applyPatch(patch: EconomyPatch, label: string, ignored: string[] = []) {
+    const entries = Object.entries(patch) as [EconomyConfigKey, number][]
+    setDraft((current) => {
+      const next = { ...current }
+      for (const [key, value] of entries) next[key] = String(value)
+      return next
+    })
+    setErrors({})
+    const differing = entries.filter(([key, value]) => value !== saved.config[key]).length
+    setNotice(
+      differing === 0
+        ? `${label} sudah sama dengan konfigurasi aktif. Tidak ada yang perlu diterapkan.`
+        : `${label} dimuat ke draf: ${differing} setelan berbeda dari yang aktif. Periksa lalu tekan Terapkan.` +
+            (ignored.length > 0 ? ` Key tak dikenal diabaikan: ${ignored.slice(0, 5).join(', ')}.` : ''),
+    )
+  }
+
   function onSubmit() {
     const parsed = validateEconomyConfig(toNumbers(draft))
     if (!parsed.ok) {
@@ -157,6 +179,8 @@ export function EconomyForm({
       {errors._ ? (
         <p className="rounded-xl bg-muted px-3 py-2.5 text-xs text-destructive">{errors._}</p>
       ) : null}
+
+      <ConfigLoader current={saved.config} onApply={applyPatch} />
 
       <div role="tablist" aria-label="Kelompok setelan" className="admin-tabs">
         {GROUP_ORDER.map((entry) => {
@@ -287,6 +311,122 @@ export function EconomyForm({
         </>
       ) : null}
     </div>
+  )
+}
+
+function ConfigLoader({
+  current,
+  onApply,
+}: {
+  current: EconomyConfig
+  onApply: (patch: EconomyPatch, label: string, ignored?: string[]) => void
+}) {
+  const [text, setText] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  const exported = useMemo(
+    () =>
+      JSON.stringify(
+        Object.fromEntries(ECONOMY_FIELDS.map((f) => [f.key, current[f.key]])),
+        null,
+        2,
+      ),
+    [current],
+  )
+
+  function onLoad() {
+    const parsed = parseEconomyPatch(text)
+    if (!parsed.ok) {
+      setError(parsed.message)
+      return
+    }
+    setError(null)
+    onApply(parsed.patch, 'Config tempelan', parsed.unknownKeys)
+  }
+
+  async function onCopy() {
+    try {
+      await navigator.clipboard.writeText(exported)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2_000)
+    } catch {
+      setError('Papan klip tidak bisa diakses. Salin manual dari kotak di bawah.')
+    }
+  }
+
+  return (
+    <details className="rounded-xl bg-muted">
+      <summary className="focus-ring cursor-pointer list-none rounded-xl px-3 py-2.5 text-sm font-medium text-foreground">
+        Muat config
+        <span className="pl-1.5 text-xs font-normal text-muted-foreground">preset atau JSON</span>
+      </summary>
+
+      <div className="flex flex-col gap-2 px-2.5 pb-2.5">
+        <ul className="flex flex-col gap-2">
+          {ECONOMY_PRESETS.map((preset) => (
+            <li key={preset.id} className="rounded-lg bg-background p-2.5">
+              <div className="flex items-start gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium leading-tight text-foreground">{preset.label}</p>
+                  <p className="pt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                    {preset.summary}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null)
+                    onApply(preset.values as EconomyPatch, preset.label)
+                  }}
+                  className="focus-ring transition-ui shrink-0 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground"
+                >
+                  Muat
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <label htmlFor="economy-import" className="pt-1 text-xs font-medium text-foreground">
+          Tempel JSON config
+        </label>
+        <textarea
+          id="economy-import"
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          rows={4}
+          spellCheck={false}
+          placeholder={'{\n  "rewardPoolCapIdr": 10000,\n  "rewardPoolRegenMinutes": 6\n}'}
+          aria-invalid={Boolean(error)}
+          aria-describedby="economy-import-hint"
+          className="focus-ring w-full rounded-lg bg-background px-2.5 py-2 font-mono text-xs text-foreground"
+        />
+        <p id="economy-import-hint" className="text-[11px] leading-relaxed text-muted-foreground">
+          Boleh sebagian key saja. Key yang tidak dikenal diabaikan, dan tidak ada yang tersimpan
+          sebelum kamu menekan Terapkan.
+        </p>
+
+        {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}
+
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onLoad}
+            className="focus-ring transition-ui flex-1 rounded-lg bg-primary px-2.5 py-2 text-xs font-semibold text-primary-foreground"
+          >
+            Muat ke draf
+          </button>
+          <button
+            type="button"
+            onClick={() => void onCopy()}
+            className="focus-ring transition-ui rounded-lg bg-background px-2.5 py-2 text-xs font-medium text-foreground"
+          >
+            {copied ? 'Tersalin' : 'Salin config aktif'}
+          </button>
+        </div>
+      </div>
+    </details>
   )
 }
 

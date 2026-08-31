@@ -105,6 +105,7 @@ export function AppViewRouter({
         summary={session.referralSummary}
         code={session.referralCode}
         shareUrl={session.referralShareUrl}
+        earnedCredits={session.taskBalance + session.referralCredits}
       />
     )
   }

@@ -5,8 +5,8 @@ import { cn } from '@/shared/lib/utils'
 
 const CREDIT_SIZE_CLASS = {
   sm: 'flex-row items-baseline gap-1 text-sm font-semibold',
-  xl: 'flex-col items-stretch gap-1.5 text-4xl font-semibold leading-none tracking-tight',
-  '2xl': 'flex-row flex-wrap items-baseline gap-x-2 text-5xl font-semibold leading-none tracking-[-0.02em]',
+  xl: 'flex-col items-stretch gap-1.5 text-4xl font-bold leading-none tracking-[-0.03em]',
+  '2xl': 'flex-row flex-wrap items-baseline gap-x-2 text-5xl font-bold leading-none tracking-[-0.035em]',
 } as const
 
 const CREDIT_STACKED = { sm: false, xl: true, '2xl': false } as const
@@ -14,7 +14,7 @@ const CREDIT_STACKED = { sm: false, xl: true, '2xl': false } as const
 const CREDIT_UNIT_CLASS = {
   sm: 'text-xs font-medium',
   xl: 'text-sm font-medium',
-  '2xl': 'text-sm font-medium',
+  '2xl': 'text-sm font-semibold',
 } as const
 
 export function CreditAmount({

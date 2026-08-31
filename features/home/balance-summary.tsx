@@ -63,15 +63,15 @@ function HeroActionTile({
       type="button"
       {...props}
       className={cn(
-        'focus-ring transition-ui press-scale-soft control-h flex flex-1 items-center justify-center gap-2 rounded-lg px-3',
+        'focus-ring transition-ui press-scale-soft control-h flex flex-1 items-center justify-center gap-2 rounded-cta px-3',
         // Same hairline edge as .task-card below: a 1px --border ring instead of
         // a real border, so both surfaces read as one family. No fill, so the
         // tiles sit directly on the hero band.
-        'bg-transparent text-foreground shadow-[0_0_0_1px_var(--border)]',
+        'bg-card text-foreground ring-border',
       )}
     >
       {icon}
-      <span className="whitespace-nowrap text-sm font-semibold leading-none">{label}</span>
+      <span className="whitespace-nowrap text-[15px] font-bold tracking-tight leading-none">{label}</span>
     </button>
   )
 }

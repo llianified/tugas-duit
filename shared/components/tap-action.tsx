@@ -13,7 +13,7 @@ const TONE_CLASS = {
     'hover:bg-primary-hover active:bg-primary-active',
   ].join(' '),
   neutral: [
-    'border border-border bg-transparent text-foreground',
+    'border border-border bg-card text-foreground',
     'hover:bg-foreground/[0.04] active:bg-foreground/[0.07]',
   ].join(' '),
 } as const
@@ -53,7 +53,7 @@ export function TapAction({
       type="button"
       {...props}
       className={cn(
-        'focus-ring transition-ui press-scale-soft group flex w-full items-center rounded-xl disabled:pointer-events-none',
+        'focus-ring transition-ui press-scale-soft group flex w-full items-center rounded-cta disabled:pointer-events-none',
         compact ? 'justify-center gap-2 px-3 text-center' : 'gap-3 px-4 text-left',
         SIZE_CLASS[size],
         TONE_CLASS[tone],
@@ -63,7 +63,7 @@ export function TapAction({
       {icon ? <span className="flex shrink-0 items-center">{icon}</span> : null}
       <span
         className={cn(
-          'truncate text-sm font-semibold tracking-tight',
+          'truncate text-[15px] font-bold tracking-tight',
           compact ? 'min-w-0' : 'min-w-0 flex-1',
         )}
       >
@@ -109,7 +109,7 @@ export function TapActionWaiting({
       role="status"
       aria-live="polite"
       className={cn(
-        'flex w-full items-center rounded-xl text-sm font-medium text-muted-foreground',
+        'flex w-full items-center rounded-cta text-[15px] font-semibold text-muted-foreground',
         compact ? 'justify-center gap-2 px-3 text-center' : 'gap-3 px-4',
         SIZE_CLASS[size],
         tone === 'neutral' ? 'border border-border' : 'bg-muted',

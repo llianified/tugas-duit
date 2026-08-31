@@ -4,7 +4,9 @@ import {
   escapeTelegramHtml as escapeHtml,
   openAppMarkup,
   sendTelegramMessage,
+  sendTelegramPhoto,
   type SendMessageOptions,
+  type TelegramPhotoInput,
 } from './telegram'
 
 async function send(telegramId: string, text: string, event: string, options: SendMessageOptions = {}) {
@@ -53,20 +55,32 @@ export async function notifyWithdrawalRequested(notice: WithdrawalNotice) {
   )
 }
 
-export async function notifyWithdrawalPaid(notice: WithdrawalNotice) {
-  await send(
-    notice.telegramId,
-    [
-      '<b>Cair! Dana udah kami kirim 🎉</b>',
-      '',
-      `Jumlah: ${amount(notice)}`,
-      `Tujuan: ${destination(notice)}`,
-      '',
-      'Cek saldo kamu ya. Kalau dalam 1×24 jam belum masuk, balas pesan ini aja.',
-    ].join('\n'),
-    'paid',
-    openAppMarkup('🎮 Kumpulin lagi'),
-  )
+export async function notifyWithdrawalPaid(
+  notice: WithdrawalNotice,
+  proof?: TelegramPhotoInput,
+): Promise<string | null> {
+  const text = [
+    '<b>Cair! Dana udah kami kirim 🎉</b>',
+    '',
+    `Jumlah: ${amount(notice)}`,
+    `Tujuan: ${destination(notice)}`,
+    '',
+    proof
+      ? 'Bukti transfernya kami lampirin di atas. Kalau dalam 1×24 jam belum masuk, balas pesan ini aja.'
+      : 'Cek saldo kamu ya. Kalau dalam 1×24 jam belum masuk, balas pesan ini aja.',
+  ].join('\n')
+  const markup = openAppMarkup('🎮 Kumpulin lagi')
+
+  if (proof) {
+    try {
+      return await sendTelegramPhoto(notice.telegramId, proof, text, markup)
+    } catch (error) {
+      console.error(`[notify] bukti transfer gagal dikirim ke ${notice.telegramId}:`, error)
+    }
+  }
+
+  await send(notice.telegramId, text, 'paid', markup)
+  return null
 }
 
 export async function notifyWithdrawalRejected(notice: WithdrawalNotice & { reason: string }) {

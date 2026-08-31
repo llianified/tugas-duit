@@ -103,6 +103,7 @@ interface PayoutRow {
   paid_at: Date | null
   rejected_at: Date | null
   reject_reason: string | null
+  proof_file_id: string | null
 }
 
 const view = (row: PayoutRow) => ({
@@ -117,7 +118,26 @@ const view = (row: PayoutRow) => ({
   paidAt: row.paid_at?.getTime() ?? null,
   rejectedAt: row.rejected_at?.getTime() ?? null,
   rejectReason: row.reject_reason,
+  hasProof: row.proof_file_id !== null,
 })
+
+export async function savePayoutProof(id: string, fileId: string): Promise<void> {
+  await query(
+    "update withdrawals set proof_file_id=$2,proof_sent_at=now() where id=$1 and state='paid'",
+    [id, fileId],
+  )
+}
+
+export async function readPayoutProofFileId(
+  userId: number,
+  id: string,
+): Promise<string | null> {
+  const rows = await query<{ proof_file_id: string | null }>(
+    "select proof_file_id from withdrawals where id=$1 and user_id=$2 and state='paid'",
+    [id, userId],
+  )
+  return rows[0]?.proof_file_id ?? null
+}
 
 function sharedDestinationChannels(channelId: string): string[] {
   const channel = getPayoutChannel(channelId)

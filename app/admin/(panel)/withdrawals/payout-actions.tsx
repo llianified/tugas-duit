@@ -1,9 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { WITHDRAWAL_REJECT_REASON_MAX } from '@/features/withdraw/domain'
-import { ApiError, sendJson } from '@/shell/api-client'
+import { PAYOUT_PROOF_ACCEPT } from '@/server/payout-proof'
+import { ApiError, sendFormData, sendJson } from '@/shell/api-client'
 
 type Mode = 'idle' | 'confirm-paid' | 'reject'
 
@@ -24,16 +25,25 @@ export function PayoutActions({
   const [note, setNote] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [proof, setProof] = useState<File | null>(null)
 
   async function submit(action: 'paid' | 'rejected') {
     setPending(true)
     setError(null)
     try {
-      await sendJson(`/api/admin/withdrawals/${id}`, 'PATCH', {
-        action,
-        reason: action === 'rejected' ? reason.trim() : undefined,
-        note: note.trim() || undefined,
-      })
+      if (action === 'paid' && proof) {
+        const form = new FormData()
+        form.set('action', 'paid')
+        if (note.trim()) form.set('note', note.trim())
+        form.set('proof', proof)
+        await sendFormData(`/api/admin/withdrawals/${id}`, 'PATCH', form)
+      } else {
+        await sendJson(`/api/admin/withdrawals/${id}`, 'PATCH', {
+          action,
+          reason: action === 'rejected' ? reason.trim() : undefined,
+          note: note.trim() || undefined,
+        })
+      }
       router.refresh()
     } catch (cause) {
       if (cause instanceof ApiError) {
@@ -57,6 +67,7 @@ export function PayoutActions({
           Pastikan transfernya sudah benar-benar dilakukan. Status ini tidak bisa dibatalkan —
           perbaikannya harus lewat penyesuaian ledger manual.
         </p>
+        <ProofField file={proof} onChange={setProof} disabled={pending} />
         <NoteField value={note} onChange={setNote} />
         {error ? <ErrorText>{error}</ErrorText> : null}
         <Row>
@@ -114,6 +125,54 @@ export function PayoutActions({
         <PrimaryButton onClick={() => setMode('confirm-paid')}>Tandai terkirim</PrimaryButton>
         <GhostButton onClick={() => setMode('reject')}>Tolak</GhostButton>
       </Row>
+    </div>
+  )
+}
+
+function ProofField({
+  file,
+  onChange,
+  disabled,
+}: {
+  file: File | null
+  onChange: (file: File | null) => void
+  disabled: boolean
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  return (
+    <div className="flex flex-col gap-1 text-sm">
+      <label htmlFor="payout-proof" className="font-medium text-foreground">
+        Bukti transfer (opsional)
+      </label>
+      <span className="text-muted-foreground">
+        Dikirim langsung ke chat user sebagai gambar. JPEG, PNG, atau WebP, maksimum 5 MB.
+      </span>
+      <input
+        id="payout-proof"
+        ref={inputRef}
+        type="file"
+        accept={PAYOUT_PROOF_ACCEPT}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.files?.[0] ?? null)}
+        className="rounded-md bg-muted px-3 py-2 text-foreground file:mr-3 file:rounded file:border-0 file:bg-card file:px-2 file:py-1 file:text-sm file:font-medium file:text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+      />
+      {file ? (
+        <span className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="truncate">{file.name}</span>
+          <button
+            type="button"
+            onClick={() => {
+              if (inputRef.current) inputRef.current.value = ''
+              onChange(null)
+            }}
+            disabled={disabled}
+            className="shrink-0 font-medium text-destructive hover:underline disabled:opacity-50"
+          >
+            Hapus pilihan
+          </button>
+        </span>
+      ) : null}
     </div>
   )
 }

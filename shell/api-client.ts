@@ -35,6 +35,15 @@ export async function sendJson<T>(
   return readJson<T>(response)
 }
 
+export async function sendFormData<T>(
+  url: string,
+  method: 'POST' | 'PATCH',
+  form: FormData,
+): Promise<T> {
+  const response = await fetch(url, { method, body: form })
+  return readJson<T>(response)
+}
+
 async function readJson<T>(response: Response): Promise<T> {
   if (response.ok) {
     if (response.status === 204) return undefined as T

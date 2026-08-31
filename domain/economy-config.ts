@@ -434,7 +434,25 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
 
 export type EconomyValidationErrors = Partial<Record<EconomyConfigKey, string>> & { _?: string }
 
-export function validateEconomyConfig(input: unknown): {
+/**
+ * `fillMissing` HANYA untuk baris yang dibaca dari database, tidak pernah untuk masukan
+ * admin.
+ *
+ * Menambah satu key baru di kode berarti ada jendela — antara deploy dan migrasi yang
+ * mengisi key itu — ketika baris tersimpan belum memilikinya. Tanpa toleransi ini,
+ * jendela tersebut mematikan SELURUH API: `loadEconomyConfig` dipanggil hampir setiap
+ * route, dan satu key yang hilang membuat baris utuh ditolak. Itu persis yang terjadi
+ * saat `withdrawalMinActiveReferrals` masuk, dan bentuk kegagalan yang sama sudah pernah
+ * merobohkan produksi lewat migrasi 0027.
+ *
+ * Yang ditoleransi hanya key yang benar-benar TIDAK ADA. Key yang ada tapi bukan bilangan
+ * bulat, atau di luar rentangnya, tetap menggagalkan baris — penjagaan itu yang menangkap
+ * konfigurasi rusak, dan tidak boleh ikut dilonggarkan.
+ */
+export function validateEconomyConfig(
+  input: unknown,
+  options: { fillMissing?: boolean } = {},
+): {
   ok: true; config: EconomyConfig
 } | {
   ok: false; errors: EconomyValidationErrors
@@ -445,9 +463,15 @@ export function validateEconomyConfig(input: unknown): {
   }
   const raw = input as Record<string, unknown>
   const config = {} as EconomyConfig
+  const filled: EconomyConfigKey[] = []
 
   for (const field of ECONOMY_FIELDS) {
     const value = raw[field.key]
+    if (options.fillMissing && value === undefined) {
+      config[field.key] = DEFAULT_ECONOMY_CONFIG[field.key]
+      filled.push(field.key)
+      continue
+    }
     if (typeof value !== 'number' || !Number.isInteger(value)) {
       errors[field.key] = 'Harus bilangan bulat.'
       continue
@@ -459,6 +483,12 @@ export function validateEconomyConfig(input: unknown): {
     config[field.key] = value
   }
   if (Object.keys(errors).length > 0) return { ok: false, errors }
+
+  if (filled.length > 0) {
+    console.warn(
+      `[economy-config] key belum ada di baris tersimpan, dipakai nilai bawaan: ${filled.join(', ')}. Jalankan pnpm db:migrate.`,
+    )
+  }
 
   const divisible: [EconomyConfigKey, string][] = [
     ['withdrawalMinimumIdr', 'Minimum penarikan'],

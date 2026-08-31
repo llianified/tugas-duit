@@ -40,7 +40,7 @@ function parseRow(row: StoredRow | undefined): { config: EconomyConfig; version:
   if (!row) {
     throw new EconomyConfigError('ECONOMY_CONFIG_MISSING', 500)
   }
-  const parsed = validateEconomyConfig(row.config)
+  const parsed = validateEconomyConfig(row.config, { fillMissing: true })
   if (!parsed.ok) {
     console.error('[economy-config] baris konfigurasi tidak lolos validasi:', parsed.errors)
     throw new EconomyConfigError('ECONOMY_CONFIG_INVALID', 500, parsed.errors)

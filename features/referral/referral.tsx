@@ -9,7 +9,7 @@ import {
   DataListRow,
 } from '@/shared/components/data-list'
 import { EmptyState } from '@/shared/components/empty-state'
-import { GlyphCheck, GlyphCopy, GlyphUsers } from '@/shared/components/glyph'
+import { GlyphCheck, GlyphCopy, GlyphShare, GlyphUsers } from '@/shared/components/glyph'
 import { IconCircle } from '@/shared/components/icon-circle'
 import { PageHeader } from '@/shared/components/page-header'
 import { PageRegion } from '@/shared/components/page-region'
@@ -17,6 +17,8 @@ import { SectionLabel } from '@/shared/components/section-label'
 import { Surface } from '@/shared/components/surface'
 import { TotalSummary } from '@/shared/components/total-summary'
 import { VIEW_TITLE } from '@/navigation/app-view'
+import { buildShareCaption } from '@/features/referral/share-caption'
+import { shareLink } from '@/shell/share'
 import { formatCredits, formatCreditsPrecise, formatHistoryTime } from '@/shared/lib/format'
 import {
   referralCommissionPercent,
@@ -30,11 +32,13 @@ export function ReferralView({
   summary,
   code,
   shareUrl,
+  earnedCredits,
 }: {
   referrals: Referral[]
   summary: ReferralSummary
   code: string
   shareUrl: string
+  earnedCredits: number
 }) {
   return (
     <div className="view-min-h flex flex-col">
@@ -49,7 +53,12 @@ export function ReferralView({
       </div>
 
       <PageRegion>
-        <InviteCard code={code} shareUrl={shareUrl} />
+        <InviteCard
+          code={code}
+          shareUrl={shareUrl}
+          earnedCredits={earnedCredits}
+          friends={referrals.length}
+        />
       </PageRegion>
 
       <PageRegion>
@@ -129,8 +138,19 @@ function CommissionEmpty({ hasReferrals }: { hasReferrals: boolean }) {
 
 const COPIED_FEEDBACK_MS = 1_800
 
-function InviteCard({ code, shareUrl }: { code: string; shareUrl: string }) {
+function InviteCard({
+  code,
+  shareUrl,
+  earnedCredits,
+  friends,
+}: {
+  code: string
+  shareUrl: string
+  earnedCredits: number
+  friends: number
+}) {
   const [copied, setCopied] = useState(false)
+  const [sharing, setSharing] = useState(false)
 
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -139,6 +159,33 @@ function InviteCard({ code, shareUrl }: { code: string; shareUrl: string }) {
       if (resetTimer.current) clearTimeout(resetTimer.current)
     }
   }, [])
+
+  /**
+   * Tombol utamanya berbagi, bukan menyalin. Menyalin menaruh tautan di papan klip lalu
+   * menyerahkan sisanya ke user — satu langkah lagi yang sebagian besar orang tidak
+   * lakukan. Lembar berbagi sistem membuka daftar aplikasi tujuannya langsung, dan itu
+   * satu-satunya jalan tautan ini keluar dari Telegram ke tempat teman-temannya berada.
+   */
+  async function handleShare() {
+    if (!shareUrl) return
+    setSharing(true)
+    try {
+      const outcome = await shareLink({
+        url: shareUrl,
+        text: buildShareCaption({ earnedCredits, friends }),
+        title: 'Tugas Duit',
+      })
+      if (outcome === 'copied') markCopied()
+    } finally {
+      setSharing(false)
+    }
+  }
+
+  function markCopied() {
+    setCopied(true)
+    if (resetTimer.current) clearTimeout(resetTimer.current)
+    resetTimer.current = setTimeout(() => setCopied(false), COPIED_FEEDBACK_MS)
+  }
 
   async function handleCopy() {
     const link = shareUrl || code
@@ -149,9 +196,7 @@ function InviteCard({ code, shareUrl }: { code: string; shareUrl: string }) {
       return
     }
 
-    setCopied(true)
-    if (resetTimer.current) clearTimeout(resetTimer.current)
-    resetTimer.current = setTimeout(() => setCopied(false), COPIED_FEEDBACK_MS)
+    markCopied()
   }
 
   return (
@@ -171,7 +216,12 @@ function InviteCard({ code, shareUrl }: { code: string; shareUrl: string }) {
         {copied ? 'Link undangan udah disalin.' : `Kode undangan kamu: ${code}`}
       </p>
 
-      <ActionButton onClick={handleCopy} className="cta-gap">
+      <ActionButton onClick={handleShare} disabled={sharing} className="cta-gap">
+        <GlyphShare className="size-4" />
+        Bagikan ke teman
+      </ActionButton>
+
+      <ActionButton variant="ghost" onClick={handleCopy} className="label-gap-t">
         {copied ? (
           <>
             <GlyphCheck className="size-4" />

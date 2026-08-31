@@ -118,7 +118,7 @@ function AppShellInner() {
             taskReward={liveTaskReward}
             energy={session.energy}
             energyMax={session.energyMax}
-            energySecondsToNext={session.energySecondsToNext}
+            energyFill={session.energyFill}
             rewardPoolCredits={session.rewardPoolCredits}
             rewardPoolMax={session.rewardPoolMax}
             rewardPoolRegenCredits={session.rewardPoolRegenCredits}

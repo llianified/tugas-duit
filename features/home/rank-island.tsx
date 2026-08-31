@@ -5,14 +5,15 @@ import { IslandDivider, IslandPill, IslandStat } from '@/features/home/island-pi
 import { StreakGauge } from '@/features/home/streak-gauge'
 import { TierGlyph } from '@/features/home/tier-glyph'
 import type { Progression } from '@/features/home/progression'
+import type { EnergyFill } from '@/domain/energy'
 import { ProgressBar } from '@/shared/components/progress-bar'
-import { formatCredits, formatUnitCountdown } from '@/shared/lib/format'
+import { formatCredits, formatLongCountdown, formatUnitCountdown } from '@/shared/lib/format'
 
 export function RankIsland({
   progression,
   energy,
   energyMax,
-  energySecondsToNext,
+  energyFill,
   rewardPoolCredits,
   rewardPoolMax,
   rewardPoolRegenCredits,
@@ -25,7 +26,7 @@ export function RankIsland({
   progression: Progression
   energy: number
   energyMax: number
-  energySecondsToNext: number | null
+  energyFill: EnergyFill
   rewardPoolCredits: number | null
   rewardPoolMax: number | null
   rewardPoolRegenCredits: number | null
@@ -78,12 +79,7 @@ export function RankIsland({
           <IslandDivider />
         </>
       ) : null}
-      <EnergyRegion
-        energy={energy}
-        energyMax={energyMax}
-        energySecondsToNext={energySecondsToNext}
-        isOpen={isOpen}
-      />
+      <EnergyRegion energy={energy} energyMax={energyMax} fill={energyFill} isOpen={isOpen} />
     </IslandPill>
   )
 }
@@ -209,25 +205,34 @@ function RewardPoolRegion({
   )
 }
 
+/**
+ * Energi dilaporkan sebagai "penuh dalam sekian", bukan "+1 sekian".
+ *
+ * Hitungan per butir memberi user angka terburuk yang bisa dia lihat setiap
+ * kali membuka panel, padahal yang dia rencanakan adalah kapan bisa main
+ * banyak lagi — dan itu waktu menuju penuh.
+ */
 function EnergyRegion({
   energy,
   energyMax,
-  energySecondsToNext,
+  fill,
   isOpen,
 }: {
   energy: number
   energyMax: number
-  energySecondsToNext: number | null
+  fill: EnergyFill
   isOpen: boolean
 }) {
-  const energyFull = energySecondsToNext === null
+  const secondsToFull = fill.secondsToFull
 
   return (
     <IslandStat
-      label="Energi"
-      tone={energyFull ? 'success' : 'primary'}
-      value={energyFull ? 'Penuh' : `+1 · ${formatUnitCountdown(energySecondsToNext)}`}
-      meter={<EnergyPips energy={energy} max={energyMax} active={isOpen} />}
+      label={`Energi ${formatCredits(energy)}/${formatCredits(energyMax)}`}
+      tone={secondsToFull === null ? 'success' : 'primary'}
+      value={secondsToFull === null ? 'Penuh' : `Penuh ${formatLongCountdown(secondsToFull)}`}
+      meter={
+        <EnergyPips energy={energy} max={energyMax} fraction={fill.fraction} active={isOpen} />
+      }
     />
   )
 }

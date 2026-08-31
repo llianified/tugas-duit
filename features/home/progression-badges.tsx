@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import type { Difficulty } from '@/features/captcha/domain'
+import type { EnergyFill } from '@/domain/energy'
 import { getStarReward } from '@/domain/stars'
 import { DifficultyIsland } from '@/features/home/difficulty-island'
 import type { Progression } from '@/features/home/progression'
@@ -20,7 +21,7 @@ export function ProgressionBadges({
   taskReward = null,
   energy,
   energyMax,
-  energySecondsToNext,
+  energyFill,
   rewardPoolCredits,
   rewardPoolMax,
   rewardPoolRegenCredits,
@@ -36,7 +37,7 @@ export function ProgressionBadges({
   taskReward?: number | null
   energy: number
   energyMax: number
-  energySecondsToNext: number | null
+  energyFill: EnergyFill
   rewardPoolCredits: number | null
   rewardPoolMax: number | null
   rewardPoolRegenCredits: number | null
@@ -80,7 +81,7 @@ export function ProgressionBadges({
         progression={progression}
         energy={energy}
         energyMax={energyMax}
-        energySecondsToNext={energySecondsToNext}
+        energyFill={energyFill}
         rewardPoolCredits={rewardPoolCredits}
         rewardPoolMax={rewardPoolMax}
         rewardPoolRegenCredits={rewardPoolRegenCredits}

@@ -23,7 +23,7 @@ const HISTORIC: EconomyConfig = {
   maxEnergy: 5, energyRegenMinutes: 60, energyCostPerTask: 1,
   adsMaxViewsPerDay: 10, adsCooldownSeconds: 120,
   adsTicketTtlSeconds: 300, adsPassTtlMinutes: 30,
-  withdrawalMinimumIdr: 10_000,
+  withdrawalMinimumIdr: 10_000, withdrawalMinActiveReferrals: 5,
   maxPayoutIdr: 2_000_000_000, referralCommissionPercent: 10, dailyCommissionCapIdr: 6_000,
   rankTier2Tasks: 100, rankTier3Tasks: 300, rankTier4Tasks: 700, rankTier5Tasks: 1_500,
   channelJoinBonusCredits: 25,

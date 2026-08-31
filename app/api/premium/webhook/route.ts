@@ -25,6 +25,7 @@ export async function POST(request: Request) {
       order_id?: unknown
       status?: unknown
       signature?: unknown
+      total_amount?: unknown
     }>(request)
     const orderId = typeof body?.order_id === 'string' ? body.order_id.trim() : ''
     if (!orderId) return ok()
@@ -33,7 +34,13 @@ export async function POST(request: Request) {
 
     await loadEconomyConfig()
     const signature = typeof body?.signature === 'string' ? body.signature : null
-    const settled = await settlePremiumPayment(orderId, signature, 'webhook')
+    const paidAmount = Math.round(Number(body?.total_amount))
+    const settled = await settlePremiumPayment(
+      orderId,
+      signature,
+      'webhook',
+      Number.isFinite(paidAmount) && paidAmount > 0 ? paidAmount : null,
+    )
 
     if (!settled.settled) {
       if (settled.reason === 'bad_signature') return new Response(null, { status: 401 })

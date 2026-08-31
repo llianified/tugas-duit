@@ -47,6 +47,7 @@ export interface EconomyConfig {
   adsPassTtlMinutes: number
   withdrawalMinimumIdr: number
   maxPayoutIdr: number
+  withdrawalMinActiveReferrals: number
   referralCommissionPercent: number
   dailyCommissionCapIdr: number
   rankTier2Tasks: number
@@ -111,6 +112,7 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   adsPassTtlMinutes: 30,
   withdrawalMinimumIdr: 10_000,
   maxPayoutIdr: 2_000_000_000,
+  withdrawalMinActiveReferrals: 5,
   referralCommissionPercent: 10,
   dailyCommissionCapIdr: 6_000,
   rankTier2Tasks: 100,
@@ -337,6 +339,13 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     description: 'Nominal terkecil yang bisa diajukan. Menahan biaya transfer per payout.',
     impact: 'Menurunkannya membuat penarikan lebih sering, sehingga biaya transfer per rupiah naik.',
     min: 1_000, max: 10_000_000, riskyWhen: 'lower',
+  },
+  {
+    key: 'withdrawalMinActiveReferrals', group: 'withdrawal', label: 'Referral aktif minimum',
+    unit: 'referral',
+    description: 'Berapa teman undangan yang harus sudah pernah mengerjakan task sebelum user boleh menarik dana. Isi 0 supaya user tanpa referral tetap bisa menarik — gerbang waktunya tetap dijaga syarat hari aktif, yang tidak bisa dipercepat dengan menggenjot task.',
+    impact: 'Menurunkannya membuka penarikan untuk akun yang tidak membawa siapa pun, termasuk akun yang dibuat massal; menaikkannya mengunci user jujur yang tidak punya teman untuk diajak.',
+    min: 0, max: 50, riskyWhen: 'lower',
   },
   {
     key: 'maxPayoutIdr', group: 'withdrawal', label: 'Maksimum penarikan', unit: 'Rp/pengajuan',

@@ -18,7 +18,8 @@ async function upsertUser(tx: PoolClient, tg: { id: number; username?: string; f
      on conflict(telegram_id) do update set
        username=case when users.profile_overridden_at is null then excluded.username else users.username end,
        first_name=case when users.profile_overridden_at is null then excluded.first_name else users.first_name end,
-       photo_url=excluded.photo_url,updated_at=now()
+       photo_url=case when users.profile_overridden_at is null then excluded.photo_url else users.photo_url end,
+       updated_at=now()
      returning id,(xmax=0) is_new,banned_at`,
     [tg.id, tg.username ?? null, tg.first_name ?? '', tg.photo_url ?? null, generateReferralCode()],
   )

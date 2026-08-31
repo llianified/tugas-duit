@@ -1,4 +1,5 @@
-import { economyConfig } from './economy-config.ts'
+import { economyConfig, type EconomyConfig } from './economy-config.ts'
+import { rupiahToCredits } from './economy.ts'
 
 /**
  * Kolam reward: plafon penghasilan yang mengisi ulang bertahap, bukan reset tengah malam.
@@ -9,9 +10,8 @@ import { economyConfig } from './economy-config.ts'
  * kapasitasnya yang ikut rank serta streak, jadi kapasitas selalu dikirim dari luar.
  */
 
-export function baseRewardPoolCredits(): number {
-  const config = economyConfig()
-  return config.rewardPoolCapIdr / config.creditValueIdr
+export function baseRewardPoolCredits(config: EconomyConfig = economyConfig()): number {
+  return rupiahToCredits(config.rewardPoolCapIdr, config)
 }
 
 export function rewardPoolRegenMs(): number {
@@ -23,8 +23,8 @@ export function rewardPoolRegenCredits(): number {
 }
 
 /** Credit yang masuk ke kolam dalam 24 jam penuh, dipakai untuk estimasi, bukan untuk penjagaan. */
-export function rewardPoolCreditsPerDay(): number {
-  return (1_440 / economyConfig().rewardPoolRegenMinutes) * rewardPoolRegenCredits()
+export function rewardPoolCreditsPerDay(config: EconomyConfig = economyConfig()): number {
+  return (1_440 / config.rewardPoolRegenMinutes) * config.rewardPoolRegenCredits
 }
 
 interface CapacityInput {
@@ -38,8 +38,10 @@ interface CapacityInput {
  * jadi penghasilan maksimum per hari tidak ikut naik, hanya berapa yang bisa ditumpuk
  * sebelum kolam berhenti mengisi.
  */
-export function rewardPoolCapacity({ rankTier, streak, premium = false }: CapacityInput): number {
-  const config = economyConfig()
+export function rewardPoolCapacity(
+  { rankTier, streak, premium = false }: CapacityInput,
+  config: EconomyConfig = economyConfig(),
+): number {
   const normalizedTier = Math.min(5, Math.max(1, Math.floor(rankTier)))
   const rankBonus = (normalizedTier - 1) * config.rankPoolCapBonus
   const streakBonus = Math.min(
@@ -47,7 +49,7 @@ export function rewardPoolCapacity({ rankTier, streak, premium = false }: Capaci
     Math.floor(Math.max(0, streak) / config.streakCapStepDays),
   )
   const premiumBonus = premium ? config.premiumPoolCapBonus : 0
-  return baseRewardPoolCredits() + rankBonus + streakBonus + premiumBonus
+  return baseRewardPoolCredits(config) + rankBonus + streakBonus + premiumBonus
 }
 
 export interface RewardPoolSnapshot {

@@ -1,19 +1,24 @@
 
-import { economyConfig } from './economy-config.ts'
+import { economyConfig, type EconomyConfig } from './economy-config.ts'
 import { rewardPoolCreditsPerDay } from './reward-pool.ts'
 
-export function withdrawalMinimumCredits(): number {
-  const config = economyConfig()
-  return config.withdrawalMinimumIdr / config.creditValueIdr
+export function rupiahToCredits(
+  rupiah: number,
+  config: EconomyConfig = economyConfig(),
+): number {
+  return rupiah / config.creditValueIdr
+}
+
+export function withdrawalMinimumCredits(config: EconomyConfig = economyConfig()): number {
+  return rupiahToCredits(config.withdrawalMinimumIdr, config)
 }
 
 export function withdrawalMinActiveReferrals(): number {
   return economyConfig().withdrawalMinActiveReferrals
 }
 
-export function maxPayoutCredits(): number {
-  const config = economyConfig()
-  return config.maxPayoutIdr / config.creditValueIdr
+export function maxPayoutCredits(config: EconomyConfig = economyConfig()): number {
+  return rupiahToCredits(config.maxPayoutIdr, config)
 }
 
 export function maxTasksPerDay(premium = false): number {
@@ -46,8 +51,11 @@ export function firstWithdrawalEstimateDays(): number {
   return Math.max(1, Math.ceil(withdrawalMinimumCredits() / rewardPoolCreditsPerDay()))
 }
 
-export function creditsToRupiah(credits: number): number {
-  return credits * economyConfig().creditValueIdr
+export function creditsToRupiah(
+  credits: number,
+  config: EconomyConfig = economyConfig(),
+): number {
+  return credits * config.creditValueIdr
 }
 
 interface WithdrawalStatus {

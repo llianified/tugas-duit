@@ -20,6 +20,7 @@ import { Surface } from '@/shared/components/surface'
 import { PageTitle, SectionLabel } from '@/shared/components/section-label'
 import { ActionButton } from '@/shared/components/action-button'
 import { formatDateTime } from '@/shared/lib/format'
+import { EarningsPreview } from './earnings-preview'
 
 const GROUP_LABEL: Record<EconomyGroup, string> = {
   earnings: 'Plafon',
@@ -74,6 +75,15 @@ export function EconomyForm({
   const [confirming, setConfirming] = useState(false)
   const [group, setGroup] = useState<EconomyGroup>('earnings')
   const [helpFor, setHelpFor] = useState<EconomyConfigKey | null>(null)
+
+  const draftConfig = useMemo<EconomyConfig>(() => {
+    const merged = { ...saved.config }
+    for (const field of ECONOMY_FIELDS) {
+      const value = Number(draft[field.key])
+      if (draft[field.key].trim() !== '' && Number.isFinite(value)) merged[field.key] = value
+    }
+    return merged
+  }, [draft, saved])
 
   const changes = useMemo(
     () =>
@@ -213,6 +223,8 @@ export function EconomyForm({
           )
         })}
       </div>
+
+      <EarningsPreview saved={saved.config} draft={draftConfig} />
 
       <ul className="flex flex-col gap-2">
         {ECONOMY_FIELDS.filter((f) => f.group === group).map((field) => {

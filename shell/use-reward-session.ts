@@ -172,6 +172,7 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
   }, [adsEnabled, session])
 
   const openHistory = useCallback(() => pushView('history'), [pushView])
+  const openMissions = useCallback(() => pushView('missions'), [pushView])
   const openProfile = useCallback(() => pushView('profile'), [pushView])
   const openStats = useCallback(() => pushView('stats'), [pushView])
   const openReferral = useCallback(() => {
@@ -192,6 +193,7 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     user: session?.user ?? null,
     founder: session?.user?.founder ?? false,
     openHistory,
+    openMissions,
     openProfile,
     openStats,
     openReferral,

@@ -83,6 +83,64 @@ export async function recordAdClaimSignal(
   )
 }
 
+/**
+ * Ambang sapuan, dikalibrasi dari sebaran nyata di produksi (36.033 task sejak 19 Agu),
+ * bukan dari tebakan. Angka-angka ini tinggal di kode dan bukan di panel admin karena
+ * sinyal hanya mencatat — tidak pernah mengubah reward maupun menolak pembayaran —
+ * sesuai baris `FLOOR_MS` di `docs/keputusan-desain.md`.
+ */
+
+/** Sampel minimum sebelum keseragaman waktu berarti apa-apa. */
+const IDENTICAL_TIMING_MIN_SAMPLE = 50
+
+/**
+ * Ambang lama 150ms tidak pernah bisa disentuh: `elapsed_ms` mengukur waktu manusia
+ * membaca soal, bukan latensi mesin, dan spread terkecil di seluruh dataset produksi
+ * adalah 1.877ms — 12x di atas ambangnya. 600ms memberi jarak ~3x di bawah lantai
+ * manusia paling konsisten, sambil menangkap skrip ber-jitter yang dulu lolos.
+ */
+const IDENTICAL_TIMING_MAX_SPREAD_MS = 600
+
+const NO_WRONG_MIN_SOLVED = 200
+
+/**
+ * Dulu syaratnya `max(attempts) = 0` — rekor sempurna. Itu bisa dimatikan permanen oleh
+ * SATU jawaban salah yang disengaja, jadi diganti rasio. Populasi produksi rata-rata
+ * ~6,5% percobaan salah per task; 1% menandai yang enam kali lebih bersih dari itu dan
+ * memaksa pengelak membuang dua task per dua ratus, bukan satu.
+ */
+const NO_WRONG_MAX_ERROR_RATIO = 0.01
+
+/**
+ * Rentang yang disapu harus LEBIH PANJANG dari periode cron, kalau tidak detektornya buta
+ * di sela antar-jalan. Versi lama memakai jendela 10 menit sementara cron jalan tiap jam
+ * (`railway.cron.json`), jadi 50 dari 60 menit tidak pernah terlihat — burst 34 akun pada
+ * 25 Agu 09:13–09:16 lolos bukan karena ambangnya kurang, tapi karena tidak ada satu pun
+ * eksekusi yang jendelanya menutupi menit-menit itu. Tiga jam memberi ruang untuk cron
+ * yang telat atau satu-dua eksekusi yang terlewat.
+ */
+const REFERRAL_BURST_LOOKBACK_MINUTES = 180
+
+/**
+ * Kerapatan yang dicari tetap sama seperti dulu — sekian pendaftar dalam sepuluh menit —
+ * hanya saja sekarang dicari di SETIAP titik sepanjang rentang sapuan, bukan hanya di
+ * sepuluh menit terakhir. Melebarkan jendelanya saja akan menumpulkan artinya: 20
+ * pendaftar dalam tiga jam itu wajar, 20 dalam sepuluh menit tidak.
+ */
+const REFERRAL_BURST_WINDOW_MINUTES = 10
+
+const REFERRAL_BURST_THRESHOLD = 20
+
+export const SWEEP_THRESHOLDS = {
+  identicalTimingMinSample: IDENTICAL_TIMING_MIN_SAMPLE,
+  identicalTimingMaxSpreadMs: IDENTICAL_TIMING_MAX_SPREAD_MS,
+  noWrongMinSolved: NO_WRONG_MIN_SOLVED,
+  noWrongMaxErrorRatio: NO_WRONG_MAX_ERROR_RATIO,
+  referralBurstLookbackMinutes: REFERRAL_BURST_LOOKBACK_MINUTES,
+  referralBurstWindowMinutes: REFERRAL_BURST_WINDOW_MINUTES,
+  referralBurstThreshold: REFERRAL_BURST_THRESHOLD,
+} as const
+
 type SweepCounts = Record<'identical_timing' | 'no_wrong_attempts' | 'referral_burst', number>
 
 export async function sweepFraudSignals(tx: PoolClient): Promise<SweepCounts> {
@@ -96,7 +154,8 @@ export async function sweepFraudSignals(tx: PoolClient): Promise<SweepCounts> {
        join users u on u.id=tc.user_id and u.banned_at is null
        where tc.completed_at > now() - interval '1 day'
        group by tc.user_id,tc.difficulty
-       having count(*) >= 50 and stddev(tc.elapsed_ms) < 150
+       having count(*) >= ${IDENTICAL_TIMING_MIN_SAMPLE}
+          and stddev(tc.elapsed_ms) < ${IDENTICAL_TIMING_MAX_SPREAD_MS}
      ) c
      where not exists (
        select 1 from fraud_signals f
@@ -107,14 +166,19 @@ export async function sweepFraudSignals(tx: PoolClient): Promise<SweepCounts> {
 
   const noWrongAttempts = await tx.query(
     `insert into fraud_signals(user_id,signal,severity,detail)
-     select c.user_id,'no_wrong_attempts',3,jsonb_build_object('solved',c.solved)
+     select c.user_id,'no_wrong_attempts',3,
+       jsonb_build_object('solved',c.solved,'salah',c.salah,'rasioSalah',round(c.rasio,4))
      from (
-       select ch.user_id,count(*) solved
+       select ch.user_id,
+              count(*) solved,
+              coalesce(sum(ch.attempts),0) salah,
+              coalesce(sum(ch.attempts),0)::numeric / count(*) rasio
        from challenges ch
        join users u on u.id=ch.user_id and u.banned_at is null
        where ch.solved and ch.submitted_at > now() - interval '7 days'
        group by ch.user_id
-       having count(*) >= 200 and max(ch.attempts) = 0
+       having count(*) >= ${NO_WRONG_MIN_SOLVED}
+          and coalesce(sum(ch.attempts),0)::numeric / count(*) < ${NO_WRONG_MAX_ERROR_RATIO}
      ) c
      where not exists (
        select 1 from fraud_signals f
@@ -125,14 +189,31 @@ export async function sweepFraudSignals(tx: PoolClient): Promise<SweepCounts> {
 
   const referralBurst = await tx.query(
     `insert into fraud_signals(user_id,signal,severity,detail)
-     select c.referred_by,'referral_burst',4,jsonb_build_object('pendaftar',c.pendaftar,'windowMinutes',10)
+     select c.referred_by,'referral_burst',4,
+       jsonb_build_object(
+         'pendaftar',c.pendaftar,
+         'windowMinutes',${REFERRAL_BURST_WINDOW_MINUTES},
+         'lookbackMinutes',${REFERRAL_BURST_LOOKBACK_MINUTES},
+         'terakhirDaftar',c.terakhir
+       )
      from (
-       select u.referred_by,count(*) pendaftar
-       from users u
-       join users up on up.id=u.referred_by and up.banned_at is null
-       where u.referred_by is not null and u.created_at > now() - interval '10 minutes'
-       group by u.referred_by
-       having count(*) >= 20
+       select w.referred_by,max(w.in_window) pendaftar,max(w.created_at) terakhir
+       from (
+         select u.referred_by,
+                u.created_at,
+                count(*) over (
+                  partition by u.referred_by
+                  order by u.created_at
+                  range between interval '${REFERRAL_BURST_WINDOW_MINUTES} minutes' preceding
+                            and current row
+                )::int in_window
+         from users u
+         join users up on up.id=u.referred_by and up.banned_at is null
+         where u.referred_by is not null
+           and u.created_at > now() - interval '${REFERRAL_BURST_LOOKBACK_MINUTES} minutes'
+       ) w
+       group by w.referred_by
+       having max(w.in_window) >= ${REFERRAL_BURST_THRESHOLD}
      ) c
      where not exists (
        select 1 from fraud_signals f

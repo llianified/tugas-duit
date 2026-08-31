@@ -43,8 +43,9 @@ arti data atau melanggar constraint:
 | `COMMISSION_UNITS_PER_CREDIT = 100` | Satuan, bukan besaran. Kolom `commission_units` dan `pending_units` menyimpan angka dalam satuan ini, jadi mengubahnya akan mengubah arti seluruh baris komisi yang sudah tersimpan. |
 | `STAR_MAX = 3` dan tipe `StarCount` | Terikat constraint `task_completions.stars between 1 and 3`. |
 | 5 tingkat rank | Terikat daftar nama rank di `features/home/progression.ts`. Ambang tiap tingkatnya sendiri bisa disetel. |
-| `FLOOR_MS` di `server/fraud.ts` | Ambang sinyal anti-fraud. Ia hanya mencatat, tidak pernah mengubah reward maupun menolak pembayaran. |
+| `FLOOR_MS` dan `SWEEP_THRESHOLDS` di `server/fraud.ts` | Ambang sinyal anti-fraud. Ia hanya mencatat, tidak pernah mengubah reward maupun menolak pembayaran. Angkanya dikalibrasi dari sebaran nyata produksi, bukan ditebak: `identicalTimingMaxSpreadMs` 600 berdiri di bawah lantai manusia paling konsisten yang terukur (1.877ms), dan `noWrongMaxErrorRatio` 1% berdiri di bawah rata-rata populasi (~6,5%). |
 | Batas retensi, ukuran halaman, rate limit, umur sesi | Operasional, bukan ekonomi. |
+| `referralBurstLookbackMinutes` (180) jauh lebih panjang dari `referralBurstWindowMinutes` (10) | Dua angka berbeda karena menjawab dua hal berbeda: yang pertama **seberapa jauh ke belakang disapu**, yang kedua **serapat apa yang dicari**. Versi pertama menyatukan keduanya jadi satu jendela 10 menit, padahal cron jalan sekali sejam (`railway.cron.json`) — jadi 50 dari 60 menit tidak pernah terlihat dan detektornya menulis nol baris selama dua belas hari. Rentang sapuan harus selalu melampaui periode cron; kerapatannya tetap sempit supaya artinya tidak tumpul. Dijaga test `FRAUD-4`, yang gagal kalau jadwal cron diubah tanpa menaikkan rentangnya. |
 
 Satu batas datang dari database, bukan dari selera: `maxAttemptsPerTask`
 maksimal 5, karena `challenges.attempts` punya `check (attempts between 0 and

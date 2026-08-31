@@ -13,7 +13,7 @@ import { query, transaction } from './db'
 import { appendLedger } from './ledger'
 import {
   REQUIRED_ACTIVE_DAYS,
-  REQUIRED_ACTIVE_REFERRALS,
+  requiredActiveReferrals,
   WITHDRAWAL_COOLDOWN_MS,
 } from './payout-rules'
 import { requireAdmin, UnauthorizedError } from './session'
@@ -33,7 +33,7 @@ export class PayoutError extends Error {
 }
 
 const PG_UNIQUE_VIOLATION = '23505'
-export { REQUIRED_ACTIVE_DAYS, REQUIRED_ACTIVE_REFERRALS, WITHDRAWAL_COOLDOWN_MS }
+export { REQUIRED_ACTIVE_DAYS, requiredActiveReferrals, WITHDRAWAL_COOLDOWN_MS }
 
 interface PayoutEligibility {
   activeReferralCount: number
@@ -83,7 +83,7 @@ async function readEligibility(userId: number, tx?: PoolClient): Promise<PayoutE
 
   return {
     activeReferralCount: Number(row.active_referral_count),
-    requiredActiveReferrals: REQUIRED_ACTIVE_REFERRALS,
+    requiredActiveReferrals: requiredActiveReferrals(),
     activeDays: Number(row.active_days),
     requiredActiveDays: REQUIRED_ACTIVE_DAYS,
     cooldownEndsAt: endsAt && endsAt > now ? endsAt : null,

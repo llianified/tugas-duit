@@ -98,7 +98,12 @@ export async function startPremiumCheckout(
     const remote = await readInvoiceStatus(open.order_id).catch(() => null)
 
     if (remote?.status === 'SUCCESS') {
-      await settlePremiumPayment(open.order_id, remote.signature, 'gateway')
+      await settlePremiumPayment(
+        open.order_id,
+        remote.signature,
+        'gateway',
+        remote.totalAmountIdr || null,
+      )
       const settled = await query<{ granted_until: Date | null; state: string }>(
         'select granted_until, state from premium_payments where id=$1',
         [open.id],
@@ -110,7 +115,17 @@ export async function startPremiumCheckout(
       throw new PremiumPaymentError('PAYMENT_SETTLE_FAILED', 502)
     }
 
-    if (remote?.status === 'EXPIRED' || Number(open.months) !== months) {
+    /**
+     * Tagihan lama hanya dibuang kalau gateway benar-benar menjawab. `remote === null`
+     * berarti statusnya TIDAK diketahui — gateway timeout atau menolak — dan membuang
+     * tagihan atas dasar itu bisa menghapus tagihan yang sebenarnya sudah dibayar.
+     * Karena itu permintaan ganti paket saat gateway bisu dijawab dengan tagihan yang
+     * masih berjalan, bukan dengan tagihan baru: user bisa mencoba lagi sebentar lagi,
+     * dan tidak ada uang yang menggantung tanpa pemilik.
+     */
+    if (remote === null) return { ok: true, settled: false, invoice: view(open) }
+
+    if (remote.status === 'EXPIRED' || Number(open.months) !== months) {
       await query("update premium_payments set state='expired', updated_at=now() where id=$1", [
         open.id,
       ])
@@ -154,7 +169,10 @@ export type SettleResult =
       telegramId: string
       months: PremiumMonths
     }
-  | { settled: false; reason: 'not_found' | 'already_settled' | 'bad_signature' }
+  | {
+      settled: false
+      reason: 'not_found' | 'already_settled' | 'bad_signature' | 'amount_mismatch'
+    }
 
 /**
  * Satu-satunya pintu yang menyalakan premium. Idempotensinya bertumpu pada
@@ -165,6 +183,7 @@ export async function settlePremiumPayment(
   orderId: string,
   signature: string | null,
   source: 'webhook' | 'gateway',
+  paidAmountIdr: number | null = null,
 ): Promise<SettleResult> {
   return transaction(async (tx: PoolClient) => {
     const locked = await tx.query<InvoiceRow & { telegram_id: string }>(
@@ -181,6 +200,23 @@ export async function settlePremiumPayment(
     if (!signature || !sameSignature(row.signature, signature)) {
       console.warn('[premium] signature %s tidak cocok untuk %s', source, orderId)
       return { settled: false as const, reason: 'bad_signature' as const }
+    }
+
+    /**
+     * Signature membuktikan callback-nya asli, bukan bahwa nominalnya lunas. Keduanya
+     * pertanyaan berbeda, dan hanya yang pertama yang selama ini diperiksa. Nominal
+     * yang dibandingkan `total_amount_idr` — yang benar-benar ditagih setelah KlikQRIS
+     * menambahkan kode unik — bukan harga paketnya.
+     */
+    if (paidAmountIdr !== null && paidAmountIdr < Number(row.total_amount_idr)) {
+      console.warn(
+        '[premium] nominal %s kurang untuk %s: dibayar %d, ditagih %d',
+        source,
+        orderId,
+        paidAmountIdr,
+        Number(row.total_amount_idr),
+      )
+      return { settled: false as const, reason: 'amount_mismatch' as const }
     }
 
     const months = Number(row.months) as PremiumMonths

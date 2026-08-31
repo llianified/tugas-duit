@@ -229,7 +229,7 @@ describe('konsumen membaca dari satu sumber kebenaran', () => {
     await expect(
       createPayout(userId, {
         channelId: 'dana',
-        accountNumber: `08${Math.floor(Math.random() * 1_000_000_000)}`,
+        accountNumber: `08${String(Math.floor(Math.random() * 1_000_000_000)).padStart(9, '0')}`,
         accountName: 'Uji Coba',
         credits: 100,
       }),

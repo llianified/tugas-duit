@@ -6,7 +6,7 @@ import { projectRewardPool, rewardPoolCapacity } from '../domain/reward-pool.ts'
 import { getRank } from '../features/home/progression.ts'
 import { formatCredits, formatRupiah } from '../shared/lib/format.ts'
 import { query } from './db.ts'
-import { REQUIRED_ACTIVE_DAYS, REQUIRED_ACTIVE_REFERRALS } from './payout-rules.ts'
+import { REQUIRED_ACTIVE_DAYS, requiredActiveReferrals } from './payout-rules.ts'
 import { escapeTelegramHtml as escapeHtml, openAppMarkup, sendTelegramMessage } from './telegram.ts'
 
 export type EngagementKind =
@@ -39,6 +39,22 @@ const POOL_IDLE_HOURS = 6
 const STREAK_LOOKBACK_DAYS = 120
 const MAX_SENDS_PER_RUN = 500
 const SEND_GAP_MS = 60
+
+/**
+ * Anggaran waktu, bukan sekadar plafon jumlah.
+ *
+ * `MAX_SENDS_PER_RUN` sendirian tidak pernah bisa menghentikan putaran tepat waktu:
+ * 500 kirim x `SEND_GAP_MS` sudah 30 detik sebelum satu pun round-trip Telegram
+ * dihitung, sementara route cron-nya dibatasi `maxDuration = 60`. Yang terjadi bukan
+ * "sisanya jam depan" melainkan proses dibunuh di tengah — dan karena `deliver()`
+ * menulis penanda `bot_notifications` SEBELUM mengirim, user yang penandanya sempat
+ * tertulis tapi pesannya belum terkirim tidak akan pernah dicoba lagi.
+ *
+ * Jadi putaran berhenti sendiri sebelum tenggatnya, dengan sisa yang cukup untuk
+ * merapikan dan mengembalikan ringkasan. Penanda hanya ditulis untuk pesan yang
+ * benar-benar sempat dikirim.
+ */
+export const DEFAULT_SEND_BUDGET_MS = 30_000
 
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
 
@@ -160,7 +176,7 @@ async function loadConfig(): Promise<boolean> {
 function withdrawReady(row: CandidateRow, balance: number, premium: boolean): boolean {
   if (balance < withdrawalMinimumCredits()) return false
   if (row.processing_withdrawals > 0) return false
-  if (row.active_referrals < REQUIRED_ACTIVE_REFERRALS) return false
+  if (row.active_referrals < requiredActiveReferrals()) return false
   if (row.active_days < REQUIRED_ACTIVE_DAYS) return false
   if (!row.last_withdrawal_at) return true
   return row.last_withdrawal_at.getTime() + withdrawalCooldownMs(premium) <= row.now.getTime()
@@ -345,9 +361,12 @@ async function deliver(row: CandidateRow, message: Message): Promise<boolean> {
 }
 
 export async function runEngagementNotifications(
-  options: { now?: Date } = {},
+  options: { now?: Date; budgetMs?: number } = {},
 ): Promise<Record<string, number>> {
   if (!(await loadConfig())) return {}
+
+  const budgetMs = options.budgetMs ?? DEFAULT_SEND_BUDGET_MS
+  const deadline = Date.now() + budgetMs
 
   const clock = options.now ?? (await query<{ now: Date }>('select now() as now'))[0]?.now
   const hour = wibHour(clock ?? new Date())
@@ -366,7 +385,13 @@ export async function runEngagementNotifications(
   let total = 0
   for (const row of candidates) {
     if (total >= MAX_SENDS_PER_RUN) {
-      console.warn(`[engagement] batas ${MAX_SENDS_PER_RUN} pesan per putaran tercapai, sisanya jam depan`)
+      console.warn(`[engagement] batas ${MAX_SENDS_PER_RUN} pesan per putaran tercapai, sisanya putaran berikutnya`)
+      break
+    }
+    if (Date.now() >= deadline) {
+      console.warn(
+        `[engagement] anggaran ${budgetMs}ms habis setelah ${total} pesan, sisanya putaran berikutnya`,
+      )
       break
     }
     const message = pickMessage(row, streakOf.get(String(row.id)) ?? 0)

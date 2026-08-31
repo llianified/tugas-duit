@@ -7,6 +7,10 @@ export function withdrawalMinimumCredits(): number {
   return config.withdrawalMinimumIdr / config.creditValueIdr
 }
 
+export function withdrawalMinActiveReferrals(): number {
+  return economyConfig().withdrawalMinActiveReferrals
+}
+
 export function maxPayoutCredits(): number {
   const config = economyConfig()
   return config.maxPayoutIdr / config.creditValueIdr

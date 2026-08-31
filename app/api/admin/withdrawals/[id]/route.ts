@@ -71,14 +71,30 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const settled = await settlePayout(admin.id, id, body.action, reason, body.note ?? null)
     if (!settled) return new Response(null, { status: 404 })
 
-    if (body.action === 'paid') {
-      const fileId = await notifyWithdrawalPaid(settled.notice, proof)
-      if (fileId) await savePayoutProof(id, fileId)
-    } else {
-      await notifyWithdrawalRejected({ ...settled.notice, reason })
+    /**
+     * Penarikannya sudah settle di database sebelum baris ini. Kegagalan mengirim
+     * notifikasi atau menyimpan bukti tidak boleh berubah menjadi 500 ke admin: yang
+     * dilihat admin akan jadi "gagal" untuk pengajuan yang sebenarnya sudah beres, dan
+     * percobaan ulangnya akan dijawab ALREADY_SETTLED. Jadi sisa langkahnya dicatat,
+     * bukan dilempar, dan hasilnya ikut dikirim balik supaya panel bisa memberi tahu
+     * kalau buktinya perlu dikirim ulang.
+     */
+    let proofSaved = false
+    try {
+      if (body.action === 'paid') {
+        const fileId = await notifyWithdrawalPaid(settled.notice, proof)
+        if (fileId) {
+          await savePayoutProof(id, fileId)
+          proofSaved = true
+        }
+      } else {
+        await notifyWithdrawalRejected({ ...settled.notice, reason })
+      }
+    } catch (error) {
+      console.error('[admin] penarikan sudah settle tapi kabarnya gagal dikirim:', error)
     }
 
-    return Response.json({ withdrawal: settled.withdrawal })
+    return Response.json({ withdrawal: settled.withdrawal, proofSaved })
   } catch (error) {
     if (error instanceof PayoutError) {
       return apiError(error.code, MESSAGE[error.code] ?? 'Pengajuan tidak bisa diproses.', error.status)

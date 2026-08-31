@@ -1,7 +1,7 @@
 import { query } from './db'
 import {
   REQUIRED_ACTIVE_DAYS,
-  REQUIRED_ACTIVE_REFERRALS,
+  requiredActiveReferrals,
   WITHDRAWAL_COOLDOWN_MS,
 } from './payout-rules'
 import { generateReferralCode } from './referral'
@@ -14,7 +14,7 @@ import { generateReferralCode } from './referral'
  */
 export async function seedActiveReferrals(
   uplineId: number,
-  count = REQUIRED_ACTIVE_REFERRALS,
+  count = requiredActiveReferrals(),
 ): Promise<void> {
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   for (let index = 0; index < count; index += 1) {

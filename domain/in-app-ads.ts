@@ -45,6 +45,10 @@ export interface InAppAdsSettings {
 /**
  * Nilai dari dashboard Monetag: 2 iklan dalam 6 menit, jarak 30 detik, iklan pertama
  * setelah 5 detik, sesi ikut tersimpan saat pindah halaman.
+ *
+ * Dipakai sebagai cadangan saja — jadwal yang berlaku dibaca dari config ekonomi lewat
+ * `inAppAdsSettings()`. Nilai ini yang jalan sebelum `/api/session` termuat, jadi bentuknya
+ * disamakan dengan bawaan config supaya tidak ada lonjakan frekuensi di detik-detik awal.
  */
 export const DEFAULT_IN_APP_ADS_SETTINGS: InAppAdsSettings = {
   frequency: 2,
@@ -52,6 +56,35 @@ export const DEFAULT_IN_APP_ADS_SETTINGS: InAppAdsSettings = {
   intervalSeconds: 30,
   timeoutSeconds: 5,
   everyPage: false,
+}
+
+/**
+ * Jadwal yang berlaku, diturunkan dari config ekonomi supaya frekuensi impresi bisa
+ * dinaikkan atau diturunkan dari panel admin tanpa deploy — ini satu-satunya tuas
+ * pemasukan yang efeknya langsung.
+ *
+ * `cappingHours` disimpan sebagai MENIT di config (`inAppAdsCappingMinutes`) karena seluruh
+ * config ekonomi divalidasi sebagai bilangan bulat, sementara jendela pendek yang realistis
+ * (6 menit) hanya bisa ditulis sebagai pecahan jam. Pembagian 60-nya terjadi di sini, satu
+ * tempat saja.
+ *
+ * `everyPage` tidak ikut dijadikan field: config ekonomi hanya menerima angka, dan mereset
+ * sesi tiap pindah halaman akan membuat plafon `frequency` tidak pernah berlaku di app yang
+ * pindah view sesering ini.
+ */
+export function inAppAdsSettings(config: {
+  inAppAdsFrequency: number
+  inAppAdsCappingMinutes: number
+  inAppAdsIntervalSeconds: number
+  inAppAdsTimeoutSeconds: number
+}): InAppAdsSettings {
+  return {
+    frequency: config.inAppAdsFrequency,
+    cappingHours: config.inAppAdsCappingMinutes / 60,
+    intervalSeconds: config.inAppAdsIntervalSeconds,
+    timeoutSeconds: config.inAppAdsTimeoutSeconds,
+    everyPage: false,
+  }
 }
 
 export interface InAppAdsSession {

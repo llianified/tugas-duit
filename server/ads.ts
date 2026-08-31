@@ -66,7 +66,16 @@ async function readState(userId: number, tx?: PoolClient) {
 }
 
 export interface AdsSessionState {
+  /** Tiket iklan berhadiah: tombol opt-in yang membayar ongkos masuk satu task. */
   enabled: boolean
+  /**
+   * Interstitial otomatis yang nongol sendiri tanpa diminta. Dipisah dari `enabled`
+   * karena premium hanya membeli ketenangan, bukan penghapusan jalan keluar: yang
+   * dimatikan cuma iklan yang mengganggu, sementara tiket berhadiah tetap ada supaya
+   * user premium yang energinya habis masih punya pilihan — dan impresi berhadiah itu
+   * tetap terhitung sebagai pemasukan.
+   */
+  inAppEnabled: boolean
   provider: AdProvider | null
   unitId: string | null
   viewsLeft: number
@@ -76,6 +85,7 @@ export interface AdsSessionState {
 
 const ADS_OFF: AdsSessionState = {
   enabled: false,
+  inAppEnabled: false,
   provider: null,
   unitId: null,
   viewsLeft: 0,
@@ -84,27 +94,20 @@ const ADS_OFF: AdsSessionState = {
 }
 
 /**
- * Premium membeli "bebas iklan", jadi tiketnya dimatikan di dua tempat: state yang
- * dibaca klien supaya tombolnya tidak dirender, dan `openAdTicket` supaya permintaan
- * yang tetap dikirim tangan tetap ditolak.
+ * Premium mematikan interstitial otomatis saja (`inAppEnabled: false`). Tiket berhadiah
+ * sengaja tetap hidup untuk premium: ia tidak pernah muncul sendiri, hanya dirender
+ * sebagai tombol saat user butuh task tambahan, jadi tidak melanggar janji "bebas iklan
+ * yang ganggu" tapi tetap menjaga impresi yang membayari reward pool.
  */
 export async function readAdsState(userId: number): Promise<AdsSessionState> {
   const resolved = resolveAdProvider()
   const enabled = Boolean(resolved) && adsConfigured()
-  if (await isPremium(userId)) return ADS_OFF
-  if (!resolved || !enabled) {
-    return {
-      enabled: false,
-      provider: null,
-      unitId: null,
-      viewsLeft: 0,
-      cooldownSecondsLeft: 0,
-      pass: null,
-    }
-  }
+  if (!resolved || !enabled) return ADS_OFF
+  const premium = await isPremium(userId)
   const state = await readState(userId)
   return {
     enabled: true,
+    inAppEnabled: !premium,
     provider: resolved.provider,
     unitId: resolved.unitId,
     viewsLeft: adViewsLeft(state.viewsToday),
@@ -125,7 +128,7 @@ export type OpenTicketResult =
 
 export async function openAdTicket(userId: number): Promise<OpenTicketResult> {
   const resolved = resolveAdProvider()
-  if (!resolved || (await isPremium(userId)))
+  if (!resolved)
     return { ok: false, reason: 'ads_disabled', cooldownSecondsLeft: 0, viewsLeft: 0 }
   const { provider, unitId } = resolved
 

@@ -75,7 +75,12 @@ type WithdrawalState = 'processing' | 'paid' | 'rejected'
 export interface WithdrawalEligibility {
   activeReferralCount: number
   requiredActiveReferrals: number
+  /** Hari WIB berbeda yang pernah punya minimal satu task selesai — tidak harus berturut-turut. */
+  activeDays: number
+  requiredActiveDays: number
   cooldownEndsAt: number | null
+  /** Jeda yang berlaku untuk user ini: premium lebih pendek, jadi tidak boleh ditulis tetap di UI. */
+  cooldownDays: number
 }
 
 /** Satu penarikan yang benar-benar sudah dibayar, nama penerimanya sudah dimask di server. */

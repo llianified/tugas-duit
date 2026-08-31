@@ -66,11 +66,13 @@ function WithdrawDialogBody({
     ? 'balance'
     : !eligibility
       ? 'loading'
-      : eligibility.activeReferralCount < eligibility.requiredActiveReferrals
-        ? 'referrals'
-        : eligibility.cooldownEndsAt
-          ? 'cooldown'
-          : null
+      : eligibility.activeDays < eligibility.requiredActiveDays
+        ? 'days'
+        : eligibility.activeReferralCount < eligibility.requiredActiveReferrals
+          ? 'referrals'
+          : eligibility.cooldownEndsAt
+            ? 'cooldown'
+            : null
 
   async function handleSubmit(input: WithdrawalSubmitInput) {
     const created = await onSubmit(input)
@@ -112,6 +114,9 @@ function WithdrawDialogBody({
                     activeReferralCount={eligibility?.activeReferralCount}
                     requiredActiveReferrals={eligibility?.requiredActiveReferrals}
                     cooldownEndsAt={eligibility?.cooldownEndsAt}
+                    cooldownDays={eligibility?.cooldownDays ?? null}
+                    activeDays={eligibility?.activeDays}
+                    requiredActiveDays={eligibility?.requiredActiveDays}
                   />
                 </div>
 

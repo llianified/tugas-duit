@@ -346,9 +346,9 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
   },
   {
     key: 'referralCommissionPercent', group: 'referral', label: 'Komisi referral', unit: '%',
-    description: 'Persentase reward downline yang mengalir ke upline. Satu tingkat saja.',
+    description: 'Persentase reward downline yang mengalir ke upline. Satu tingkat saja. Tidak boleh 0: pada 0% tidak ada baris komisi yang ditulis, sedangkan syarat penarikan menghitung downline dari baris itu — jadi 0% mengunci penarikan setiap user yang belum terlanjur memenuhi syaratnya.',
     impact: 'Menaikkannya menaikkan biaya per task yang dikerjakan user yang punya upline.',
-    min: 0, max: 50, riskyWhen: 'higher',
+    min: 1, max: 50, riskyWhen: 'higher',
   },
   {
     key: 'dailyCommissionCapIdr', group: 'referral', label: 'Plafon komisi harian', unit: 'Rp/hari',

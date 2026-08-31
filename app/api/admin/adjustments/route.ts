@@ -1,7 +1,8 @@
 import { loadEconomyConfig } from '@/server/economy-config'
 import { maxPayoutCredits } from '@/domain/economy'
-import { apiError, assertSameOrigin, handleRouteError } from '@/server/http'
+import { apiError, assertSameOrigin, handleRouteError, rateLimited } from '@/server/http'
 import { recordAdjustment } from '@/server/ledger'
+import { checkRateLimit } from '@/server/ratelimit'
 import { requireUser } from '@/server/session'
 
 export const runtime = 'nodejs'
@@ -16,6 +17,8 @@ export async function POST(request: Request) {
     await loadEconomyConfig()
     const admin = await requireUser()
     if (!admin.isAdmin) return new Response(null, { status: 404 })
+    const limit = await checkRateLimit(`admin:adjustments:${admin.id}`, 30, 3_600)
+    if (!limit.allowed) return rateLimited(limit.retryAfter)
 
     const body = (await request.json().catch(() => null)) as {
       userId?: string

@@ -8,9 +8,18 @@
  * berhadiah, dan satu iklan otomatis yang nongol di tengah tontonan berhadiah membuat
  * Promise-nya reject, sehingga tiketnya gagal diklaim dan credit user hangus.
  *
- * Maka jadwalnya dipegang sendiri: SDK cuma disuruh menayangkan SATU iklan per panggilan
- * (lihat `IN_APP_SINGLE_SHOT_SETTINGS`), dan kapan panggilan itu terjadi diputuskan di
- * sini. Dengan begitu jadwalnya bisa ditahan selama iklan berhadiah sedang jalan.
+ * Maka jadwalnya dipegang sendiri, dan `type: 'inApp'` **tidak pernah** dikirim ke SDK.
+ * Percobaan sebelumnya menetralkan jadwal SDK lewat `{ frequency: 1, capping: 0,
+ * interval: 0, timeout: 0 }` justru membuatnya liar: `capping: 0` adalah jendela sepanjang
+ * nol jam, jadi "1 iklan per 0 jam" tidak pernah membatasi apa pun, dan `interval: 0`
+ * menghapus jeda antar iklan. Karena jadwal SDK tidak bisa dibatalkan, setiap panggilan
+ * meninggalkan satu penjadwal tanpa plafon yang hidup terus — menumpuk tiap kali penjadwal
+ * di sini berdetak, sampai iklannya tayang berlapis-lapis.
+ *
+ * Yang dipakai sekarang bentuk yang sama dengan jalur berhadiah: `show()` polos tanpa
+ * parameter. Satu panggilan = satu iklan, Promise-nya settle, tidak ada jadwal yang
+ * tertinggal di dalam SDK. Kapan panggilan itu terjadi sepenuhnya diputuskan di sini,
+ * sehingga bisa ditahan selama iklan berhadiah sedang jalan.
  *
  * Modul ini tidak menyentuh `window`, timer, atau storage — hanya menjawab "berapa lama
  * lagi sampai iklan berikutnya boleh tayang". Efek sampingnya ada di
@@ -44,21 +53,6 @@ export const DEFAULT_IN_APP_ADS_SETTINGS: InAppAdsSettings = {
   timeoutSeconds: 5,
   everyPage: false,
 }
-
-/**
- * Yang dikirim ke SDK di setiap panggilan. Semua angka penjadwalannya dimatikan supaya
- * SDK menayangkan satu iklan lalu berhenti — jadwal sebenarnya ada di `nextInAppDelayMs`.
- */
-export const IN_APP_SINGLE_SHOT_SETTINGS = {
-  type: 'inApp',
-  inAppSettings: {
-    frequency: 1,
-    capping: 0,
-    interval: 0,
-    timeout: 0,
-    everyPage: false,
-  },
-} as const
 
 export interface InAppAdsSession {
   /** Awal jendela capping yang sedang berjalan. */

@@ -15,20 +15,28 @@ export function NotEligibleNote({
   activeReferralCount = 0,
   requiredActiveReferrals = 5,
   cooldownEndsAt = null,
+  cooldownDays = null,
+  activeDays = 0,
+  requiredActiveDays = 7,
 }: {
-  reason?: 'balance' | 'referrals' | 'cooldown' | 'loading'
+  reason?: 'balance' | 'days' | 'referrals' | 'cooldown' | 'loading'
   activeReferralCount?: number
   requiredActiveReferrals?: number
   cooldownEndsAt?: number | null
+  cooldownDays?: number | null
+  activeDays?: number
+  requiredActiveDays?: number
 }) {
   const title =
     reason === 'balance'
       ? 'Belum bisa ditarik'
       : reason === 'loading'
         ? 'Lagi ngecek syaratnya'
-        : reason === 'referrals'
-          ? 'Referral belum cukup'
-          : 'Masih cooldown'
+        : reason === 'days'
+          ? 'Hari aktifnya belum cukup'
+          : reason === 'referrals'
+            ? 'Referral belum cukup'
+            : 'Masih cooldown'
 
   return (
     <Surface as="section" aria-label={title}>
@@ -49,6 +57,12 @@ export function NotEligibleNote({
           </>
         ) : reason === 'loading' ? (
           <>Bentar ya, kami lagi ngecek syarat penarikan kamu.</>
+        ) : reason === 'days' ? (
+          <>
+            Kamu punya {formatCredits(activeDays)} dari {formatCredits(requiredActiveDays)} hari
+            aktif. Satu hari kehitung aktif kalau ada minimal 1 task yang kelar — nggak harus
+            berturut-turut, jadi bolong sehari nggak ngulang dari nol.
+          </>
         ) : reason === 'referrals' ? (
           <>
             Kamu punya {formatCredits(activeReferralCount)} dari {formatCredits(requiredActiveReferrals)}{' '}
@@ -56,7 +70,11 @@ export function NotEligibleNote({
           </>
         ) : (
           <>
-            Kamu bisa tarik dana lagi {cooldownEndsAt ? formatHistoryTime(cooldownEndsAt) : 'setelah cooldown-nya kelar'}. Cooldown-nya 7 hari dihitung dari pengajuan terakhir — tetap jalan walau pengajuannya ditolak.
+            Kamu bisa tarik dana lagi {cooldownEndsAt ? formatHistoryTime(cooldownEndsAt) : 'setelah cooldown-nya kelar'}.{' '}
+            {cooldownDays === null
+              ? 'Cooldown-nya dihitung dari pengajuan terakhir'
+              : `Cooldown-nya ${formatCredits(cooldownDays)} hari dihitung dari pengajuan terakhir`}{' '}
+            — tetap jalan walau pengajuannya ditolak.
           </>
         )}
       </p>

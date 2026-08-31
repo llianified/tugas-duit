@@ -1,14 +1,11 @@
 import { getPayoutChannel, maskAccountNumber, PAYOUT_ETA_TEXT } from '@/features/withdraw/domain'
 import { formatCredits, formatRupiah, formatShortDate } from '@/shared/lib/format'
-import { WITHDRAWAL_COOLDOWN_MS } from './payout-rules'
 import {
   escapeTelegramHtml as escapeHtml,
   openAppMarkup,
   sendTelegramMessage,
   type SendMessageOptions,
 } from './telegram'
-
-const COOLDOWN_DAYS = Math.round(WITHDRAWAL_COOLDOWN_MS / 86_400_000)
 
 async function send(telegramId: string, text: string, event: string, options: SendMessageOptions = {}) {
   try {
@@ -25,6 +22,11 @@ interface WithdrawalNotice {
   accountName: string
   credits: number
   amountIdr: number
+  /**
+   * Datang dari pemanggil, bukan dari konstanta modul: jedanya 3 hari untuk user premium
+   * dan 7 untuk yang lain, dan hanya `server/payout.ts` yang tahu status premium orangnya.
+   */
+  cooldownDays: number
 }
 
 const destination = (notice: WithdrawalNotice) =>
@@ -44,7 +46,7 @@ export async function notifyWithdrawalRequested(notice: WithdrawalNotice) {
       `Nama: ${escapeHtml(notice.accountName)}`,
       '',
       `${PAYOUT_ETA_TEXT} Santai aja, nanti kami kabarin lagi di sini.`,
-      `Oh iya, penarikan berikutnya baru kebuka ${COOLDOWN_DAYS} hari lagi.`,
+      `Oh iya, penarikan berikutnya baru kebuka ${formatCredits(notice.cooldownDays)} hari lagi.`,
     ].join('\n'),
     'requested',
     openAppMarkup('🎮 Lanjut cari credit'),
@@ -77,7 +79,7 @@ export async function notifyWithdrawalRejected(notice: WithdrawalNotice & { reas
       '',
       `Tenang, saldo ${amount(notice)} udah balik utuh ke akun kamu.`,
       '',
-      `Cuma satu hal: cooldown ${COOLDOWN_DAYS} hari tetap jalan dari tanggal pengajuan tadi, jadi pengajuan berikutnya nunggu itu habis dulu. Sambil nunggu, betulin dulu datanya ya.`,
+      `Cuma satu hal: cooldown ${formatCredits(notice.cooldownDays)} hari tetap jalan dari tanggal pengajuan tadi, jadi pengajuan berikutnya nunggu itu habis dulu. Sambil nunggu, betulin dulu datanya ya.`,
     ].join('\n'),
     'rejected',
     openAppMarkup('🎮 Balik ke app'),

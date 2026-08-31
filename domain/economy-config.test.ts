@@ -83,6 +83,10 @@ describe('validation — nilai absurd ditolak', () => {
   it('regen nol detik', () => rejects({ energyRegenMinutes: 0 }, 'energyRegenMinutes'))
   it('komisi di atas 100%', () => rejects({ referralCommissionPercent: 150 }, 'referralCommissionPercent'))
   it('komisi negatif', () => rejects({ referralCommissionPercent: -5 }, 'referralCommissionPercent'))
+  // 0% menghentikan penulisan referral_commissions, sedangkan syarat penarikan menghitung
+  // downline dari baris itu — jadi 0% mengunci penarikan tanpa pesan yang menjelaskan.
+  it('komisi nol mengunci syarat penarikan', () =>
+    rejects({ referralCommissionPercent: 0 }, 'referralCommissionPercent'))
   it('minimum penarikan nol', () => rejects({ withdrawalMinimumIdr: 0 }, 'withdrawalMinimumIdr'))
   it('payout tanpa batas', () => rejects({ maxPayoutIdr: 99_000_000_000 }, 'maxPayoutIdr'))
   it('kapasitas kolam ekstrem', () => rejects({ rewardPoolCapIdr: 50_000_000 }, 'rewardPoolCapIdr'))

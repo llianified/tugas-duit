@@ -114,7 +114,7 @@ describe('PREM-DB-2 — perpanjangan menumpuk dari tanggal berakhir', () => {
 })
 
 describe('PREM-DB-3 — status premium menggerakkan batas yang dibaca server', () => {
-  it('memperbesar kapasitas kolam dan energi, dan mematikan iklan', async () => {
+  it('memperbesar kapasitas kolam dan energi, dan mematikan interstitial otomatis saja', async () => {
     const { query } = await import('./db')
     const { readAdsState } = await import('./ads')
     const { readEnergy } = await import('./energy')
@@ -123,7 +123,9 @@ describe('PREM-DB-3 — status premium menggerakkan batas yang dibaca server', (
 
     const kapasitasBiasa = await readRewardPoolCapacity(userId)
     const energiBiasa = await readEnergy(userId)
-    expect((await readAdsState(userId)).enabled).toBe(true)
+    const biasa = await readAdsState(userId)
+    expect(biasa.enabled).toBe(true)
+    expect(biasa.inAppEnabled).toBe(true)
 
     await query("update users set premium_until=now()+interval '30 days' where id=$1", [userId])
 
@@ -132,12 +134,17 @@ describe('PREM-DB-3 — status premium menggerakkan batas yang dibaca server', (
     )
     expect((await readEnergy(userId)).max).toBe(DEFAULT_ECONOMY_CONFIG.premiumMaxEnergy)
     expect((await readEnergy(userId)).max).toBeGreaterThan(energiBiasa.max)
-    expect((await readAdsState(userId)).enabled).toBe(false)
+
+    /**
+     * Inti pemisahannya: premium hanya membayar untuk tidak diganggu. Interstitial yang
+     * nongol sendiri mati, tapi tiket berhadiah tetap boleh dibuka — itu jalan keluar
+     * saat energinya habis, dan impresinya tetap masuk sebagai pemasukan.
+     */
+    const premium = await readAdsState(userId)
+    expect(premium.inAppEnabled).toBe(false)
+    expect(premium.enabled).toBe(true)
     const { openAdTicket } = await import('./ads')
-    await expect(openAdTicket(userId)).resolves.toMatchObject({
-      ok: false,
-      reason: 'ads_disabled',
-    })
+    await expect(openAdTicket(userId)).resolves.toMatchObject({ ok: true })
   })
 
   it('memakai batas task harian premium di consumeQuota', async () => {

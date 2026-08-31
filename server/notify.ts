@@ -112,7 +112,7 @@ export async function notifyPremiumActivated(
       '',
       `Paket ${formatCredits(months)} bulan udah nyala. Berlaku sampai ${formatShortDate(premiumUntil)}.`,
       '',
-      'Energi kamu sekarang lebih besar dan ngisi lebih cepat, stok reward muat lebih banyak, iklan hilang, dan penarikan bisa lebih sering.',
+      'Energi kamu sekarang lebih besar dan ngisi lebih cepat, stok reward muat lebih banyak, iklan yang nongol sendiri hilang, dan penarikan bisa lebih sering.',
     ].join('\n'),
     'premium-activated',
     openAppMarkup('👑 Buka app'),

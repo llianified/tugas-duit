@@ -217,6 +217,7 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     channelBonus: session?.channelBonus ?? null,
     refreshSession: mutateSession,
     adsEnabled: session?.ads?.enabled ?? false,
+    inAppAdsEnabled: session?.ads?.inAppEnabled ?? false,
     adViewsLeft: session?.ads?.viewsLeft ?? 0,
     adCooldownSecondsLeft: session?.ads?.cooldownSecondsLeft ?? 0,
     adPassReady: hasPass,

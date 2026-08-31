@@ -84,7 +84,10 @@ export async function fetchPublicPayouts() {
 export type TaskPayment = 'energy' | 'ad'
 
 export type AdsState = {
+  /** Tiket berhadiah (opt-in). Tetap `true` untuk premium. */
   enabled: boolean
+  /** Interstitial otomatis. `false` untuk premium. */
+  inAppEnabled: boolean
   provider: AdProvider | null
   unitId: string | null
   viewsLeft: number

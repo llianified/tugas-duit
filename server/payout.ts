@@ -257,45 +257,6 @@ export async function createPayout(
   })
 }
 
-const PUBLIC_PAYOUT_LIMIT = 10
-
-interface PublicPayoutRow {
-  account_name: string
-  channel_id: string
-  credits: number
-  amount_idr: number
-  paid_at: Date
-}
-
-export function maskPayoutRecipient(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean)
-  if (words.length === 0) return '***'
-  return words
-    .slice(0, 3)
-    .map((word) => `${word.slice(0, 1).toLocaleUpperCase('id-ID')}${'*'.repeat(Math.min(3, Math.max(1, word.length - 1)))}`)
-    .join(' ')
-}
-
-export async function getPublicPayouts(limit = PUBLIC_PAYOUT_LIMIT) {
-  const safeLimit = Math.min(PUBLIC_PAYOUT_LIMIT, Math.max(1, Math.trunc(limit)))
-  const rows = await query<PublicPayoutRow>(
-    `select account_name,channel_id,credits,amount_idr,paid_at
-     from withdrawals
-     where state='paid' and paid_at is not null
-     order by paid_at desc
-     limit $1`,
-    [safeLimit],
-  )
-
-  return rows.map((row) => ({
-    recipient: maskPayoutRecipient(row.account_name),
-    channelId: row.channel_id,
-    credits: Number(row.credits),
-    amountIdr: Number(row.amount_idr),
-    paidAt: row.paid_at.getTime(),
-  }))
-}
-
 export async function getPayouts(userId: number) {
   const [rows, totals, eligibility] = await Promise.all([
     query<PayoutRow>('select * from withdrawals where user_id=$1 order by requested_at desc limit 20', [

@@ -70,8 +70,8 @@ export async function getActivityFeed(): Promise<ActivityEntry[]> {
                 join users u on u.id = tc.user_id
                where u.banned_at is null and tc.stars = 3
                order by tc.completed_at desc
-               limit $1 * $2) recent
-       where per_user <= $2)
+               limit $1::int * $2::int) recent
+       where per_user <= $2::int)
      union all
      (select 'wd-' || w.id, 'payout', u.first_name, u.photo_url,
              w.amount_idr::int, null, w.paid_at

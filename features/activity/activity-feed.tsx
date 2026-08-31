@@ -3,7 +3,7 @@
 import type { ActivityEntry } from '@/features/activity/domain'
 import { ProfileAvatar } from '@/features/home/profile-avatar'
 import { DIFFICULTY_LABEL, type Difficulty } from '@/features/captcha/domain'
-import { AppViewSkeleton } from '@/shared/components/app-skeleton'
+import { DataListSkeleton } from '@/shared/components/app-skeleton'
 import { DataList, DataListRow } from '@/shared/components/data-list'
 import { EmptyState } from '@/shared/components/empty-state'
 import { GlyphBolt } from '@/shared/components/glyph'
@@ -11,7 +11,7 @@ import { MetaBadge } from '@/shared/components/meta-badge'
 import { formatCredits, formatHistoryTime, formatRupiah } from '@/shared/lib/format'
 
 export function ActivityFeed({ entries }: { entries: ActivityEntry[] | null }) {
-  if (entries === null) return <AppViewSkeleton />
+  if (entries === null) return <DataListSkeleton marker />
 
   if (entries.length === 0) {
     return (

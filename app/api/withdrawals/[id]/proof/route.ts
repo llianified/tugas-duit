@@ -1,5 +1,6 @@
-import { apiError, assertNotCrossSite, handleRouteError } from '@/server/http'
+import { apiError, assertNotCrossSite, handleRouteError, rateLimited } from '@/server/http'
 import { readPayoutProofFileId } from '@/server/payout'
+import { checkRateLimit } from '@/server/ratelimit'
 import { requireUser } from '@/server/session'
 import { readTelegramFile } from '@/server/telegram'
 
@@ -13,6 +14,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (site) return site
   try {
     const user = await requireUser()
+    const limit = await checkRateLimit(`withdrawal-proof:${user.id}`, 60, 3_600)
+    if (!limit.allowed) return rateLimited(limit.retryAfter)
+
     const { id } = await params
     if (!UUID_SHAPE.test(id)) return new Response(null, { status: 404 })
 

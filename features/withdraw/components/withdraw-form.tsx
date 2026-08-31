@@ -5,7 +5,7 @@ import { useMemo, useRef, useState } from 'react'
 import { stepVariants } from '@/shared/lib/motion'
 import { AccountStep } from '@/features/withdraw/components/account-step'
 import { AmountStep } from '@/features/withdraw/components/amount-step'
-import { WithdrawConfirmDialog } from '@/features/withdraw/components/withdraw-confirm-dialog'
+import { ConfirmStep } from '@/features/withdraw/components/confirm-step'
 import {
   DEFAULT_PAYOUT_CHANNEL_ID,
   getPayoutChannel,
@@ -17,7 +17,7 @@ import {
   type WithdrawalDraftErrors,
 } from '@/features/withdraw/domain'
 
-export type WithdrawStep = 'amount' | 'account'
+export type WithdrawStep = 'amount' | 'account' | 'confirm'
 
 export interface WithdrawalSubmitInput {
   channelId: string
@@ -34,11 +34,13 @@ const NO_DRAFT_ERRORS: WithdrawalDraftErrors = {
 
 export function WithdrawForm({
   balance,
+  cooldownDays,
   step,
   onStepChange,
   onSubmit,
 }: {
   balance: number
+  cooldownDays: number | null
   step: WithdrawStep
   onStepChange: (step: WithdrawStep) => void
   onSubmit: (input: WithdrawalSubmitInput) => Promise<Withdrawal | null>
@@ -52,8 +54,6 @@ export function WithdrawForm({
   const [amountSubmitted, setAmountSubmitted] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [pendingInput, setPendingInput] = useState<WithdrawalSubmitInput | null>(null)
   const submittingRef = useRef(false)
 
   const channel = getPayoutChannel(draft.channelId)
@@ -82,31 +82,28 @@ export function WithdrawForm({
 
     if (!isDraftValid(errors)) return
 
-    setPendingInput({
+    onStepChange('confirm')
+  }
+
+  async function handleConfirm() {
+    if (submittingRef.current) return
+    submittingRef.current = true
+    setIsSubmitting(true)
+    await onSubmit({
       channelId: draft.channelId,
       accountNumber: draft.accountNumber,
       accountName: draft.accountName,
       credits,
     })
-    setConfirmOpen(true)
-  }
-
-  async function handleConfirm() {
-    if (submittingRef.current || !pendingInput) return
-    submittingRef.current = true
-    setIsSubmitting(true)
-    const created = await onSubmit(pendingInput)
-    if (created) setConfirmOpen(false)
     submittingRef.current = false
     setIsSubmitting(false)
   }
 
   return (
-    <>
-      <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={step}
-        variants={stepVariants(step === 'account' ? 1 : -1)}
+        variants={stepVariants(step === 'amount' ? -1 : 1)}
         initial="hidden"
         animate="show"
         exit="exit"
@@ -123,7 +120,7 @@ export function WithdrawForm({
             onChannelChange={(channelId) => update({ channelId })}
             onContinue={handleContinue}
           />
-        ) : (
+        ) : step === 'account' ? (
           <AccountStep
             channel={channel}
             credits={credits}
@@ -134,16 +131,21 @@ export function WithdrawForm({
             onEditAmount={() => onStepChange('amount')}
             onSubmit={handleSubmit}
           />
+        ) : (
+          <ConfirmStep
+            input={{
+              channelId: draft.channelId,
+              accountNumber: draft.accountNumber,
+              accountName: draft.accountName,
+              credits,
+            }}
+            cooldownDays={cooldownDays}
+            isSubmitting={isSubmitting}
+            onConfirm={handleConfirm}
+            onBack={() => onStepChange('account')}
+          />
         )}
-        </motion.div>
-      </AnimatePresence>
-      <WithdrawConfirmDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        input={pendingInput}
-        isSubmitting={isSubmitting}
-        onConfirm={handleConfirm}
-      />
-    </>
+      </motion.div>
+    </AnimatePresence>
   )
 }

@@ -109,8 +109,6 @@ export function DataListSkeleton({
  * terangkat karena `SegmentedTabs` selalu punya satu tab aktif — strip yang rata
  * seluruhnya akan tersentak begitu data masuk.
  */
-const HOME_PANEL_TAB_LABEL = ['Misi', 'Aktivitas'] as const
-
 function PanelTabsSkeleton({
   labels,
   className,
@@ -144,30 +142,43 @@ function PanelTabsSkeleton({
 const MISSION_TITLE_W = ['w-36', 'w-44', 'w-28'] as const
 
 /**
- * Tiga baris, sebanyak `MISSIONS` di `domain/missions.ts`. Kartu misi adalah panel
- * bawaan Beranda, jadi bentuk inilah yang menggantikan kerangka ini — bukan daftar
- * transaksi, yang sekarang hidup di tab sebelahnya.
+ * Tiga baris, sebanyak `MISSIONS` di `domain/missions.ts`.
+ *
+ * Dipakai oleh `MissionCard` sendiri selagi `/api/missions` jalan, karena daftar itu
+ * memuat datanya di luar `/api/session` — jadi ia tetap kosong beberapa saat setelah
+ * kerangka app menghilang. Di view Misi permukaan `--muted`-nya dilepas, sama seperti
+ * `variant="page"` pada kartunya: kerangka harus menggambar bentuk yang benar-benar
+ * akan datang, bukan kotak yang tidak pernah muncul.
  */
-function MissionCardSkeleton() {
+export function MissionListSkeleton({ surface = true }: { surface?: boolean }) {
+  const tone = surface ? 'on-muted' : 'default'
+
   return (
-    <div className="rounded-lg bg-muted/60 p-[var(--surface-p)] ring-border">
+    <div
+      aria-hidden
+      className={
+        surface
+          ? 'animate-fade-in rounded-lg bg-muted/60 p-[var(--surface-p)] ring-border'
+          : 'animate-fade-in'
+      }
+    >
       <div className="flex items-center justify-between gap-3">
         <div className="flex h-6 items-center">
-          <Bar className="h-3 w-24" tone="on-muted" />
+          <Bar className="h-3 w-24" tone={tone} />
         </div>
-        <Bar className="h-6 w-24 rounded-md" tone="on-muted" />
+        <Bar className="h-6 w-24 rounded-md" tone={tone} />
       </div>
 
-      <div className="label-gap-t flex flex-col gap-3">
+      <div className={`label-gap-t flex flex-col ${surface ? 'gap-3' : 'gap-4'}`}>
         {MISSION_TITLE_W.map((titleWidth) => (
           <div key={titleWidth}>
             <div className="flex h-5 items-center justify-between gap-3">
-              <Bar className={`h-3.5 ${titleWidth}`} tone="on-muted" />
-              <Bar className="h-3.5 w-10 shrink-0" tone="on-muted" />
+              <Bar className={`h-3.5 ${titleWidth}`} tone={tone} />
+              <Bar className="h-3.5 w-10 shrink-0" tone={tone} />
             </div>
             <div className="mt-1.5 flex h-4 items-center gap-2">
               <span className="h-1 min-w-0 flex-1 rounded-full bg-muted-foreground/20" />
-              <Bar className="h-2.5 w-8 shrink-0" tone="on-muted" />
+              <Bar className="h-2.5 w-8 shrink-0" tone={tone} />
             </div>
           </div>
         ))}
@@ -230,16 +241,20 @@ export function AppViewSkeleton() {
         </div>
       </div>
 
-      <div className="region-t">
-        <PanelTabsSkeleton labels={HOME_PANEL_TAB_LABEL} />
-        <div className="region-gap-t">
-          <MissionCardSkeleton />
-        </div>
+      {/*
+        Strip tab dan kartu misi dilepas bersama tab Beranda: sejak Misi pindah ke nav,
+        yang tersisa di bawah hero adalah "Transaksi terakhir" — tiga baris, sebanyak
+        yang dipotong `RecentTransactions`. Kartu premium dan bonus channel sengaja
+        tidak digambar; keduanya bersyarat, dan kerangka yang menjanjikan kartu yang
+        tidak datang menyentak lebih keras daripada kerangka yang kekurangan satu.
+      */}
+      <div className="region-t flex flex-1 flex-col">
+        <DataListSkeleton rows={3} badge />
       </div>
 
-      {/* Sama seperti `HomeView`: panel berakhir dengan kartu, bukan baris list, jadi
-          sisa jarak ke nav dibiarkan penuh satu region-gap. */}
-      <div className="flex-1" />
+      {/* Sama seperti `RecentTransactions`: region ditutup baris list, jadi sisa jarak
+          ke nav dipangkas sebesar padding baris terakhir. */}
+      <div className="view-trim-b flex-1 [--view-trim-b:var(--list-row-py)]" />
     </div>
   )
 }

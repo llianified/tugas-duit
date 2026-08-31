@@ -46,8 +46,6 @@ interface HomeViewProps {
 
 const ENTER_STEP_CLASS = ['enter-step-0', 'enter-step-1', 'enter-step-2'] as const
 
-type HomePanel = 'missions' | 'activity' | 'bonus'
-
 export function HomeView({
   balance,
   history,

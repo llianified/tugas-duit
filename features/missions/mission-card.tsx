@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import type { MissionProgress } from '@/domain/missions'
+import { MissionListSkeleton } from '@/shared/components/app-skeleton'
 import { EmptyState } from '@/shared/components/empty-state'
 import { GlyphBolt, GlyphCheck } from '@/shared/components/glyph'
 import { MetaBadge } from '@/shared/components/meta-badge'
@@ -72,9 +73,15 @@ export function MissionCard({
     [load, onClaimed],
   )
 
-  if (!missions) return null
-
   const page = variant === 'page'
+
+  /**
+   * Di Beranda daftar ini satu kartu di antara kartu lain, jadi ia boleh tidak ada
+   * sampai datanya masuk. Sebagai isi utama view Misi ia tidak boleh: kerangka app
+   * sudah menghilang, dan `/api/missions` dimuat terpisah dari `/api/session`, jadi
+   * halamannya berhenti di paragraf "Cara kerjanya" tanpa tanda apa pun sedang jalan.
+   */
+  if (!missions) return page ? <MissionListSkeleton surface={false} /> : null
 
   if (missions.length === 0) {
     if (!page) return null

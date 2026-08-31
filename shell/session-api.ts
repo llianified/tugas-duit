@@ -8,7 +8,7 @@ import type { RewardPoolState } from '@/domain/reward-pool'
 import type { Challenge, HistoryEntry } from '@/features/captcha/domain'
 import type { LeaderboardBoard } from '@/features/leaderboard/domain'
 import type { UserStats } from '@/features/stats/domain'
-import type { Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
+import type { PublicPayout, Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
 import { fetchJson, sendJson } from '@/shell/api-client'
 
 export type SessionResponse = {
@@ -75,6 +75,10 @@ export async function startPremiumCheckout(months: PremiumMonths) {
 
 export async function claimChannelBonus() {
   return sendJson<ChannelClaimResponse>('/api/channel/claim', 'POST')
+}
+
+export async function fetchPublicPayouts() {
+  return fetchJson<{ payouts: PublicPayout[] }>('/api/public-payouts')
 }
 
 export type TaskPayment = 'energy' | 'ad'

@@ -12,16 +12,20 @@ import { StarRating } from '@/shared/components/star-rating'
 import { TotalSummary } from '@/shared/components/total-summary'
 import { VIEW_TITLE } from '@/navigation/app-view'
 import { DIFFICULTY_LABEL, type HistoryEntry } from '@/features/captcha/domain'
+import { PublicPayoutPanel } from '@/features/withdraw/components/public-payout-list'
 import { WithdrawalList } from '@/features/withdraw/components/withdrawal-list'
 import type { Withdrawal } from '@/features/withdraw/domain'
 import { formatCredits, formatCreditsPrecise, formatHistoryTime } from '@/shared/lib/format'
 
-type HistoryTab = 'task' | 'withdrawal'
+type HistoryTab = 'task' | 'withdrawal' | 'proof'
 
 const TABS: readonly SegmentedTab<HistoryTab>[] = [
   { value: 'task', label: 'Task' },
   { value: 'withdrawal', label: 'Penarikan' },
+  { value: 'proof', label: 'Bukti bayar' },
 ]
+
+const PROOF_TITLE = 'Bukti pembayaran'
 
 const SUMMARY = {
   task: {
@@ -58,24 +62,28 @@ export function HistoryView({
   processingCredits: number
 }) {
   const [tab, setTab] = useState<HistoryTab>('task')
-  const summary = SUMMARY[tab]
+  const summary = tab === 'proof' ? null : SUMMARY[tab]
 
   return (
     <div className="view-min-h flex flex-col">
       <PageHeader title={VIEW_TITLE.history} />
 
-      <TotalSummary
-        label={summary.label}
-        credits={tab === 'task' ? totalCredits : withdrawnCredits}
-        hint={summary.hint}
-        ariaLabel={summary.ariaLabel}
-        note={
-          tab === 'withdrawal' && processingCredits > 0
-            ? `${formatCreditsPrecise(processingCredits)} credit masih diproses admin.`
-            : undefined
-        }
-        className="region-under-brand"
-      />
+      {summary === null ? (
+        <ProofHeading />
+      ) : (
+        <TotalSummary
+          label={summary.label}
+          credits={tab === 'task' ? totalCredits : withdrawnCredits}
+          hint={summary.hint}
+          ariaLabel={summary.ariaLabel}
+          note={
+            tab === 'withdrawal' && processingCredits > 0
+              ? `${formatCreditsPrecise(processingCredits)} credit masih diproses admin.`
+              : undefined
+          }
+          className="region-under-brand"
+        />
+      )}
 
       <SegmentedTabs
         tabs={TABS}
@@ -100,11 +108,25 @@ export function HistoryView({
             loadingMore={loadingMore}
             onLoadMore={onLoadMore}
           />
-        ) : (
+        ) : tab === 'withdrawal' ? (
           <WithdrawalHistoryPanel withdrawals={withdrawals} />
+        ) : (
+          <PublicPayoutPanel />
         )}
       </div>
     </div>
+  )
+}
+
+function ProofHeading() {
+  return (
+    <section aria-label={PROOF_TITLE} className="region-under-brand">
+      <p className="text-base font-semibold tracking-tight">{PROOF_TITLE}</p>
+      <p className="stack-gap-t text-sm leading-relaxed text-muted-foreground text-pretty">
+        Penarikan yang sudah kami bayar ke pengguna lain, terbuka buat siapa saja. Nama
+        penerimanya disamarkan, nomor rekeningnya tidak pernah ditampilkan.
+      </p>
+    </section>
   )
 }
 

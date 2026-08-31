@@ -26,7 +26,7 @@ const USER_STREAK_CAP = 3
  * Umpan aktivitas publik, global untuk semua user dan urut waktu. Dua sumber, dan
  * keduanya dipilih karena sudah publik di tempat lain: task bintang tiga memakai nama
  * depan Telegram persis seperti papan peringkat, dan penarikan yang sudah dibayar
- * memakai baris yang sama dengan tab "Bukti bayar". Tidak ada permukaan privasi baru
+ * memakai nama penerima yang sudah disamarkan. Tidak ada permukaan privasi baru
  * yang dibuka di sini.
  *
  * Yang TIDAK masuk umpan: task bintang satu dan dua. Umpan ini gunanya menunjukkan

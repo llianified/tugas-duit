@@ -9,7 +9,7 @@ import type { Challenge, HistoryEntry } from '@/features/captcha/domain'
 import type { ActivityEntry } from '@/features/activity/domain'
 import type { LeaderboardBoard } from '@/features/leaderboard/domain'
 import type { UserStats } from '@/features/stats/domain'
-import type { PublicPayout, Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
+import type { Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
 import { fetchJson, sendJson } from '@/shell/api-client'
 
 export type SessionResponse = {
@@ -88,10 +88,6 @@ export async function claimChannelBonus() {
 
 export async function verifyChannelMembership() {
   return sendJson<ChannelGateState>('/api/channel/verify', 'POST')
-}
-
-export async function fetchPublicPayouts() {
-  return fetchJson<{ payouts: PublicPayout[] }>('/api/public-payouts')
 }
 
 export type TaskPayment = 'energy' | 'ad'

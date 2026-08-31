@@ -8,19 +8,19 @@ type ActionButtonSize = 'md' | 'compact' | 'micro'
 
 const VARIANT_CLASS: Record<ActionButtonVariant, string> = {
   primary: [
-    'w-full bg-primary text-primary-foreground font-bold',
+    'w-full bg-primary text-primary-foreground font-semibold',
     'hover:bg-primary-hover',
     'active:bg-primary-active',
     'disabled:bg-muted disabled:text-muted-foreground',
     'disabled:opacity-70 disabled:hover:bg-muted',
   ].join(' '),
   soft: [
-    'w-full btn-soft text-foreground font-bold',
+    'w-full btn-soft text-foreground font-semibold',
     'hover:bg-muted',
     'disabled:text-muted-foreground disabled:opacity-70',
   ].join(' '),
   quiet: [
-    'w-auto px-3 text-primary font-bold',
+    'w-auto px-3 text-primary font-semibold',
     'hover:text-primary-hover',
     'active:text-primary-active',
     'disabled:text-muted-foreground disabled:opacity-70',
@@ -32,7 +32,7 @@ const VARIANT_CLASS: Record<ActionButtonVariant, string> = {
     'disabled:opacity-40 disabled:hover:text-muted-foreground',
   ].join(' '),
   danger: [
-    'w-full bg-destructive text-primary-foreground font-bold',
+    'w-full bg-destructive text-primary-foreground font-semibold',
     'hover:opacity-90',
     'active:opacity-80',
     'disabled:bg-muted disabled:text-muted-foreground',

@@ -382,7 +382,7 @@ function PrestigeChips({ entry }: { entry: LeaderboardEntry }) {
         <span
           key={badge.key}
           title={badge.detail}
-          className={cn(BADGE_SHAPE, 'shrink-0 font-bold', CHIP_TONE[badge.key])}
+          className={cn(BADGE_SHAPE, 'shrink-0 font-medium', CHIP_TONE[badge.key])}
         >
           {badge.label}
         </span>

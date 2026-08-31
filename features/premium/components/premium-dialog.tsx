@@ -206,7 +206,7 @@ function PlanRow({
             {formatRupiah(plan.baselineIdr)}
           </p>
         ) : null}
-        <p className="mt-1 text-base font-bold leading-none tabular-nums text-foreground">
+        <p className="mt-1 text-base font-semibold leading-none tabular-nums text-foreground">
           {formatRupiah(plan.priceIdr)}
         </p>
       </div>
@@ -316,7 +316,7 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
       <dd
         className={cn(
           'truncate text-right tabular-nums',
-          strong ? 'text-base font-bold text-foreground' : 'text-xs text-foreground',
+          strong ? 'text-base font-semibold text-foreground' : 'text-xs text-foreground',
         )}
       >
         {value}

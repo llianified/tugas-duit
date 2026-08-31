@@ -122,8 +122,8 @@ function PanelTabsSkeleton({
         <div
           key={label}
           className={[
-            'relative flex flex-1 items-center justify-center rounded-md px-3 py-2 text-label font-bold tracking-tight',
-            index === 0 ? 'bg-card shadow-sm' : '',
+            'relative flex flex-1 items-center justify-center rounded-md px-3 py-2 text-label tracking-tight',
+            index === 0 ? 'bg-card font-semibold shadow-sm' : 'font-medium',
           ]
             .filter(Boolean)
             .join(' ')}
@@ -288,7 +288,12 @@ function BoardSurfaceTabsSkeleton() {
             index === 0 ? 'border-primary' : 'border-transparent',
           ].join(' ')}
         >
-          <span className="relative flex text-cta font-bold tracking-tight">
+          <span
+            className={[
+              'relative flex text-cta tracking-tight',
+              index === 0 ? 'font-semibold' : 'font-medium',
+            ].join(' ')}
+          >
             <span className="invisible">{label}</span>
             <Bar className="absolute inset-x-0 top-1/2 h-3.5 -translate-y-1/2" />
           </span>

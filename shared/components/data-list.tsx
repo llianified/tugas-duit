@@ -57,7 +57,7 @@ export function DataListRow({
       {marker}
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-cta font-bold tracking-[-0.01em]">{title}</p>
+        <p className="truncate text-cta font-semibold tracking-[-0.01em]">{title}</p>
         {meta ? (
           <p className="truncate text-meta leading-snug text-muted-foreground">{meta}</p>
         ) : null}
@@ -100,11 +100,11 @@ export function DataListAmount({
   return (
     <span
       className={cn(
-        'text-cta font-bold tabular-nums',
+        'text-cta font-semibold tabular-nums',
         tone === 'primary' ? 'text-primary' : 'text-foreground',
       )}
     >
-      {value} <span className="text-label font-semibold text-muted-foreground">credit</span>
+      {value} <span className="text-label font-normal text-muted-foreground">credit</span>
     </span>
   )
 }

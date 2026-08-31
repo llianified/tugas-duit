@@ -115,7 +115,7 @@ export function ProfileView({
         </button>
 
         <div className="min-w-0 flex-1">
-          <p className="flex min-w-0 items-center gap-1.5 text-[20px] font-bold leading-tight tracking-[-0.02em] text-foreground">
+          <p className="flex min-w-0 items-center gap-1.5 text-[20px] font-semibold leading-tight tracking-[-0.02em] text-foreground">
             <span className="truncate">{user.firstName}</span>
             {isPremium ? <GlyphCrown className="size-4 shrink-0 text-premium" /> : null}
           </p>
@@ -127,7 +127,7 @@ export function ProfileView({
                 <span
                   key={badge.key}
                   title={badge.detail}
-                  className={cn('rounded-md px-1.5 py-0.5 text-meta font-bold', CHIP_TONE[badge.key])}
+                  className={cn('rounded-md px-1.5 py-0.5 text-meta font-medium', CHIP_TONE[badge.key])}
                 >
                   {badge.label}
                 </span>
@@ -158,9 +158,9 @@ export function ProfileView({
       <section aria-label="Perolehan" className="region-t region-t-flush">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-4xl font-bold leading-none tracking-[-0.035em] tabular-nums text-foreground">
+            <p className="text-4xl font-semibold leading-none tracking-[-0.035em] tabular-nums text-foreground">
               {formatCredits(stats.balance)}
-              <span className="ml-1.5 text-base font-semibold text-muted-foreground">credit</span>
+              <span className="ml-1.5 text-base font-normal text-muted-foreground">credit</span>
             </p>
             <p className="mt-1.5 text-cta font-semibold tabular-nums text-success">
               +{formatCredits(rangeCredits)} periode ini
@@ -188,7 +188,7 @@ export function ProfileView({
         </IconCircle>
         <div className="min-w-0 flex-1">
           <SectionLabel>Nilai rupiah</SectionLabel>
-          <p className="text-lg font-bold tracking-tight tabular-nums text-foreground">
+          <p className="text-lg font-semibold tracking-tight tabular-nums text-foreground">
             {formatRupiah(creditsToRupiah(stats.balance))}
           </p>
         </div>
@@ -213,7 +213,7 @@ export function ProfileView({
               title={row.label}
               meta={`${formatCredits(row.credits)} credit terkumpul`}
               amount={
-                <span className="text-cta font-bold tabular-nums text-foreground">
+                <span className="text-cta font-semibold tabular-nums text-foreground">
                   {formatCredits(row.count)}
                 </span>
               }
@@ -248,7 +248,7 @@ function MetaFact({ icon, value }: { icon: React.ReactNode; value: string }) {
       <span aria-hidden="true" className="text-muted-foreground/70">
         {icon}
       </span>
-      <span className="font-semibold text-foreground/80">{value}</span>
+      <span className="font-medium text-foreground/80">{value}</span>
     </span>
   )
 }
@@ -257,7 +257,7 @@ function StatTile({ label, value }: { label: string; value: string }) {
   return (
     <div className="stat-tile">
       <SectionLabel>{label}</SectionLabel>
-      <p className="mt-0.5 text-lg font-bold tracking-tight tabular-nums text-foreground">
+      <p className="mt-0.5 text-lg font-semibold tracking-tight tabular-nums text-foreground">
         {value}
       </p>
     </div>

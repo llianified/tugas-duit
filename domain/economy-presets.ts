@@ -34,6 +34,85 @@ const KEYS = new Set<string>(ECONOMY_FIELDS.map((field) => field.key))
  */
 export const ECONOMY_PRESETS: readonly EconomyPreset[] = [
   {
+    id: 'growth',
+    label: 'Bakar duit',
+    summary:
+      'Kolam ±288 credit/hari (≈Rp28.800) dengan kapasitas 300 credit supaya user yang buka sekali sehari tetap memanen penuh, batas task 400, dan impresi digenjot dari dua sisi: 25 tiket iklan plus 4 interstitial per 5 menit. Pakai kalau memang sedang membeli pertumbuhan, dan pantau biaya payout hariannya.',
+    values: {
+      /**
+       * Kapasitas dibuat ±1× isi ulang harian, BUKAN dibiarkan kecil. Kolam yang jauh
+       * lebih kecil dari lajunya berhenti mengisi begitu penuh, jadi yang memanen penuh
+       * hanya user yang kembali tiap beberapa jam — setelan agresif dengan cap sempit
+       * justru membayar penggiling 24 jam lebih banyak daripada user yang kerja sekali
+       * duduk, kebalikan dari yang dibeli di sini.
+       */
+      rewardPoolCapIdr: 30_000,
+      rewardPoolRegenMinutes: 5,
+      rewardPoolRegenCredits: 1,
+      rankPoolCapBonus: 10,
+      streakCapStepDays: 5,
+      maxStreakCapBonus: 20,
+
+      /**
+       * Batas task harian dinaikkan supaya yang mengikat payout tetap kolam. Pada
+       * ±288 credit/hari dan soal Mudah 3★ yang cuma 3 credit, batas 100 task akan
+       * kehabisan kuota sebelum kolamnya habis: user disuruh berhenti padahal masih
+       * ada reward, dan sebagian task terakhirnya dibayar 0.
+       */
+      maxTasksPerDay: 400,
+
+      // Energi cukup untuk menghabiskan kolam (144 regen/hari + tiket iklan, sementara
+      // kolam sebesar ini butuh ±80 task), dengan stok 8 supaya energi tidak terbuang
+      // saat user pergi sebentar.
+      maxEnergy: 8,
+      energyRegenMinutes: 10,
+      energyCostPerTask: 1,
+      premiumMaxEnergy: 10,
+      premiumEnergyRegenMinutes: 5,
+
+      /**
+       * Sisi impresi. Tiket berhadiah membayar ongkos masuk task, jadi ia menambah
+       * tontonan tanpa menambah credit; interstitial dirapatkan ke 4 per jendela 5
+       * menit. Jadwalnya masih muat di jendelanya: 10s tunda + 3 × 30s jeda = 100s.
+       */
+      adsMaxViewsPerDay: 25,
+      adsCooldownSeconds: 45,
+      adsTicketTtlSeconds: 300,
+      adsPassTtlMinutes: 10,
+      inAppAdsFrequency: 4,
+      inAppAdsCappingMinutes: 5,
+      inAppAdsIntervalSeconds: 30,
+      inAppAdsTimeoutSeconds: 10,
+
+      /**
+       * Minimum penarikan dibiarkan tinggi justru karena kolamnya cepat: ambang
+       * Rp50.000 tercapai dalam ±2 hari menggiling, jadi ia menahan biaya transfer
+       * tanpa memperlambat siapa pun. Gerbang waktunya tetap syarat 7 hari aktif yang
+       * hard-coded, yang tidak bisa dipercepat dengan menggenjot task.
+       */
+      withdrawalMinimumIdr: 50_000,
+      withdrawalMinActiveReferrals: 5,
+      maxPayoutIdr: 2_000_000_000,
+
+      referralCommissionPercent: 10,
+      dailyCommissionCapIdr: 10_000,
+
+      /**
+       * Premium diberi perk yang masih terasa di setelan seboros ini — kapasitas kolam
+       * +50 dan batas task 800, karena energi saja sudah tidak mengikat. Harga tidak
+       * digeser: pada laju kolam ini satu bulan premium tetap lebih murah daripada
+       * yang ditarik user dalam sehari, dan itu memang bagian dari yang dibakar.
+       */
+      premiumPoolCapBonus: 50,
+      premiumMaxTasksPerDay: 800,
+
+      // Gerbang channel dibuka: memblok sesi pertama membuang justru trafik yang
+      // sedang dibeli. Bonus join dinaikkan sebagai ganti pengunci.
+      channelJoinBonusCredits: 50,
+      channelGateEnabled: 0,
+    },
+  },
+  {
     id: 'retention',
     label: 'Retensi dulu',
     summary:

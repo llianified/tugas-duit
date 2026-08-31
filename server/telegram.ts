@@ -91,6 +91,73 @@ export async function sendTelegramMessage(chatId: string, text: string, options:
   if (!response.ok) throw new Error(`Telegram API ${response.status}`)
 }
 
+export interface TelegramPhotoInput { bytes: Uint8Array; contentType: string; fileName: string }
+
+export async function sendTelegramPhoto(
+  chatId: string,
+  photo: TelegramPhotoInput,
+  caption: string,
+  options: SendMessageOptions = {},
+): Promise<string> {
+  const form = new FormData()
+  form.set('chat_id', chatId)
+  form.set('caption', caption)
+  form.set('parse_mode', 'HTML')
+  if (options.replyMarkup) form.set('reply_markup', JSON.stringify(options.replyMarkup))
+  form.set(
+    'photo',
+    new Blob([photo.bytes as unknown as BlobPart], { type: photo.contentType }),
+    photo.fileName,
+  )
+
+  const response = await fetch(`https://api.telegram.org/bot${env.botToken}/sendPhoto`, {
+    method: 'POST',
+    body: form,
+    signal: AbortSignal.timeout(30_000),
+  })
+  if (!response.ok) throw new Error(`Telegram API ${response.status}`)
+
+  const body = (await response.json().catch(() => null)) as {
+    ok?: boolean
+    result?: { photo?: { file_id?: string; file_size?: number }[] }
+  } | null
+  const sizes = body?.ok ? (body.result?.photo ?? []) : []
+  const largest = sizes.reduce<{ file_id?: string; file_size?: number } | null>(
+    (best, size) => ((size.file_size ?? 0) >= (best?.file_size ?? -1) ? size : best),
+    null,
+  )
+  if (!largest?.file_id) throw new Error('Telegram sendPhoto tanpa file_id')
+  return largest.file_id
+}
+
+export interface TelegramFile { bytes: Uint8Array; contentType: string }
+
+export async function readTelegramFile(fileId: string): Promise<TelegramFile | null> {
+  const meta = await fetch(
+    `https://api.telegram.org/bot${env.botToken}/getFile?file_id=${encodeURIComponent(fileId)}`,
+    { signal: AbortSignal.timeout(10_000) },
+  ).catch(() => null)
+  if (!meta?.ok) return null
+
+  const body = (await meta.json().catch(() => null)) as {
+    ok?: boolean
+    result?: { file_path?: string }
+  } | null
+  const path = body?.ok ? body.result?.file_path : null
+  if (!path) return null
+
+  const download = await fetch(
+    `https://api.telegram.org/file/bot${env.botToken}/${path}`,
+    { signal: AbortSignal.timeout(20_000) },
+  ).catch(() => null)
+  if (!download?.ok) return null
+
+  return {
+    bytes: new Uint8Array(await download.arrayBuffer()),
+    contentType: download.headers.get('content-type') ?? 'image/jpeg',
+  }
+}
+
 export function openAppMarkup(label: string): SendMessageOptions {
   const bot = env.botUsernameOrNull
   if (!bot) return {}

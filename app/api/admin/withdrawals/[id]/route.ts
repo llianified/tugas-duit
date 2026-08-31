@@ -1,8 +1,9 @@
 import { loadEconomyConfig } from '@/server/economy-config'
 import { WITHDRAWAL_REJECT_REASON_MAX } from '@/features/withdraw/domain'
-import { apiError, assertSameOrigin, handleRouteError } from '@/server/http'
+import { apiError, assertSameOrigin, handleRouteError, rateLimited } from '@/server/http'
 import { notifyWithdrawalPaid, notifyWithdrawalRejected } from '@/server/notify'
 import { PayoutError, settlePayout } from '@/server/payout'
+import { checkRateLimit } from '@/server/ratelimit'
 import { requireUser } from '@/server/session'
 
 export const runtime = 'nodejs'
@@ -19,6 +20,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     await loadEconomyConfig()
     const admin = await requireUser()
     if (!admin.isAdmin) return new Response(null, { status: 404 })
+    const limit = await checkRateLimit(`admin:withdrawal-settle:${admin.id}`, 60, 3_600)
+    if (!limit.allowed) return rateLimited(limit.retryAfter)
 
     const { id } = await params
     const body = (await request.json().catch(() => null)) as {

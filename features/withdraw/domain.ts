@@ -76,6 +76,8 @@ export interface WithdrawalEligibility {
   activeReferralCount: number
   requiredActiveReferrals: number
   cooldownEndsAt: number | null
+  /** Jeda yang berlaku untuk user ini: premium lebih pendek, jadi tidak boleh ditulis tetap di UI. */
+  cooldownDays: number
 }
 
 /** Satu penarikan yang benar-benar sudah dibayar, nama penerimanya sudah dimask di server. */

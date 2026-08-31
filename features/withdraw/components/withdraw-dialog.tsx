@@ -112,6 +112,7 @@ function WithdrawDialogBody({
                     activeReferralCount={eligibility?.activeReferralCount}
                     requiredActiveReferrals={eligibility?.requiredActiveReferrals}
                     cooldownEndsAt={eligibility?.cooldownEndsAt}
+                    cooldownDays={eligibility?.cooldownDays ?? null}
                   />
                 </div>
 

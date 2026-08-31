@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatCredits, formatHistoryTime } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
+import { ActionButton } from '@/shared/components/action-button'
 
 export function AutoRefresh({ seconds }: { seconds: number }) {
   const router = useRouter()
@@ -53,7 +54,7 @@ export function AutoRefresh({ seconds }: { seconds: number }) {
       : Math.max(0, Math.ceil((refreshedAt + seconds * 1_000 - now) / 1_000))
 
   return (
-    <div className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2">
+    <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-1.5">
       <span
         aria-hidden="true"
         className={cn(
@@ -61,7 +62,7 @@ export function AutoRefresh({ seconds }: { seconds: number }) {
           !live ? 'bg-muted-foreground' : pending ? 'bg-primary' : 'bg-success',
         )}
       />
-      <p className="min-w-0 flex-1 text-[11px] leading-tight text-muted-foreground">
+      <p className="min-w-0 flex-1 text-meta leading-tight text-muted-foreground">
         <span className="text-foreground">
           {refreshedAt === null ? 'Baru dimuat' : formatHistoryTime(refreshedAt)}
         </span>
@@ -74,22 +75,24 @@ export function AutoRefresh({ seconds }: { seconds: number }) {
               : 'pembaruan otomatis dijeda'}
         </span>
       </p>
-      <button
-        type="button"
+      <ActionButton
+        variant="ghost"
+        size="micro"
+        className="w-auto shrink-0"
         onClick={() => setLive((current) => !current)}
         aria-pressed={live}
-        className="focus-ring transition-ui shrink-0 rounded-lg px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
       >
         {live ? 'Jeda' : 'Lanjut'}
-      </button>
-      <button
-        type="button"
+      </ActionButton>
+      <ActionButton
+        variant="soft"
+        size="micro"
+        className="w-auto shrink-0"
         onClick={refresh}
         disabled={pending}
-        className="focus-ring transition-ui shrink-0 rounded-lg bg-background px-2 py-1 text-[11px] font-medium text-foreground disabled:text-muted-foreground"
       >
         Muat ulang
-      </button>
+      </ActionButton>
     </div>
   )
 }

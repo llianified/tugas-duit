@@ -43,14 +43,14 @@ export function CaptchaMeter({
       <StarRating stars={stars} size="sm" />
 
       {capped ? (
-        <p className="label-gap-t text-[11px] leading-tight text-muted-foreground">
+        <p className="label-gap-t text-meta leading-tight text-muted-foreground">
           Stok reward kamu tinggal {formatCredits(payable)} credit, jadi segitu yang dibayar buat
           task ini. Stoknya keisi lagi pelan-pelan.
         </p>
       ) : null}
 
       <div aria-hidden className="label-gap-t flex items-center gap-2">
-        <span className="shrink-0 text-[11px] font-medium text-muted-foreground">Sisa waktu</span>
+        <span className="shrink-0 text-meta font-medium text-muted-foreground">Sisa waktu</span>
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border">
           <div
             ref={barRef}

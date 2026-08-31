@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { MissionProgress } from '@/domain/missions'
 import { MissionListSkeleton } from '@/shared/components/app-skeleton'
+import { ActionButton } from '@/shared/components/action-button'
 import { EmptyState } from '@/shared/components/empty-state'
 import { GlyphBolt, GlyphCheck } from '@/shared/components/glyph'
 import { MetaBadge } from '@/shared/components/meta-badge'
@@ -94,7 +95,8 @@ export function MissionCard({
     )
   }
 
-  const done = missions.filter((mission) => mission.claimed).length
+  const claimed = missions.filter((mission) => mission.claimed).length
+  const done = missions.filter((mission) => mission.done).length
 
   return (
     <section
@@ -103,8 +105,9 @@ export function MissionCard({
     >
       <div className="flex items-center justify-between gap-3">
         <SectionLabel as="h2">Misi hari ini</SectionLabel>
-        <MetaBadge>
+        <MetaBadge tone={done > claimed ? 'accent' : 'muted'}>
           {formatCredits(done)}/{formatCredits(missions.length)} selesai
+          {done > claimed ? ` · ${formatCredits(done - claimed)} siap diambil` : ''}
         </MetaBadge>
       </div>
 
@@ -168,7 +171,7 @@ function MissionRow({
             style={{ width: `${ratio * 100}%` }}
           />
         </span>
-        <span className="min-w-[2.5rem] shrink-0 text-right text-[11px] tabular-nums text-muted-foreground">
+        <span className="min-w-[2.5rem] shrink-0 text-right text-meta tabular-nums text-muted-foreground">
           {formatCredits(mission.progress)}/{formatCredits(mission.target)}
         </span>
       </div>
@@ -188,7 +191,7 @@ function MissionAction({
   if (mission.claimed) {
     return (
       <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground">
-        <GlyphCheck className="size-3.5" />
+        <GlyphCheck className="glyph-sm" />
         Diambil
       </span>
     )
@@ -197,21 +200,21 @@ function MissionAction({
   if (!mission.done) {
     return (
       <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground">
-        <GlyphBolt className="size-3.5" />+{formatCredits(mission.reward)}
+        <GlyphBolt className="glyph-sm" />+{formatCredits(mission.reward)}
       </span>
     )
   }
 
   return (
-    <button
-      type="button"
+    <ActionButton
+      size="micro"
+      className="w-auto shrink-0 gap-1"
       onClick={onClaim}
       disabled={claiming}
       aria-label={`Ambil ${formatCredits(mission.reward)} energi dari misi ${mission.title}`}
-      className="focus-ring transition-ui press-scale-soft flex shrink-0 items-center gap-1 rounded-md bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground"
     >
-      <GlyphBolt className="size-3.5" />
-      {claiming ? 'Mengambil…' : `+${formatCredits(mission.reward)}`}
-    </button>
+      <GlyphBolt className="glyph-sm" />
+      {claiming ? 'Mengambil…' : `Ambil +${formatCredits(mission.reward)}`}
+    </ActionButton>
   )
 }

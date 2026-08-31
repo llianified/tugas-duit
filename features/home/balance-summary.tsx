@@ -1,13 +1,13 @@
 'use client'
 
 import { type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { actionButtonClass } from '@/shared/components/action-button'
 import { CreditAmount } from '@/shared/components/credit-amount'
 import { GlyphHistory, GlyphWithdraw } from '@/shared/components/glyph'
 import { InfoHint } from '@/shared/components/info-hint'
 import { creditsToRupiah } from '@/domain/economy'
 import { formatCredits, formatRupiah } from '@/shared/lib/format'
 import { useCountUp } from '@/shared/lib/use-count-up'
-import { cn } from '@/shared/lib/utils'
 
 export function BalanceSummary({
   balance,
@@ -62,16 +62,10 @@ function HeroActionTile({
     <button
       type="button"
       {...props}
-      className={cn(
-        'focus-ring transition-ui press-scale-soft control-h flex flex-1 items-center justify-center gap-2 rounded-cta px-3',
-        // Same hairline edge as .task-card below: a 1px --border ring instead of
-        // a real border, so both surfaces read as one family. No fill, so the
-        // tiles sit directly on the hero band.
-        'btn-soft text-foreground',
-      )}
+      className={actionButtonClass({ variant: 'soft', className: 'flex-1 px-3' })}
     >
       {icon}
-      <span className="whitespace-nowrap text-[15px] font-bold tracking-tight leading-none">{label}</span>
+      <span className="whitespace-nowrap leading-none">{label}</span>
     </button>
   )
 }
@@ -89,14 +83,14 @@ function BalanceActions({
         label="Tarik dana"
         onClick={onWithdraw}
         icon={
-          <GlyphWithdraw className="size-5" />
+          <GlyphWithdraw className="glyph-lg" />
         }
       />
 
       <HeroActionTile
         label="Riwayat"
         onClick={onHistory}
-        icon={<GlyphHistory className="size-5" />}
+        icon={<GlyphHistory className="glyph-lg" />}
       />
     </div>
   )

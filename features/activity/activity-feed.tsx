@@ -16,7 +16,7 @@ export function ActivityFeed({ entries }: { entries: ActivityEntry[] | null }) {
   if (entries.length === 0) {
     return (
       <EmptyState
-        icon={<GlyphBolt className="size-5" />}
+        icon={<GlyphBolt className="glyph-lg" />}
         title="Belum ada aktivitas"
         description="Task bintang tiga dan penarikan yang sudah dibayar bakal muncul di sini."
       />
@@ -52,7 +52,7 @@ export function ActivityFeed({ entries }: { entries: ActivityEntry[] | null }) {
               : `Bintang tiga · ${formatHistoryTime(entry.at)}`
           }
           amount={
-            <span className="text-[15px] font-bold tabular-nums text-success">
+            <span className="text-cta font-bold tabular-nums text-success">
               {entry.kind === 'payout'
                 ? formatRupiah(entry.amount)
                 : `+${formatCredits(entry.amount)}`}

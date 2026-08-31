@@ -162,7 +162,7 @@ function TaskStats({
         note={
           energyFill.secondsToFull === null
             ? 'penuh'
-            : `penuh ${formatLongCountdown(energyFill.secondsToFull)}`
+            : `penuh dalam ${formatLongCountdown(energyFill.secondsToFull)}`
         }
         hint={`Energi tersisa ${formatCredits(energy)} dari ${formatCredits(energyMax)}. Terisi sendiri tanpa perlu membuka aplikasi.`}
       />
@@ -187,7 +187,7 @@ function Stat({
       <dd className="mt-0.5 text-lg font-bold tracking-tight tabular-nums text-foreground">
         {value}
       </dd>
-      <dd className="text-[11px] font-normal tabular-nums text-muted-foreground/70">{note}</dd>
+      <dd className="text-meta font-normal tabular-nums text-muted-foreground/70">{note}</dd>
     </div>
   )
 }

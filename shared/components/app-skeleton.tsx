@@ -73,7 +73,7 @@ export function DataListSkeleton({
   /** Diameter penanda baris. `DataList` biasa memakai lingkaran 36px, papan
    *  peringkat memakai avatar 40px (`BoardFrame`). */
   markerClass?: string
-  /** `MetaBadge` di sisi kanan label: `px-1.5 py-1 text-[11px]` ≈ 24px. */
+  /** `MetaBadge` di sisi kanan label: `px-1.5 py-1 text-meta` ≈ 24px. */
   badge?: boolean
 }) {
   return (
@@ -122,7 +122,7 @@ function PanelTabsSkeleton({
         <div
           key={label}
           className={[
-            'relative flex flex-1 items-center justify-center rounded-md px-3 py-2 text-[13px] font-bold tracking-tight',
+            'relative flex flex-1 items-center justify-center rounded-md px-3 py-2 text-label font-bold tracking-tight',
             index === 0 ? 'bg-card shadow-sm' : '',
           ]
             .filter(Boolean)
@@ -208,7 +208,7 @@ export function AppViewSkeleton() {
             <div className="block-gap-t grid grid-cols-3 gap-1.5">
               {[0, 1, 2].map((column) => (
                 // Tinggi tiap baris disetel ke line box aslinya di `TaskStats`:
-                // eyebrow 19,5px, angka text-lg 28px, catatan text-[11px] 16,5px.
+                // eyebrow 19,5px, angka text-lg 28px, catatan text-meta 16,5px.
                 // Kalau ditebak, tombol CTA di bawahnya bergeser saat data masuk —
                 // pergeseran yang paling terasa justru karena itu tombolnya.
                 <div className="stat-tile" key={column}>
@@ -288,7 +288,7 @@ function BoardSurfaceTabsSkeleton() {
             index === 0 ? 'border-primary' : 'border-transparent',
           ].join(' ')}
         >
-          <span className="relative flex text-[15px] font-bold tracking-tight">
+          <span className="relative flex text-cta font-bold tracking-tight">
             <span className="invisible">{label}</span>
             <Bar className="absolute inset-x-0 top-1/2 h-3.5 -translate-y-1/2" />
           </span>

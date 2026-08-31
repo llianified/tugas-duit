@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { ActionButton } from '@/shared/components/action-button'
+import { ActionButton, actionButtonClass } from '@/shared/components/action-button'
 import { GlyphTelegram } from '@/shared/components/glyph'
 import { IconCircle } from '@/shared/components/icon-circle'
 import { userFacingMessage } from '@/shell/api-client'
@@ -62,7 +62,7 @@ export function ChannelGate({
           href={gate.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="focus-ring transition-ui press-scale-soft control-h flex items-center justify-center rounded-cta bg-primary text-[15px] font-bold tracking-tight text-primary-foreground hover:bg-primary-hover active:bg-primary-active"
+          className={actionButtonClass()}
         >
           Buka channel
         </a>

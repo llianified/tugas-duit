@@ -45,7 +45,7 @@ export function TotalSummary({
       </div>
 
       {note ? (
-        <p className="label-gap-t text-[13px] leading-relaxed text-muted-foreground text-pretty">{note}</p>
+        <p className="label-gap-t text-label leading-relaxed text-muted-foreground text-pretty">{note}</p>
       ) : null}
     </section>
   )

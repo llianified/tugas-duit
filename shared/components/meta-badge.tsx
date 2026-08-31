@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/shared/lib/utils'
 
-const BADGE_BOX = 'px-1.5 py-1 text-[11px]'
+const BADGE_BOX = 'px-1.5 py-1 text-meta'
 export const BADGE_SHAPE = `${BADGE_BOX} rounded-md`
 
 export function MetaBadge({

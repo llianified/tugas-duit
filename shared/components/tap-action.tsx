@@ -55,14 +55,20 @@ export function TapAction({
       {icon ? <span className="flex shrink-0 items-center">{icon}</span> : null}
       <span
         className={cn(
-          'truncate text-[15px] font-bold tracking-tight',
-          compact ? 'min-w-0' : 'min-w-0 flex-1',
+          'text-cta font-bold tracking-tight',
+          compact ? 'shrink-0 whitespace-nowrap' : 'min-w-0 flex-1 truncate',
         )}
       >
         {label}
       </span>
       {meta ? (
-        <span className={cn('shrink-0 text-xs font-medium tabular-nums', META_CLASS[tone])}>
+        <span
+          className={cn(
+            'text-xs font-medium tabular-nums',
+            compact ? 'min-w-0 truncate' : 'shrink-0',
+            META_CLASS[tone],
+          )}
+        >
           {meta}
         </span>
       ) : null}
@@ -99,7 +105,7 @@ export function TapActionWaiting({
       role="status"
       aria-live="polite"
       className={cn(
-        'flex w-full items-center rounded-cta text-[15px] font-semibold text-muted-foreground',
+        'flex w-full items-center rounded-cta text-cta font-semibold text-muted-foreground',
         compact ? 'justify-center gap-2 px-3 text-center' : 'gap-3 px-4',
         'control-h',
         tone === 'neutral' ? 'border border-border' : 'bg-muted',
@@ -107,8 +113,14 @@ export function TapActionWaiting({
       )}
     >
       {icon ? <span className="flex shrink-0 items-center">{icon}</span> : null}
-      <span className={cn('truncate', compact ? 'min-w-0' : 'min-w-0 flex-1')}>{label}</span>
-      {meta ? <span className="shrink-0 text-xs tabular-nums">{meta}</span> : null}
+      <span className={cn(compact ? 'shrink-0 whitespace-nowrap' : 'min-w-0 flex-1 truncate')}>
+        {label}
+      </span>
+      {meta ? (
+        <span className={cn('text-xs tabular-nums', compact ? 'min-w-0 truncate' : 'shrink-0')}>
+          {meta}
+        </span>
+      ) : null}
     </div>
   )
 }

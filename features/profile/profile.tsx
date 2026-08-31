@@ -20,7 +20,13 @@ import {
 import { IconCircle } from '@/shared/components/icon-circle'
 import { PageHeader } from '@/shared/components/page-header'
 import { SectionLabel } from '@/shared/components/section-label'
-import { formatCredits, formatRupiah, formatShortDate } from '@/shared/lib/format'
+import { SegmentedTabs, type SegmentedTab } from '@/shared/components/segmented-tabs'
+import {
+  formatCredits,
+  formatCreditsDecimal,
+  formatRupiah,
+  formatShortDate,
+} from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import type { PremiumState, SessionResponse } from '@/shell/session-api'
 
@@ -40,6 +46,11 @@ const RANGES = [
 ] as const
 
 type RangeKey = (typeof RANGES)[number]['key']
+
+const RANGE_TABS: readonly SegmentedTab<RangeKey>[] = RANGES.map((item) => ({
+  value: item.key,
+  label: item.label,
+}))
 
 export function ProfileView({
   user,
@@ -108,7 +119,7 @@ export function ProfileView({
             <span className="truncate">{user.firstName}</span>
             {isPremium ? <GlyphCrown className="size-4 shrink-0 text-premium" /> : null}
           </p>
-          <p className="truncate text-[15px] leading-snug text-muted-foreground">{handle}</p>
+          <p className="truncate text-cta leading-snug text-muted-foreground">{handle}</p>
 
           {badges.length > 0 ? (
             <div className="mt-1.5 flex flex-wrap gap-1">
@@ -116,7 +127,7 @@ export function ProfileView({
                 <span
                   key={badge.key}
                   title={badge.detail}
-                  className={cn('rounded-md px-1.5 py-0.5 text-[11px] font-bold', CHIP_TONE[badge.key])}
+                  className={cn('rounded-md px-1.5 py-0.5 text-meta font-bold', CHIP_TONE[badge.key])}
                 >
                   {badge.label}
                 </span>
@@ -126,19 +137,19 @@ export function ProfileView({
         </div>
       </section>
 
-      <dl className="stack-gap-t flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-muted-foreground">
+      <dl className="stack-gap-t flex flex-wrap items-center gap-x-4 gap-y-1.5 text-label text-muted-foreground">
         <MetaFact icon={<TierGlyph tier={rank.tier} className="size-3.5" />} value={rank.name} />
         <MetaFact
-          icon={<GlyphCheck className="size-3.5" />}
+          icon={<GlyphCheck className="glyph-sm" />}
           value={`${formatCredits(stats.completedCount)} task`}
         />
         <MetaFact
-          icon={<GlyphBolt className="size-3.5" />}
-          value={`${stats.averageStars.toFixed(1)} bintang`}
+          icon={<GlyphBolt className="glyph-sm" />}
+          value={`${formatCreditsDecimal(stats.averageStars)} bintang`}
         />
         {stats.joinedAt ? (
           <MetaFact
-            icon={<GlyphHistory className="size-3.5" />}
+            icon={<GlyphHistory className="glyph-sm" />}
             value={`Gabung ${formatShortDate(stats.joinedAt)}`}
           />
         ) : null}
@@ -151,29 +162,19 @@ export function ProfileView({
               {formatCredits(stats.balance)}
               <span className="ml-1.5 text-base font-semibold text-muted-foreground">credit</span>
             </p>
-            <p className="mt-1.5 text-[15px] font-semibold tabular-nums text-success">
+            <p className="mt-1.5 text-cta font-semibold tabular-nums text-success">
               +{formatCredits(rangeCredits)} periode ini
             </p>
           </div>
 
-          <div className="flex shrink-0 gap-1 rounded-full bg-muted p-1">
-            {RANGES.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => setRange(item.key)}
-                aria-pressed={range === item.key}
-                className={cn(
-                  'focus-ring transition-ui rounded-full px-2.5 py-1 text-[12px] font-bold',
-                  range === item.key
-                    ? 'bg-card text-foreground'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
+          <SegmentedTabs
+            className="shrink-0"
+            size="sm"
+            ariaLabel="Rentang penghasilan"
+            tabs={RANGE_TABS}
+            value={range}
+            onChange={setRange}
+          />
         </div>
 
         <div className="stack-gap-t">
@@ -183,7 +184,7 @@ export function ProfileView({
 
       <section aria-label="Saldo" className="region-t flex items-center gap-3">
         <IconCircle size="lg" tone="card">
-          <GlyphWallet className="size-5" />
+          <GlyphWallet className="glyph-lg" />
         </IconCircle>
         <div className="min-w-0 flex-1">
           <SectionLabel>Nilai rupiah</SectionLabel>
@@ -212,7 +213,7 @@ export function ProfileView({
               title={row.label}
               meta={`${formatCredits(row.credits)} credit terkumpul`}
               amount={
-                <span className="text-[15px] font-bold tabular-nums text-foreground">
+                <span className="text-cta font-bold tabular-nums text-foreground">
                   {formatCredits(row.count)}
                 </span>
               }
@@ -225,13 +226,13 @@ export function ProfileView({
         <DataList label="Ringkasan lain">
           <DataListRow
             showDivider
-            marker={<GlyphUsers className="size-5 text-muted-foreground" />}
+            marker={<GlyphUsers className="glyph-lg text-muted-foreground" />}
             title="Teman yang kamu ajak"
             meta={`${formatCredits(stats.activeReferralCount)} dari ${formatCredits(stats.referralCount)} aktif`}
           />
           <DataListRow
             showDivider={false}
-            marker={<GlyphHistory className="size-5 text-muted-foreground" />}
+            marker={<GlyphHistory className="glyph-lg text-muted-foreground" />}
             title="Riwayat task"
             meta={`${formatCredits(stats.completedCount)} task selesai`}
           />

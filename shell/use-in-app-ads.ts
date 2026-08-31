@@ -33,6 +33,21 @@ import { readShow, showFailureReason, waitForShow } from '@/shell/monetag-sdk'
 
 const SESSION_KEY = 'tugasduit.in-app-ads.session'
 
+/**
+ * Interstitial otomatis dimatikan di luar produksi. Di preview v0 dan `next dev` iklan
+ * ini muncul sendiri menutupi layar, jadi tiap kali ada yang mau memeriksa isi aplikasi
+ * yang terlihat justru iklannya. Yang dimatikan hanya jalur otomatis: SDK-nya tetap dimuat
+ * di `app/layout.tsx` dan iklan berhadiah (`use-ad-pass.ts`) tetap jalan karena sifatnya
+ * opt-in — ditekan sendiri oleh yang mau menontonnya.
+ *
+ * Kalau jalur otomatisnya memang sedang mau diuji di preview, isi
+ * `NEXT_PUBLIC_IN_APP_ADS_IN_DEV=true`. Di produksi saklar ini tidak berpengaruh:
+ * pengaturnya tetap `ads.inAppEnabled` dari `/api/session`.
+ */
+const AUTO_ADS_ALLOWED =
+  process.env.NODE_ENV === 'production' ||
+  process.env.NEXT_PUBLIC_IN_APP_ADS_IN_DEV === 'true'
+
 /** Jeda sebelum mencoba lagi kalau SDK-nya tidak muncul dalam jendela tunggu. */
 const SDK_RETRY_MS = 30_000
 
@@ -71,7 +86,7 @@ export function useInAppAds({
   settings?: InAppAdsSettings
 }): void {
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled || !AUTO_ADS_ALLOWED) return
 
     const sdkName = monetagSdkName(zoneId)
     let session = readStoredSession(settings, Date.now())

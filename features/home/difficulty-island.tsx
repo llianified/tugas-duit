@@ -57,7 +57,7 @@ function DifficultySummaryRegion({ maxReward }: { maxReward: number }) {
   return (
     <div className="island-region">
       <div className="island-row flex items-center justify-between gap-3">
-        <span className="shrink-0 text-[11px] leading-none text-muted-foreground">
+        <span className="shrink-0 text-meta leading-none text-muted-foreground">
           Reward ditentukan kecepatan
         </span>
         <span className="flex shrink-0 items-center gap-1.5 text-xs font-semibold leading-none text-primary tabular-nums">
@@ -81,7 +81,7 @@ function StarTierRegion({ difficulty }: { difficulty: Difficulty }) {
       {tiers.map((tier) => (
         <div key={tier.stars} className="island-row flex items-center justify-between gap-3">
           <StarRating stars={tier.stars} className="shrink-0" />
-          <span className="min-w-0 flex-1 truncate text-[11px] leading-none text-muted-foreground tabular-nums">
+          <span className="min-w-0 flex-1 truncate text-meta leading-none text-muted-foreground tabular-nums">
             {tier.window}
           </span>
           <span className="shrink-0 text-xs font-semibold leading-none text-foreground tabular-nums">

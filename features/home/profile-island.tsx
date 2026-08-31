@@ -57,7 +57,7 @@ export function ProfileIsland({
             <span className="truncate text-xs font-semibold text-foreground">
               {user.firstName}
             </span>
-            {isPremium ? <GlyphCrown className="size-3.5 shrink-0 text-premium" /> : null}
+            {isPremium ? <GlyphCrown className="glyph-sm shrink-0 text-premium" /> : null}
           </span>
         }
         tone="muted"
@@ -108,7 +108,7 @@ export function ProfileIsland({
               onClose()
               onOpenStats()
             }}
-            className="focus-ring transition-ui island-region flex w-full items-center justify-center rounded-md text-[13px] font-bold text-primary hover:text-primary-hover active:text-primary-active"
+            className="focus-ring transition-ui island-region flex w-full items-center justify-center rounded-md text-label font-bold text-primary hover:text-primary-hover active:text-primary-active"
           >
             Buka statistik
           </button>

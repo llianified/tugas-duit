@@ -1,11 +1,11 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Dialog } from '@base-ui/react/dialog'
+import { AppDialog, AppDialogBody, AppDialogHeader } from '@/shared/components/dialog'
 import type { PremiumMonths, PremiumPlan } from '@/domain/premium'
 import { premiumBenefitList } from '@/features/premium/benefits'
 import { ActionButton } from '@/shared/components/action-button'
-import { GlyphCheck, GlyphCross, GlyphCrown, GlyphSpinner } from '@/shared/components/glyph'
+import { GlyphCheck, GlyphCrown, GlyphSpinner } from '@/shared/components/glyph'
 import { SectionLabel } from '@/shared/components/section-label'
 import { userFacingMessage } from '@/shell/api-client'
 import {
@@ -30,19 +30,13 @@ export function PremiumDialog({
   onRefresh: () => Promise<unknown>
 }) {
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Backdrop className="animate-in fade-in data-[ending-style]:animate-out data-[ending-style]:fade-out fixed inset-0 z-40 bg-scrim duration-150" />
-
-        <Dialog.Popup className="animate-in fade-in zoom-in-95 data-[ending-style]:animate-out data-[ending-style]:fade-out data-[ending-style]:zoom-out-95 fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem-2*(var(--nav-pill-h)+var(--content-gap)))] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg bg-card outline-none duration-150">
-          <PremiumDialogBody
-            premium={premium}
-            onRefresh={onRefresh}
-            onClose={() => onOpenChange(false)}
-          />
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <AppDialog open={open} onOpenChange={onOpenChange} heightLimit="above-nav">
+      <PremiumDialogBody
+        premium={premium}
+        onRefresh={onRefresh}
+        onClose={() => onOpenChange(false)}
+      />
+    </AppDialog>
   )
 }
 
@@ -90,20 +84,13 @@ function PremiumDialogBody({
 
   return (
     <>
-      <header className="flex items-center gap-2 border-b border-border px-[var(--surface-p)] py-3">
-        <GlyphCrown className="size-5 text-premium" />
-        <Dialog.Title className="text-sm font-semibold text-foreground">
-          {activated ? 'Premium aktif' : invoice ? 'Bayar pakai QRIS' : 'Tugas Duit Premium'}
-        </Dialog.Title>
-        <Dialog.Close
-          aria-label="Tutup"
-          className="focus-ring transition-ui ml-auto rounded-md p-1 text-muted-foreground hover:text-foreground"
-        >
-          <GlyphCross className="size-4" />
-        </Dialog.Close>
-      </header>
+      <AppDialogHeader
+        divided
+        icon={<GlyphCrown className="glyph-lg text-premium" />}
+        title={activated ? 'Premium aktif' : invoice ? 'Bayar pakai QRIS' : 'Tugas Duit Premium'}
+      />
 
-      <div className="flex-1 overflow-y-auto px-[var(--surface-p)] py-3">
+      <AppDialogBody>
         {activated ? (
           <ActivatedPanel premium={premium} onClose={onClose} />
         ) : invoice ? (
@@ -115,7 +102,7 @@ function PremiumDialogBody({
         ) : (
           <PlanPanel premium={premium} pending={pending} error={error} onBuy={buy} />
         )}
-      </div>
+      </AppDialogBody>
     </>
   )
 }
@@ -161,7 +148,7 @@ function PlanPanel({
 
       {error ? <p className="stack-gap-t text-xs text-destructive">{error}</p> : null}
 
-      <p className="stack-gap-t text-[11px] leading-snug text-muted-foreground">
+      <p className="stack-gap-t text-meta leading-snug text-muted-foreground">
         Pembayaran lewat QRIS, bisa dari e-wallet atau m-banking apa pun. Premium nyala otomatis
         begitu pembayarannya masuk.
       </p>
@@ -207,7 +194,7 @@ function PlanRow({
           {formatRupiah(plan.pricePerMonthIdr)}/bulan
         </p>
         {plan.savingIdr > 0 ? (
-          <p className="mt-1 text-[11px] leading-none tabular-nums text-premium">
+          <p className="mt-1 text-meta leading-none tabular-nums text-premium">
             Hemat {formatRupiah(plan.savingIdr)} ({formatCredits(plan.savingPercent)}%)
           </p>
         ) : null}
@@ -215,7 +202,7 @@ function PlanRow({
 
       <div className="shrink-0 text-right">
         {plan.savingIdr > 0 ? (
-          <p className="text-[11px] leading-none tabular-nums text-muted-foreground line-through">
+          <p className="text-meta leading-none tabular-nums text-muted-foreground line-through">
             {formatRupiah(plan.baselineIdr)}
           </p>
         ) : null}
@@ -285,7 +272,7 @@ function PaymentPanel({
         />
       </dl>
 
-      <p className="stack-gap-t text-[11px] leading-snug text-muted-foreground">
+      <p className="stack-gap-t text-meta leading-snug text-muted-foreground">
         Nominalnya harus <span className="font-semibold text-foreground">persis</span> segitu —
         angka belakangnya kode unik yang dipakai buat mencocokkan pembayaran kamu.
       </p>
@@ -299,7 +286,7 @@ function PaymentPanel({
         </ActionButton>
       </div>
 
-      <p className="stack-gap-t text-center text-[11px] text-muted-foreground">
+      <p className="stack-gap-t text-center text-meta text-muted-foreground">
         Halaman ini ngecek sendiri tiap beberapa detik.
       </p>
     </>

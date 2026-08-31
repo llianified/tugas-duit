@@ -26,11 +26,11 @@ export function DifficultyMeter({ difficulty }: { difficulty: Difficulty }) {
   const strength = DIFFICULTY_STRENGTH[difficulty]
 
   return (
-    <span aria-hidden="true" className="flex shrink-0 items-center gap-[2px]">
+    <span aria-hidden="true" className="flex shrink-0 items-center gap-0.5">
       {Array.from({ length: SEGMENT_COUNT }, (_, index) => (
         <span
           key={index}
-          className={`h-2.5 w-[3px] rounded-full ${
+          className={`h-2.5 w-0.75 rounded-full ${
             index < strength ? 'bg-foreground/70' : 'bg-foreground/15'
           }`}
         />

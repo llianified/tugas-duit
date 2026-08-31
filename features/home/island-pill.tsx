@@ -5,7 +5,7 @@ import { useIslandDismiss, useIslandGeometry } from '@/features/home/use-island-
 import { hapticTap } from '@/shell/haptic'
 import { cn } from '@/shared/lib/utils'
 
-const ISLAND_PILL_BOX = 'h-[var(--brand-pill-h)] px-3 text-[11px] leading-none'
+const ISLAND_PILL_BOX = 'h-[var(--brand-pill-h)] px-3 text-meta leading-none'
 
 const ISLAND_PILL_RADIUS = 'rounded-[calc(var(--brand-pill-h)/2)]'
 
@@ -41,7 +41,7 @@ export function IslandStat({
   return (
     <div className="island-region">
       <div className="island-row flex items-center justify-between gap-3">
-        <span className="min-w-0 truncate text-[11px] leading-none text-muted-foreground tabular-nums">
+        <span className="min-w-0 truncate text-meta leading-none text-muted-foreground tabular-nums">
           {label}
         </span>
         <span

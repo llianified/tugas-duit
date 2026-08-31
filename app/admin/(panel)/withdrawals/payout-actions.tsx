@@ -3,6 +3,9 @@
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
 import { PAYOUT_PROOF_ACCEPT, WITHDRAWAL_REJECT_REASON_MAX } from '@/features/withdraw/domain'
+import { ActionButton } from '@/shared/components/action-button'
+import { TextArea, TextInput } from '@/shared/components/input'
+import { Surface } from '@/shared/components/surface'
 import { ApiError, sendFormData, sendJson } from '@/shell/api-client'
 
 type Mode = 'idle' | 'confirm-paid' | 'reject'
@@ -91,13 +94,12 @@ export function PayoutActions({
           <span className="text-muted-foreground">
             Dikirim ke {userName} lewat Telegram. Saldo otomatis dikembalikan.
           </span>
-          <textarea
+          <TextArea
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             rows={2}
             maxLength={WITHDRAWAL_REJECT_REASON_MAX}
             placeholder="Nama pemilik rekening tidak cocok."
-            className="rounded-md bg-muted px-3 py-2 text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
           />
           <span className="text-xs text-muted-foreground tabular-nums">
             {reason.length}/{WITHDRAWAL_REJECT_REASON_MAX}
@@ -154,7 +156,7 @@ function ProofField({
         accept={PAYOUT_PROOF_ACCEPT}
         disabled={disabled}
         onChange={(event) => onChange(event.target.files?.[0] ?? null)}
-        className="rounded-md bg-muted px-3 py-2 text-foreground file:mr-3 file:rounded file:border-0 file:bg-card file:px-2 file:py-1 file:text-sm file:font-medium file:text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+        className="focus-ring transition-ui control-h-compact w-full rounded-lg bg-muted px-3 text-sm text-muted-foreground file:mr-3 file:h-full file:rounded-md file:border-0 file:bg-card file:px-3 file:text-sm file:font-semibold file:text-foreground"
       />
       {file ? (
         <span className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -181,18 +183,22 @@ function NoteField({ value, onChange }: { value: string; onChange: (value: strin
     <label className="flex flex-col gap-1 text-sm">
       <span className="font-medium text-foreground">Catatan admin (opsional)</span>
       <span className="text-muted-foreground">Hanya untuk internal, mis. nomor referensi transfer.</span>
-      <input
+      <TextInput
+        size="compact"
         type="text"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="rounded-md bg-muted px-3 py-2 text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
       />
     </label>
   )
 }
 
 function Panel({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-col gap-3 rounded-md bg-card p-3">{children}</div>
+  return (
+    <Surface tone="solid" className="flex flex-col gap-3 bg-card">
+      {children}
+    </Surface>
+  )
 }
 
 function Row({ children }: { children: React.ReactNode }) {
@@ -207,9 +213,6 @@ function ErrorText({ children }: { children: React.ReactNode }) {
   )
 }
 
-const BUTTON_BASE =
-  'rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50'
-
 function PrimaryButton({
   children,
   onClick,
@@ -220,14 +223,9 @@ function PrimaryButton({
   disabled?: boolean
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`${BUTTON_BASE} bg-primary text-primary-foreground hover:bg-[var(--color-primary-hover)]`}
-    >
+    <ActionButton size="compact" className="w-auto" onClick={onClick} disabled={disabled}>
       {children}
-    </button>
+    </ActionButton>
   )
 }
 
@@ -241,14 +239,15 @@ function DangerButton({
   disabled?: boolean
 }) {
   return (
-    <button
-      type="button"
+    <ActionButton
+      variant="danger"
+      size="compact"
+      className="w-auto"
       onClick={onClick}
       disabled={disabled}
-      className={`${BUTTON_BASE} bg-destructive text-primary-foreground hover:opacity-90`}
     >
       {children}
-    </button>
+    </ActionButton>
   )
 }
 
@@ -262,13 +261,14 @@ function GhostButton({
   disabled?: boolean
 }) {
   return (
-    <button
-      type="button"
+    <ActionButton
+      variant="ghost"
+      size="compact"
+      className="w-auto"
       onClick={onClick}
       disabled={disabled}
-      className={`${BUTTON_BASE} text-muted-foreground hover:bg-muted-foreground/15 hover:text-foreground`}
     >
       {children}
-    </button>
+    </ActionButton>
   )
 }

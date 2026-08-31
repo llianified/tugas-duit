@@ -229,7 +229,7 @@ function EnergyRegion({
     <IslandStat
       label={`Energi ${formatCredits(energy)}/${formatCredits(energyMax)}`}
       tone={secondsToFull === null ? 'success' : 'primary'}
-      value={secondsToFull === null ? 'Penuh' : `Penuh ${formatLongCountdown(secondsToFull)}`}
+      value={secondsToFull === null ? 'Penuh' : `Penuh dalam ${formatLongCountdown(secondsToFull)}`}
       meter={
         <EnergyPips energy={energy} max={energyMax} fraction={fill.fraction} active={isOpen} />
       }

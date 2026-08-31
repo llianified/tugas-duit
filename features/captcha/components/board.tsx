@@ -122,7 +122,7 @@ export function ChallengeSelect({
       role="radiogroup"
       aria-label="Pilihan bentuk"
       aria-invalid={status === 'error'}
-      className={`grid min-h-0 flex-1 gap-2 [grid-auto-rows:minmax(4rem,1fr)] ${columns}`}
+      className={`grid min-h-0 flex-1 content-center gap-2 [grid-auto-rows:minmax(4.5rem,9rem)] ${columns}`}
     >
       {options.map((option) => {
         const isSelected = selected === option.key
@@ -142,7 +142,7 @@ export function ChallengeSelect({
               disabled && !isSelected ? 'opacity-40' : ''
             }`}
           >
-            <GlyphShape shape={option.key} className="size-8" />
+            <GlyphShape shape={option.key} className="size-12" />
           </button>
         )
       })}

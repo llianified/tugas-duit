@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react'
 import { creditsToRupiah } from '@/domain/economy'
-import { ActionButton } from '@/shared/components/action-button'
+import { ActionButton, actionButtonClass } from '@/shared/components/action-button'
 import { GlyphTelegram } from '@/shared/components/glyph'
 import { userFacingMessage } from '@/shell/api-client'
 import { claimChannelBonus, type ChannelBonusState } from '@/shell/session-api'
@@ -39,7 +39,7 @@ export function ChannelBonusCard({
       className="rounded-lg bg-muted/60 p-[var(--surface-p)] ring-border"
     >
       <div className="flex items-start gap-2">
-        <GlyphTelegram className="mt-0.5 size-5 shrink-0 text-primary" />
+        <GlyphTelegram className="mt-0.5 glyph-lg shrink-0 text-primary" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold leading-snug text-foreground">
             Join channel, dapat {formatCredits(bonus.credits)} credit
@@ -59,7 +59,7 @@ export function ChannelBonusCard({
           href={bonus.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="focus-ring transition-ui press-scale-soft control-h flex flex-1 items-center justify-center rounded-cta btn-soft text-[15px] font-bold tracking-tight text-foreground"
+          className={actionButtonClass({ variant: 'soft', className: 'flex-1' })}
         >
           Buka channel
         </a>

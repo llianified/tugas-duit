@@ -47,7 +47,7 @@ function PremiumActiveCard({ premium }: { premium: PremiumState }) {
       <div className="flex items-center gap-2">
         <CrownMark />
         <p className="text-sm font-semibold leading-none text-foreground">Premium aktif</p>
-        <span className="ml-auto text-[11px] font-semibold tabular-nums text-premium">
+        <span className="ml-auto text-meta font-semibold tabular-nums text-premium">
           {formatCredits(premium.daysLeft)} hari lagi
         </span>
       </div>
@@ -65,7 +65,7 @@ function PremiumActiveCard({ premium }: { premium: PremiumState }) {
           .map((benefit) => (
             <li
               key={benefit.key}
-              className="inline-flex items-center gap-1 rounded-md bg-premium/10 px-1.5 py-1 text-[11px] font-medium text-premium"
+              className="inline-flex items-center gap-1 rounded-md bg-premium/10 px-1.5 py-1 text-meta font-medium text-premium"
             >
               <GlyphCheck className="size-3" />
               {benefit.title}

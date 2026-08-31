@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { ActionButton } from '@/shared/components/action-button'
 
-export function CopyButton({ value }: { value: string }) {
+export function CopyButton({ value, label = 'nomor rekening' }: { value: string; label?: string }) {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle')
 
   async function copy() {
@@ -16,13 +17,9 @@ export function CopyButton({ value }: { value: string }) {
   }
 
   return (
-    <button
-      type="button"
-      onClick={copy}
-      className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted-foreground/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-    >
+    <ActionButton variant="soft" size="micro" className="w-auto" onClick={copy}>
       {state === 'copied' ? 'Tersalin' : state === 'failed' ? 'Gagal' : 'Salin'}
-      <span className="sr-only"> nomor rekening</span>
-    </button>
+      <span className="sr-only"> {label}</span>
+    </ActionButton>
   )
 }

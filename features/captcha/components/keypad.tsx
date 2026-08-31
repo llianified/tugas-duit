@@ -147,7 +147,7 @@ function BackspaceKey({
       aria-label="Hapus satu karakter"
       className={className}
     >
-      <GlyphBackspace className="size-5" />
+      <GlyphBackspace className="glyph-lg" />
     </KeypadKey>
   )
 }

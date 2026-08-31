@@ -67,6 +67,15 @@ export function ProgressionBadges({
 
   return (
     <>
+      {openPanel === null ? null : (
+        <button
+          type="button"
+          aria-label="Tutup panel"
+          onClick={closePanel}
+          className="island-dismiss"
+        />
+      )}
+
       {profileVisible ? (
         <ProfileIsland
           onOpenStats={onOpenStats}

@@ -58,9 +58,9 @@ function WithdrawalListItem({
       marker={
         <DataListMarker tone={isPaid ? 'success' : 'muted'}>
           {isPaid ? (
-            <GlyphCheck className="size-3.5" />
+            <GlyphCheck className="glyph-sm" />
           ) : isRejected ? (
-            <GlyphCross className="size-3.5" />
+            <GlyphCross className="glyph-sm" />
           ) : (
             <GlyphWallet className="size-4" />
           )}

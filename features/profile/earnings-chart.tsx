@@ -42,7 +42,7 @@ export function EarningsChart({ series }: { series: EarningsPoint[] }) {
 
   if (!shape) {
     return (
-      <div className="flex h-24 items-center justify-center text-[13px] text-muted-foreground">
+      <div className="flex h-24 items-center justify-center text-label text-muted-foreground">
         Grafik muncul setelah task pertama kamu selesai.
       </div>
     )

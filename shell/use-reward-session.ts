@@ -215,6 +215,8 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     startTaskWithAd,
     premium: session?.premium ?? null,
     channelBonus: session?.channelBonus ?? null,
+    channelGate: session?.channelGate ?? null,
+    channelBlocked: Boolean(session?.channelGate?.required && !session.channelGate.member),
     refreshSession: mutateSession,
     adsEnabled: session?.ads?.enabled ?? false,
     inAppAdsEnabled: session?.ads?.inAppEnabled ?? false,

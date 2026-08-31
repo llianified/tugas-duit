@@ -4,6 +4,7 @@ import { MotionConfig } from 'motion/react'
 import { useEffect, useMemo, useState } from 'react'
 import { economyConfig } from '@/domain/economy-config'
 import { inAppAdsSettings } from '@/domain/in-app-ads'
+import { ChannelGate } from '@/features/channel/channel-gate'
 import { getProgression } from '@/features/home/progression'
 import { ProgressionBadges } from '@/features/home/progression-badges'
 import { NavPill } from '@/navigation/nav-pill'
@@ -59,8 +60,14 @@ function AppShellInner() {
       config.inAppAdsTimeoutSeconds,
     ],
   )
+  const channelBlocked =
+    !session.loading &&
+    !session.sessionFailed &&
+    !session.unauthenticated &&
+    session.channelBlocked
+
   useInAppAds({
-    enabled: session.inAppAdsEnabled,
+    enabled: session.inAppAdsEnabled && !channelBlocked,
     zoneId: inAppZoneId(),
     settings: adsSettings,
   })
@@ -90,9 +97,9 @@ function AppShellInner() {
     !session.unauthenticated &&
     session.stats !== null
 
-  const badgesVisible = shellReady
+  const badgesVisible = shellReady && !channelBlocked
 
-  const navVisible = shellReady && effectiveView !== 'captcha'
+  const navVisible = shellReady && !channelBlocked && effectiveView !== 'captcha'
 
   const themeToggleVisible = shellReady || session.sessionFailed || session.unauthenticated
 
@@ -102,9 +109,11 @@ function AppShellInner() {
       ? 'session-failed'
       : session.unauthenticated
         ? 'unauthenticated'
-        : activeChallenge
-          ? `captcha-${activeChallenge.id}`
-          : effectiveView
+        : channelBlocked
+          ? 'channel-gate'
+          : activeChallenge
+            ? `captcha-${activeChallenge.id}`
+            : effectiveView
 
   const [depthTracker, setDepthTracker] = useState<{ depth: number; direction: 1 | -1 }>({
     depth: session.viewDepth,
@@ -124,7 +133,7 @@ function AppShellInner() {
       direction={depthTracker.direction}
       showThemeToggle={themeToggleVisible}
       hideThemeToggle={progressionPanelOpen || effectiveView === 'captcha'}
-      heroBand={session.loading || (!activeChallenge && effectiveView === 'home')}
+      heroBand={session.loading || (!channelBlocked && !activeChallenge && effectiveView === 'home')}
       badges={
         badgesVisible ? (
           <ProgressionBadges
@@ -156,13 +165,17 @@ function AppShellInner() {
         ) : null
       }
     >
-      <AppViewRouter
-        session={session}
-        activeChallenge={activeChallenge}
-        effectiveView={effectiveView}
-        showError={showError}
-        onTaskRewardChange={setLiveTaskReward}
-      />
+      {channelBlocked && session.channelGate ? (
+        <ChannelGate gate={session.channelGate} onVerified={session.refreshSession} />
+      ) : (
+        <AppViewRouter
+          session={session}
+          activeChallenge={activeChallenge}
+          effectiveView={effectiveView}
+          showError={showError}
+          onTaskRewardChange={setLiveTaskReward}
+        />
+      )}
     </AppFrame>
   )
 }

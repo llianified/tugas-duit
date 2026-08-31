@@ -34,6 +34,7 @@ export type SessionResponse = {
   ads?: AdsState
   premium?: PremiumState
   channelBonus?: ChannelBonusState
+  channelGate?: ChannelGateState
   botAppUrl?: string | null
 }
 
@@ -63,6 +64,12 @@ export type ChannelBonusState = {
   claimed: boolean
 }
 
+export type ChannelGateState = {
+  required: boolean
+  member: boolean
+  url: string
+}
+
 export type PremiumCheckoutResponse =
   | { settled: true; premiumUntil: number }
   | { settled: false; invoice: PremiumInvoice }
@@ -75,6 +82,10 @@ export async function startPremiumCheckout(months: PremiumMonths) {
 
 export async function claimChannelBonus() {
   return sendJson<ChannelClaimResponse>('/api/channel/claim', 'POST')
+}
+
+export async function verifyChannelMembership() {
+  return sendJson<ChannelGateState>('/api/channel/verify', 'POST')
 }
 
 export async function fetchPublicPayouts() {

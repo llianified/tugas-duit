@@ -29,6 +29,10 @@ export function channelBonusEnabled(): boolean {
   return channelJoinBonusCredits() > 0
 }
 
+export function channelGateRequired(): boolean {
+  return economyConfig().channelGateEnabled > 0
+}
+
 export function dailyCommissionCreditCap(): number {
   const config = economyConfig()
   return config.dailyCommissionCapIdr / config.creditValueIdr

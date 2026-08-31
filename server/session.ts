@@ -19,6 +19,8 @@ interface SessionUser {
   isAdmin: boolean
   premiumUntil: Date | null
   channelBonusClaimedAt: Date | null
+  channelMember: boolean | null
+  channelCheckedAt: Date | null
 }
 
 export class UnauthorizedError extends Error {}
@@ -60,8 +62,10 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     is_admin: boolean
     premium_until: Date | null
     channel_bonus_claimed_at: Date | null
+    channel_member: boolean | null
+    channel_checked_at: Date | null
   }>(
-    `update sessions s set last_seen_at=now() from users u where s.token_hash=$1 and s.user_id=u.id and s.revoked_at is null and s.expires_at>now() returning u.id,u.public_id,u.telegram_id,u.first_name,u.username,u.photo_url,u.balance_credits,u.referral_code,u.banned_at,u.is_admin,u.premium_until,u.channel_bonus_claimed_at`,
+    `update sessions s set last_seen_at=now() from users u where s.token_hash=$1 and s.user_id=u.id and s.revoked_at is null and s.expires_at>now() returning u.id,u.public_id,u.telegram_id,u.first_name,u.username,u.photo_url,u.balance_credits,u.referral_code,u.banned_at,u.is_admin,u.premium_until,u.channel_bonus_claimed_at,u.channel_member,u.channel_checked_at`,
     [hashToken(token)],
   )
   const row = rows[0]
@@ -79,6 +83,8 @@ export async function getSessionUser(): Promise<SessionUser | null> {
         isAdmin: isAdminUser(row.telegram_id, row.is_admin),
         premiumUntil: row.premium_until,
         channelBonusClaimedAt: row.channel_bonus_claimed_at,
+        channelMember: row.channel_member,
+        channelCheckedAt: row.channel_checked_at,
       }
     : null
 }

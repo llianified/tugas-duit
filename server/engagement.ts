@@ -284,7 +284,7 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
         '',
         `Saldo kamu masih aman ${money(balance)}, energi udah penuh dari kemarin-kemarin.`,
         '',
-        'Balik bentar aja, beberapa captcha udah nambah saldo lagi.',
+        'Balik bentar aja, beberapa soal udah nambah saldo lagi.',
       ].join('\n'),
     }
   }
@@ -329,7 +329,7 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
         '',
         `${formatCredits(energy.current)}/${formatCredits(energy.max)} energi siap dipakai. Energi yang udah penuh berhenti ngisi, jadi mending langsung dihabisin.`,
         '',
-        'Pecahin captcha, credit-nya masuk.',
+        'Pecahin soal, credit-nya masuk.',
       ].join('\n'),
     }
   }

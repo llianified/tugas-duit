@@ -47,7 +47,7 @@ interface HomeViewProps {
 
 const ENTER_STEP_CLASS = ['enter-step-0', 'enter-step-1', 'enter-step-2'] as const
 
-type HomePanel = 'missions' | 'activity' | 'bonus' | 'premium'
+type HomePanel = 'missions' | 'activity' | 'bonus'
 
 export function HomeView({
   balance,
@@ -80,13 +80,16 @@ export function HomeView({
   /**
    * Kartu sekunder ditumpuk di tab, bukan berderet ke bawah.
    *
-   * Misi, bonus channel, dan premium sama-sama sekunder terhadap task — tidak ada yang
-   * perlu terlihat bersamaan, dan menderetkan ketiganya mendorong transaksi terakhir
-   * keluar layar sehingga beranda selalu menuntut gulir. Sebagai tab, tingginya tetap
+   * Misi dan bonus channel sama-sama sekunder terhadap task — tidak ada yang perlu
+   * terlihat bersamaan, dan menderetkan semuanya mendorong transaksi terakhir keluar
+   * layar sehingga beranda selalu menuntut gulir. Sebagai tab, tingginya tetap
    * setinggi satu kartu berapa pun yang aktif.
    *
    * Tab yang isinya tidak ada tidak dirender sama sekali: user yang sudah mengklaim
    * bonus channel tidak diberi tab kosong untuk ditekan.
+   *
+   * Kartu premium berada di atas tab, bukan di dalamnya: penawarannya harus terlihat
+   * tanpa user menekan tab lebih dulu.
    */
   const panels: SegmentedTab<HomePanel>[] = [
     { value: 'missions', label: 'Misi' },
@@ -96,9 +99,6 @@ export function HomeView({
     panels.push({ value: 'bonus', label: 'Bonus' })
   }
   const premiumReachable = Boolean(premium && (premium.active || premium.paymentEnabled))
-  if (premium && premiumReachable) {
-    panels.push({ value: 'premium', label: premium.active ? 'Premium' : 'VIP' })
-  }
   const [panel, setPanel] = useState<HomePanel>('missions')
   const activePanel = panels.some((item) => item.value === panel) ? panel : 'missions'
 
@@ -135,13 +135,19 @@ export function HomeView({
       </div>
 
       <div className={`animate-view-in region-t ${ENTER_STEP_CLASS[2]}`}>
+        {premium && premiumReachable ? (
+          <PremiumCard premium={premium} onOpen={() => setPremiumOpen(true)} />
+        ) : null}
+
         {panels.length > 1 ? (
-          <SegmentedTabs
-            tabs={panels}
-            value={activePanel}
-            onChange={setPanel}
-            ariaLabel="Panel beranda"
-          />
+          <div className={premium && premiumReachable ? 'region-gap-t' : undefined}>
+            <SegmentedTabs
+              tabs={panels}
+              value={activePanel}
+              onChange={setPanel}
+              ariaLabel="Panel beranda"
+            />
+          </div>
         ) : null}
 
         <div
@@ -159,9 +165,6 @@ export function HomeView({
           ) : null}
           {activePanel === 'bonus' && channelBonus ? (
             <ChannelBonusCard bonus={channelBonus} onClaimed={onRefreshSession} />
-          ) : null}
-          {activePanel === 'premium' && premium ? (
-            <PremiumCard premium={premium} onOpen={() => setPremiumOpen(true)} />
           ) : null}
         </div>
       </div>

@@ -33,12 +33,30 @@ export async function consumeQuota(
      returning tasks_completed`,
     [userId],
   )
+  /**
+   * Penghitung dinaikkan lebih dulu supaya kenaikannya ikut terkunci baris `daily_quotas`
+   * yang sama, lalu dikembalikan kalau task-nya ternyata tidak dibayar. Tanpa pengembalian
+   * ini `tasks_completed` naik untuk setiap penolakan juga, sehingga jaring anti-bot
+   * menghitung percobaan alih-alih task yang benar-benar dibayar — dan user yang menabrak
+   * plafon sekali tidak akan pernah turun lagi dari plafon itu di hari yang sama.
+   */
+  const rollback = () =>
+    tx.query(
+      `update daily_quotas set tasks_completed=greatest(0, tasks_completed-1)
+        where user_id=$1 and quota_date=${TODAY}`,
+      [userId],
+    )
+
   if (Number(counted.rows[0].tasks_completed) > maxTasks) {
+    await rollback()
     return { refusal: 'daily_task_cap', paidReward: 0, pool: await readRewardPool(userId, tx) }
   }
 
   const spent = await spendRewardPool(tx, userId, reward)
-  if (spent.paid <= 0) return { refusal: 'pool_empty', paidReward: 0, pool: spent.state }
+  if (spent.paid <= 0) {
+    await rollback()
+    return { refusal: 'pool_empty', paidReward: 0, pool: spent.state }
+  }
 
   await tx.query(
     `update daily_quotas set credits_earned=credits_earned+$2

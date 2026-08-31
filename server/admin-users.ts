@@ -91,8 +91,8 @@ export async function searchAdminUsers(term: string): Promise<AdminUserSummary[]
      from users
      where ($2::uuid is not null and public_id=$2::uuid)
         or ($3::bigint is not null and telegram_id=$3::bigint)
-        or username ilike '%' || $1 || '%'
-        or first_name ilike '%' || $1 || '%'
+        or username ilike '%' || replace(replace(replace($1,'\\','\\\\'),'%','\\%'),'_','\\_') || '%'
+        or first_name ilike '%' || replace(replace(replace($1,'\\','\\\\'),'%','\\%'),'_','\\_') || '%'
         or upper(referral_code)=upper($1)
      order by created_at desc
      limit ${SEARCH_LIMIT}`,

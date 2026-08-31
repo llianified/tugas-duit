@@ -14,6 +14,21 @@ const FRAUD_SIGNAL_RETENTION = '180 days'
 
 const BOT_NOTIFICATION_RETENTION = '90 days'
 
+/**
+ * Jendela rekonsiliasi saldo.
+ *
+ * Bentuk lamanya menjumlahkan SELURUH `credit_ledger` yang di-join ke SELURUH `users`
+ * dengan `group by` per user, lalu baru memotongnya dengan `limit 50` — biaya yang naik
+ * seiring umur ledger dan pada akhirnya memakan seluruh jatah `maxDuration` route cron
+ * sebelum satu pesan pun sempat dikirim.
+ *
+ * Yang dipersempit hanya himpunan user yang diperiksa, bukan penjumlahannya: saldo
+ * hanya bisa melenceng lewat tulisan, dan setiap tulisan saldo (`appendLedger`) ikut
+ * menyetel `users.updated_at`. Jadi drift baru selalu berada di dalam jendela ini
+ * selama cron berjalan lebih sering daripada panjangnya.
+ */
+const BALANCE_CHECK_WINDOW = '3 days'
+
 export type MaintenanceSummary = {
   challenges: number
   rateLimits: number
@@ -58,22 +73,26 @@ export async function runMaintenance(): Promise<MaintenanceSummary> {
   console.log(`[maintenance] ${fraudSignals} sinyal kedaluwarsa dihapus`)
 
   const drift = await query<{ id: string; balance_credits: string; ledger_total: string }>(
-    `select u.id, u.balance_credits, coalesce(sum(l.amount), 0) as ledger_total
+    `select u.id, u.balance_credits,
+            coalesce((select sum(l.amount) from credit_ledger l where l.user_id = u.id), 0)
+              as ledger_total
        from users u
-       left join credit_ledger l on l.user_id = u.id
-      group by u.id, u.balance_credits
-     having u.balance_credits <> coalesce(sum(l.amount), 0)
+      where u.updated_at >= now() - interval '${BALANCE_CHECK_WINDOW}'
+        and u.balance_credits <>
+            coalesce((select sum(l.amount) from credit_ledger l where l.user_id = u.id), 0)
       limit 50`,
   )
   if (drift.length) {
-    console.error(`[maintenance] SELISIH SALDO pada ${drift.length} user — periksa segera:`)
+    console.error(
+      `[maintenance] SELISIH SALDO pada ${drift.length} user aktif ${BALANCE_CHECK_WINDOW} terakhir — periksa segera:`,
+    )
     for (const row of drift) {
       console.error(
         `[maintenance]   user ${row.id}: saldo ${row.balance_credits}, jumlah ledger ${row.ledger_total}`,
       )
     }
   } else {
-    console.log('[maintenance] rekonsiliasi saldo: cocok')
+    console.log(`[maintenance] rekonsiliasi saldo (${BALANCE_CHECK_WINDOW} terakhir): cocok`)
   }
 
   const botNotifications = await execute(

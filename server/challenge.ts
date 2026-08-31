@@ -231,7 +231,7 @@ export async function submitAnswer(
       return { ok: false, reason: 'wrong', attemptsLeft: maxAttempts - bumped.rows[0].attempts }
     }
     const marked = await tx.query<{ elapsed_ms: number }>(
-      `update challenges set submitted_at=now(),solved=true where id=$1 returning (extract(epoch from(now()-coalesce(started_at,issued_at)))*1000)::int elapsed_ms`,
+      `update challenges set submitted_at=now() where id=$1 returning (extract(epoch from(now()-coalesce(started_at,issued_at)))*1000)::int elapsed_ms`,
       [id],
     )
     const elapsedMs = marked.rows[0].elapsed_ms
@@ -243,6 +243,16 @@ export async function submitAnswer(
       return { ok: false, reason: quota.refusal === 'pool_empty' ? 'pool_empty' : 'daily_task_cap' }
     }
     const paidReward = quota.paidReward
+
+    /**
+     * `solved` ditulis SETELAH kuota membayar, bukan bersamaan dengan `submitted_at`.
+     * Jawaban yang benar tapi tidak dibayar (kolam kosong / plafon harian) tetap soal
+     * yang ditutup, bukan soal yang selesai: tidak ada baris `task_completions` maupun
+     * ledger untuknya. Menandainya `solved` membuat hitungan admin tidak cocok dengan
+     * jumlah completion, dan membuatnya luput dari sapuan `runMaintenance` yang memang
+     * hanya menghapus soal ber-`solved = false`.
+     */
+    await tx.query('update challenges set solved=true where id=$1', [id])
     const completion = await tx.query<{ id: string }>(
       `insert into task_completions(user_id,challenge_id,type,difficulty,elapsed_ms,stars,reward) values($1,$2,$3,$4,$5,$6,$7) returning id`,
       [userId, id, c.type, c.difficulty, elapsedMs, stars, paidReward],

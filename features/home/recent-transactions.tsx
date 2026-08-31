@@ -13,7 +13,12 @@ export function RecentTransactions({
   completedCount: number
 }) {
   const isEmpty = history.length === 0
-  const rows = history.slice(0, 5)
+  /**
+   * Tiga, bukan lima. Beranda dirancang muat dalam satu layar tanpa gulir, dan dua baris
+   * terakhir adalah satu-satunya yang mendorongnya lewat — sementara riwayat lengkapnya
+   * ada satu ketukan jauhnya lewat tombol Riwayat di atas maupun nav bawah.
+   */
+  const rows = history.slice(0, 3)
 
   return (
     <DataList

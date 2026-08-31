@@ -115,7 +115,7 @@ export function ProfileView({
         </button>
 
         <div className="min-w-0 flex-1">
-          <p className="flex min-w-0 items-center gap-1.5 text-[22px] font-bold leading-tight tracking-[-0.02em] text-foreground">
+          <p className="flex min-w-0 items-center gap-1.5 text-[20px] font-bold leading-tight tracking-[-0.02em] text-foreground">
             <span className="truncate">{user.firstName}</span>
             {isPremium ? <GlyphCrown className="size-4 shrink-0 text-premium" /> : null}
           </p>

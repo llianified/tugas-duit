@@ -57,10 +57,12 @@ export function DataListRow({
       {marker}
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-cta font-semibold tracking-tight">{title}</p>
-        {meta ? <p className="mt-0.5 truncate text-label text-muted-foreground">{meta}</p> : null}
+        <p className="truncate text-cta font-bold tracking-[-0.01em]">{title}</p>
+        {meta ? (
+          <p className="truncate text-meta leading-snug text-muted-foreground">{meta}</p>
+        ) : null}
         {note ? (
-          <p className="mt-1 text-label leading-relaxed text-muted-foreground">{note}</p>
+          <p className="mt-1 text-meta leading-relaxed text-muted-foreground">{note}</p>
         ) : null}
       </div>
 

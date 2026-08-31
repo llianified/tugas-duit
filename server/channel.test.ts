@@ -108,3 +108,97 @@ describe('CHAN-1 — bonus hanya untuk anggota channel yang terbukti', () => {
     expect(await countLedger(user.id)).toBe(0)
   })
 })
+
+async function gateUser(user: { id: number; telegramId: string }) {
+  const { query } = await import('./db')
+  const rows = await query<{ channel_member: boolean | null; channel_checked_at: Date | null }>(
+    'select channel_member, channel_checked_at from users where id=$1',
+    [user.id],
+  )
+  return {
+    id: user.id,
+    telegramId: user.telegramId,
+    channelMember: rows[0].channel_member,
+    channelCheckedAt: rows[0].channel_checked_at,
+  }
+}
+
+const membershipCalls = async () => {
+  const telegram = await import('./telegram')
+  return vi.mocked(telegram.readChannelMembership).mock.calls.length
+}
+
+describe('CHAN-GATE — gerbang wajib join channel', () => {
+  it('tidak menuntut apa pun saat saklarnya dimatikan dari panel admin', async () => {
+    const { readChannelGateState } = await import('./channel')
+    const user = await makeUser()
+    membership.value = false
+    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, channelGateEnabled: 0 })
+
+    const before = await membershipCalls()
+    const state = await readChannelGateState(await gateUser(user))
+    expect(state).toMatchObject({ required: false, member: true })
+    expect(await membershipCalls()).toBe(before)
+  })
+
+  it('memblok yang belum join dan meloloskan yang sudah', async () => {
+    const { channelGateBlocks, readChannelGateState } = await import('./channel')
+    const outsider = await makeUser()
+    membership.value = false
+    expect(await readChannelGateState(await gateUser(outsider))).toMatchObject({
+      required: true,
+      member: false,
+    })
+    expect(await channelGateBlocks(await gateUser(outsider))).toBe(true)
+
+    const member = await makeUser()
+    membership.value = true
+    expect(await readChannelGateState(await gateUser(member))).toMatchObject({
+      required: true,
+      member: true,
+    })
+    expect(await channelGateBlocks(await gateUser(member))).toBe(false)
+  })
+
+  it('menyimpan hasilnya supaya anggota tidak dicek ulang ke Telegram tiap panggilan', async () => {
+    const { readChannelGateState } = await import('./channel')
+    const user = await makeUser()
+    membership.value = true
+
+    await readChannelGateState(await gateUser(user))
+    const cached = await gateUser(user)
+    expect(cached.channelMember).toBe(true)
+
+    const before = await membershipCalls()
+    expect(await readChannelGateState(cached)).toMatchObject({ member: true })
+    expect(await membershipCalls()).toBe(before)
+  })
+
+  it('memaksa cek ulang saat user menekan tombol "sudah join"', async () => {
+    const { readChannelGateState } = await import('./channel')
+    const user = await makeUser()
+    membership.value = false
+    await readChannelGateState(await gateUser(user))
+
+    membership.value = true
+    const before = await membershipCalls()
+    const rechecked = await readChannelGateState(await gateUser(user), { force: true })
+    expect(await membershipCalls()).toBe(before + 1)
+    expect(rechecked).toMatchObject({ required: true, member: true })
+    expect((await gateUser(user)).channelMember).toBe(true)
+  })
+
+  it('meloloskan user saat keanggotaan tidak bisa dipastikan, tanpa mencatat tebakan', async () => {
+    const { readChannelGateState } = await import('./channel')
+    const user = await makeUser()
+    membership.value = null
+
+    expect(await readChannelGateState(await gateUser(user))).toMatchObject({
+      required: true,
+      member: true,
+    })
+    const stored = await gateUser(user)
+    expect(stored.channelMember).toBeNull()
+    expect(stored.channelCheckedAt).toBeNull()
+  })
+})

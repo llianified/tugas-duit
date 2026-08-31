@@ -3,6 +3,7 @@ import { economyConfig } from '@/domain/economy-config'
 import { isPremiumActive, premiumDaysLeft, premiumPerks, premiumPlans } from '@/domain/premium'
 import { loadEconomyConfig } from '@/server/economy-config'
 import { readAdsState } from '@/server/ads'
+import { readChannelGateState } from '@/server/channel'
 import { query } from '@/server/db'
 import { readEnergy } from '@/server/energy'
 import { env } from '@/server/env'
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
       })
     }
 
-    const [breakdown, energy, rewardPool, ads, invoice] = await Promise.all([
+    const [breakdown, energy, rewardPool, ads, invoice, channelGate] = await Promise.all([
       query<{
         task_credits: string
         referral_credits: string
@@ -48,6 +49,7 @@ export async function GET(request: Request) {
       readRewardPool(user.id),
       readAdsState(user.id),
       readPendingInvoice(user.id),
+      readChannelGateState(user),
     ])
 
     const premiumUntil = user.premiumUntil ? user.premiumUntil.getTime() : null
@@ -87,6 +89,7 @@ export async function GET(request: Request) {
         credits: channelJoinBonusCredits(),
         claimed: Boolean(user.channelBonusClaimedAt),
       },
+      channelGate,
     })
   } catch (error) {
     return handleRouteError(error)

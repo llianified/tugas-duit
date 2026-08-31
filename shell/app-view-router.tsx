@@ -1,7 +1,11 @@
 'use client'
 
 import { ActionButton } from '@/shared/components/action-button'
-import { AppViewSkeleton } from '@/shared/components/app-skeleton'
+import {
+  AppViewSkeleton,
+  LeaderboardSkeleton,
+  StatsSkeleton,
+} from '@/shared/components/app-skeleton'
 import { CaptchaView } from '@/features/captcha/components/captcha'
 import type { Challenge } from '@/features/captcha/domain'
 import { HistoryView } from '@/features/history/history'
@@ -128,13 +132,13 @@ export function AppViewRouter({
   }
 
   if (effectiveView === 'stats') {
-    if (!session.stats) return <AppViewSkeleton />
+    if (!session.stats) return <StatsSkeleton key="stats" />
     return <StatsView key="stats" stats={session.stats} />
   }
 
   if (effectiveView === 'leaderboard') {
     if (!LEADERBOARD_ENABLED) return <LeaderboardComingSoon key="leaderboard" />
-    if (!session.leaderboard) return <AppViewSkeleton />
+    if (!session.leaderboard) return <LeaderboardSkeleton key="leaderboard" />
     return (
       <LeaderboardView
         key="leaderboard"

@@ -1,6 +1,6 @@
-import { createHash, timingSafeEqual } from 'node:crypto'
 import { query } from './db'
 import { env } from './env'
+import { matchesSecret } from './secret'
 import { createSession } from './session'
 
 const MIN_PASSWORD_LENGTH = 24
@@ -12,12 +12,6 @@ export type AdminLoginFailure =
   | 'BANNED'
 
 type AdminLoginResult = { ok: true } | { ok: false; reason: AdminLoginFailure }
-
-function matchesSecret(supplied: string, expected: string): boolean {
-  const a = createHash('sha256').update(supplied).digest()
-  const b = createHash('sha256').update(expected).digest()
-  return timingSafeEqual(a, b)
-}
 
 export async function loginAdminWithPassword(
   password: string,

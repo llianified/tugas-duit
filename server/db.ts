@@ -7,7 +7,6 @@ export function isPreviewDb(): boolean {
 }
 
 function sslConfig() {
-  if (env.databaseUrl.includes('.railway.internal')) return undefined
   if (process.env.DATABASE_SSL_NO_VERIFY === 'true') {
     if (process.env.NODE_ENV === 'production') {
       console.error('[db] DATABASE_SSL_NO_VERIFY diabaikan di produksi — verifikasi sertifikat tetap menyala.')
@@ -19,6 +18,20 @@ function sslConfig() {
   return { rejectUnauthorized: true }
 }
 
+/**
+ * Di server yang hidup terus, satu proses melayani semua request sehingga pool besar
+ * terbayar. Di serverless tiap instance punya pool sendiri dan jumlah instance yang
+ * hidup bersamaan tidak kita kendalikan, jadi pool besar mengalikan koneksi menganggur
+ * sampai batas Neon habis. Kecilkan di sana, dan sandarkan penggabungannya pada
+ * connection pooler Neon (host ber-`-pooler`), bukan pada pool di dalam proses ini.
+ */
+const SERVERLESS_MAX_CLIENTS = 3
+const LONG_LIVED_MAX_CLIENTS = 10
+
+export function createPool(connectionString: string, max: number): Pool {
+  return new Pool({ connectionString, max, idleTimeoutMillis: 30_000, ssl: sslConfig() })
+}
+
 const globalForDb = globalThis as unknown as { pool?: Pool }
 let localPool: Pool | undefined
 
@@ -26,12 +39,10 @@ function getPool(): Pool {
   const cached = globalForDb.pool ?? localPool
   if (cached) return cached
 
-  const created = new Pool({
-    connectionString: env.databaseUrl,
-    max: 10,
-    idleTimeoutMillis: 30_000,
-    ssl: sslConfig(),
-  })
+  const created = createPool(
+    env.databaseUrl,
+    process.env.VERCEL ? SERVERLESS_MAX_CLIENTS : LONG_LIVED_MAX_CLIENTS,
+  )
 
   localPool = created
   if (process.env.NODE_ENV !== 'production') globalForDb.pool = created
@@ -56,6 +67,17 @@ export const pool = {
 export async function query<T>(sql: string, params: unknown[] = []): Promise<T[]> {
   if (isPreviewDb()) return (await previewQuery(sql, params)).rows as T[]
   return (await getPool().query(sql, params)).rows as T[]
+}
+
+/**
+ * Untuk pernyataan yang jawabannya jumlah baris terpengaruh, bukan isinya — `delete`
+ * pembersihan retensi, misalnya. `query()` hanya mengembalikan baris, dan tidak semua
+ * tabel punya kolom yang bisa di-`returning` (`rate_limits` dan `used_init_data`
+ * berkunci gabungan, tanpa `id`).
+ */
+export async function execute(sql: string, params: unknown[] = []): Promise<number> {
+  if (isPreviewDb()) return (await previewQuery(sql, params)).rowCount
+  return (await getPool().query(sql, params)).rowCount ?? 0
 }
 
 export async function transaction<T>(fn: (tx: PoolClient) => Promise<T>): Promise<T> {

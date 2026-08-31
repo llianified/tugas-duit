@@ -119,7 +119,14 @@ const NO_WRONG_MAX_ERROR_RATIO = 0.01
  * eksekusi yang jendelanya menutupi menit-menit itu. Tiga jam memberi ruang untuk cron
  * yang telat atau satu-dua eksekusi yang terlewat.
  */
-const REFERRAL_BURST_LOOKBACK_MINUTES = 180
+/**
+ * Harus lebih panjang daripada jarak antar-jalan cron, plus margin. Kalau lebih pendek,
+ * selisihnya jadi lubang buta permanen: sapuan tidak akan pernah melihat apa yang terjadi
+ * di antara dua jalan. 25 jam menutupi cron harian di `vercel.json` dengan margin satu jam.
+ * FRAUD-4 mengunci kaitan ini — kalau jadwal cron-nya dipercepat lagi, test itu yang
+ * memberi tahu berapa nilai yang masih sah.
+ */
+const REFERRAL_BURST_LOOKBACK_MINUTES = 1_500
 
 /**
  * Kerapatan yang dicari tetap sama seperti dulu — sekian pendaftar dalam sepuluh menit —

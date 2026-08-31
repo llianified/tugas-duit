@@ -23,6 +23,17 @@ export type EngagementKind =
 const HOUR_FIRST = 8
 const HOUR_LAST = 20
 const STREAK_REMINDER_HOURS = [19, 20]
+
+/**
+ * Diekspor supaya jadwal cron bisa diuji terhadapnya. Jalan pemeliharaan yang jatuh di
+ * luar rentang ini menyelesaikan pembersihan dengan normal tapi tidak mengirim satu
+ * pesan pun — kegagalan yang tidak memunculkan error di mana pun.
+ */
+export const ENGAGEMENT_HOURS = {
+  first: HOUR_FIRST,
+  last: HOUR_LAST,
+  streakReminder: STREAK_REMINDER_HOURS,
+} as const
 const ENERGY_IDLE_HOURS = 3
 const POOL_IDLE_HOURS = 6
 const STREAK_LOOKBACK_DAYS = 120

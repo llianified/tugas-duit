@@ -1,11 +1,12 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { TierGlyph } from '@/features/home/tier-glyph'
 import { PageHeader } from '@/shared/components/page-header'
 import { PageRegion } from '@/shared/components/page-region'
 import { ProgressBar } from '@/shared/components/progress-bar'
 import { TotalSummary } from '@/shared/components/total-summary'
+import { SegmentedTabs, type SegmentedTab } from '@/shared/components/segmented-tabs'
 import { VIEW_TITLE } from '@/navigation/app-view'
 import type { UserStats } from '@/features/stats/domain'
 import { STAR_MAX } from '@/domain/stars'
@@ -36,15 +37,65 @@ export function StatsView({ stats }: StatsViewProps) {
         className="region-under-brand"
       />
 
-      <ProgressSection stats={stats} />
-      <TaskSection stats={stats} />
-      <DifficultySection stats={stats} />
-      <BalanceSection stats={stats} />
-      <ReferralSection stats={stats} />
-      <PayoutSection stats={stats} />
-
-      <div className="flex-1" />
+      <StatsPanels stats={stats} />
     </div>
+  )
+}
+
+type StatsPanel = 'progres' | 'task' | 'saldo' | 'tarik'
+
+const STATS_TABS: readonly SegmentedTab<StatsPanel>[] = [
+  { value: 'progres', label: 'Progres' },
+  { value: 'task', label: 'Task' },
+  { value: 'saldo', label: 'Saldo' },
+  { value: 'tarik', label: 'Tarik' },
+]
+
+/**
+ * Enam seksi statistik ditumpuk berderet menuntut gulir hampir seribu piksel, dan tidak
+ * ada satu pun pertanyaan yang butuh keenamnya sekaligus: yang mengecek progres tidak
+ * sedang mengecek penarikan. Dikelompokkan jadi tiga tab, tiap jawaban muat dalam satu
+ * layar — bentuk yang sama dengan beranda dan riwayat, jadi tidak ada pola baru yang
+ * harus dipelajari user.
+ */
+function StatsPanels({ stats }: { stats: UserStats }) {
+  const [panel, setPanel] = useState<StatsPanel>('progres')
+
+  return (
+    <>
+      <SegmentedTabs
+        tabs={STATS_TABS}
+        value={panel}
+        onChange={setPanel}
+        ariaLabel="Kelompok statistik"
+        className="region-gap-t"
+      />
+
+      <div
+        key={panel}
+        role="tabpanel"
+        id={`panel-${panel}`}
+        aria-labelledby={`tab-${panel}`}
+        className="animate-fade-in flex flex-1 flex-col"
+      >
+        {panel === 'progres' ? (
+          <>
+            <ProgressSection stats={stats} />
+            <DifficultySection stats={stats} />
+          </>
+        ) : null}
+        {panel === 'task' ? <TaskSection stats={stats} /> : null}
+        {panel === 'saldo' ? (
+          <>
+            <BalanceSection stats={stats} />
+            <ReferralSection stats={stats} />
+          </>
+        ) : null}
+        {panel === 'tarik' ? <PayoutSection stats={stats} /> : null}
+      </div>
+
+      <div className="view-trim-b flex-1 [--view-trim-b:var(--list-row-py)]" />
+    </>
   )
 }
 

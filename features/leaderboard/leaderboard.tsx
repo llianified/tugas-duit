@@ -50,7 +50,7 @@ export function LeaderboardView({
     <div className="view-min-h flex flex-col">
       <PageHeader title={VIEW_TITLE.leaderboard} />
 
-      <div role="tablist" aria-label="Tampilan papan" className="region-t region-t-flush flex gap-5">
+      <div role="tablist" aria-label="Tampilan papan" className="region-under-brand flex gap-5">
         {(
           [
             ['papan', 'Papan'],

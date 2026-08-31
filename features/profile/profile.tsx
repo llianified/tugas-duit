@@ -78,7 +78,7 @@ export function ProfileView({
     <div className="flex flex-col">
       <PageHeader title={VIEW_TITLE.profile} />
 
-      <section aria-label="Identitas" className="region-t flex items-start gap-3">
+      <section aria-label="Identitas" className="region-under-brand flex items-start gap-3">
         <button
           type="button"
           onClick={onOpenPhotoNote}

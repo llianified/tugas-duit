@@ -16,8 +16,8 @@ async function makeUser(balance = 0): Promise<{ id: number; publicId: string }> 
     [700_000_000_000_000 + suffix, 'Uji', generateReferralCode(), balance],
   )
   const user = { id: Number(rows[0].id), publicId: rows[0].public_id }
-  const { seedActiveReferrals } = await import('./payout-fixtures')
-  await seedActiveReferrals(user.id)
+  const { seedWithdrawalEligibility } = await import('./payout-fixtures')
+  await seedWithdrawalEligibility(user.id)
   return user
 }
 

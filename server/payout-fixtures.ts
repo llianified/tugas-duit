@@ -1,11 +1,15 @@
 import { query } from './db'
-import { REQUIRED_ACTIVE_REFERRALS, WITHDRAWAL_COOLDOWN_MS } from './payout-rules'
+import {
+  REQUIRED_ACTIVE_DAYS,
+  REQUIRED_ACTIVE_REFERRALS,
+  WITHDRAWAL_COOLDOWN_MS,
+} from './payout-rules'
 import { generateReferralCode } from './referral'
 
 /**
- * Perkakas khusus uji, bukan jalur produksi: `createPayout` menuntut referral aktif dan
- * cooldown 7 hari, jadi berkas uji mana pun yang menyentuh penarikan harus menyiapkan
- * dua hal itu dulu. Dikumpulkan di sini supaya syaratnya cukup diperbarui sekali kalau
+ * Perkakas khusus uji, bukan jalur produksi: `createPayout` menuntut hari aktif, referral
+ * aktif, dan cooldown, jadi berkas uji mana pun yang menyentuh penarikan harus menyiapkan
+ * ketiganya dulu. Dikumpulkan di sini supaya syaratnya cukup diperbarui sekali kalau
  * gatingnya berubah — bukan disalin ke tiap `*.test.ts`.
  */
 export async function seedActiveReferrals(
@@ -44,4 +48,39 @@ export async function clearWithdrawalCooldown(userId: number): Promise<void> {
       where user_id=$1`,
     [userId, WITHDRAWAL_COOLDOWN_MS + 60_000],
   )
+}
+
+/**
+ * Menyiapkan hari aktif: satu task selesai per hari WIB berbeda, mundur dari kemarin.
+ * Batas harinya harus sama persis dengan `ELIGIBILITY_SQL` di `payout.ts` — keduanya
+ * memakai `(completed_at at time zone 'Asia/Jakarta')::date`.
+ */
+export async function seedActiveDays(
+  userId: number,
+  days = REQUIRED_ACTIVE_DAYS,
+): Promise<void> {
+  if (days <= 0) return
+  await query(
+    `with baru as (
+       insert into challenges(user_id,type,difficulty,payload,answer_hash,max_reward,
+                              expires_at,submitted_at,solved)
+       select $1,'text','Easy','{}','\\x00',1,now(),now(),true from generate_series(1,$2) g
+       returning id
+     ), bernomor as (
+       select id, (row_number() over ())::int rn from baru
+     )
+     insert into task_completions(user_id,challenge_id,type,difficulty,elapsed_ms,stars,reward,completed_at)
+     select $1, id, 'text', 'Easy', 1000, 3, 1, now() - (rn * interval '1 day') from bernomor`,
+    [userId, days],
+  )
+}
+
+/**
+ * Semua syarat kelayakan penarikan sekaligus. Ini yang dipakai berkas uji yang cuma perlu
+ * lolos gerbang tanpa peduli syarat mana yang sedang diuji — jadi saat gerbangnya bertambah,
+ * yang berubah cukup fungsi ini, bukan setiap `*.test.ts` yang menyentuh penarikan.
+ */
+export async function seedWithdrawalEligibility(userId: number): Promise<void> {
+  await seedActiveReferrals(userId)
+  await seedActiveDays(userId)
 }

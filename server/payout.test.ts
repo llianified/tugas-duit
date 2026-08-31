@@ -8,9 +8,10 @@ beforeAll(async () => {
   await query('select 1')
 }, 120_000)
 
-async function makeUser(balance: number, activeReferrals = 5): Promise<number> {
+async function makeUser(balance: number, activeReferrals = 5, activeDays?: number): Promise<number> {
   const { query } = await import('./db')
   const { generateReferralCode } = await import('./referral')
+  const { seedActiveDays, seedActiveReferrals } = await import('./payout-fixtures')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string }>(
     `insert into users(telegram_id,first_name,referral_code,balance_credits)
@@ -19,28 +20,8 @@ async function makeUser(balance: number, activeReferrals = 5): Promise<number> {
   )
   const userId = Number(rows[0].id)
 
-  for (let index = 0; index < activeReferrals; index += 1) {
-    const downline = await query<{ id: string }>(
-      `insert into users(telegram_id,first_name,referral_code,referred_by)
-       values($1,'Referral aktif',$2,$3) returning id`,
-      [900_100_000_000_000 + suffix * 10 + index, generateReferralCode(), userId],
-    )
-    const challenge = await query<{ id: string }>(
-      `insert into challenges(user_id,type,difficulty,payload,answer_hash,max_reward,expires_at,submitted_at,solved)
-       values($1,'text','Easy','{}','\\x00',1,now(),now(),true) returning id`,
-      [downline[0].id],
-    )
-    const completion = await query<{ id: string }>(
-      `insert into task_completions(user_id,challenge_id,type,difficulty,elapsed_ms,stars,reward)
-       values($1,$2,'text','Easy',1000,3,1) returning id`,
-      [downline[0].id, challenge[0].id],
-    )
-    await query(
-      `insert into referral_commissions(upline_id,downline_id,task_completion_id,reward,commission_units)
-       values($1,$2,$3,1,1)`,
-      [userId, downline[0].id, completion[0].id],
-    )
-  }
+  await seedActiveReferrals(userId, activeReferrals)
+  await seedActiveDays(userId, activeDays)
 
   return userId
 }
@@ -285,5 +266,91 @@ describe('WD-10 — notifikasi memakai jeda efektif user, bukan angka tetap', ()
     })
 
     expect(created.cooldownDays).toBe(7)
+  })
+})
+
+describe('WD-11 — syarat hari aktif sebelum penarikan pertama', () => {
+  const input = () => ({
+    channelId: PAYOUT_CHANNELS[0].id,
+    accountNumber: accountFor(PAYOUT_CHANNELS[0]),
+    accountName: 'Uji Hari Aktif',
+    credits: withdrawalMinimumCredits(),
+  })
+
+  it('menolak user yang saldonya cukup tapi belum punya hari aktif', async () => {
+    const { createPayout, REQUIRED_ACTIVE_DAYS } = await import('./payout')
+    const userId = await makeUser(withdrawalMinimumCredits(), 5, 0)
+
+    await expect(createPayout(userId, input())).rejects.toMatchObject({
+      code: 'ACTIVE_DAYS_REQUIRED',
+      status: 403,
+      fields: { activeDays: '0', requiredActiveDays: String(REQUIRED_ACTIVE_DAYS) },
+    })
+  })
+
+  it('masih menolak saat kurang satu hari', async () => {
+    const { createPayout, REQUIRED_ACTIVE_DAYS } = await import('./payout')
+    const userId = await makeUser(withdrawalMinimumCredits(), 5, REQUIRED_ACTIVE_DAYS - 1)
+
+    await expect(createPayout(userId, input())).rejects.toMatchObject({
+      code: 'ACTIVE_DAYS_REQUIRED',
+    })
+  })
+
+  it('menerima tepat di hari aktif ke-tujuh', async () => {
+    const { createPayout } = await import('./payout')
+    const userId = await makeUser(withdrawalMinimumCredits(), 5)
+
+    await expect(createPayout(userId, input())).resolves.toHaveProperty('withdrawal')
+  })
+
+  /**
+   * Yang dipilih pemilik repo hari aktif berbeda, bukan streak: bolong sehari tidak boleh
+   * mengulang dari nol. Fixture di sini sengaja berjarak dua hari supaya tidak ada satu pun
+   * rentetan berturut-turut yang panjangnya tujuh.
+   */
+  it('menghitung hari yang tidak berturut-turut', async () => {
+    const { query } = await import('./db')
+    const { createPayout, getPayouts, REQUIRED_ACTIVE_DAYS } = await import('./payout')
+    const userId = await makeUser(withdrawalMinimumCredits(), 5, 0)
+
+    await query(
+      `with baru as (
+         insert into challenges(user_id,type,difficulty,payload,answer_hash,max_reward,
+                                expires_at,submitted_at,solved)
+         select $1,'text','Easy','{}','\\x00',1,now(),now(),true from generate_series(1,$2) g
+         returning id
+       ), bernomor as (
+         select id, (row_number() over ())::int rn from baru
+       )
+       insert into task_completions(user_id,challenge_id,type,difficulty,elapsed_ms,stars,reward,completed_at)
+       select $1, id, 'text', 'Easy', 1000, 3, 1, now() - (rn * 2 * interval '1 day') from bernomor`,
+      [userId, REQUIRED_ACTIVE_DAYS],
+    )
+
+    const eligibility = (await getPayouts(userId)).eligibility
+    expect(eligibility.activeDays).toBe(REQUIRED_ACTIVE_DAYS)
+    expect(eligibility.requiredActiveDays).toBe(REQUIRED_ACTIVE_DAYS)
+    await expect(createPayout(userId, input())).resolves.toHaveProperty('withdrawal')
+  })
+
+  it('dua task di hari yang sama tetap dihitung satu hari', async () => {
+    const { query } = await import('./db')
+    const { getPayouts } = await import('./payout')
+    const userId = await makeUser(withdrawalMinimumCredits(), 5, 0)
+
+    await query(
+      `with baru as (
+         insert into challenges(user_id,type,difficulty,payload,answer_hash,max_reward,
+                                expires_at,submitted_at,solved)
+         select $1,'text','Easy','{}','\\x00',1,now(),now(),true from generate_series(1,5) g
+         returning id
+       )
+       insert into task_completions(user_id,challenge_id,type,difficulty,elapsed_ms,stars,reward,completed_at)
+       select $1, id, 'text', 'Easy', 1000, 3, 1, now() - interval '1 day' from baru`,
+      [userId],
+    )
+
+    expect((await getPayouts(userId)).eligibility.activeDays).toBe(1)
   })
 })

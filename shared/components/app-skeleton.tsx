@@ -9,9 +9,11 @@ const ROW_TITLE_W = ['w-32', 'w-40', 'w-28', 'w-36', 'w-24'] as const
 function DataRowSkeleton({
   showDivider,
   titleWidth,
+  marker,
 }: {
   showDivider: boolean
   titleWidth: string
+  marker?: boolean
 }) {
   return (
     <div
@@ -22,6 +24,8 @@ function DataRowSkeleton({
         .filter(Boolean)
         .join(' ')}
     >
+      {marker ? <Bar className="size-9 shrink-0 rounded-full" /> : null}
+
       <div className="min-w-0 flex-1">
         <div className="flex h-5 items-center">
           <Bar className={`h-3.5 ${titleWidth}`} />
@@ -31,6 +35,39 @@ function DataRowSkeleton({
         </div>
       </div>
       <Bar className="h-3.5 w-16" />
+    </div>
+  )
+}
+
+/**
+ * Kerangka setinggi satu daftar, untuk panel yang memuat di dalam view yang sudah
+ * tergambar. `AppViewSkeleton` tidak bisa dipakai di sana: ia membawa hero band,
+ * tombol aksi, dan kartu task — seluruh anatomi Beranda — jadi saat dipasang di dalam
+ * tab ia menggambar layar yang berbeda dari yang sedang dibuka.
+ */
+export function DataListSkeleton({
+  rows = 6,
+  marker = false,
+}: {
+  rows?: number
+  marker?: boolean
+}) {
+  return (
+    <div
+      className="animate-fade-in view-trim-b [--view-trim-b:var(--list-row-py)]"
+      aria-hidden
+    >
+      <Bar className="h-3 w-36" />
+      <div className="label-gap-t [--label-trim:var(--list-row-py)] flex flex-col">
+        {Array.from({ length: rows }, (_, index) => (
+          <DataRowSkeleton
+            key={index}
+            showDivider={index !== rows - 1}
+            titleWidth={ROW_TITLE_W[index % ROW_TITLE_W.length]}
+            marker={marker}
+          />
+        ))}
+      </div>
     </div>
   )
 }

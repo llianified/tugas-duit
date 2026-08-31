@@ -1,7 +1,9 @@
 'use client'
 
 import { MotionConfig } from 'motion/react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { economyConfig } from '@/domain/economy-config'
+import { inAppAdsSettings } from '@/domain/in-app-ads'
 import { getProgression } from '@/features/home/progression'
 import { ProgressionBadges } from '@/features/home/progression-badges'
 import { NavPill } from '@/navigation/nav-pill'
@@ -39,8 +41,28 @@ function AppShellInner() {
    * `/api/session` diturunkan dari `adsMaxViewsPerDay`, jadi mengisi 0 di panel ekonomi
    * mematikan keduanya tanpa deploy. Dipasang di sini, bukan di `app/layout.tsx`, karena
    * saklarnya baru diketahui setelah sesi termuat.
+   *
+   * Jadwalnya dibaca dari config ekonomi yang dikirim `/api/session`, dan sengaja
+   * di-memo per nilai — bukan per render. `useInAppAds` menaruh `settings` di dependency
+   * effect-nya, jadi objek baru tiap render akan membongkar penjadwal dan memulai jendela
+   * capping dari nol terus-menerus, yang justru membuat iklan tayang lebih sering daripada
+   * plafonnya.
    */
-  useInAppAds({ enabled: session.adsEnabled, zoneId: inAppZoneId() })
+  const config = economyConfig()
+  const adsSettings = useMemo(
+    () => inAppAdsSettings(config),
+    [
+      config.inAppAdsFrequency,
+      config.inAppAdsCappingMinutes,
+      config.inAppAdsIntervalSeconds,
+      config.inAppAdsTimeoutSeconds,
+    ],
+  )
+  useInAppAds({
+    enabled: session.adsEnabled,
+    zoneId: inAppZoneId(),
+    settings: adsSettings,
+  })
 
   useEffect(() => {
     if (!session.sessionFailed) return

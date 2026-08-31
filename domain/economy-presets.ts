@@ -15,22 +15,47 @@ export interface EconomyPreset {
 const KEYS = new Set<string>(ECONOMY_FIELDS.map((field) => field.key))
 
 /**
- * Preset "Kolam besar, laju tetap": kolam reward diperbesar supaya user yang
- * hanya sempat 1–2 sesi per hari tidak kehilangan isi ulang karena kolam penuh,
- * sementara laju isi ulang tetap yang menentukan plafon harian (Rp 24.000/hari).
- * Dengan minimum penarikan Rp 50.000: bot 24 jam ~2 hari, grinder 8 jam ~5 hari,
- * user aktif normal ~10 hari, user santai ~3 minggu.
+ * Preset "Sesi pendek, sering kembali": disetel untuk model pendapatan impresi
+ * iklan in-app, bukan sesi panjang.
+ *
+ * Tiga angka dikunci dari luar dan tidak disentuh preset ini: 1 credit = Rp 100,
+ * tabel reward per bintang, dan minimum penarikan Rp 10.000 + 3 referral aktif.
+ * Konsekuensinya aritmetiknya keras: reward rata-rata ~4 credit/task, jadi
+ * plafon Rp 10.000/hari = 100 credit = hanya ~25 task BERBAYAR per hari. Itu
+ * langit-langit yang tidak bisa dinegosiasi tanpa mengubah salah satu dari tiga
+ * angka di atas.
+ *
+ * Cara 25 task itu disebar jadi banyak app-open:
+ *   - Kolam kecil (Rp 2.000 = 20 credit, ~5 task) penuh dalam 5 jam. User yang
+ *     mau memanen penuh harus kembali 4–5 kali sehari; kolam yang lebih besar
+ *     justru MENGURANGI jumlah app-open.
+ *   - Laju 1 credit / 15 menit = 96 credit/hari = Rp 9.600/hari. Itu plafon
+ *     sesungguhnya, dan satu-satunya sumber rupiah di app ini.
+ *   - Jeda iklan 60 menit (3.600 detik, batas maksimum field) menyebar 10 tiket
+ *     ke ~10 jam, bukan habis dalam satu sesi 20 menit seperti pada jeda 120
+ *     detik.
+ *
+ * PENTING — tiket iklan di kode ini hanya membayar ongkos ENERGI satu task, ia
+ * tidak menambah credit. Jadi ketika kolam kosong, tiket iklan tidak punya nilai
+ * apa pun bagi user, dan prompt iklan di momen itu akan diabaikan. Preset ini
+ * menyiapkan angkanya, tapi momen "kolam kosong" baru jadi inventory iklan
+ * setelah mode XP/rank tanpa credit dipasang di domain/reward-pool.ts.
+ *
+ * Energi sengaja TIDAK dijadikan tembok kedua: kapasitasnya 10 (batas keras
+ * constraint users_energy_range) dengan regen 15 menit, supaya yang menghentikan
+ * sesi selalu kolam reward — satu tembok yang bisa dijelaskan, bukan dua tembok
+ * yang jatuh bersamaan seperti pada setelan 5 energi + kolam Rp 5.000.
  */
 export const ECONOMY_PRESETS: readonly EconomyPreset[] = [
   {
-    id: 'balanced-pool',
-    label: 'Saran: kolam besar, laju tetap',
+    id: 'short-session-ads',
+    label: 'Saran: sesi pendek, sering kembali',
     summary:
-      'Kolam Rp 10.000 penuh dalam 10 jam, isi ulang 1 credit / 6 menit (plafon Rp 24.000/hari). Grinder cair ~5 hari, santai ~3 minggu.',
+      'Kolam Rp 2.000 (~5 task) penuh dalam 5 jam, isi ulang 1 credit / 15 menit (plafon Rp 9.600/hari). Jeda iklan 60 menit menyebar 10 tiket ke ~10 app-open. Cair Rp 10.000 ~1–2 hari, tetap terkunci 3 referral aktif.',
     values: {
       creditValueIdr: 100,
-      rewardPoolCapIdr: 10_000,
-      rewardPoolRegenMinutes: 6,
+      rewardPoolCapIdr: 2_000,
+      rewardPoolRegenMinutes: 15,
       rewardPoolRegenCredits: 1,
       rankPoolCapBonus: 10,
       streakCapStepDays: 7,
@@ -63,29 +88,34 @@ export const ECONOMY_PRESETS: readonly EconomyPreset[] = [
       rewardHard1: 3,
       rewardHard2: 6,
       rewardHard3: 9,
-      maxEnergy: 5,
-      energyRegenMinutes: 10,
+      maxEnergy: 10,
+      energyRegenMinutes: 15,
       energyCostPerTask: 1,
       adsMaxViewsPerDay: 10,
-      adsCooldownSeconds: 120,
+      adsCooldownSeconds: 3_600,
       adsTicketTtlSeconds: 300,
       adsPassTtlMinutes: 30,
-      withdrawalMinimumIdr: 50_000,
-      maxPayoutIdr: 5_000_000,
+      withdrawalMinimumIdr: 10_000,
+      withdrawalMinActiveReferrals: 3,
+      maxPayoutIdr: 500_000,
       referralCommissionPercent: 10,
-      dailyCommissionCapIdr: 5_000,
+      dailyCommissionCapIdr: 1_000,
       rankTier2Tasks: 50,
       rankTier3Tasks: 150,
       rankTier4Tasks: 400,
       rankTier5Tasks: 1_000,
-      channelJoinBonusCredits: 25,
+      channelJoinBonusCredits: 10,
       premiumPrice1Idr: 19_900,
       premiumPrice2Idr: 34_900,
       premiumPrice3Idr: 44_900,
+      // Premium dijual sebagai kenyamanan, bukan penghasilan lebih besar: laju
+      // isi ulang kolam tidak ikut naik, jadi plafon rupiah per harinya sama
+      // dengan user biasa. Yang dibeli adalah kolam 70 credit (tidak perlu login
+      // tiap 5 jam untuk memanen penuh) dan energi yang tidak pernah terasa.
       premiumMaxEnergy: 10,
       premiumEnergyRegenMinutes: 5,
-      premiumPoolCapBonus: 60,
-      premiumMaxTasksPerDay: 800,
+      premiumPoolCapBonus: 50,
+      premiumMaxTasksPerDay: 1_000,
       premiumWithdrawalCooldownDays: 3,
     },
   },

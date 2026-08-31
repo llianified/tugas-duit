@@ -45,6 +45,10 @@ export interface EconomyConfig {
   adsCooldownSeconds: number
   adsTicketTtlSeconds: number
   adsPassTtlMinutes: number
+  inAppAdsFrequency: number
+  inAppAdsCappingMinutes: number
+  inAppAdsIntervalSeconds: number
+  inAppAdsTimeoutSeconds: number
   withdrawalMinimumIdr: number
   maxPayoutIdr: number
   withdrawalMinActiveReferrals: number
@@ -110,6 +114,10 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   adsCooldownSeconds: 120,
   adsTicketTtlSeconds: 300,
   adsPassTtlMinutes: 30,
+  inAppAdsFrequency: 2,
+  inAppAdsCappingMinutes: 6,
+  inAppAdsIntervalSeconds: 30,
+  inAppAdsTimeoutSeconds: 5,
   withdrawalMinimumIdr: 10_000,
   maxPayoutIdr: 2_000_000_000,
   withdrawalMinActiveReferrals: 5,
@@ -335,6 +343,30 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     min: 1, max: 1_440, riskyWhen: 'higher',
   },
   {
+    key: 'inAppAdsFrequency', group: 'ads', label: 'Interstitial per jendela', unit: 'iklan',
+    description: 'Banyak interstitial otomatis yang ditayangkan dalam satu jendela. Ini iklan yang nongol sendiri sambil user memakai app — sumber impresi, bukan tiket berhadiah. Isi 0 untuk mematikan interstitial tanpa mematikan iklan berhadiah.',
+    impact: 'Menaikkannya memperbanyak impresi per sesi, sekaligus memperbesar kemungkinan user menutup app karena terlalu sering disela.',
+    min: 0, max: 20, riskyWhen: 'higher',
+  },
+  {
+    key: 'inAppAdsCappingMinutes', group: 'ads', label: 'Panjang jendela interstitial', unit: 'menit',
+    description: 'Lama satu jendela penayangan. Setelah jendela ini lewat, hitungannya mulai dari nol lagi.',
+    impact: 'Menurunkannya membuat jendela lebih cepat bergulir, sehingga plafon per jendela berlaku lebih sering.',
+    min: 1, max: 1_440, riskyWhen: 'lower',
+  },
+  {
+    key: 'inAppAdsIntervalSeconds', group: 'ads', label: 'Jeda antar interstitial', unit: 'detik',
+    description: 'Jarak minimum antara dua interstitial di jendela yang sama.',
+    impact: 'Menurunkannya membuat iklan datang beruntun, yang paling sering jadi alasan user menutup app.',
+    min: 0, max: 3_600, riskyWhen: 'lower',
+  },
+  {
+    key: 'inAppAdsTimeoutSeconds', group: 'ads', label: 'Tunda interstitial pertama', unit: 'detik',
+    description: 'Jeda sejak jendela dimulai sampai interstitial pertama boleh tayang. Memberi user waktu mengerjakan sesuatu sebelum disela.',
+    impact: 'Menurunkannya membuat iklan menyambut user tepat saat app dibuka, sebelum ia sempat mengerjakan satu task pun.',
+    min: 0, max: 600, riskyWhen: 'lower',
+  },
+  {
     key: 'withdrawalMinimumIdr', group: 'withdrawal', label: 'Minimum penarikan', unit: 'Rp',
     description: 'Nominal terkecil yang bisa diajukan. Menahan biaya transfer per payout.',
     impact: 'Menurunkannya membuat penarikan lebih sering, sehingga biaya transfer per rupiah naik.',
@@ -530,6 +562,23 @@ export function validateEconomyConfig(
     if (config[ceiling] < smallest) {
       errors[ceiling] =
         `Batas hasil Hitung ${label} harus minimal ${smallest} supaya muat ${config[digits]} digit.`
+    }
+  }
+
+  /**
+   * Jadwal interstitial harus muat di jendelanya sendiri. Kalau tunda iklan pertama plus
+   * jeda antar iklan melampaui panjang jendela, jendela sudah bergulir sebelum iklan
+   * terakhir sempat tayang — plafon `inAppAdsFrequency` jadi angka yang tidak pernah
+   * tercapai, dan admin tidak punya cara melihat bahwa impresinya hilang di situ.
+   */
+  if (config.inAppAdsFrequency > 0) {
+    const needed =
+      config.inAppAdsTimeoutSeconds +
+      (config.inAppAdsFrequency - 1) * config.inAppAdsIntervalSeconds
+    const window = config.inAppAdsCappingMinutes * 60
+    if (needed > window) {
+      errors.inAppAdsCappingMinutes =
+        `Jendela ${config.inAppAdsCappingMinutes} menit terlalu pendek untuk ${config.inAppAdsFrequency} iklan: butuh minimal ${Math.ceil(needed / 60)} menit dengan tunda dan jeda sekarang.`
     }
   }
 

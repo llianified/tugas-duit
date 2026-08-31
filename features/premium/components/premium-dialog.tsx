@@ -185,7 +185,7 @@ function PlanRow({
             {formatCredits(plan.months)} bulan
           </p>
           {plan.best ? (
-            <span className="rounded-md bg-premium px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-card">
+            <span className="rounded-md bg-premium px-2 py-[3px] text-meta font-bold uppercase leading-none tracking-[0.06em] text-card">
               Paling hemat
             </span>
           ) : null}

@@ -127,7 +127,7 @@ export function ProfileView({
                 <span
                   key={badge.key}
                   title={badge.detail}
-                  className={cn('rounded-md px-1.5 py-0.5 text-meta font-medium', CHIP_TONE[badge.key])}
+                  className={cn('rounded-md px-2 py-[3px] text-meta font-medium', CHIP_TONE[badge.key])}
                 >
                   {badge.label}
                 </span>

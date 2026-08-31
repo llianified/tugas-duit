@@ -65,7 +65,7 @@ function PremiumActiveCard({ premium }: { premium: PremiumState }) {
           .map((benefit) => (
             <li
               key={benefit.key}
-              className="inline-flex items-center gap-1 rounded-md bg-premium/10 px-1.5 py-1 text-meta font-medium text-premium"
+              className="inline-flex items-center gap-1 rounded-md bg-premium/10 px-2 py-[3px] text-meta font-medium text-premium"
             >
               <GlyphCheck className="size-3" />
               {benefit.title}

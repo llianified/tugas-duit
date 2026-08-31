@@ -12,6 +12,8 @@ import { ActionButton } from '@/shared/components/action-button'
 import { GlyphCrown, GlyphTrophy } from '@/shared/components/glyph'
 import { SegmentedTabs, type SegmentedTab } from '@/shared/components/segmented-tabs'
 import { ProfileAvatar } from '@/features/home/profile-avatar'
+import { ActivityFeed } from '@/features/activity/activity-feed'
+import type { ActivityEntry } from '@/features/activity/domain'
 import { TierGlyph } from '@/features/home/tier-glyph'
 import { cn } from '@/shared/lib/utils'
 import { BADGE_SHAPE, MetaBadge } from '@/shared/components/meta-badge'
@@ -25,14 +27,59 @@ import { prestigeBadges, type PrestigeKey } from '@/domain/prestige'
 import { formatCredits } from '@/shared/lib/format'
 import type { LeaderboardBoard, LeaderboardEntry } from '@/features/leaderboard/domain'
 
-export function LeaderboardView({ board }: { board: LeaderboardBoard }) {
+type BoardSurface = 'papan' | 'aktivitas'
+
+/**
+ * Dua tab tingkat atas, bukan dua item nav. Papan dan umpan aktivitas menjawab
+ * pertanyaan yang sama — "apa yang sedang terjadi di antara pemain lain" — hanya
+ * dengan sumbu berbeda: satu peringkat kumulatif, satu urutan waktu. Menaruhnya
+ * berdampingan lebih jujur daripada menambah item keenam ke nav pill yang di lebar
+ * 384px sudah menyisakan 76px per item.
+ */
+export function LeaderboardView({
+  board,
+  activity,
+}: {
+  board: LeaderboardBoard
+  activity: ActivityEntry[] | null
+}) {
   const { entries, you, participants, premiumMembers } = board
+  const [surface, setSurface] = useState<BoardSurface>('papan')
 
   return (
     <div className="view-min-h flex flex-col">
       <PageHeader title={VIEW_TITLE.leaderboard} />
 
-      {entries.length === 0 ? (
+      <div role="tablist" aria-label="Tampilan papan" className="region-t flex gap-5 border-b border-border">
+        {(
+          [
+            ['papan', 'Papan'],
+            ['aktivitas', 'Aktivitas'],
+          ] as [BoardSurface, string][]
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={surface === key}
+            onClick={() => setSurface(key)}
+            className={cn(
+              'focus-ring transition-ui -mb-px border-b-2 px-1 pb-2.5 text-[15px] font-bold tracking-tight',
+              surface === key
+                ? 'border-primary text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {surface === 'aktivitas' ? (
+        <div className="region-t">
+          <ActivityFeed entries={activity} />
+        </div>
+      ) : entries.length === 0 ? (
         <EmptyState
           icon={<GlyphTrophy className="glyph-md text-muted-foreground" />}
           title="Papan masih kosong"

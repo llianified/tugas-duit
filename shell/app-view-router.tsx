@@ -120,6 +120,9 @@ export function AppViewRouter({
         stats={session.stats}
         premium={session.premium}
         founder={session.founder}
+        onOpenPhotoNote={() =>
+          showError('Foto dan nama diambil dari Telegram. Ubah di Telegram, lalu buka ulang app-nya.')
+        }
       />
     )
   }
@@ -132,7 +135,13 @@ export function AppViewRouter({
   if (effectiveView === 'leaderboard') {
     if (!LEADERBOARD_ENABLED) return <LeaderboardComingSoon key="leaderboard" />
     if (!session.leaderboard) return <AppViewSkeleton />
-    return <LeaderboardView key="leaderboard" board={session.leaderboard} />
+    return (
+      <LeaderboardView
+        key="leaderboard"
+        board={session.leaderboard}
+        activity={session.activity}
+      />
+    )
   }
 
   if (!session.task) {

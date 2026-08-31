@@ -6,6 +6,7 @@ import type { EnergyState } from '@/domain/energy'
 import type { PremiumMonths, PremiumPerks, PremiumPlan } from '@/domain/premium'
 import type { RewardPoolState } from '@/domain/reward-pool'
 import type { Challenge, HistoryEntry } from '@/features/captcha/domain'
+import type { ActivityEntry } from '@/features/activity/domain'
 import type { LeaderboardBoard } from '@/features/leaderboard/domain'
 import type { UserStats } from '@/features/stats/domain'
 import type { PublicPayout, Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
@@ -123,6 +124,7 @@ export type TaskResponse = { challenge: Challenge }
 export type HistoryResponse = { entries: HistoryEntry[]; nextCursor: string | null }
 export type StatsResponse = { stats: UserStats }
 export type LeaderboardResponse = { board: LeaderboardBoard }
+export type ActivityResponse = { entries: ActivityEntry[] }
 export type ReferralResponse = {
   code: string
   shareUrl: string

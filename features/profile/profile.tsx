@@ -1,16 +1,25 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import { creditsToRupiah } from '@/domain/economy'
 import { prestigeBadges, type PrestigeKey } from '@/domain/prestige'
-import { TierGlyph } from '@/features/home/tier-glyph'
+import { EarningsChart } from '@/features/profile/earnings-chart'
 import { ProfileAvatar } from '@/features/home/profile-avatar'
+import { TierGlyph } from '@/features/home/tier-glyph'
 import type { UserStats } from '@/features/stats/domain'
-import { DataList, DataListRow } from '@/shared/components/data-list'
-import { GlyphCrown, GlyphHistory, GlyphUsers } from '@/shared/components/glyph'
-import { PageHeader } from '@/shared/components/page-header'
-import { PageRegion } from '@/shared/components/page-region'
-import { SectionLabel } from '@/shared/components/section-label'
 import { VIEW_TITLE } from '@/navigation/app-view'
+import { DataList, DataListRow } from '@/shared/components/data-list'
+import {
+  GlyphBolt,
+  GlyphCheck,
+  GlyphCrown,
+  GlyphHistory,
+  GlyphUsers,
+  GlyphWallet,
+} from '@/shared/components/glyph'
+import { IconCircle } from '@/shared/components/icon-circle'
+import { PageHeader } from '@/shared/components/page-header'
+import { SectionLabel } from '@/shared/components/section-label'
 import { formatCredits, formatRupiah, formatShortDate } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import type { PremiumState, SessionResponse } from '@/shell/session-api'
@@ -24,17 +33,28 @@ const CHIP_TONE: Record<PrestigeKey, string> = {
   founder: 'bg-foreground/10 text-foreground',
 }
 
+const RANGES = [
+  { key: '7', label: '7h', days: 7 },
+  { key: '30', label: '30h', days: 30 },
+  { key: 'all', label: 'Semua', days: 0 },
+] as const
+
+type RangeKey = (typeof RANGES)[number]['key']
+
 export function ProfileView({
   user,
   stats,
   premium,
   founder,
+  onOpenPhotoNote,
 }: {
   user: SessionUser
   stats: UserStats
   premium: PremiumState | null
   founder: boolean
+  onOpenPhotoNote: () => void
 }) {
+  const [range, setRange] = useState<RangeKey>('30')
   const isPremium = Boolean(premium?.active)
   const handle = user.username ? `@${user.username}` : user.id
   const rank = stats.progression.rank
@@ -46,91 +66,142 @@ export function ProfileView({
     premium: isPremium,
   })
 
+  const series = useMemo(() => {
+    const days = RANGES.find((item) => item.key === range)?.days ?? 0
+    if (days === 0) return stats.earningsSeries
+    return stats.earningsSeries.slice(-days)
+  }, [stats.earningsSeries, range])
+
+  const rangeCredits = series.reduce((sum, point) => sum + point.credits, 0)
+
   return (
     <div className="flex flex-col">
       <PageHeader title={VIEW_TITLE.profile} />
 
-      <section aria-label="Identitas" className="region-t flex items-center gap-3">
-        <span className="relative flex shrink-0">
+      <section aria-label="Identitas" className="region-t flex items-start gap-3">
+        <button
+          type="button"
+          onClick={onOpenPhotoNote}
+          aria-label="Tentang foto profil"
+          className="focus-ring press-scale-soft relative flex shrink-0 rounded-full"
+        >
           <ProfileAvatar
             photoUrl={user.photoUrl}
             className={cn(
-              'size-16',
+              'size-[4.5rem]',
               isPremium
                 ? 'shadow-[0_0_0_2px_color-mix(in_oklab,var(--premium)_65%,transparent)]'
                 : 'ring-border',
             )}
-            glyphClassName="size-7"
+            glyphClassName="size-8"
           />
           <span
             aria-hidden="true"
-            className={cn(
-              'absolute -bottom-0.5 -right-0.5 flex size-6 items-center justify-center rounded-full bg-card',
-              'shadow-[0_0_0_2px_var(--background)]',
-              isPremium ? 'text-premium' : 'text-foreground/70',
-            )}
+            className="btn-soft absolute -bottom-0.5 -right-0.5 flex size-6 items-center justify-center rounded-full text-foreground"
           >
-            <TierGlyph tier={rank.tier} className="size-4" />
+            <TierGlyph tier={rank.tier} className="size-3.5" />
           </span>
-        </span>
+        </button>
 
         <div className="min-w-0 flex-1">
-          <p className="flex min-w-0 items-center gap-1.5 text-xl font-bold tracking-tight text-foreground">
+          <p className="flex min-w-0 items-center gap-1.5 text-[22px] font-bold leading-tight tracking-[-0.02em] text-foreground">
             <span className="truncate">{user.firstName}</span>
             {isPremium ? <GlyphCrown className="size-4 shrink-0 text-premium" /> : null}
           </p>
-          <p className="truncate text-[15px] text-muted-foreground">{handle}</p>
-          <p className="mt-1 text-[13px] font-semibold text-primary">{rank.name}</p>
+          <p className="truncate text-[15px] leading-snug text-muted-foreground">{handle}</p>
+
+          {badges.length > 0 ? (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {badges.map((badge) => (
+                <span
+                  key={badge.key}
+                  title={badge.detail}
+                  className={cn('rounded-md px-1.5 py-0.5 text-[11px] font-bold', CHIP_TONE[badge.key])}
+                >
+                  {badge.label}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
       </section>
 
-      {badges.length > 0 ? (
-        <div className="stack-gap-t flex flex-wrap gap-1.5">
-          {badges.map((badge) => (
-            <span
-              key={badge.key}
-              title={badge.detail}
-              className={cn(
-                'rounded-md px-2 py-1 text-[11px] font-bold',
-                CHIP_TONE[badge.key],
-              )}
-            >
-              {badge.label}
-            </span>
-          ))}
+      <dl className="stack-gap-t flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-muted-foreground">
+        <MetaFact icon={<TierGlyph tier={rank.tier} className="size-3.5" />} value={rank.name} />
+        <MetaFact
+          icon={<GlyphCheck className="size-3.5" />}
+          value={`${formatCredits(stats.completedCount)} task`}
+        />
+        <MetaFact
+          icon={<GlyphBolt className="size-3.5" />}
+          value={`${stats.averageStars.toFixed(1)} bintang`}
+        />
+        {stats.joinedAt ? (
+          <MetaFact
+            icon={<GlyphHistory className="size-3.5" />}
+            value={`Gabung ${formatShortDate(stats.joinedAt)}`}
+          />
+        ) : null}
+      </dl>
+
+      <section aria-label="Perolehan" className="region-t">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-4xl font-bold leading-none tracking-[-0.035em] tabular-nums text-foreground">
+              {formatCredits(stats.balance)}
+              <span className="ml-1.5 text-base font-semibold text-muted-foreground">credit</span>
+            </p>
+            <p className="mt-1.5 text-[15px] font-semibold tabular-nums text-success">
+              +{formatCredits(rangeCredits)} periode ini
+            </p>
+          </div>
+
+          <div className="flex shrink-0 gap-1 rounded-full bg-muted p-1">
+            {RANGES.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setRange(item.key)}
+                aria-pressed={range === item.key}
+                className={cn(
+                  'focus-ring transition-ui rounded-full px-2.5 py-1 text-[12px] font-bold',
+                  range === item.key
+                    ? 'bg-card text-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
         </div>
-      ) : null}
 
-      <p className="stack-gap-t text-[13px] leading-relaxed text-muted-foreground">
-        {formatCredits(stats.completedCount)} task &middot; rata-rata{' '}
-        {stats.averageStars.toFixed(1)} bintang
-        {stats.joinedAt ? <> &middot; gabung {formatShortDate(stats.joinedAt)}</> : null}
-      </p>
+        <div className="stack-gap-t">
+          <EarningsChart series={series} />
+        </div>
+      </section>
 
-      <PageRegion label="Saldo">
-        <p className="text-4xl font-bold leading-none tracking-[-0.03em] tabular-nums text-foreground">
-          {formatCredits(stats.balance)}
-          <span className="ml-2 text-sm font-semibold text-muted-foreground">credit</span>
-        </p>
-        <p className="stack-gap-t text-[15px] tabular-nums text-muted-foreground">
-          {formatRupiah(creditsToRupiah(stats.balance))}
-        </p>
-      </PageRegion>
+      <section aria-label="Saldo" className="region-t flex items-center gap-3">
+        <IconCircle size="lg" tone="card">
+          <GlyphWallet className="size-5" />
+        </IconCircle>
+        <div className="min-w-0 flex-1">
+          <SectionLabel>Nilai rupiah</SectionLabel>
+          <p className="text-lg font-bold tracking-tight tabular-nums text-foreground">
+            {formatRupiah(creditsToRupiah(stats.balance))}
+          </p>
+        </div>
+      </section>
 
-      <PageRegion label="Rekam jejak">
-        <div className="grid grid-cols-2 gap-2">
+      <section aria-label="Rekam jejak" className="region-t">
+        <SectionLabel as="h2">Rekam jejak</SectionLabel>
+        <div className="stack-gap-t grid grid-cols-2 gap-2">
           <StatTile label="Streak" value={`${formatCredits(stats.streak)} hari`} />
           <StatTile label="Hari aktif" value={`${formatCredits(stats.activeDays)} hari`} />
-          <StatTile
-            label="Bintang tiga"
-            value={`${Math.round(stats.perfectShare * 100)}%`}
-          />
-          <StatTile
-            label="Reward terbaik"
-            value={`+${formatCredits(stats.bestReward)} credit`}
-          />
+          <StatTile label="Bintang tiga" value={`${Math.round(stats.perfectShare * 100)}%`} />
+          <StatTile label="Reward terbaik" value={`+${formatCredits(stats.bestReward)}`} />
         </div>
-      </PageRegion>
+      </section>
 
       <div className="region-t">
         <DataList label="Sebaran kesulitan">
@@ -159,14 +230,25 @@ export function ProfileView({
             meta={`${formatCredits(stats.activeReferralCount)} dari ${formatCredits(stats.referralCount)} aktif`}
           />
           <DataListRow
+            showDivider={false}
             marker={<GlyphHistory className="size-5 text-muted-foreground" />}
             title="Riwayat task"
             meta={`${formatCredits(stats.completedCount)} task selesai`}
-            showDivider={false}
           />
         </DataList>
       </div>
     </div>
+  )
+}
+
+function MetaFact({ icon, value }: { icon: React.ReactNode; value: string }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <span aria-hidden="true" className="text-muted-foreground/70">
+        {icon}
+      </span>
+      <span className="font-semibold text-foreground/80">{value}</span>
+    </span>
   )
 }
 

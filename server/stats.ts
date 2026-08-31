@@ -14,7 +14,7 @@ const EMPTY_TALLY: Record<Difficulty, DifficultyTally> = {
 }
 
 export async function getStats(userId: number, balance: number): Promise<UserStats> {
-  const [totals, difficulties, money, payouts, referrals] = await Promise.all([
+  const [totals, difficulties, money, payouts, referrals, series] = await Promise.all([
     query<{
       completed_count: number
       today_count: number
@@ -97,6 +97,24 @@ export async function getStats(userId: number, balance: number): Promise<UserSta
               (select count(*) from referral_commissions where upline_id = $1)::int      as downline_tasks`,
       [userId],
     ),
+    /**
+     * Deret harian untuk grafik profil. Dibatasi 30 hari WIB terakhir dan dihitung
+     * dari `task_completions`, bukan dari `credit_ledger`: yang digambar grafik ini
+     * adalah hasil KERJA per hari, dan ledger juga memuat komisi, penyesuaian admin,
+     * serta tahanan penarikan yang akan membuat garisnya melompat tanpa user
+     * mengerjakan apa pun.
+     */
+    query<{ day: string; credits: number }>(
+      `select to_char((completed_at at time zone $2)::date, 'YYYY-MM-DD') as day,
+              coalesce(sum(reward), 0)::int                               as credits
+         from task_completions
+        where user_id = $1
+          and (completed_at at time zone $2)::date
+              > (now() at time zone $2)::date - interval '30 day'
+        group by 1
+        order by 1`,
+      [userId, TIME_ZONE],
+    ),
   ])
 
   const totalRow = totals[0]
@@ -106,6 +124,7 @@ export async function getStats(userId: number, balance: number): Promise<UserSta
   }
 
   return getUserStats({
+    earningsSeries: series.map((row) => ({ day: row.day, credits: Number(row.credits) })),
     joinedAt: referrals[0].joined_at?.getTime() ?? null,
     completedCount: totalRow.completed_count,
     todayCount: totalRow.today_count,

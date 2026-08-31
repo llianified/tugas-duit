@@ -22,7 +22,7 @@ export function buildShareCaption(stats: ShareStats): string {
 
   if (stats.earnedCredits > 0) {
     return [
-      `Gue udah ngumpulin ${rupiah} dari Tugas Duit — cuma modal jawab captcha di Telegram.`,
+      `Gue udah ngumpulin ${rupiah} dari Tugas Duit — cuma modal jawab soal di Telegram.`,
       'Gabung pakai tautan gue, kita dua-duanya dapet bonus 👇',
     ].join(' ')
   }
@@ -30,12 +30,12 @@ export function buildShareCaption(stats: ShareStats): string {
   if (stats.friends > 0) {
     return [
       `${formatCredits(stats.friends)} teman gue udah gabung Tugas Duit.`,
-      'Jawab captcha, kumpulin credit, tarik jadi Rupiah. Ikut lewat tautan gue 👇',
+      'Jawab soal, kumpulin credit, tarik jadi Rupiah. Ikut lewat tautan gue 👇',
     ].join(' ')
   }
 
   return [
-    'Tugas Duit: jawab captcha di Telegram, kumpulin credit, tarik jadi Rupiah.',
+    'Tugas Duit: jawab soal singkat di Telegram, kumpulin credit, tarik jadi Rupiah.',
     'Gabung pakai tautan gue, kita dua-duanya dapet bonus 👇',
   ].join(' ')
 }

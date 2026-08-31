@@ -15,7 +15,8 @@ const geistSans = Geist({
 
 export const metadata: Metadata = {
   title: 'Tugas Duit',
-  description: 'Task CAPTCHA berhadiah credit, dengan riwayat task dan program referral.',
+  description:
+    'Kerjakan soal singkat berhadiah credit, kumpulkan, lalu tukar jadi Rupiah. Lengkap dengan riwayat task, statistik, dan program referral.',
   generator: 'v0.app',
   icons: {
     icon: [{ url: '/icon.png', sizes: '512x512', type: 'image/png' }],

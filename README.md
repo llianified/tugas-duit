@@ -1,6 +1,6 @@
 # tugas-duit
 
-Telegram Mini App: user mengerjakan captcha → dapat credit → bisa ditarik jadi Rupiah.
+Telegram Mini App: user mengerjakan soal singkat → dapat credit → bisa ditarik jadi Rupiah.
 
 **Live di produksi** (Railway) — bukan proyek eksperimen.
 

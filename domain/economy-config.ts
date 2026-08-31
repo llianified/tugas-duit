@@ -59,6 +59,7 @@ export interface EconomyConfig {
   rankTier4Tasks: number
   rankTier5Tasks: number
   channelJoinBonusCredits: number
+  channelGateEnabled: number
   premiumPrice1Idr: number
   premiumPrice2Idr: number
   premiumPrice3Idr: number
@@ -128,6 +129,7 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   rankTier4Tasks: 700,
   rankTier5Tasks: 1_500,
   channelJoinBonusCredits: 25,
+  channelGateEnabled: 1,
   premiumPrice1Idr: 19_900,
   premiumPrice2Idr: 34_900,
   premiumPrice3Idr: 44_900,
@@ -413,6 +415,12 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     description: 'Credit sekali seumur akun untuk user yang terbukti jadi anggota channel Telegram. Keanggotaannya diperiksa ke Telegram, bukan dipercaya dari klik. Isi 0 untuk mematikan kartunya tanpa deploy.',
     impact: 'Menaikkannya menaikkan biaya akuisisi setiap akun baru yang join channel.',
     min: 0, max: 1_000, riskyWhen: 'higher',
+  },
+  {
+    key: 'channelGateEnabled', group: 'channel', label: 'Wajib join channel', unit: '0/1',
+    description: 'Isi 1 untuk memblok seluruh app sampai user terbukti jadi anggota channel Telegram, 0 untuk membuka lagi. Keanggotaannya diperiksa ke Telegram dan hasilnya di-cache; kalau Telegram tidak bisa dihubungi user diloloskan, dan penarikan saldo tidak pernah ikut diblokir.',
+    impact: 'Menyalakannya menutup akses semua user yang belum join, termasuk yang sudah punya saldo.',
+    min: 0, max: 1, riskyWhen: 'higher',
   },
   {
     key: 'premiumPrice1Idr', group: 'premium', label: 'Harga premium 1 bulan', unit: 'Rp',

@@ -10,7 +10,7 @@ function startMessage(firstName: string | null) {
     `<b>${sapaan}</b>`,
     '',
     'Selamat datang di <b>Tugas Duit</b> — tempat rebahan yang tetap bisa cuan.',
-    'Cara mainnya simpel banget: pecahin captcha, kumpulin credit, tukar jadi Rupiah. Nggak ada modal, nggak ada drama.',
+    'Cara mainnya simpel banget: pecahin soal singkat, kumpulin credit, tukar jadi Rupiah. Nggak ada modal, nggak ada drama.',
     '',
     '⚡ Energi ngisi sendiri, jadi bisa main tiap hari',
     '💰 Stok reward juga ngisi sendiri, tinggal dihabisin',
@@ -25,7 +25,7 @@ function startMessage(firstName: string | null) {
 const HELP_MESSAGE = [
   '<b>Cara mainnya 🎮</b>',
   '',
-  '1. Buka app-nya, ambil captcha, jawab yang bener.',
+  '1. Buka app-nya, ambil soal, jawab yang bener.',
   '2. Makin cepat jawabnya, makin gede bintangnya, makin gede credit-nya.',
   '3. Tiap task motong 1 energi. Energi ngisi sendiri, nggak perlu ditungguin.',
   '4. Bayaran task diambil dari stok reward kamu. Stoknya juga ngisi sendiri, dan makin gede kalau rank sama streak kamu naik.',

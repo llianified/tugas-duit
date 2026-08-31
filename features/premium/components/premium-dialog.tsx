@@ -189,7 +189,7 @@ function PlanRow({
         'focus-ring transition-ui press-scale-soft relative flex w-full items-center gap-3 rounded-lg p-3 text-left disabled:cursor-not-allowed disabled:opacity-70',
         plan.best
           ? 'bg-premium/10 shadow-[0_0_0_1.5px_color-mix(in_oklab,var(--premium)_55%,transparent)]'
-          : 'bg-muted/60 shadow-[0_0_0_1px_var(--border)]',
+          : 'bg-muted/60 ring-border',
       )}
     >
       <div className="min-w-0 flex-1">

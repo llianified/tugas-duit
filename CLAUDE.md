@@ -44,10 +44,18 @@ Lihat `.env.example` untuk daftar lengkap env var.
 - **Dua connection string, dua keperluan.** Runtime memakai endpoint *pooled* (`-pooler`);
   `pnpm db:migrate` memakai endpoint *langsung* lewat `DATABASE_URL_UNPOOLED`, karena
   `pg_advisory_lock` bersifat per-sesi dan pooler Neon berjalan di mode transaksi.
-- **Migrasi tidak jalan sendiri saat deploy.** Vercel tidak punya start command, jadi
-  `pnpm db:migrate` dijalankan manual sebelum deploy yang membawa migrasi baru. Jangan
-  menaruhnya di build command: build ikut jalan di tiap deploy Preview, dan branch setengah
-  jadi tidak boleh memigrasi database produksi.
+- **Migrasi jalan sendiri, tapi hanya di deploy Production.** Vercel memakai script
+  `vercel-build`, yang menjalankan `scripts/migrate.ts --deploy` sebelum `next build`.
+  Flag `--deploy` itu penjaganya: migrasi dilewati kecuali `VERCEL_ENV=production`, karena
+  build ikut jalan di tiap deploy Preview dan branch setengah jadi tidak boleh memigrasi
+  database produksi. Jalur otomatis juga menolak jalan tanpa `DATABASE_URL_UNPOOLED` —
+  `pg_advisory_lock` tidak menjamin apa pun di pooler mode transaksi. Migrasi gagal =
+  build gagal, jadi kode tidak pernah live di atas skema yang belum siap.
+  `pnpm db:migrate` manual tidak membawa flag itu dan tetap jalan apa adanya.
+- **Migrasi jalan sebelum kode barunya live.** Selama migrasinya aditif (tambah kolom,
+  tambah tabel) itu aman. Migrasi yang merusak — drop/rename kolom yang masih dibaca kode
+  lama — akan mematahkan deploy yang sedang berjalan di jendela itu, jadi pecah dua:
+  tambah dulu, hapus di deploy berikutnya. Rollback deploy juga tidak me-rollback DB.
 - **Pekerjaan terjadwal lewat HTTP**, bukan proses terpisah: `app/api/cron/maintenance`,
   dijaga `CRON_SECRET`, isinya `server/maintenance.ts`. `pnpm db:cleanup` menjalankan hal yang
   persis sama dari CLI. Jadwalnya di `vercel.json` dan harus jatuh di dalam jam kirim

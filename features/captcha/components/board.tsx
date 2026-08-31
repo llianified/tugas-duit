@@ -10,7 +10,7 @@ const BOARD_CONTENT_CLASS = 'flex min-h-16 flex-1 select-none items-center justi
 
 function ChallengeBoard({ children }: { children: ReactNode }) {
   return (
-    <div className="challenge-board animate-board-in flex max-h-72 min-h-0 flex-1 flex-col items-stretch justify-center rounded-xl p-[var(--surface-p)]">
+    <div className="challenge-board animate-board-in flex min-h-[9.5rem] max-h-56 shrink-0 flex-col items-stretch justify-center rounded-cta p-[var(--surface-p)]">
       <div className={BOARD_CONTENT_CLASS}>{children}</div>
     </div>
   )
@@ -39,7 +39,7 @@ export function ChallengeText({ display }: { display: string }) {
           <span
             key={`${char}-${index}`}
             aria-hidden="true"
-            className={`jitter-char ${jitterRotationClass(index)} ${jitterOffsetClass(index)} w-7 text-center text-3xl font-semibold tabular-nums text-foreground`}
+            className={`jitter-char ${jitterRotationClass(index)} ${jitterOffsetClass(index)} w-9 text-center text-4xl font-bold tabular-nums text-foreground`}
           >
             {char}
           </span>
@@ -66,7 +66,7 @@ export function ChallengeMath({ expression }: { expression: string }) {
       <span className="sr-only">{`Hitung ${spoken}`}</span>
       <span
         aria-hidden="true"
-        className="flex items-center gap-2 text-4xl font-semibold tracking-wide tabular-nums text-foreground"
+        className="flex items-center gap-2 text-4xl font-bold tracking-wide tabular-nums text-foreground"
       >
         {expression.split(' ').map((token, index) => (
           <span key={index} className={SPOKEN_OPERATOR[token] ? 'text-primary' : undefined}>
@@ -94,7 +94,7 @@ export function ChallengeSelectBoard({ instruction }: { instruction: string }) {
       <span className="sr-only">{instruction}</span>
       <span
         aria-hidden="true"
-        className="text-center text-4xl font-semibold tracking-tight text-foreground text-balance"
+        className="text-center text-4xl font-bold tracking-tight text-foreground text-balance"
       >
         {target}
       </span>

@@ -99,7 +99,7 @@ export function InfoHint({
           ref={bubbleRef}
           id={bubbleId}
           role="note"
-          className="animate-hint-in pointer-events-none absolute inset-x-0 top-full z-30 mt-3 block rounded-bubble bg-muted bubble-p text-left text-xs font-normal leading-relaxed tracking-normal text-muted-foreground shadow-bubble text-pretty"
+          className="animate-hint-in pointer-events-none absolute inset-x-0 top-full z-30 mt-3 block rounded-bubble bg-muted bubble-p text-left text-[13px] font-normal leading-relaxed tracking-normal text-muted-foreground shadow-bubble text-pretty"
         >
           <span
             ref={tailRef}

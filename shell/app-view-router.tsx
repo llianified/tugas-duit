@@ -8,6 +8,7 @@ import { HistoryView } from '@/features/history/history'
 import { HomeView } from '@/features/home/home'
 import { LEADERBOARD_ENABLED } from '@/features/leaderboard/availability'
 import { LeaderboardComingSoon, LeaderboardView } from '@/features/leaderboard/leaderboard'
+import { ProfileView } from '@/features/profile/profile'
 import { ReferralView } from '@/features/referral/referral'
 import { StatsView } from '@/features/stats/stats'
 import type { AppView } from '@/navigation/app-view'
@@ -110,6 +111,22 @@ export function AppViewRouter({
     )
   }
 
+  if (effectiveView === 'profile') {
+    if (!session.stats || !session.user) return <AppViewSkeleton />
+    return (
+      <ProfileView
+        key="profile"
+        user={session.user}
+        stats={session.stats}
+        premium={session.premium}
+        founder={session.founder}
+        onOpenPhotoNote={() =>
+          showError('Foto dan nama diambil dari Telegram. Ubah di Telegram, lalu buka ulang app-nya.')
+        }
+      />
+    )
+  }
+
   if (effectiveView === 'stats') {
     if (!session.stats) return <AppViewSkeleton />
     return <StatsView key="stats" stats={session.stats} />
@@ -118,7 +135,13 @@ export function AppViewRouter({
   if (effectiveView === 'leaderboard') {
     if (!LEADERBOARD_ENABLED) return <LeaderboardComingSoon key="leaderboard" />
     if (!session.leaderboard) return <AppViewSkeleton />
-    return <LeaderboardView key="leaderboard" board={session.leaderboard} />
+    return (
+      <LeaderboardView
+        key="leaderboard"
+        board={session.leaderboard}
+        activity={session.activity}
+      />
+    )
   }
 
   if (!session.task) {

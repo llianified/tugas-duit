@@ -6,6 +6,7 @@ import type { EnergyState } from '@/domain/energy'
 import type { PremiumMonths, PremiumPerks, PremiumPlan } from '@/domain/premium'
 import type { RewardPoolState } from '@/domain/reward-pool'
 import type { Challenge, HistoryEntry } from '@/features/captcha/domain'
+import type { ActivityEntry } from '@/features/activity/domain'
 import type { LeaderboardBoard } from '@/features/leaderboard/domain'
 import type { UserStats } from '@/features/stats/domain'
 import type { PublicPayout, Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
@@ -21,6 +22,7 @@ export type SessionResponse = {
     balance: number
     referralCode: string
     banned?: boolean
+    founder?: boolean
   } | null
   breakdown?: { taskCredits: number; referralCredits: number; withdrawnCredits: number }
   energy?: EnergyState & {
@@ -34,6 +36,7 @@ export type SessionResponse = {
   ads?: AdsState
   premium?: PremiumState
   channelBonus?: ChannelBonusState
+  channelGate?: ChannelGateState
   botAppUrl?: string | null
 }
 
@@ -63,6 +66,12 @@ export type ChannelBonusState = {
   claimed: boolean
 }
 
+export type ChannelGateState = {
+  required: boolean
+  member: boolean
+  url: string
+}
+
 export type PremiumCheckoutResponse =
   | { settled: true; premiumUntil: number }
   | { settled: false; invoice: PremiumInvoice }
@@ -75,6 +84,10 @@ export async function startPremiumCheckout(months: PremiumMonths) {
 
 export async function claimChannelBonus() {
   return sendJson<ChannelClaimResponse>('/api/channel/claim', 'POST')
+}
+
+export async function verifyChannelMembership() {
+  return sendJson<ChannelGateState>('/api/channel/verify', 'POST')
 }
 
 export async function fetchPublicPayouts() {
@@ -111,6 +124,7 @@ export type TaskResponse = { challenge: Challenge }
 export type HistoryResponse = { entries: HistoryEntry[]; nextCursor: string | null }
 export type StatsResponse = { stats: UserStats }
 export type LeaderboardResponse = { board: LeaderboardBoard }
+export type ActivityResponse = { entries: ActivityEntry[] }
 export type ReferralResponse = {
   code: string
   shareUrl: string

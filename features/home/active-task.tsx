@@ -15,6 +15,7 @@ import {
   formatLongCountdown,
   formatRupiah,
 } from '@/shared/lib/format'
+import { EYEBROW_CLASS } from '@/shared/components/section-label'
 import { cn } from '@/shared/lib/utils'
 
 export function ActiveTask({
@@ -182,10 +183,10 @@ function Stat({
 }) {
   return (
     <div className="stat-tile" title={hint}>
-      <dt className="text-[10px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
-        {label}
-      </dt>
-      <dd className="mt-1 text-base font-semibold tabular-nums text-foreground">{value}</dd>
+      <dt className={EYEBROW_CLASS}>{label}</dt>
+      <dd className="mt-0.5 text-lg font-bold tracking-tight tabular-nums text-foreground">
+        {value}
+      </dd>
       <dd className="text-[11px] font-normal tabular-nums text-muted-foreground/70">{note}</dd>
     </div>
   )

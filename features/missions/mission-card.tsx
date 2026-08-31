@@ -69,7 +69,7 @@ export function MissionCard({
   return (
     <section
       aria-label="Misi harian"
-      className="rounded-lg bg-muted/60 p-[var(--surface-p)] shadow-[0_0_0_1px_var(--border)]"
+      className="rounded-lg bg-muted/60 p-[var(--surface-p)] ring-border"
     >
       <div className="flex items-center justify-between gap-3">
         <SectionLabel as="h2">Misi hari ini</SectionLabel>

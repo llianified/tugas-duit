@@ -88,3 +88,16 @@ describe('claimInitData', () => {
     expect(new Date(rows[0].expires_at).getTime()).toBe((authDate + 900) * 1000)
   })
 })
+
+describe('readChannelMembership tanpa token bot', () => {
+  it('mengembalikan null, bukan melempar — token hilang berarti tidak bisa dipastikan', async () => {
+    const { readChannelMembership } = await import('./telegram')
+    const saved = process.env.TELEGRAM_BOT_TOKEN
+    delete process.env.TELEGRAM_BOT_TOKEN
+    try {
+      await expect(readChannelMembership('123')).resolves.toBeNull()
+    } finally {
+      process.env.TELEGRAM_BOT_TOKEN = saved
+    }
+  })
+})

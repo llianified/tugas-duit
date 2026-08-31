@@ -69,7 +69,7 @@ export function AppViewSkeleton() {
               </div>
             ))}
           </div>
-            <Bar className="cta-gap cta-h w-full rounded-xl" />
+            <Bar className="cta-gap cta-h w-full rounded-cta" />
           </div>
         </div>
       </div>

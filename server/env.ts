@@ -24,6 +24,7 @@ export const env = {
   },
   get cronSecretOrNull() { return process.env.CRON_SECRET?.trim() || null },
   get botToken() { return required('TELEGRAM_BOT_TOKEN') },
+  get botTokenOrNull() { return process.env.TELEGRAM_BOT_TOKEN?.trim() || null },
   get botUsername() { return required('TELEGRAM_BOT_USERNAME') },
   get botUsernameOrNull() { return process.env.TELEGRAM_BOT_USERNAME ?? null },
   get webhookSecret() { return required('TELEGRAM_WEBHOOK_SECRET') },

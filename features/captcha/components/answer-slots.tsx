@@ -101,7 +101,7 @@ export function CaptchaAnswerSlots({
               <OTPField.Input
                 aria-label={`${unit.one} ke-${index + 1}`}
                 aria-invalid={hasError}
-                className={`focus-ring transition-ui size-12 min-w-0 shrink rounded-lg text-center text-xl font-semibold tabular-nums disabled:opacity-50 ${
+                className={`focus-ring transition-ui size-12 min-w-0 shrink rounded-lg text-center text-2xl font-bold tabular-nums disabled:opacity-50 ${
                   hasError
                     ? 'bg-destructive/10 text-destructive'
                     : filled

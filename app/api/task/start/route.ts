@@ -1,3 +1,4 @@
+import { channelGateBlocks } from '@/server/channel'
 import { loadEconomyConfig } from '@/server/economy-config'
 import { startChallenge, type TaskPayment } from '@/server/challenge'
 import { apiError, assertSameOrigin, handleRouteError, rateLimited } from '@/server/http'
@@ -15,6 +16,13 @@ export async function POST(request: Request) {
     const user = await requireUser()
     const limit = await checkRateLimit(`task:start:${user.id}`, 30, 60)
     if (!limit.allowed) return rateLimited(limit.retryAfter)
+    if (await channelGateBlocks(user)) {
+      return apiError(
+        'CHANNEL_REQUIRED',
+        'Join channel Telegram kami dulu ya sebelum mulai ngerjain task.',
+        403,
+      )
+    }
     const body = (await request.json().catch(() => null)) as {
       challengeId?: string
       payWith?: string

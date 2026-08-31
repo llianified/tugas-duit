@@ -108,7 +108,7 @@ export function ProfileIsland({
               onClose()
               onOpenStats()
             }}
-            className="focus-ring transition-ui island-region flex w-full items-center justify-center rounded-md text-label font-bold text-primary hover:text-primary-hover active:text-primary-active"
+            className="focus-ring transition-ui island-region flex w-full items-center justify-center rounded-md text-label font-semibold text-primary hover:text-primary-hover active:text-primary-active"
           >
             Buka statistik
           </button>

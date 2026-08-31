@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/shared/lib/utils'
 
-export const EYEBROW_CLASS = 'text-label font-bold tracking-tight text-muted-foreground'
+export const EYEBROW_CLASS = 'text-label font-medium tracking-tight text-muted-foreground'
 
 export const PAGE_TITLE_CLASS = 'text-base font-semibold tracking-tight text-foreground'
 

@@ -52,7 +52,7 @@ export function ActivityFeed({ entries }: { entries: ActivityEntry[] | null }) {
               : `Bintang tiga · ${formatHistoryTime(entry.at)}`
           }
           amount={
-            <span className="text-cta font-bold tabular-nums text-success">
+            <span className="text-cta font-semibold tabular-nums text-success">
               {entry.kind === 'payout'
                 ? formatRupiah(entry.amount)
                 : `+${formatCredits(entry.amount)}`}

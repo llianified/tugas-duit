@@ -55,7 +55,7 @@ export function TapAction({
       {icon ? <span className="flex shrink-0 items-center">{icon}</span> : null}
       <span
         className={cn(
-          'text-cta font-bold tracking-tight',
+          'text-cta font-semibold tracking-tight',
           compact ? 'shrink-0 whitespace-nowrap' : 'min-w-0 flex-1 truncate',
         )}
       >

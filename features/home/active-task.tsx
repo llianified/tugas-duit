@@ -184,7 +184,7 @@ function Stat({
   return (
     <div className="stat-tile" title={hint}>
       <dt className={EYEBROW_CLASS}>{label}</dt>
-      <dd className="mt-0.5 text-lg font-bold tracking-tight tabular-nums text-foreground">
+      <dd className="mt-0.5 text-lg font-semibold tracking-tight tabular-nums text-foreground">
         {value}
       </dd>
       <dd className="text-meta font-normal tabular-nums text-muted-foreground/70">{note}</dd>

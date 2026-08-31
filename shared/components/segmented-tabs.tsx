@@ -27,13 +27,13 @@ const SIZE_CLASS: Record<SegmentedSize, Record<SegmentedVariant, string>> = {
 }
 
 const ACTIVE_CLASS: Record<SegmentedVariant, string> = {
-  pill: 'bg-card text-foreground shadow-sm',
-  underline: 'border-primary text-foreground',
+  pill: 'bg-card font-semibold text-foreground shadow-sm',
+  underline: 'border-primary font-semibold text-foreground',
 }
 
 const INACTIVE_CLASS: Record<SegmentedVariant, string> = {
-  pill: 'text-muted-foreground hover:text-foreground',
-  underline: 'border-transparent text-muted-foreground hover:text-foreground',
+  pill: 'font-medium text-muted-foreground hover:text-foreground',
+  underline: 'border-transparent font-medium text-muted-foreground hover:text-foreground',
 }
 
 export function SegmentedTabs<T extends string>({
@@ -71,7 +71,7 @@ export function SegmentedTabs<T extends string>({
               onChange(tab.value)
             }}
             className={cn(
-              'focus-ring transition-ui font-bold tracking-tight',
+              'focus-ring transition-ui tracking-tight',
               ITEM_CLASS[variant],
               SIZE_CLASS[size][variant],
               active ? ACTIVE_CLASS[variant] : INACTIVE_CLASS[variant],

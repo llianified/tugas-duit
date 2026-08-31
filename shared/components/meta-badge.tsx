@@ -19,9 +19,9 @@ export function MetaBadge({
     <span
       className={cn(
         BADGE_SHAPE,
-        'inline-flex shrink-0 items-center font-semibold tabular-nums',
+        'inline-flex shrink-0 items-center font-medium tabular-nums',
         tone === 'accent'
-          ? 'bg-primary/10 font-bold text-primary'
+          ? 'bg-primary/10 font-semibold text-primary'
           : 'bg-muted text-muted-foreground',
         className,
       )}

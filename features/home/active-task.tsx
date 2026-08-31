@@ -1,22 +1,27 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { WatchAdToPlay } from '@/features/ads/watch-ad-to-play'
 import { DifficultyBadge } from '@/features/captcha/components/difficulty-badge'
-import { GlyphBolt } from '@/shared/components/glyph'
+import { EnergyRecoverySheet } from '@/features/home/energy-recovery-sheet'
 import { TapAction, TapActionWaiting } from '@/shared/components/tap-action'
 import { hapticTap } from '@/shell/haptic'
 import type { Challenge } from '@/features/captcha/domain'
 import { creditsToRupiah } from '@/domain/economy'
-import { energyCostPerTask } from '@/domain/energy'
-import { formatCountdown, formatCredits, formatRupiah } from '@/shared/lib/format'
+import { energyCostPerTask, type EnergyFill } from '@/domain/energy'
+import {
+  formatCountdown,
+  formatCredits,
+  formatLongCountdown,
+  formatRupiah,
+} from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 
 export function ActiveTask({
   task,
   energy,
   energyMax,
-  energySecondsToNext,
+  energyFill,
   rewardPoolCredits,
   rewardPoolSecondsToNext,
   adsEnabled,
@@ -26,11 +31,13 @@ export function ActiveTask({
   watchingAd,
   onStart,
   onStartWithAd,
+  onOpenMissions,
+  onOpenPremium,
 }: {
   task: Challenge
   energy: number
   energyMax: number
-  energySecondsToNext: number | null
+  energyFill: EnergyFill
   rewardPoolCredits: number | null
   rewardPoolSecondsToNext: number | null
   adsEnabled: boolean
@@ -40,7 +47,10 @@ export function ActiveTask({
   watchingAd: boolean
   onStart: () => void
   onStartWithAd: () => void
+  onOpenMissions: () => void
+  onOpenPremium: (() => void) | null
 }) {
+  const [recoveryOpen, setRecoveryOpen] = useState(false)
   const poolEmpty = rewardPoolCredits === 0
   const energyEmpty = energy < energyCostPerTask()
   const waiting = poolEmpty || energyEmpty
@@ -54,7 +64,7 @@ export function ActiveTask({
           energy={energy}
           energyMax={energyMax}
           energyEmpty={energyEmpty}
-          energySecondsToNext={energySecondsToNext}
+          energyFill={energyFill}
         />
         <div className="cta-gap flex items-stretch gap-2 [&>*]:min-w-0 [&>*]:flex-1">
           <StartAction
@@ -62,9 +72,10 @@ export function ActiveTask({
             poolEmpty={poolEmpty}
             energy={energy}
             energyMax={energyMax}
-            energySecondsToNext={energySecondsToNext}
+            energyFill={energyFill}
             rewardPoolSecondsToNext={rewardPoolSecondsToNext}
             onStart={onStart}
+            onRecover={() => setRecoveryOpen(true)}
           />
           <WatchAdToPlay
             enabled={adsEnabled}
@@ -77,6 +88,20 @@ export function ActiveTask({
           />
         </div>
       </div>
+
+      <EnergyRecoverySheet
+        open={recoveryOpen}
+        onOpenChange={setRecoveryOpen}
+        energy={energy}
+        energyMax={energyMax}
+        fill={energyFill}
+        adsEnabled={adsEnabled}
+        adViewsLeft={adViewsLeft}
+        adReady={adPassReady || adCooldownSecondsLeft === 0}
+        onWatchAd={onStartWithAd}
+        onOpenMissions={onOpenMissions}
+        onOpenPremium={onOpenPremium}
+      />
     </section>
   )
 }
@@ -103,13 +128,13 @@ function TaskStats({
   energy,
   energyMax,
   energyEmpty,
-  energySecondsToNext,
+  energyFill,
 }: {
   maxReward: number
   energy: number
   energyMax: number
   energyEmpty: boolean
-  energySecondsToNext: number | null
+  energyFill: EnergyFill
 }) {
   return (
     <dl className="block-gap-t grid grid-cols-3 gap-1.5">
@@ -134,13 +159,11 @@ function TaskStats({
           </span>
         }
         note={
-          energy >= energyMax
+          energyFill.secondsToFull === null
             ? 'penuh'
-            : energySecondsToNext === null
-              ? 'energi'
-              : `+1 ${formatCountdown(energySecondsToNext)}`
+            : `penuh ${formatLongCountdown(energyFill.secondsToFull)}`
         }
-        hint={`Energi tersisa ${formatCredits(energy)} dari ${formatCredits(energyMax)}.`}
+        hint={`Energi tersisa ${formatCredits(energy)} dari ${formatCredits(energyMax)}. Terisi sendiri tanpa perlu membuka aplikasi.`}
       />
     </dl>
   )
@@ -168,22 +191,33 @@ function Stat({
   )
 }
 
+/**
+ * Energi habis membuka jalan keluar, stok habis tetap menunggu.
+ *
+ * Bedanya bukan kosmetik: energi punya jalan keluar yang dimiliki user sendiri
+ * (tiket iklan, misi, premium), sedangkan stok reward diisi oleh sistem dan
+ * tidak ada tombol yang bisa mempercepatnya. Jadi hanya energi yang jadi tombol
+ * — menawarkan aksi untuk hal yang tidak bisa dia ubah cuma memindahkan
+ * kekecewaan satu ketukan lebih jauh.
+ */
 function StartAction({
   waiting,
   poolEmpty,
   energy,
   energyMax,
-  energySecondsToNext,
+  energyFill,
   rewardPoolSecondsToNext,
   onStart,
+  onRecover,
 }: {
   waiting: boolean
   poolEmpty: boolean
   energy: number
   energyMax: number
-  energySecondsToNext: number | null
+  energyFill: EnergyFill
   rewardPoolSecondsToNext: number | null
   onStart: () => void
+  onRecover: () => void
 }) {
   if (!waiting) {
     return (
@@ -199,18 +233,35 @@ function StartAction({
     )
   }
 
-  return poolEmpty ? (
-    <TapActionWaiting
+  if (poolEmpty) {
+    return (
+      <TapActionWaiting
+        compact
+        label="Stok habis"
+        meta={
+          rewardPoolSecondsToNext === null ? undefined : formatCountdown(rewardPoolSecondsToNext)
+        }
+      />
+    )
+  }
+
+  const secondsToFull = energyFill.secondsToFull
+
+  return (
+    <TapAction
       compact
-      label="Stok habis"
-      meta={rewardPoolSecondsToNext === null ? undefined : formatCountdown(rewardPoolSecondsToNext)}
-    />
-  ) : (
-    <TapActionWaiting
-      compact
-      icon={<GlyphBolt className="size-4 text-primary" />}
-      label="Energi habis"
-      meta={energySecondsToNext === null ? undefined : formatCountdown(energySecondsToNext)}
+      tone="neutral"
+      label="Isi energi"
+      meta={secondsToFull === null ? undefined : formatLongCountdown(secondsToFull)}
+      aria-label={
+        secondsToFull === null
+          ? 'Energi habis, lihat cara lanjut tanpa menunggu'
+          : `Energi habis, penuh dalam ${formatLongCountdown(secondsToFull)}. Lihat cara lanjut tanpa menunggu`
+      }
+      onClick={() => {
+        hapticTap()
+        onRecover()
+      }}
     />
   )
 }

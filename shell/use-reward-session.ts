@@ -51,8 +51,11 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     void mutateSession()
   }, [mutateSession])
 
-  const { energy, energySecondsToNext } = useEnergyProjection({
+  const premiumActive = session?.premium?.active ?? false
+
+  const { energy, energySecondsToNext, energyFill } = useEnergyProjection({
     payload: session?.energy ?? null,
+    premium: premiumActive,
     refreshSession: retrySession,
   })
 
@@ -201,8 +204,9 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     submitting,
     startingTask,
     energy,
-    energyMax: maxEnergy(session?.premium?.active ?? false),
+    energyMax: maxEnergy(premiumActive),
     energySecondsToNext,
+    energyFill,
     rewardPoolCredits,
     rewardPoolMax,
     rewardPoolRegenCredits,

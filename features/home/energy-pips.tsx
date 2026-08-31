@@ -2,19 +2,30 @@
 
 import { cn } from '@/shared/lib/utils'
 
+/**
+ * Pip energi dengan pip berikutnya terisi sebagian.
+ *
+ * Tanpa `fraction` meter ini diam belasan menit lalu melompat satu pip, dan diam
+ * yang lama itulah yang membuat user menyimpulkan aplikasinya menghukum dia.
+ * Dengan pip parsial yang naik tiap detik, jeda yang sama terbaca sebagai
+ * sesuatu yang sedang berjalan.
+ */
 export function EnergyPips({
   energy,
   max,
+  fraction = 0,
   active = true,
   className,
 }: {
   energy: number
   max: number
+  fraction?: number
   active?: boolean
   className?: string
 }) {
   const clamped = Math.max(0, Math.min(max, energy))
   const filled = active ? clamped : 0
+  const partial = active ? Math.max(0, Math.min(1, fraction)) : 0
 
   return (
     <div
@@ -25,15 +36,26 @@ export function EnergyPips({
       aria-valuetext={`Energi ${clamped} dari ${max}`}
       className={cn('flex items-center gap-1', className)}
     >
-      {Array.from({ length: max }, (_, index) => (
-        <div
-          key={index}
-          className={cn(
-            'meter-h flex-1 rounded-full transition-colors duration-300 ease-out motion-reduce:transition-none',
-            index < filled ? 'bg-primary' : 'bg-border',
-          )}
-        />
-      ))}
+      {Array.from({ length: max }, (_, index) => {
+        const isFilled = index < filled
+        const isFilling = !isFilled && index === filled && partial > 0
+
+        return (
+          <div key={index} className="meter-h flex-1 overflow-hidden rounded-full bg-border">
+            {isFilled || isFilling ? (
+              <div
+                className={cn(
+                  'h-full rounded-full',
+                  isFilled
+                    ? 'bg-primary transition-colors duration-300 ease-out motion-reduce:transition-none'
+                    : 'bg-primary/45 transition-[width] duration-1000 ease-linear motion-reduce:transition-none',
+                )}
+                style={{ width: isFilled ? '100%' : `${(partial * 100).toFixed(1)}%` }}
+              />
+            ) : null}
+          </div>
+        )
+      })}
     </div>
   )
 }

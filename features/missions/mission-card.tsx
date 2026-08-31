@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import type { MissionProgress } from '@/domain/missions'
+import { EmptyState } from '@/shared/components/empty-state'
 import { GlyphBolt, GlyphCheck } from '@/shared/components/glyph'
 import { MetaBadge } from '@/shared/components/meta-badge'
 import { SectionLabel } from '@/shared/components/section-label'
@@ -23,9 +24,18 @@ type ClaimResponse = { energyGranted: number; energy: number; energyMax: number 
 export function MissionCard({
   refreshKey,
   onClaimed,
+  variant = 'card',
 }: {
   refreshKey: number
   onClaimed: () => Promise<unknown>
+  /**
+   * `page` dipakai saat daftar ini menjadi isi utama sebuah view, bukan satu kartu
+   * di antara kartu lain. Permukaan `--muted` dilepas — kartu di dalam halaman yang
+   * seluruhnya tentang misi hanya menambah satu kotak tanpa memisahkan apa pun —
+   * dan daftar kosong berhenti mengembalikan `null`, karena view yang kosong total
+   * adalah jalan buntu sementara kartu yang hilang dari Beranda bukan.
+   */
+  variant?: 'card' | 'page'
 }) {
   const [missions, setMissions] = useState<MissionProgress[] | null>(null)
   const [claiming, setClaiming] = useState<string | null>(null)
@@ -62,14 +72,27 @@ export function MissionCard({
     [load, onClaimed],
   )
 
-  if (!missions || missions.length === 0) return null
+  if (!missions) return null
+
+  const page = variant === 'page'
+
+  if (missions.length === 0) {
+    if (!page) return null
+    return (
+      <EmptyState
+        icon={<GlyphCheck className="glyph-md text-muted-foreground" />}
+        title="Belum ada misi hari ini"
+        description="Misi baru terbit setiap hari. Selesaikan task dulu, misinya bakal muncul di sini."
+      />
+    )
+  }
 
   const done = missions.filter((mission) => mission.claimed).length
 
   return (
     <section
       aria-label="Misi harian"
-      className="rounded-lg bg-muted/60 p-[var(--surface-p)] ring-border"
+      className={page ? undefined : 'rounded-lg bg-muted/60 p-[var(--surface-p)] ring-border'}
     >
       <div className="flex items-center justify-between gap-3">
         <SectionLabel as="h2">Misi hari ini</SectionLabel>
@@ -78,7 +101,7 @@ export function MissionCard({
         </MetaBadge>
       </div>
 
-      <ul className="label-gap-t flex flex-col gap-3">
+      <ul className={cn('label-gap-t flex flex-col', page ? 'gap-4' : 'gap-3')}>
         {missions.map((mission) => (
           <MissionRow
             key={mission.key}

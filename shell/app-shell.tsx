@@ -37,10 +37,11 @@ function AppShellInner() {
   const [liveTaskReward, setLiveTaskReward] = useState<number | null>(null)
 
   /**
-   * Interstitial otomatis ikut satu saklar dengan iklan berhadiah: `ads.enabled` di
-   * `/api/session` diturunkan dari `adsMaxViewsPerDay`, jadi mengisi 0 di panel ekonomi
-   * mematikan keduanya tanpa deploy. Dipasang di sini, bukan di `app/layout.tsx`, karena
-   * saklarnya baru diketahui setelah sesi termuat.
+   * Interstitial otomatis punya saklarnya sendiri, `ads.inAppEnabled`, terpisah dari
+   * `ads.enabled` milik iklan berhadiah. Keduanya sama-sama mati saat `adsMaxViewsPerDay`
+   * diisi 0 di panel ekonomi, tapi premium hanya mematikan yang ini — tiket berhadiah
+   * tetap dirender karena sifatnya opt-in. Dipasang di sini, bukan di `app/layout.tsx`,
+   * karena saklarnya baru diketahui setelah sesi termuat.
    *
    * Jadwalnya dibaca dari config ekonomi yang dikirim `/api/session`, dan sengaja
    * di-memo per nilai — bukan per render. `useInAppAds` menaruh `settings` di dependency
@@ -59,7 +60,7 @@ function AppShellInner() {
     ],
   )
   useInAppAds({
-    enabled: session.adsEnabled,
+    enabled: session.inAppAdsEnabled,
     zoneId: inAppZoneId(),
     settings: adsSettings,
   })

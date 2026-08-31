@@ -34,8 +34,9 @@ export function premiumBenefitList(perks: PremiumPerks): PremiumBenefit[] {
     },
     {
       key: 'ads',
-      title: 'Bebas iklan',
-      detail: 'Nggak ada lagi tayangan iklan buat nambah jatah task. Langsung kerjain aja.',
+      title: 'Bebas iklan yang nongol sendiri',
+      detail:
+        'Nggak ada lagi iklan yang tiba-tiba nutup layar pas kamu lagi ngerjain task. Tombol nonton iklan buat nambah jatah task tetap ada kalau kamu mau pakai — itu pilihan kamu, bukan gangguan.',
     },
     {
       key: 'withdraw',

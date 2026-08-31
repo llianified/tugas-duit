@@ -5,7 +5,8 @@ import {
   setUserSuspension,
   updateAdminUserProfile,
 } from '@/server/admin-users'
-import { apiError, assertSameOrigin, handleRouteError } from '@/server/http'
+import { apiError, assertSameOrigin, handleRouteError, rateLimited } from '@/server/http'
+import { checkRateLimit } from '@/server/ratelimit'
 import { requireUser } from '@/server/session'
 
 export const runtime = 'nodejs'
@@ -35,6 +36,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ pu
   try {
     const admin = await requireUser()
     if (!admin.isAdmin) return new Response(null, { status: 404 })
+    const limit = await checkRateLimit(`admin:user-write:${admin.id}`, 60, 3_600)
+    if (!limit.allowed) return rateLimited(limit.retryAfter)
 
     const { publicId } = await params
     const body = (await request.json().catch(() => null)) as Body | null

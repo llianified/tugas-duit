@@ -35,36 +35,47 @@ interface PayoutEligibility {
   activeReferralCount: number
   requiredActiveReferrals: number
   cooldownEndsAt: number | null
+  /** Jeda yang benar-benar berlaku untuk user ini — 3 hari kalau premium, 7 kalau tidak. */
+  cooldownDays: number
 }
 
-async function getPayoutEligibilityInTransaction(
-  executor: PoolClient,
-  userId: number,
-): Promise<PayoutEligibility> {
-  const result = await executor.query<{
-    active_referral_count: string
-    last_requested_at: Date | null
-    premium_until: Date | null
-  }>(
-    `select
-       (select count(distinct downline_id) from referral_commissions where upline_id=$1) active_referral_count,
-       (select max(requested_at) from withdrawals where user_id=$1) last_requested_at,
-       (select premium_until from users where id=$1) premium_until`,
-    [userId],
-  )
-  const row = result.rows[0]
-  const premium = isPremiumActive(
-    row.premium_until ? row.premium_until.getTime() : null,
-    Date.now(),
-  )
-  const cooldownEndsAt = row.last_requested_at
-    ? row.last_requested_at.getTime() + withdrawalCooldownMs(premium)
-    : null
+const ELIGIBILITY_SQL = `select
+   (select count(distinct downline_id) from referral_commissions where upline_id=$1) active_referral_count,
+   (select max(requested_at) from withdrawals where user_id=$1) last_requested_at,
+   (select premium_until from users where id=$1) premium_until`
+
+type EligibilityRow = {
+  active_referral_count: string
+  last_requested_at: Date | null
+  premium_until: Date | null
+}
+
+/**
+ * Satu-satunya pembaca kelayakan penarikan, dipakai jalur baca maupun jalur tulis.
+ *
+ * Dulu keduanya punya SQL kembar. Saat premium menambahkan jeda 3 hari, hanya jalur tulis
+ * yang ikut diubah — jalur baca tetap memakai 7 hari, sehingga UI menggerbang user premium
+ * sampai hari ketujuh padahal server sudah menerima pengajuannya sejak hari ketiga. Yang
+ * memperbaikinya bukan menyamakan konstantanya, melainkan menghapus salinannya.
+ *
+ * Bentuk `tx?` mengikuti `run()` di `reward-pool.ts` dan `ads.ts`: ikut transaksi saat
+ * dipakai `createPayout`, berdiri sendiri saat sekadar dibaca.
+ */
+async function readEligibility(userId: number, tx?: PoolClient): Promise<PayoutEligibility> {
+  const rows = tx
+    ? (await tx.query<EligibilityRow>(ELIGIBILITY_SQL, [userId])).rows
+    : await query<EligibilityRow>(ELIGIBILITY_SQL, [userId])
+  const row = rows[0]
+  const now = Date.now()
+  const premium = isPremiumActive(row.premium_until ? row.premium_until.getTime() : null, now)
+  const cooldownMs = withdrawalCooldownMs(premium)
+  const endsAt = row.last_requested_at ? row.last_requested_at.getTime() + cooldownMs : null
 
   return {
     activeReferralCount: Number(row.active_referral_count),
     requiredActiveReferrals: REQUIRED_ACTIVE_REFERRALS,
-    cooldownEndsAt: cooldownEndsAt && cooldownEndsAt > Date.now() ? cooldownEndsAt : null,
+    cooldownEndsAt: endsAt && endsAt > now ? endsAt : null,
+    cooldownDays: Math.round(cooldownMs / 86_400_000),
   }
 }
 
@@ -145,7 +156,7 @@ export async function createPayout(
     if (body.credits < withdrawalMinimumCredits()) throw new PayoutError('BELOW_MINIMUM', 400)
     if (body.credits > balance) throw new PayoutError('INSUFFICIENT_BALANCE', 400)
 
-    const eligibility = await getPayoutEligibilityInTransaction(tx, userId)
+    const eligibility = await readEligibility(userId, tx)
     if (eligibility.activeReferralCount < eligibility.requiredActiveReferrals) {
       throw new PayoutError('ACTIVE_REFERRALS_REQUIRED', 403, {
         activeReferralCount: String(eligibility.activeReferralCount),
@@ -190,7 +201,11 @@ export async function createPayout(
           hold.ledgerId,
         ],
       )
-      return { withdrawal: view(inserted.rows[0]), balance: hold.balance }
+      return {
+        withdrawal: view(inserted.rows[0]),
+        balance: hold.balance,
+        cooldownDays: eligibility.cooldownDays,
+      }
     } catch (error) {
       if (
         error instanceof Error &&
@@ -244,7 +259,7 @@ export async function getPublicPayouts(limit = PUBLIC_PAYOUT_LIMIT) {
 }
 
 export async function getPayouts(userId: number) {
-  const [rows, totals, eligibilityRows] = await Promise.all([
+  const [rows, totals, eligibility] = await Promise.all([
     query<PayoutRow>('select * from withdrawals where user_id=$1 order by requested_at desc limit 20', [
       userId,
     ]),
@@ -254,17 +269,8 @@ export async function getPayouts(userId: number) {
        from withdrawals where user_id=$1`,
       [userId],
     ),
-    query<{ active_referral_count: string; last_requested_at: Date | null }>(
-      `select
-         (select count(distinct downline_id) from referral_commissions where upline_id=$1) active_referral_count,
-         (select max(requested_at) from withdrawals where user_id=$1) last_requested_at`,
-      [userId],
-    ),
+    readEligibility(userId),
   ])
-  const eligibilityRow = eligibilityRows[0]
-  const rawCooldownEndsAt = eligibilityRow.last_requested_at
-    ? eligibilityRow.last_requested_at.getTime() + WITHDRAWAL_COOLDOWN_MS
-    : null
 
   return {
     withdrawals: rows.map(view),
@@ -272,12 +278,7 @@ export async function getPayouts(userId: number) {
       withdrawnCredits: Number(totals[0].withdrawn_credits),
       processingCredits: Number(totals[0].processing_credits),
     },
-    eligibility: {
-      activeReferralCount: Number(eligibilityRow.active_referral_count),
-      requiredActiveReferrals: REQUIRED_ACTIVE_REFERRALS,
-      cooldownEndsAt:
-        rawCooldownEndsAt && rawCooldownEndsAt > Date.now() ? rawCooldownEndsAt : null,
-    },
+    eligibility,
   }
 }
 
@@ -290,6 +291,7 @@ interface SettledPayout {
     accountName: string
     credits: number
     amountIdr: number
+    cooldownDays: number
   }
 }
 
@@ -310,8 +312,10 @@ export async function settlePayout(
       account_number: string
       account_name: string
       amount_idr: number
+      premium_until: Date | null
     }>(
-      `select w.user_id,u.telegram_id,w.credits,w.state,w.channel_id,w.account_number,w.account_name,w.amount_idr
+      `select w.user_id,u.telegram_id,w.credits,w.state,w.channel_id,w.account_number,w.account_name,
+              w.amount_idr,u.premium_until
        from withdrawals w join users u on u.id=w.user_id
        where w.id=$1 for update of w`,
       [id],
@@ -349,6 +353,11 @@ export async function settlePayout(
         accountName: wd.account_name,
         credits: wd.credits,
         amountIdr: Number(wd.amount_idr),
+        cooldownDays: Math.round(
+          withdrawalCooldownMs(
+            isPremiumActive(wd.premium_until ? wd.premium_until.getTime() : null, Date.now()),
+          ) / 86_400_000,
+        ),
       },
     }
   })

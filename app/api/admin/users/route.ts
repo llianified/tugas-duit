@@ -1,5 +1,6 @@
 import { searchAdminUsers } from '@/server/admin-users'
-import { handleRouteError } from '@/server/http'
+import { handleRouteError, rateLimited } from '@/server/http'
+import { checkRateLimit } from '@/server/ratelimit'
 import { requireUser } from '@/server/session'
 
 export const runtime = 'nodejs'
@@ -9,6 +10,8 @@ export async function GET(request: Request) {
   try {
     const admin = await requireUser()
     if (!admin.isAdmin) return new Response(null, { status: 404 })
+    const limit = await checkRateLimit(`admin:users:${admin.id}`, 300, 3_600)
+    if (!limit.allowed) return rateLimited(limit.retryAfter)
 
     const term = new URL(request.url).searchParams.get('q') ?? ''
     const users = await searchAdminUsers(term)

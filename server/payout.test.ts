@@ -204,3 +204,86 @@ describe('WD-8 — premium memakai jeda penarikan yang lebih pendek', () => {
     await expect(createPayout(userId, input)).resolves.toHaveProperty('withdrawal')
   })
 })
+
+describe('WD-9 — kelayakan yang dibaca UI sama dengan yang diterima server', () => {
+  /**
+   * Jalur baca (`getPayouts`, yang menggerbang dialog penarikan) dan jalur tulis
+   * (`createPayout`) pernah punya SQL kembar. Saat premium menambah jeda 3 hari, hanya
+   * jalur tulis yang ikut berubah — UI menahan pembeli premium sampai hari ketujuh
+   * padahal server sudah menerimanya sejak hari ketiga. Yang diuji di sini kesepakatan
+   * keduanya, bukan salah satunya.
+   */
+  it('menutup dan membuka gerbang pada hari yang sama di kedua jalur', async () => {
+    const { createPayout, getPayouts } = await import('./payout')
+    const { DEFAULT_ECONOMY_CONFIG } = await import('@/domain/economy-config')
+    const { query } = await import('./db')
+    const credits = withdrawalMinimumCredits()
+    const userId = await makeUser(credits * 3)
+    const input = {
+      channelId: PAYOUT_CHANNELS[0].id,
+      accountNumber: accountFor(PAYOUT_CHANNELS[0]),
+      accountName: 'Uji Sinkron',
+      credits,
+    }
+
+    const first = await createPayout(userId, input)
+    await query(
+      "update withdrawals set state='rejected',rejected_at=now(),reject_reason='Ditolak untuk tes' where id=$1",
+      [first.withdrawal.id],
+    )
+    const elapsedDays = DEFAULT_ECONOMY_CONFIG.premiumWithdrawalCooldownDays + 1
+    await query(
+      "update withdrawals set requested_at=now()-($2::int * interval '1 day') where id=$1",
+      [first.withdrawal.id, elapsedDays],
+    )
+
+    const biasa = (await getPayouts(userId)).eligibility
+    expect(biasa.cooldownEndsAt).not.toBeNull()
+    expect(biasa.cooldownDays).toBe(7)
+    await expect(createPayout(userId, input)).rejects.toMatchObject({
+      code: 'WITHDRAWAL_COOLDOWN',
+    })
+
+    await query("update users set premium_until=now()+interval '30 days' where id=$1", [userId])
+
+    const premium = (await getPayouts(userId)).eligibility
+    expect(premium.cooldownDays).toBe(DEFAULT_ECONOMY_CONFIG.premiumWithdrawalCooldownDays)
+    expect(premium.cooldownEndsAt).toBeNull()
+    await expect(createPayout(userId, input)).resolves.toHaveProperty('withdrawal')
+  })
+})
+
+describe('WD-10 — notifikasi memakai jeda efektif user, bukan angka tetap', () => {
+  it('mengembalikan jeda premium dari createPayout', async () => {
+    const { createPayout } = await import('./payout')
+    const { DEFAULT_ECONOMY_CONFIG } = await import('@/domain/economy-config')
+    const { query } = await import('./db')
+    const credits = withdrawalMinimumCredits()
+    const userId = await makeUser(credits)
+    await query("update users set premium_until=now()+interval '30 days' where id=$1", [userId])
+
+    const created = await createPayout(userId, {
+      channelId: PAYOUT_CHANNELS[0].id,
+      accountNumber: accountFor(PAYOUT_CHANNELS[0]),
+      accountName: 'Uji Notifikasi',
+      credits,
+    })
+
+    expect(created.cooldownDays).toBe(DEFAULT_ECONOMY_CONFIG.premiumWithdrawalCooldownDays)
+  })
+
+  it('mengembalikan jeda biasa untuk user tanpa premium', async () => {
+    const { createPayout } = await import('./payout')
+    const credits = withdrawalMinimumCredits()
+    const userId = await makeUser(credits)
+
+    const created = await createPayout(userId, {
+      channelId: PAYOUT_CHANNELS[0].id,
+      accountNumber: accountFor(PAYOUT_CHANNELS[0]),
+      accountName: 'Uji Notifikasi Biasa',
+      credits,
+    })
+
+    expect(created.cooldownDays).toBe(7)
+  })
+})

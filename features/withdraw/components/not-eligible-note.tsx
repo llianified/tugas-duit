@@ -15,11 +15,13 @@ export function NotEligibleNote({
   activeReferralCount = 0,
   requiredActiveReferrals = 5,
   cooldownEndsAt = null,
+  cooldownDays = null,
 }: {
   reason?: 'balance' | 'referrals' | 'cooldown' | 'loading'
   activeReferralCount?: number
   requiredActiveReferrals?: number
   cooldownEndsAt?: number | null
+  cooldownDays?: number | null
 }) {
   const title =
     reason === 'balance'
@@ -56,7 +58,11 @@ export function NotEligibleNote({
           </>
         ) : (
           <>
-            Kamu bisa tarik dana lagi {cooldownEndsAt ? formatHistoryTime(cooldownEndsAt) : 'setelah cooldown-nya kelar'}. Cooldown-nya 7 hari dihitung dari pengajuan terakhir — tetap jalan walau pengajuannya ditolak.
+            Kamu bisa tarik dana lagi {cooldownEndsAt ? formatHistoryTime(cooldownEndsAt) : 'setelah cooldown-nya kelar'}.{' '}
+            {cooldownDays === null
+              ? 'Cooldown-nya dihitung dari pengajuan terakhir'
+              : `Cooldown-nya ${formatCredits(cooldownDays)} hari dihitung dari pengajuan terakhir`}{' '}
+            — tetap jalan walau pengajuannya ditolak.
           </>
         )}
       </p>

@@ -46,22 +46,6 @@ export const PAYOUT_CHANNELS: readonly PayoutChannel[] = [
     accountPlaceholder: '10 digit',
     digits: { min: 10, max: 10 },
   },
-  {
-    id: 'bri',
-    name: 'BRI',
-    kind: 'bank',
-    accountLabel: 'Nomor rekening BRI',
-    accountPlaceholder: '15 digit',
-    digits: { min: 15, max: 15 },
-  },
-  {
-    id: 'mandiri',
-    name: 'Mandiri',
-    kind: 'bank',
-    accountLabel: 'Nomor rekening Mandiri',
-    accountPlaceholder: '13 digit',
-    digits: { min: 13, max: 13 },
-  },
 ]
 
 export const DEFAULT_PAYOUT_CHANNEL_ID = PAYOUT_CHANNELS[0].id

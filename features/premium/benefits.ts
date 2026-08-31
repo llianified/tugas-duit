@@ -32,11 +32,18 @@ export function premiumBenefitList(perks: PremiumPerks): PremiumBenefit[] {
       detail:
         'Daya tampungnya lebih gede, jadi sekali duduk bisa ngumpulin lebih banyak sebelum stoknya habis.',
     },
+    /**
+     * Judulnya sengaja tidak berbunyi "bebas iklan". Premium hanya mematikan interstitial
+     * otomatis; tiket berhadiah tetap hidup karena impresinya yang membayari fitur ini.
+     * Menjanjikan nol iklan lalu tetap merender tombol iklan adalah bentuk kebohongan yang
+     * paling mahal — user membayar, melihat tombolnya, dan menyimpulkan seluruh daftar ini
+     * tidak bisa dipercaya. Kalimat terakhir menutup celah itu di depan, bukan di ulasan.
+     */
     {
       key: 'ads',
-      title: 'Bebas iklan yang nongol sendiri',
+      title: 'Iklan yang muncul sendiri dimatikan',
       detail:
-        'Nggak ada lagi iklan yang tiba-tiba nutup layar pas kamu lagi ngerjain task. Tombol nonton iklan buat nambah jatah task tetap ada kalau kamu mau pakai — itu pilihan kamu, bukan gangguan.',
+        'Iklan yang nongol sendiri tiap beberapa menit berhenti total. Yang masih ada cuma tombol nonton iklan buat nambah jatah task — nggak pernah muncul sendiri, cuma jalan kalau kamu yang menekan. Jadi premium bukan berarti nol iklan.',
     },
     {
       key: 'withdraw',

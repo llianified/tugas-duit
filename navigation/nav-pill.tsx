@@ -20,10 +20,10 @@ type NavSlot = {
 
 const NAV_SLOTS: readonly NavSlot[] = [
   { view: ROOT_VIEW, label: 'Beranda', icon: <GlyphHome className="glyph-md" /> },
-  { view: 'profile', label: 'Profil', icon: <GlyphUser className="glyph-md" /> },
   { view: 'leaderboard', label: 'Peringkat', icon: <GlyphTrophy className="glyph-md" /> },
   { view: 'history', label: 'Riwayat', icon: <GlyphHistory className="glyph-md" /> },
   { view: 'referral', label: 'Teman', icon: <GlyphUsers className="glyph-md" /> },
+  { view: 'profile', label: 'Profil', icon: <GlyphUser className="glyph-md" /> },
 ]
 
 export function NavPill({
@@ -44,7 +44,8 @@ export function NavPill({
   )
 }
 
-const NAV_LABEL_W = ['w-11', 'w-9', 'w-12', 'w-11', 'w-9'] as const
+/** Sejajar urutan NAV_SLOTS: Beranda, Peringkat, Riwayat, Teman, Profil. */
+const NAV_LABEL_W = ['w-11', 'w-12', 'w-11', 'w-9', 'w-9'] as const
 
 export function NavPillSkeleton() {
   return (

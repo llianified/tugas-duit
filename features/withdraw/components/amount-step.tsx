@@ -20,7 +20,6 @@ export function AmountStep({
   channel,
   amount,
   credits,
-  error,
   onAmountChange,
   onChannelChange,
   onContinue,
@@ -29,7 +28,6 @@ export function AmountStep({
   channel: PayoutChannel
   amount: string
   credits: number
-  error: string | null
   onAmountChange: (amount: string) => void
   onChannelChange: (channelId: string) => void
   onContinue: () => void
@@ -49,15 +47,7 @@ export function AmountStep({
       <div className="flex flex-col gap-3">
         <ChannelSelect value={channel.id} onChange={onChannelChange} />
 
-        <div>
-          <ActionButton onClick={onContinue}>Lanjut</ActionButton>
-          <p
-            role={error ? 'alert' : undefined}
-            className="label-gap-t min-h-4 text-center text-xs leading-4 text-destructive text-pretty"
-          >
-            {error}
-          </p>
-        </div>
+        <ActionButton onClick={onContinue}>Lanjut</ActionButton>
       </div>
 
       <NumericKeypad

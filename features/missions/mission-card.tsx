@@ -9,6 +9,7 @@ import { MetaBadge } from '@/shared/components/meta-badge'
 import { SectionLabel } from '@/shared/components/section-label'
 import { fetchJson, sendJson, userFacingMessage } from '@/shell/api-client'
 import { hapticTap } from '@/shell/haptic'
+import { useToast } from '@/shell/toast'
 import { formatCredits } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 
@@ -40,7 +41,7 @@ export function MissionCard({
 }) {
   const [missions, setMissions] = useState<MissionProgress[] | null>(null)
   const [claiming, setClaiming] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const showError = useToast()
 
   const load = useCallback(async () => {
     try {
@@ -58,19 +59,18 @@ export function MissionCard({
   const claim = useCallback(
     async (key: string) => {
       hapticTap()
-      setError(null)
       setClaiming(key)
       try {
         await sendJson<ClaimResponse>('/api/missions/claim', 'POST', { key })
         await Promise.all([load(), onClaimed()])
       } catch (cause) {
-        setError(userFacingMessage(cause))
+        showError(userFacingMessage(cause))
         await load()
       } finally {
         setClaiming(null)
       }
     },
-    [load, onClaimed],
+    [load, onClaimed, showError],
   )
 
   const page = variant === 'page'
@@ -118,8 +118,6 @@ export function MissionCard({
           />
         ))}
       </ul>
-
-      {error ? <p className="stack-gap-t text-xs text-destructive">{error}</p> : null}
     </section>
   )
 }

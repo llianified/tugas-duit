@@ -1,6 +1,4 @@
-export const PAYOUT_PROOF_MAX_BYTES = 5 * 1024 * 1024
-
-export const PAYOUT_PROOF_ACCEPT = 'image/jpeg,image/png,image/webp'
+import { PAYOUT_PROOF_MAX_BYTES } from '@/features/withdraw/domain'
 
 export interface PayoutProof {
   bytes: Uint8Array

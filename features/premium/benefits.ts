@@ -9,6 +9,18 @@ export interface PremiumBenefit {
 
 export function premiumBenefitList(perks: PremiumPerks): PremiumBenefit[] {
   return [
+    /**
+     * Mahkota memimpin daftar, bukan menutupnya. Ia satu-satunya keuntungan yang dilihat
+     * orang lain — sisanya cuma terasa oleh pemiliknya — dan kartu upsell di beranda hanya
+     * menampilkan tiga teratas, jadi urutan di sini yang menentukan apakah premium terbaca
+     * sebagai status atau sekadar paket kecepatan.
+     */
+    {
+      key: 'badge',
+      title: 'Mahkota emas di papan peringkat',
+      detail:
+        'Kelihatan semua orang yang buka papan peringkat, bukan cuma kamu sendiri. Di header dan panel profil kamu juga muncul.',
+    },
     {
       key: 'energy',
       title: `Energi ${formatCredits(perks.maxEnergy)}, ngisi tiap ${formatCredits(perks.energyRegenMinutes)} menit`,
@@ -34,11 +46,6 @@ export function premiumBenefitList(perks: PremiumPerks): PremiumBenefit[] {
       key: 'tasks',
       title: `Batas task harian ${formatCredits(perks.maxTasksPerDay)}`,
       detail: `Naik dari ${formatCredits(perks.baseMaxTasksPerDay)}, jadi nggak kepentok pas lagi rajin-rajinnya.`,
-    },
-    {
-      key: 'badge',
-      title: 'Badge emas di profil',
-      detail: 'Kelihatan di header dan panel profil kamu.',
     },
   ]
 }

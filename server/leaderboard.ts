@@ -12,7 +12,9 @@ export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> 
     task_count: number
     task_credits: number
     participants: number
+    premium_members: number
     is_you: boolean
+    is_premium: boolean
   }>(
     `with ranked as (
        select u.id,
@@ -23,13 +25,18 @@ export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> 
               (rank() over (order by coalesce(sum(tc.reward), 0) desc,
                                      count(tc.id) desc,
                                      u.id))::int                  as position,
-              (count(*) over ())::int                             as participants
+              (count(*) over ())::int                             as participants,
+              (u.premium_until is not null and u.premium_until > now()) as is_premium,
+              (count(*) filter (
+                 where u.premium_until is not null and u.premium_until > now()
+               ) over ())::int                                    as premium_members
          from users u
          join task_completions tc on tc.user_id = u.id
         where u.banned_at is null
         group by u.id
      )
      select public_id, first_name, task_count, task_credits, position, participants,
+            premium_members, is_premium,
             (id = $1) as is_you
        from ranked
       where position <= $2 or id = $1
@@ -44,11 +51,13 @@ export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> 
     taskCount: row.task_count,
     credits: row.task_credits,
     you: row.is_you,
+    premium: row.is_premium,
   })
 
   return {
     entries: rows.filter((row) => row.position <= BOARD_SIZE).map(toEntry),
     you: rows.filter((row) => row.is_you).map(toEntry)[0] ?? null,
     participants: rows[0]?.participants ?? 0,
+    premiumMembers: rows[0]?.premium_members ?? 0,
   }
 }

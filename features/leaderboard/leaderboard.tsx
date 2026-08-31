@@ -8,7 +8,7 @@ import {
 } from '@/shared/components/data-list'
 import { CreditAmount } from '@/shared/components/credit-amount'
 import { EmptyState } from '@/shared/components/empty-state'
-import { GlyphTrophy } from '@/shared/components/glyph'
+import { GlyphCrown, GlyphTrophy } from '@/shared/components/glyph'
 import { MetaBadge } from '@/shared/components/meta-badge'
 import { PageHeader } from '@/shared/components/page-header'
 import { PageRegion } from '@/shared/components/page-region'
@@ -20,7 +20,7 @@ import { formatCredits } from '@/shared/lib/format'
 import type { LeaderboardBoard, LeaderboardEntry } from '@/features/leaderboard/domain'
 
 export function LeaderboardView({ board }: { board: LeaderboardBoard }) {
-  const { entries, you, participants } = board
+  const { entries, you, participants, premiumMembers } = board
 
   return (
     <div className="view-min-h flex flex-col">
@@ -37,7 +37,7 @@ export function LeaderboardView({ board }: { board: LeaderboardBoard }) {
           <YourPosition you={you} participants={participants} />
 
           <PageRegion>
-            <BoardList entries={entries} />
+            <BoardList entries={entries} premiumMembers={premiumMembers} participants={participants} />
           </PageRegion>
 
           {you && you.position > entries[entries.length - 1].position ? (
@@ -119,11 +119,29 @@ function YourPosition({
   )
 }
 
-function BoardList({ entries }: { entries: LeaderboardEntry[] }) {
+/**
+ * Papan peringkat adalah satu-satunya layar di app ini tempat user melihat user lain.
+ * Karena itu di sinilah status premium punya arti: badge yang cuma terlihat pemiliknya
+ * bukan status, cuma dekorasi. Mahkotanya menempel di nama, bukan di kolom terpisah,
+ * supaya terbaca sebagai bagian dari identitas orangnya.
+ */
+function BoardList({
+  entries,
+  premiumMembers,
+  participants,
+}: {
+  entries: LeaderboardEntry[]
+  premiumMembers: number
+  participants: number
+}) {
   return (
     <DataList
       label="Perolehan teratas"
-      badge={`${formatCredits(entries.length)} teratas`}
+      badge={
+        premiumMembers > 0
+          ? `${formatCredits(premiumMembers)} dari ${formatCredits(participants)} premium`
+          : `${formatCredits(entries.length)} teratas`
+      }
       ariaLabel="Papan peringkat perolehan teratas"
     >
       {entries.map((entry, index) => (
@@ -155,14 +173,16 @@ function BoardListItem({
         </DataListMarker>
       }
       title={
-        entry.you ? (
-          <span className="flex min-w-0 items-center gap-2">
-            <span className="truncate">{entry.displayName}</span>
-            <MetaBadge tone="accent">Kamu</MetaBadge>
-          </span>
-        ) : (
-          entry.displayName
-        )
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate">{entry.displayName}</span>
+          {entry.premium ? (
+            <GlyphCrown
+              className="size-3.5 shrink-0 text-premium"
+              aria-label="Anggota premium"
+            />
+          ) : null}
+          {entry.you ? <MetaBadge tone="accent">Kamu</MetaBadge> : null}
+        </span>
       }
       meta={`${rank.name} · ${formatCredits(entry.taskCount)} task`}
       amount={<DataListAmount value={formatCredits(entry.credits)} tone="neutral" />}

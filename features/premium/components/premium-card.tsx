@@ -19,14 +19,33 @@ export function PremiumCard({
   return <PremiumUpsellCard premium={premium} onOpen={onOpen} />
 }
 
-const GOLD_SURFACE =
-  'rounded-lg bg-gradient-to-br from-[color-mix(in_oklab,var(--premium)_18%,transparent)] to-transparent shadow-[0_0_0_1px_color-mix(in_oklab,var(--premium)_35%,transparent)]'
+/**
+ * Emasnya dibangun dari `--premium` lewat `color-mix`, bukan dari nilai warna baru, supaya
+ * ikut berbalik sendiri antara tema terang (amber gelap) dan gelap (amber terang). Garis
+ * tipis di tepi atas memberi kesan permukaan yang tertimpa cahaya tanpa menambah bayangan
+ * — bentuk yang masih sejalan dengan kartu lain di app ini yang semuanya rata.
+ */
+const GOLD_SURFACE = [
+  'relative overflow-hidden rounded-lg',
+  'bg-gradient-to-br from-[color-mix(in_oklab,var(--premium)_20%,transparent)] via-[color-mix(in_oklab,var(--premium)_7%,transparent)] to-transparent',
+  'shadow-[0_0_0_1px_color-mix(in_oklab,var(--premium)_38%,transparent)]',
+  'before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px',
+  'before:bg-[linear-gradient(90deg,transparent,color-mix(in_oklab,var(--premium)_70%,transparent),transparent)]',
+].join(' ')
+
+function CrownMark() {
+  return (
+    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--premium)_22%,transparent)]">
+      <GlyphCrown className="size-4 text-premium" />
+    </span>
+  )
+}
 
 function PremiumActiveCard({ premium }: { premium: PremiumState }) {
   return (
     <section aria-label="Status premium" className={cn(GOLD_SURFACE, 'p-[var(--surface-p)]')}>
       <div className="flex items-center gap-2">
-        <GlyphCrown className="size-5 text-premium" />
+        <CrownMark />
         <p className="text-sm font-semibold leading-none text-foreground">Premium aktif</p>
         <span className="ml-auto text-[11px] font-semibold tabular-nums text-premium">
           {formatCredits(premium.daysLeft)} hari lagi
@@ -80,13 +99,13 @@ function PremiumUpsellCard({
       )}
     >
       <div className="flex items-center gap-2">
-        <GlyphCrown className="size-5 text-premium" />
+        <CrownMark />
         <SectionLabel className="text-premium">Premium</SectionLabel>
         <GlyphChevron className="ml-auto size-4 text-muted-foreground" direction="right" />
       </div>
 
       <p className="stack-gap-t text-sm font-semibold leading-snug text-foreground">
-        Ngumpulin lebih cepat, cairin lebih sering.
+        Mahkota emas di sebelah nama kamu, kelihatan semua orang di papan peringkat.
       </p>
 
       <ul className="stack-gap-t space-y-1">

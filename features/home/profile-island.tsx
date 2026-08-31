@@ -18,6 +18,7 @@ export function ProfileIsland({
   slideOutTo,
   onToggle,
   onClose,
+  onOpenProfile,
 }: {
   user: SessionUser
   stats: UserStats
@@ -26,6 +27,7 @@ export function ProfileIsland({
   slideOutTo?: 'left' | 'right'
   onToggle: () => void
   onClose: () => void
+  onOpenProfile?: () => void
 }) {
   const handle = user.username ? `@${user.username}` : user.id
   const isPremium = Boolean(premium?.active)
@@ -97,6 +99,21 @@ export function ProfileIsland({
             : `${formatCredits(stats.referralCount)} · +${formatCredits(stats.referralCredits)} credit`
         }
       />
+      {onOpenProfile ? (
+        <>
+          <IslandDivider />
+          <button
+            type="button"
+            onClick={() => {
+              onClose()
+              onOpenProfile()
+            }}
+            className="focus-ring transition-ui island-region flex w-full items-center justify-center rounded-md text-[13px] font-bold text-primary hover:text-primary-hover active:text-primary-active"
+          >
+            Buka profil lengkap
+          </button>
+        </>
+      ) : null}
     </IslandPill>
   )
 }

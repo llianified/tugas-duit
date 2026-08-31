@@ -276,7 +276,7 @@ function BoardFrame({
         className={cn(
           'absolute -bottom-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1',
           'text-[10px] font-bold tabular-nums shadow-[0_0_0_1.5px_var(--background)]',
-          position <= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
+          MEDAL_CLASS[position] ?? 'bg-muted text-muted-foreground',
         )}
       >
         {formatCredits(position)}
@@ -310,6 +310,19 @@ function BoardFrame({
  * batas sebelum nama mulai terpotong, dan `prestigeBadges` sudah mengurutkan dari yang
  * paling langka jadi yang terpotong selalu yang paling murah. */
 const BOARD_CHIP_LIMIT = 2
+
+/**
+ * Tiga besar dapat warna sendiri — emas, perak, perunggu — bukan warna primary yang
+ * sama untuk ketiganya. Podium yang seluruhnya seragam menghapus satu-satunya hal yang
+ * membuat posisi 1 berbeda dari posisi 3, padahal jarak antara keduanya justru yang
+ * paling diperebutkan. Emas di sini TIDAK bertabrakan dengan emas premium: yang premium
+ * hidup di cincin avatar dan mahkota, yang ini di lencana nomor.
+ */
+const MEDAL_CLASS: Record<number, string> = {
+  1: 'bg-[#d4a017] text-black',
+  2: 'bg-[#b8bcc4] text-black',
+  3: 'bg-[#b06a3b] text-white',
+}
 
 const CHIP_TONE: Record<PrestigeKey, string> = {
   founder: 'bg-foreground/10 text-foreground',

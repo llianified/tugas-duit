@@ -14,6 +14,7 @@ const VIEWS: Record<AppView, true> = {
   referral: true,
   stats: true,
   leaderboard: true,
+  profile: true,
 }
 
 function isAppView(value: unknown): value is AppView {

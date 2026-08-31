@@ -21,6 +21,7 @@ export type SessionResponse = {
     balance: number
     referralCode: string
     banned?: boolean
+    founder?: boolean
   } | null
   breakdown?: { taskCredits: number; referralCredits: number; withdrawnCredits: number }
   energy?: EnergyState & {

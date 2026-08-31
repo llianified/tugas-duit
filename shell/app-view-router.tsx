@@ -8,6 +8,7 @@ import { HistoryView } from '@/features/history/history'
 import { HomeView } from '@/features/home/home'
 import { LEADERBOARD_ENABLED } from '@/features/leaderboard/availability'
 import { LeaderboardComingSoon, LeaderboardView } from '@/features/leaderboard/leaderboard'
+import { ProfileView } from '@/features/profile/profile'
 import { ReferralView } from '@/features/referral/referral'
 import { StatsView } from '@/features/stats/stats'
 import type { AppView } from '@/navigation/app-view'
@@ -106,6 +107,19 @@ export function AppViewRouter({
         code={session.referralCode}
         shareUrl={session.referralShareUrl}
         earnedCredits={session.taskBalance + session.referralCredits}
+      />
+    )
+  }
+
+  if (effectiveView === 'profile') {
+    if (!session.stats || !session.user) return <AppViewSkeleton />
+    return (
+      <ProfileView
+        key="profile"
+        user={session.user}
+        stats={session.stats}
+        premium={session.premium}
+        founder={session.founder}
       />
     )
   }

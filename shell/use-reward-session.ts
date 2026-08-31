@@ -161,6 +161,7 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
 
   const openHistory = useCallback(() => pushView('history'), [pushView])
   const openProfile = useCallback(() => pushView('profile'), [pushView])
+  const openStats = useCallback(() => pushView('stats'), [pushView])
   const openReferral = useCallback(() => {
     void mutateReferral()
     pushView('referral')
@@ -180,6 +181,7 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     founder: session?.user?.founder ?? false,
     openHistory,
     openProfile,
+    openStats,
     openReferral,
     goBack,
     selectView,

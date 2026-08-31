@@ -169,7 +169,10 @@ export function HomeView({
         </div>
       </div>
 
-      <div className="view-trim-b flex-1 [--view-trim-b:var(--list-row-py)]" />
+      {/* Panel beranda selalu berakhir dengan kartu berbingkai, bukan baris list, jadi
+          tidak ada padding baris yang perlu dipangkas. Sisa jarak ke nav dibiarkan
+          penuh satu region-gap supaya sama dengan jarak di atas tab. */}
+      <div className="flex-1" />
 
       <WithdrawDialog
         open={withdrawOpen}

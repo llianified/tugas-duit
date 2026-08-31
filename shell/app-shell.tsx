@@ -156,7 +156,7 @@ function AppShellInner() {
             rewardPoolRegenCredits={session.rewardPoolRegenCredits}
             rewardPoolSecondsToNext={session.rewardPoolSecondsToNext}
             onPanelOpenChange={setProgressionPanelOpen}
-            onOpenProfile={session.openProfile}
+            onOpenStats={session.openStats}
           />
         ) : null
       }

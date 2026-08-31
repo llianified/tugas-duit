@@ -6,6 +6,23 @@ import { env } from './env'
 const COOKIE_NAME = 'td_session'
 const hashToken = (token: string) => createHash('sha256').update(token).digest()
 
+/**
+ * Aplikasi ini selalu hidup di dalam iframe pihak ketiga — Telegram WebApp maupun
+ * preview v0. Chrome sudah memblokir cookie pihak ketiga yang tak berpartisi, jadi
+ * `SameSite=None; Secure` saja tidak cukup lagi: cookie ikut terkirim di respons,
+ * tapi browser membuangnya, dan `/api/session` selalu balik `user: null` ("Kami belum
+ * kenal sesi kamu"). `Partitioned` (CHIPS) menitipkan cookie ke partisi milik situs
+ * induk sehingga tetap tersimpan dan terkirim. Atribut ini harus sama persis saat
+ * cookie dihapus, kalau tidak yang terhapus adalah cookie lain.
+ */
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'none',
+  partitioned: true,
+  path: '/',
+} as const
+
 interface SessionUser {
   id: number
   publicId: string
@@ -37,13 +54,7 @@ export async function createSession(userId: number, userAgent: string | null) {
     `update sessions set revoked_at=now() where id in (select id from sessions where user_id=$1 and revoked_at is null order by created_at desc offset 5)`,
     [userId],
   )
-  ;(await cookies()).set(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'none',
-    path: '/',
-    expires: expiresAt,
-  })
+  ;(await cookies()).set(COOKIE_NAME, token, { ...COOKIE_OPTIONS, expires: expiresAt })
 }
 
 export async function getSessionUser(): Promise<SessionUser | null> {
@@ -114,5 +125,5 @@ export async function destroySession() {
   if (token) {
     await query('update sessions set revoked_at=now() where token_hash=$1', [hashToken(token)])
   }
-  jar.delete(COOKIE_NAME)
+  jar.set(COOKIE_NAME, '', { ...COOKIE_OPTIONS, maxAge: 0 })
 }

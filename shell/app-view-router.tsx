@@ -137,7 +137,7 @@ export function AppViewRouter({
       task={session.task}
       energy={session.energy}
       energyMax={session.energyMax}
-      energySecondsToNext={session.energySecondsToNext}
+      energyFill={session.energyFill}
       rewardPoolCredits={session.rewardPoolCredits}
       rewardPoolSecondsToNext={session.rewardPoolSecondsToNext}
       adsEnabled={session.adsEnabled}

@@ -9,6 +9,7 @@ import { MissionCard } from '@/features/missions/mission-card'
 import { PremiumCard } from '@/features/premium/components/premium-card'
 import { PremiumDialog } from '@/features/premium/components/premium-dialog'
 import type { Challenge, HistoryEntry } from '@/features/captcha/domain'
+import type { EnergyFill } from '@/domain/energy'
 import type { ChannelBonusState, PremiumState } from '@/shell/session-api'
 import { WithdrawDialog } from '@/features/withdraw/components/withdraw-dialog'
 import type { WithdrawalSubmitInput } from '@/features/withdraw/components/withdraw-form'
@@ -25,7 +26,7 @@ interface HomeViewProps {
   task: Challenge
   energy: number
   energyMax: number
-  energySecondsToNext: number | null
+  energyFill: EnergyFill
   rewardPoolCredits: number | null
   rewardPoolSecondsToNext: number | null
   adsEnabled: boolean
@@ -55,7 +56,7 @@ export function HomeView({
   task,
   energy,
   energyMax,
-  energySecondsToNext,
+  energyFill,
   rewardPoolCredits,
   rewardPoolSecondsToNext,
   adsEnabled,
@@ -94,7 +95,8 @@ export function HomeView({
   if (channelBonus?.enabled && !channelBonus.claimed) {
     panels.push({ value: 'bonus', label: 'Bonus' })
   }
-  if (premium && (premium.active || premium.paymentEnabled)) {
+  const premiumReachable = Boolean(premium && (premium.active || premium.paymentEnabled))
+  if (premium && premiumReachable) {
     panels.push({ value: 'premium', label: premium.active ? 'Premium' : 'VIP' })
   }
   const [panel, setPanel] = useState<HomePanel>('missions')
@@ -116,7 +118,7 @@ export function HomeView({
             task={task}
             energy={energy}
             energyMax={energyMax}
-            energySecondsToNext={energySecondsToNext}
+            energyFill={energyFill}
             rewardPoolCredits={rewardPoolCredits}
             rewardPoolSecondsToNext={rewardPoolSecondsToNext}
             adsEnabled={adsEnabled}
@@ -126,6 +128,8 @@ export function HomeView({
             watchingAd={watchingAd}
             onStart={onStart}
             onStartWithAd={onStartWithAd}
+            onOpenMissions={() => setPanel('missions')}
+            onOpenPremium={premiumReachable ? () => setPremiumOpen(true) : null}
           />
         </div>
       </div>

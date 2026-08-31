@@ -104,11 +104,16 @@ export interface Withdrawal {
   paidAt: number | null
   rejectedAt: number | null
   rejectReason: string | null
+  hasProof: boolean
 }
 
 export const PAYOUT_ETA_TEXT = 'Dana masuk paling lama 1×24 jam kerja.'
 
 export const WITHDRAWAL_REJECT_REASON_MAX = 280
+
+export const PAYOUT_PROOF_MAX_BYTES = 5 * 1024 * 1024
+
+export const PAYOUT_PROOF_ACCEPT = 'image/jpeg,image/png,image/webp'
 
 export function sanitizeAccountNumber(value: string): string {
   return value.replace(/\D/g, '')

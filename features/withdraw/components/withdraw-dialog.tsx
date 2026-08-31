@@ -100,6 +100,7 @@ function WithdrawDialogBody({
             {!gatingReason ? (
               <WithdrawForm
                 balance={balance}
+                cooldownDays={eligibility?.cooldownDays ?? null}
                 step={step}
                 onStepChange={setStep}
                 onSubmit={handleSubmit}

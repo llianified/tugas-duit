@@ -354,3 +354,77 @@ describe('WD-11 — syarat hari aktif sebelum penarikan pertama', () => {
     expect((await getPayouts(userId)).eligibility.activeDays).toBe(1)
   })
 })
+
+describe('WD-12 — bukti transfer', () => {
+  const jpeg = () => new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46])
+  const png = () =>
+    new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d])
+
+  const asFile = (bytes: Uint8Array, type: string, name = 'bukti') =>
+    new File([bytes as unknown as BlobPart], name, { type })
+
+  it('menerima JPEG dan PNG asli', async () => {
+    const { readPayoutProof } = await import('./payout-proof')
+
+    await expect(readPayoutProof(asFile(jpeg(), 'image/jpeg'))).resolves.toMatchObject({
+      ok: true,
+      proof: { contentType: 'image/jpeg', fileName: 'bukti-transfer.jpg' },
+    })
+    await expect(readPayoutProof(asFile(png(), 'image/png'))).resolves.toMatchObject({
+      ok: true,
+      proof: { contentType: 'image/png', fileName: 'bukti-transfer.png' },
+    })
+  })
+
+  it('menolak berkas yang bukan gambar walau mime-nya mengaku gambar', async () => {
+    const { readPayoutProof } = await import('./payout-proof')
+    const bytes = new TextEncoder().encode('%PDF-1.7 bukan gambar')
+
+    await expect(readPayoutProof(asFile(bytes, 'image/png'))).resolves.toMatchObject({ ok: false })
+  })
+
+  it('menolak mime yang tidak cocok dengan isi berkasnya', async () => {
+    const { readPayoutProof } = await import('./payout-proof')
+
+    await expect(readPayoutProof(asFile(jpeg(), 'image/png'))).resolves.toMatchObject({ ok: false })
+  })
+
+  it('menolak berkas kosong dan berkas di atas 5 MB', async () => {
+    const { readPayoutProof } = await import('./payout-proof')
+    const { PAYOUT_PROOF_MAX_BYTES } = await import('@/features/withdraw/domain')
+    const besar = new Uint8Array(PAYOUT_PROOF_MAX_BYTES + 1)
+    besar.set(jpeg())
+
+    await expect(readPayoutProof(asFile(new Uint8Array(0), 'image/png'))).resolves.toMatchObject({
+      ok: false,
+    })
+    await expect(readPayoutProof(asFile(besar, 'image/jpeg'))).resolves.toMatchObject({ ok: false })
+  })
+
+  it('hasProof mengikuti kolom bukti tanpa membocorkan file_id', async () => {
+    const { query } = await import('./db')
+    const { createPayout, getPayouts, savePayoutProof } = await import('./payout')
+    const credits = withdrawalMinimumCredits()
+    const userId = await makeUser(credits)
+
+    const created = await createPayout(userId, {
+      channelId: PAYOUT_CHANNELS[0].id,
+      accountNumber: accountFor(PAYOUT_CHANNELS[0]),
+      accountName: 'Uji Bukti',
+      credits,
+    })
+    const id = created.withdrawal.id
+
+    expect((await getPayouts(userId)).withdrawals[0]).toMatchObject({ hasProof: false })
+
+    await savePayoutProof(id, 'file-id-uji')
+    expect((await getPayouts(userId)).withdrawals[0].hasProof).toBe(false)
+
+    await query("update withdrawals set state='paid',paid_at=now() where id=$1", [id])
+    await savePayoutProof(id, 'file-id-uji')
+
+    const withdrawal = (await getPayouts(userId)).withdrawals[0]
+    expect(withdrawal.hasProof).toBe(true)
+    expect(JSON.stringify(withdrawal)).not.toContain('file-id-uji')
+  })
+})

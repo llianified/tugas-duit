@@ -5,7 +5,6 @@ import { ActiveTask } from '@/features/home/active-task'
 import { BalanceSummary } from '@/features/home/balance-summary'
 import { RecentTransactions } from '@/features/home/recent-transactions'
 import { ChannelBonusCard } from '@/features/channel/channel-card'
-import { MissionCard } from '@/features/missions/mission-card'
 import { PremiumCard } from '@/features/premium/components/premium-card'
 import { PremiumDialog } from '@/features/premium/components/premium-dialog'
 import type { Challenge, HistoryEntry } from '@/features/captcha/domain'
@@ -14,7 +13,6 @@ import type { ChannelBonusState, PremiumState } from '@/shell/session-api'
 import { WithdrawDialog } from '@/features/withdraw/components/withdraw-dialog'
 import type { WithdrawalSubmitInput } from '@/features/withdraw/components/withdraw-form'
 import type { Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
-import { SegmentedTabs, type SegmentedTab } from '@/shared/components/segmented-tabs'
 
 interface HomeViewProps {
   balance: number
@@ -40,6 +38,7 @@ interface HomeViewProps {
   withdrawalEligibility: WithdrawalEligibility | null
   onSubmitWithdrawal: (input: WithdrawalSubmitInput) => Promise<Withdrawal | null>
   onOpenHistory: () => void
+  onOpenMissions: () => void
   premium: PremiumState | null
   channelBonus: ChannelBonusState | null
   onRefreshSession: () => Promise<unknown>
@@ -70,6 +69,7 @@ export function HomeView({
   withdrawalEligibility,
   onSubmitWithdrawal,
   onOpenHistory,
+  onOpenMissions,
   premium,
   channelBonus,
   onRefreshSession,
@@ -78,29 +78,20 @@ export function HomeView({
   const [premiumOpen, setPremiumOpen] = useState(false)
 
   /**
-   * Kartu sekunder ditumpuk di tab, bukan berderet ke bawah.
+   * Tab beranda dilepas begitu Misi pindah ke nav.
    *
-   * Misi dan bonus channel sama-sama sekunder terhadap task — tidak ada yang perlu
-   * terlihat bersamaan, dan menderetkan semuanya mendorong transaksi terakhir keluar
-   * layar sehingga beranda selalu menuntut gulir. Sebagai tab, tingginya tetap
-   * setinggi satu kartu berapa pun yang aktif.
+   * Tiga tab menyisakan dua tanpa Misi, dan dua-duanya sudah bermasalah sebelum itu:
+   * "Aktivitas" dan view "Riwayat" adalah data yang sama dengan dua nama berbeda —
+   * user tidak punya cara menduga bedanya — sementara "Bonus" cuma ada selama
+   * bonusnya belum diklaim, jadi jumlah tabnya berubah di tempat yang sama. Sisanya
+   * sekarang berderet, dan barisnya memakai nama aslinya, "Transaksi terakhir",
+   * sehingga tidak lagi bersaing dengan Riwayat.
    *
-   * Tab yang isinya tidak ada tidak dirender sama sekali: user yang sudah mengklaim
-   * bonus channel tidak diberi tab kosong untuk ditekan.
-   *
-   * Kartu premium berada di atas tab, bukan di dalamnya: penawarannya harus terlihat
-   * tanpa user menekan tab lebih dulu.
+   * Bonus diletakkan di atas transaksi karena ia satu-satunya yang menuntut aksi dan
+   * bisa hilang; transaksi hanya catatan yang tidak ke mana-mana.
    */
-  const panels: SegmentedTab<HomePanel>[] = [
-    { value: 'missions', label: 'Misi' },
-    { value: 'activity', label: 'Aktivitas' },
-  ]
-  if (channelBonus?.enabled && !channelBonus.claimed) {
-    panels.push({ value: 'bonus', label: 'Bonus' })
-  }
   const premiumReachable = Boolean(premium && (premium.active || premium.paymentEnabled))
-  const [panel, setPanel] = useState<HomePanel>('missions')
-  const activePanel = panels.some((item) => item.value === panel) ? panel : 'missions'
+  const bonusReachable = Boolean(channelBonus?.enabled && !channelBonus.claimed)
 
   return (
     <div className="view-min-h flex flex-col">
@@ -128,7 +119,7 @@ export function HomeView({
             watchingAd={watchingAd}
             onStart={onStart}
             onStartWithAd={onStartWithAd}
-            onOpenMissions={() => setPanel('missions')}
+            onOpenMissions={onOpenMissions}
             onOpenPremium={premiumReachable ? () => setPremiumOpen(true) : null}
           />
         </div>
@@ -139,39 +130,21 @@ export function HomeView({
           <PremiumCard premium={premium} onOpen={() => setPremiumOpen(true)} />
         ) : null}
 
-        {panels.length > 1 ? (
+        {bonusReachable && channelBonus ? (
           <div className={premium && premiumReachable ? 'region-gap-t' : undefined}>
-            <SegmentedTabs
-              tabs={panels}
-              value={activePanel}
-              onChange={setPanel}
-              ariaLabel="Panel beranda"
-            />
+            <ChannelBonusCard bonus={channelBonus} onClaimed={onRefreshSession} />
           </div>
         ) : null}
 
         <div
-          key={activePanel}
-          role={panels.length > 1 ? 'tabpanel' : undefined}
-          id={panels.length > 1 ? `panel-${activePanel}` : undefined}
-          aria-labelledby={panels.length > 1 ? `tab-${activePanel}` : undefined}
-          className={panels.length > 1 ? 'animate-fade-in region-gap-t' : undefined}
+          className={
+            (premium && premiumReachable) || bonusReachable ? 'region-gap-t' : undefined
+          }
         >
-          {activePanel === 'missions' ? (
-            <MissionCard refreshKey={completedCount} onClaimed={onRefreshSession} />
-          ) : null}
-          {activePanel === 'activity' ? (
-            <RecentTransactions history={history} completedCount={completedCount} />
-          ) : null}
-          {activePanel === 'bonus' && channelBonus ? (
-            <ChannelBonusCard bonus={channelBonus} onClaimed={onRefreshSession} />
-          ) : null}
+          <RecentTransactions history={history} completedCount={completedCount} />
         </div>
       </div>
 
-      {/* Panel beranda selalu berakhir dengan kartu berbingkai, bukan baris list, jadi
-          tidak ada padding baris yang perlu dipangkas. Sisa jarak ke nav dibiarkan
-          penuh satu region-gap supaya sama dengan jarak di atas tab. */}
       <div className="flex-1" />
 
       <WithdrawDialog

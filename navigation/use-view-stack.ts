@@ -10,6 +10,7 @@ const NAV_GUARD_KEY = 'tugasDuitViewStackGuard'
 const VIEWS: Record<AppView, true> = {
   home: true,
   captcha: true,
+  missions: true,
   history: true,
   referral: true,
   stats: true,

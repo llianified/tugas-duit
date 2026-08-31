@@ -12,6 +12,7 @@ import { HistoryView } from '@/features/history/history'
 import { HomeView } from '@/features/home/home'
 import { LEADERBOARD_ENABLED } from '@/features/leaderboard/availability'
 import { LeaderboardComingSoon, LeaderboardView } from '@/features/leaderboard/leaderboard'
+import { MissionsView } from '@/features/missions/missions'
 import { ProfileView } from '@/features/profile/profile'
 import { ReferralView } from '@/features/referral/referral'
 import { StatsView } from '@/features/stats/stats'
@@ -98,6 +99,16 @@ export function AppViewRouter({
         withdrawals={session.withdrawals}
         withdrawnCredits={session.withdrawnCredits}
         processingCredits={session.processingCredits}
+      />
+    )
+  }
+
+  if (effectiveView === 'missions') {
+    return (
+      <MissionsView
+        key="missions"
+        refreshKey={session.completedCount}
+        onClaimed={session.refreshSession}
       />
     )
   }

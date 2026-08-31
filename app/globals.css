@@ -854,18 +854,32 @@
     background-color: var(--foreground);
     color: var(--background);
   }
+  /**
+   * Toast naik dari bawah, duduk di atas nav pill kalau nav-nya ada.
+   *
+   * `--toast-lift` diisi lewat `[data-app-nav]` yang dipasang `AppFrame`, bukan
+   * lewat props: layer ini dirender `ToastProvider` di luar pohon `AppFrame`,
+   * jadi variabelnya harus dititipkan di `:root` supaya bisa diwarisi. Tanpa nav
+   * (captcha, sesi gagal) toast langsung menempel ke inset bawah.
+   *
+   * z-index-nya di atas dialog premium (50) — error yang muncul dari aksi di
+   * dalam dialog tidak boleh tertutup dialog yang memicunya.
+   */
   .toast-layer {
     position: fixed;
     left: 0;
     right: 0;
-    top: calc(var(--brand-band-top) + var(--brand-band-h) + 0.5rem);
-    z-index: 40;
+    bottom: calc(var(--content-inset-bottom) + var(--toast-lift, 0px));
+    z-index: 60;
     display: flex;
-    flex-direction: column;
+    flex-direction: column-reverse;
     align-items: center;
     gap: 0.5rem;
     padding-inline: var(--content-px);
     pointer-events: none;
+  }
+  :root[data-app-nav='true'] .toast-layer {
+    --toast-lift: calc(var(--nav-pill-h) + 0.5rem);
   }
   .bubble-p {
     padding: var(--bubble-py) var(--bubble-px);

@@ -14,8 +14,8 @@ import {
   validateWithdrawalDraft,
   type Withdrawal,
   type WithdrawalDraft,
-  type WithdrawalDraftErrors,
 } from '@/features/withdraw/domain'
+import { useToast } from '@/shell/toast'
 
 export type WithdrawStep = 'amount' | 'account' | 'confirm'
 
@@ -24,12 +24,6 @@ export interface WithdrawalSubmitInput {
   accountNumber: string
   accountName: string
   credits: number
-}
-
-const NO_DRAFT_ERRORS: WithdrawalDraftErrors = {
-  accountNumber: null,
-  accountName: null,
-  amount: null,
 }
 
 export function WithdrawForm({
@@ -51,10 +45,9 @@ export function WithdrawForm({
     accountName: '',
     amount: '',
   })
-  const [amountSubmitted, setAmountSubmitted] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const submittingRef = useRef(false)
+  const showError = useToast()
 
   const channel = getPayoutChannel(draft.channelId)
   const errors = useMemo(() => validateWithdrawalDraft(draft, balance), [draft, balance])
@@ -65,22 +58,26 @@ export function WithdrawForm({
   }
 
   function handleContinue() {
-    setAmountSubmitted(true)
-    if (errors.amount) return
+    if (errors.amount) {
+      showError(errors.amount)
+      return
+    }
     onStepChange('account')
   }
 
   function handleSubmit() {
     if (submittingRef.current) return
-    setSubmitted(true)
 
     if (errors.amount) {
-      setAmountSubmitted(true)
+      showError(errors.amount)
       onStepChange('amount')
       return
     }
 
-    if (!isDraftValid(errors)) return
+    if (!isDraftValid(errors)) {
+      showError(errors.accountNumber ?? errors.accountName ?? 'Periksa kembali data tujuan.')
+      return
+    }
 
     onStepChange('confirm')
   }
@@ -115,7 +112,6 @@ export function WithdrawForm({
             channel={channel}
             amount={draft.amount}
             credits={credits}
-            error={amountSubmitted ? errors.amount : null}
             onAmountChange={(amount) => update({ amount })}
             onChannelChange={(channelId) => update({ channelId })}
             onContinue={handleContinue}
@@ -125,7 +121,6 @@ export function WithdrawForm({
             channel={channel}
             credits={credits}
             draft={draft}
-            errors={submitted ? errors : NO_DRAFT_ERRORS}
             isSubmitting={isSubmitting}
             onChange={update}
             onEditAmount={() => onStepChange('amount')}

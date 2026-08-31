@@ -5,6 +5,7 @@ import { ActionButton } from '@/shared/components/action-button'
 import { GlyphTelegram } from '@/shared/components/glyph'
 import { IconCircle } from '@/shared/components/icon-circle'
 import { userFacingMessage } from '@/shell/api-client'
+import { useToast } from '@/shell/toast'
 import { verifyChannelMembership, type ChannelGateState } from '@/shell/session-api'
 
 export function ChannelGate({
@@ -15,24 +16,23 @@ export function ChannelGate({
   onVerified: () => Promise<unknown>
 }) {
   const [checking, setChecking] = useState(false)
-  const [message, setMessage] = useState<string | null>(null)
+  const showError = useToast()
 
   const verify = useCallback(async () => {
-    setMessage(null)
     setChecking(true)
     try {
       const next = await verifyChannelMembership()
       if (next.required && !next.member) {
-        setMessage('Kamu masih belum kelihatan jadi anggota channel. Join dulu, baru tekan lagi ya.')
+        showError('Kamu masih belum kelihatan jadi anggota channel. Join dulu, baru tekan lagi ya.')
         return
       }
       await onVerified()
     } catch (cause) {
-      setMessage(userFacingMessage(cause))
+      showError(userFacingMessage(cause))
     } finally {
       setChecking(false)
     }
-  }, [onVerified])
+  }, [onVerified, showError])
 
   return (
     <section
@@ -50,12 +50,6 @@ export function ChannelGate({
         Tugas Duit cuma bisa dipakai anggota channel Telegram kami. Semua pengumuman
         pembayaran dan perubahan aturan diumumkan di sana.
       </p>
-
-      {message ? (
-        <p className="stack-gap-t max-w-[17rem] text-xs leading-relaxed text-destructive">
-          {message}
-        </p>
-      ) : null}
 
       <div className="stack-gap-t flex w-full max-w-xs flex-col gap-2">
         <a

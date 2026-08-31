@@ -13,6 +13,7 @@ import {
   type PremiumInvoice,
   type PremiumState,
 } from '@/shell/session-api'
+import { useToast } from '@/shell/toast'
 import { formatCredits, formatLongCountdown, formatRupiah } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 
@@ -57,12 +58,11 @@ function PremiumDialogBody({
 }) {
   const [invoice, setInvoice] = useState<PremiumInvoice | null>(premium.invoice)
   const [pending, setPending] = useState<PremiumMonths | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const showError = useToast()
   const activated = premium.active
 
   const buy = useCallback(
     async (months: PremiumMonths) => {
-      setError(null)
       setPending(months)
       try {
         const result = await startPremiumCheckout(months)
@@ -72,12 +72,12 @@ function PremiumDialogBody({
         }
         setInvoice(result.invoice)
       } catch (cause) {
-        setError(userFacingMessage(cause))
+        showError(userFacingMessage(cause))
       } finally {
         setPending(null)
       }
     },
-    [onRefresh],
+    [onRefresh, showError],
   )
 
   useEffect(() => {
@@ -113,7 +113,7 @@ function PremiumDialogBody({
             onRefresh={onRefresh}
           />
         ) : (
-          <PlanPanel premium={premium} pending={pending} error={error} onBuy={buy} />
+          <PlanPanel premium={premium} pending={pending} onBuy={buy} />
         )}
       </div>
     </>
@@ -123,12 +123,10 @@ function PremiumDialogBody({
 function PlanPanel({
   premium,
   pending,
-  error,
   onBuy,
 }: {
   premium: PremiumState
   pending: PremiumMonths | null
-  error: string | null
   onBuy: (months: PremiumMonths) => void
 }) {
   return (
@@ -158,8 +156,6 @@ function PlanPanel({
           />
         ))}
       </div>
-
-      {error ? <p className="stack-gap-t text-xs text-destructive">{error}</p> : null}
 
       <p className="stack-gap-t text-[11px] leading-snug text-muted-foreground">
         Pembayaran lewat QRIS, bisa dari e-wallet atau m-banking apa pun. Premium nyala otomatis

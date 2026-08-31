@@ -11,7 +11,6 @@ import {
   sanitizeAccountNumber,
   type PayoutChannel,
   type WithdrawalDraft,
-  type WithdrawalDraftErrors,
 } from '@/features/withdraw/domain'
 import { cn } from '@/shared/lib/utils'
 
@@ -19,7 +18,6 @@ export function AccountStep({
   channel,
   credits,
   draft,
-  errors,
   isSubmitting,
   onChange,
   onEditAmount,
@@ -28,7 +26,6 @@ export function AccountStep({
   channel: PayoutChannel
   credits: number
   draft: WithdrawalDraft
-  errors: WithdrawalDraftErrors
   isSubmitting: boolean
   onChange: (patch: Partial<WithdrawalDraft>) => void
   onEditAmount: () => void
@@ -44,11 +41,7 @@ export function AccountStep({
     >
       <AmountRecap credits={credits} channel={channel} onEdit={onEditAmount} />
 
-      <Field
-        label={channel.accountLabel}
-        htmlFor="withdraw-account-number"
-        error={errors.accountNumber}
-      >
+      <Field label={channel.accountLabel} htmlFor="withdraw-account-number">
         <input
           id="withdraw-account-number"
           type="tel"
@@ -58,14 +51,13 @@ export function AccountStep({
           placeholder={channel.accountPlaceholder}
           value={draft.accountNumber}
           onChange={(event) => onChange({ accountNumber: sanitizeAccountNumber(event.target.value) })}
-          className={inputClass(errors.accountNumber)}
+          className={INPUT_CLASS}
         />
       </Field>
 
       <Field
         label="Nama pemilik"
         htmlFor="withdraw-account-name"
-        error={errors.accountName}
         hint="Harus sama dengan nama di akun tujuan."
       >
         <input
@@ -75,7 +67,7 @@ export function AccountStep({
           placeholder="Nama lengkap"
           value={draft.accountName}
           onChange={(event) => onChange({ accountName: event.target.value })}
-          className={inputClass(errors.accountName)}
+          className={INPUT_CLASS}
         />
       </Field>
 
@@ -117,23 +109,17 @@ function AmountRecap({
   )
 }
 
-function inputClass(hasError: string | null | false | undefined) {
-  return cn(
-    'focus-ring control-h w-full rounded-lg px-3 text-sm placeholder:text-muted-foreground',
-    hasError ? 'bg-destructive/10 text-destructive' : 'bg-muted text-foreground',
-  )
-}
+const INPUT_CLASS =
+  'focus-ring control-h w-full rounded-lg bg-muted px-3 text-sm text-foreground placeholder:text-muted-foreground'
 
 function Field({
   label,
   htmlFor,
-  error,
   hint,
   children,
 }: {
   label: string
   htmlFor: string
-  error: string | null
   hint?: string
   children: ReactNode
 }) {
@@ -143,11 +129,7 @@ function Field({
         {label}
       </label>
       <div className="stack-gap-t">{children}</div>
-      {error ? (
-        <p role="alert" className="stack-gap-t text-xs leading-relaxed text-destructive text-pretty">
-          {error}
-        </p>
-      ) : hint ? (
+      {hint ? (
         <p className="stack-gap-t text-xs leading-relaxed text-muted-foreground text-pretty">{hint}</p>
       ) : null}
     </div>

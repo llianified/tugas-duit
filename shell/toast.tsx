@@ -91,12 +91,12 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: number)
 
   function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
     if (dragY === null) return
-    setDragY(Math.min(0, event.clientY - startY.current))
+    setDragY(Math.max(0, event.clientY - startY.current))
   }
 
   function handlePointerUp() {
     if (dragY === null) return
-    if (dragY <= -SWIPE_DISMISS_PX) {
+    if (dragY >= SWIPE_DISMISS_PX) {
       close()
       return
     }
@@ -107,7 +107,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: number)
     <motion.div
       role="alert"
       className="toast-item bubble-p"
-      initial={{ opacity: 0, y: -12, scale: 0.97 }}
+      initial={{ opacity: 0, y: 12, scale: 0.97 }}
       animate={{
         opacity: 1,
         y: dragY ?? 0,
@@ -116,7 +116,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: number)
       }}
       exit={{
         opacity: 0,
-        y: -12,
+        y: 12,
         scale: 0.97,
         transition: { duration: LEAVE_DURATION_MS / 1000, ease: EASE_OUT_QUART },
       }}

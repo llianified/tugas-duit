@@ -108,6 +108,13 @@ function ProofDialog({ id, onClose }: { id: string | null; onClose: () => void }
 
           <div className="mt-3 flex min-h-0 flex-col overflow-y-auto px-content pb-[var(--content-px)]">
             {id ? (
+              // Bukti transfer disajikan `/api/withdrawals/[id]/proof` di balik sesi user
+              // dan `Cache-Control: private, no-store`, jadi optimizer next/image tidak
+              // bisa mengambilnya — fetch-nya jalan server-side tanpa cookie dan berujung
+              // 401. Dimensinya juga tidak diketahui (file dari admin, rasio bebas).
+              // `images.unoptimized` sudah aktif project-wide, jadi next/image cuma
+              // menambah wrapper tanpa optimasi apa pun.
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={`/api/withdrawals/${id}/proof`}
                 alt="Bukti transfer dari admin"

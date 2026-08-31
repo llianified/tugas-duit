@@ -50,14 +50,25 @@ function AppShellInner() {
    * capping dari nol terus-menerus, yang justru membuat iklan tayang lebih sering daripada
    * plafonnya.
    */
-  const config = economyConfig()
+  const {
+    inAppAdsFrequency,
+    inAppAdsCappingMinutes,
+    inAppAdsIntervalSeconds,
+    inAppAdsTimeoutSeconds,
+  } = economyConfig()
   const adsSettings = useMemo(
-    () => inAppAdsSettings(config),
+    () =>
+      inAppAdsSettings({
+        inAppAdsFrequency,
+        inAppAdsCappingMinutes,
+        inAppAdsIntervalSeconds,
+        inAppAdsTimeoutSeconds,
+      }),
     [
-      config.inAppAdsFrequency,
-      config.inAppAdsCappingMinutes,
-      config.inAppAdsIntervalSeconds,
-      config.inAppAdsTimeoutSeconds,
+      inAppAdsFrequency,
+      inAppAdsCappingMinutes,
+      inAppAdsIntervalSeconds,
+      inAppAdsTimeoutSeconds,
     ],
   )
   const channelBlocked =

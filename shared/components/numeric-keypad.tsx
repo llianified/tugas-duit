@@ -72,7 +72,7 @@ export function NumericKeypad({
             aria-label="Hapus satu karakter"
             className="text-xl"
           >
-            <GlyphBackspace className="size-5" />
+            <GlyphBackspace className="glyph-lg" />
           </KeypadKey>
         </div>
       </div>

@@ -8,6 +8,8 @@ import { formatCredits, formatHistoryTime, formatRupiah } from '@/shared/lib/for
 import { AutoRefresh } from '../auto-refresh'
 import { CopyButton } from './copy-button'
 import { PayoutActions } from './payout-actions'
+import { Surface } from '@/shared/components/surface'
+import { actionButtonClass } from '@/shared/components/action-button'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -30,11 +32,11 @@ export default async function AdminWithdrawalsPage({
     return (
       <div className="flex flex-col gap-3">
         <AutoRefresh seconds={QUEUE_REFRESH_SECONDS} />
-        <p className="rounded-lg bg-muted px-4 py-8 text-center text-sm text-muted-foreground">
+        <Surface as="p" tone="solid" className="text-center text-sm text-muted-foreground">
           {offset === 0
             ? 'Tidak ada pengajuan yang menunggu.'
             : 'Halaman ini sudah kosong — antreannya menyusut sejak tautan ini dibuka.'}
-        </p>
+        </Surface>
         {offset > 0 ? <PageLink offset={0}>Kembali ke awal antrean</PageLink> : null}
       </div>
     )
@@ -56,9 +58,11 @@ export default async function AdminWithdrawalsPage({
           const channel = getPayoutChannel(payout.channelId)
 
           return (
-            <li
+            <Surface
+              as="li"
               key={payout.id}
-              className="flex flex-col gap-4 rounded-lg bg-muted p-4"
+              tone="solid"
+              className="flex flex-col gap-4"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <div className="flex flex-wrap items-baseline gap-x-2">
@@ -116,7 +120,7 @@ export default async function AdminWithdrawalsPage({
                 amountLabel={formatRupiah(payout.amountIdr)}
                 accountLabel={`${channel.name} ${payout.accountNumber}`}
               />
-            </li>
+            </Surface>
           )
         })}
       </ul>
@@ -145,7 +149,7 @@ function PageLink({ offset, children }: { offset: number; children: ReactNode })
   return (
     <Link
       href={offset === 0 ? '/admin/withdrawals' : `/admin/withdrawals?offset=${offset}`}
-      className="focus-ring rounded-md bg-muted px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted-foreground/15"
+      className={actionButtonClass({ variant: 'soft', size: 'compact', className: 'w-auto' })}
     >
       {children}
     </Link>

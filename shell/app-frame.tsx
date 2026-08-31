@@ -14,6 +14,19 @@ function useDocumentScrollLock() {
   }, [])
 }
 
+function useNavFlag(hasNav: boolean) {
+  useEffect(() => {
+    if (!hasNav) {
+      delete document.documentElement.dataset.appNav
+      return
+    }
+    document.documentElement.dataset.appNav = 'true'
+    return () => {
+      delete document.documentElement.dataset.appNav
+    }
+  }, [hasNav])
+}
+
 export function AppFrame({
   badges,
   nav,
@@ -34,6 +47,7 @@ export function AppFrame({
   heroBand?: boolean
 }) {
   useDocumentScrollLock()
+  useNavFlag(Boolean(nav))
 
   return (
     <div

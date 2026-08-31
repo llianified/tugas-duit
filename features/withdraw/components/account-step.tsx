@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 import { ActionButton } from '@/shared/components/action-button'
 import { CreditAmount } from '@/shared/components/credit-amount'
+import { TextInput } from '@/shared/components/input'
 import { EYEBROW_CLASS } from '@/shared/components/section-label'
 import { Surface } from '@/shared/components/surface'
 import { creditsToRupiah } from '@/domain/economy'
@@ -49,7 +50,7 @@ export function AccountStep({
         htmlFor="withdraw-account-number"
         error={errors.accountNumber}
       >
-        <input
+        <TextInput
           id="withdraw-account-number"
           type="tel"
           inputMode="numeric"
@@ -57,8 +58,8 @@ export function AccountStep({
           autoFocus
           placeholder={channel.accountPlaceholder}
           value={draft.accountNumber}
+          invalid={Boolean(errors.accountNumber)}
           onChange={(event) => onChange({ accountNumber: sanitizeAccountNumber(event.target.value) })}
-          className={inputClass(errors.accountNumber)}
         />
       </Field>
 
@@ -68,14 +69,14 @@ export function AccountStep({
         error={errors.accountName}
         hint="Harus sama dengan nama di akun tujuan."
       >
-        <input
+        <TextInput
           id="withdraw-account-name"
           type="text"
           autoComplete="name"
           placeholder="Nama lengkap"
           value={draft.accountName}
+          invalid={Boolean(errors.accountName)}
           onChange={(event) => onChange({ accountName: event.target.value })}
-          className={inputClass(errors.accountName)}
         />
       </Field>
 
@@ -114,13 +115,6 @@ function AmountRecap({
 
       <span className="shrink-0 text-xs font-semibold text-primary">Ubah</span>
     </Surface>
-  )
-}
-
-function inputClass(hasError: string | null | false | undefined) {
-  return cn(
-    'focus-ring control-h w-full rounded-lg px-3 text-sm placeholder:text-muted-foreground',
-    hasError ? 'bg-destructive/10 text-destructive' : 'bg-muted text-foreground',
   )
 }
 

@@ -29,6 +29,11 @@ import type { LeaderboardBoard, LeaderboardEntry } from '@/features/leaderboard/
 
 type BoardSurface = 'papan' | 'aktivitas'
 
+const SURFACE_TABS: readonly SegmentedTab<BoardSurface>[] = [
+  { value: 'papan', label: 'Papan' },
+  { value: 'aktivitas', label: 'Aktivitas' },
+]
+
 /**
  * Dua tab tingkat atas, bukan dua item nav. Papan dan umpan aktivitas menjawab
  * pertanyaan yang sama — "apa yang sedang terjadi di antara pemain lain" — hanya
@@ -50,30 +55,14 @@ export function LeaderboardView({
     <div className="view-min-h flex flex-col">
       <PageHeader title={VIEW_TITLE.leaderboard} />
 
-      <div role="tablist" aria-label="Tampilan papan" className="region-under-brand flex gap-5">
-        {(
-          [
-            ['papan', 'Papan'],
-            ['aktivitas', 'Aktivitas'],
-          ] as [BoardSurface, string][]
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={surface === key}
-            onClick={() => setSurface(key)}
-            className={cn(
-              'focus-ring transition-ui border-b-2 px-1 pb-2.5 text-[15px] font-bold tracking-tight',
-              surface === key
-                ? 'border-primary text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <SegmentedTabs
+        className="region-under-brand"
+        variant="underline"
+        ariaLabel="Tampilan papan"
+        tabs={SURFACE_TABS}
+        value={surface}
+        onChange={setSurface}
+      />
 
       {surface === 'aktivitas' ? (
         <div className="region-t">
@@ -426,7 +415,7 @@ function BoardListItem({
         <span className="flex min-w-0 items-center gap-1.5">
           <span className="truncate">{entry.displayName}</span>
           {entry.premium ? (
-            <GlyphCrown className="size-3.5 shrink-0 text-premium" aria-label="Anggota premium" />
+            <GlyphCrown className="glyph-sm shrink-0 text-premium" aria-label="Anggota premium" />
           ) : null}
           {entry.you ? <MetaBadge tone="accent">Kamu</MetaBadge> : null}
           <PrestigeChips entry={entry} />

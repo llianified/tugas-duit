@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { ActionButton } from '@/shared/components/action-button'
 import { sendJson } from '@/shell/api-client'
 
 export function SignOutButton() {
@@ -19,13 +20,8 @@ export function SignOutButton() {
   }
 
   return (
-    <button
-      type="button"
-      onClick={signOut}
-      disabled={pending}
-      className="focus-ring rounded-md px-2 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted-foreground/15 hover:text-foreground disabled:opacity-50"
-    >
+    <ActionButton variant="ghost" size="compact" className="w-auto" onClick={signOut} disabled={pending}>
       {pending ? 'Keluar…' : 'Keluar'}
-    </button>
+    </ActionButton>
   )
 }

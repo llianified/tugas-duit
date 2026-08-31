@@ -3,12 +3,12 @@ import { formatHistoryTime, formatUnitCountdown } from './format'
 
 describe('formatUnitCountdown', () => {
   it.each([
-    [0, '00m 00d'],
-    [40, '00m 40d'],
-    [60, '01m 00d'],
-    [3607, '60m 07d'],
-    [Number.NaN, '00m 00d'],
-    [-1, '00m 00d'],
+    [0, '00m 00dtk'],
+    [40, '00m 40dtk'],
+    [60, '01m 00dtk'],
+    [3607, '60m 07dtk'],
+    [Number.NaN, '00m 00dtk'],
+    [-1, '00m 00dtk'],
   ])('formats %s seconds with explicit units', (seconds, expected) => {
     expect(formatUnitCountdown(seconds)).toBe(expected)
   })

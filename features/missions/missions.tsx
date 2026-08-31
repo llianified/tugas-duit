@@ -32,7 +32,7 @@ export function MissionsView({
 
       <section aria-label="Cara kerja misi" className="region-under-brand">
         <SectionLabel as="h2">Cara kerjanya</SectionLabel>
-        <p className="label-gap-t text-[13px] leading-relaxed text-muted-foreground text-pretty">
+        <p className="label-gap-t text-label leading-relaxed text-muted-foreground text-pretty">
           Progres misi kebaca sendiri dari task yang kamu kerjakan — nggak ada yang perlu
           diaktifkan dulu. Begitu targetnya kena, energinya tinggal diambil di daftar bawah.
         </p>

@@ -6,6 +6,8 @@ import { getSessionUser } from '@/server/session'
 import { creditsToRupiah } from '@/domain/economy'
 import { formatCompact, formatCredits, formatHistoryTime, formatRupiah } from '@/shared/lib/format'
 import { AutoRefresh } from '../auto-refresh'
+import { Surface } from '@/shared/components/surface'
+import { PageTitle, SectionLabel } from '@/shared/components/section-label'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -22,7 +24,7 @@ export default async function AdminDashboardPage() {
   return (
     <div className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold text-foreground">Pemantauan</h2>
+        <PageTitle as="h2">Pemantauan</PageTitle>
         <p className="text-xs text-muted-foreground">
           Hanya membaca — tidak ada yang bisa diubah dari sini.
         </p>
@@ -82,7 +84,7 @@ export default async function AdminDashboardPage() {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
-      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      <SectionLabel as="h3">{title}</SectionLabel>
       <div className="grid grid-cols-2 gap-3">{children}</div>
     </section>
   )
@@ -100,7 +102,7 @@ function Metric({
   urgent?: boolean
 }) {
   return (
-    <div className="flex flex-col gap-1 rounded-lg bg-muted p-4">
+    <Surface tone="solid" className="flex flex-col gap-1">
       <span className="text-xs text-muted-foreground">{label}</span>
       <span
         className={`text-2xl font-semibold tabular-nums ${urgent ? 'text-primary' : 'text-foreground'}`}
@@ -108,7 +110,7 @@ function Metric({
         {value}
       </span>
       {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
-    </div>
+    </Surface>
   )
 }
 
@@ -125,16 +127,16 @@ function ActivityFeed({ entries }: { entries: AdminActivityEntry[] }) {
   if (entries.length === 0) {
     return (
       <section className="flex flex-col gap-2">
-        <h3 className="text-sm font-semibold text-foreground">Aktivitas terbaru</h3>
-        <p className="rounded-lg bg-muted px-4 py-8 text-center text-sm text-muted-foreground">
+        <SectionLabel as="h3">Aktivitas terbaru</SectionLabel>
+        <Surface as="p" tone="solid" className="text-center text-sm text-muted-foreground">
           Belum ada aktivitas tercatat.
-        </p>
+        </Surface>
       </section>
     )
   }
   return (
     <section className="flex flex-col gap-2">
-      <h3 className="text-sm font-semibold text-foreground">Aktivitas terbaru</h3>
+      <SectionLabel as="h3">Aktivitas terbaru</SectionLabel>
       <ul className="flex flex-col gap-2">
         {entries.map((entry, index) => (
           <li

@@ -4,6 +4,10 @@ import { useRouter } from 'next/navigation'
 import { useState, type ReactNode } from 'react'
 import { ApiError, sendJson } from '@/shell/api-client'
 import { formatCredits } from '@/shared/lib/format'
+import { Surface } from '@/shared/components/surface'
+import { SectionLabel } from '@/shared/components/section-label'
+import { ActionButton } from '@/shared/components/action-button'
+import { TextInput } from '@/shared/components/input'
 
 export function UserActions({
   publicId,
@@ -28,7 +32,7 @@ export function UserActions({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <h3 className="text-sm font-semibold text-foreground">Aksi admin</h3>
+      <SectionLabel as="h3">Aksi admin</SectionLabel>
       <AdjustBalance publicId={publicId} balanceCredits={balanceCredits} maxAdjust={maxAdjust} />
       <Suspension publicId={publicId} firstName={firstName} isSuspended={isSuspended} isSelf={isSelf} />
       <AdminFlag
@@ -87,22 +91,22 @@ function AdjustBalance({
       <div className="flex flex-wrap gap-3">
         <label className="flex min-w-40 flex-1 flex-col gap-1 text-sm">
           <span className="font-medium text-foreground">Jumlah credit</span>
-          <input
+          <TextInput
             inputMode="numeric"
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
             placeholder="mis. 250 atau -250"
-            className="focus-ring rounded-md bg-background px-3 py-2 tabular-nums text-foreground"
+            size="compact" tone="card" className="tabular-nums"
           />
         </label>
         <label className="flex min-w-56 flex-[2] flex-col gap-1 text-sm">
           <span className="font-medium text-foreground">Catatan (wajib)</span>
-          <input
+          <TextInput
             value={note}
             onChange={(event) => setNote(event.target.value)}
             maxLength={280}
             placeholder="Backfill reward task 12 Agu yang gagal tercatat"
-            className="focus-ring rounded-md bg-background px-3 py-2 text-foreground"
+            size="compact" tone="card"
           />
         </label>
       </div>
@@ -183,12 +187,12 @@ function Suspension({
       ) : (
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium text-foreground">Alasan (wajib)</span>
-          <input
+          <TextInput
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             maxLength={500}
             placeholder="Beberapa akun menarik ke rekening yang sama."
-            className="focus-ring rounded-md bg-background px-3 py-2 text-foreground"
+            size="compact" tone="card"
           />
         </label>
       )}
@@ -301,21 +305,21 @@ function Profile({
       <div className="flex flex-wrap gap-3">
         <label className="flex min-w-40 flex-1 flex-col gap-1 text-sm">
           <span className="font-medium text-foreground">Nama tampilan</span>
-          <input
+          <TextInput
             value={name}
             onChange={(event) => setName(event.target.value)}
             maxLength={64}
-            className="focus-ring rounded-md bg-background px-3 py-2 text-foreground"
+            size="compact" tone="card"
           />
         </label>
         <label className="flex min-w-40 flex-1 flex-col gap-1 text-sm">
           <span className="font-medium text-foreground">Username (opsional)</span>
-          <input
+          <TextInput
             value={handle}
             onChange={(event) => setHandle(event.target.value)}
             maxLength={64}
             placeholder="tanpa @"
-            className="focus-ring rounded-md bg-background px-3 py-2 text-foreground"
+            size="compact" tone="card"
           />
         </label>
       </div>
@@ -350,13 +354,13 @@ function Card({
   children: ReactNode
 }) {
   return (
-    <section className="flex flex-col gap-3 rounded-lg bg-muted p-4">
+    <Surface as="section" tone="solid" className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
         <h4 className="font-medium text-foreground">{title}</h4>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       {children}
-    </section>
+    </Surface>
   )
 }
 
@@ -380,9 +384,6 @@ function Alert({ children }: { children: ReactNode }) {
   return <p className="text-sm font-medium text-destructive">{children}</p>
 }
 
-const BUTTON_BASE =
-  'rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50'
-
 function Primary({
   children,
   onClick,
@@ -393,14 +394,9 @@ function Primary({
   disabled?: boolean
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`${BUTTON_BASE} bg-primary text-primary-foreground hover:bg-[var(--color-primary-hover)]`}
-    >
+    <ActionButton size="compact" className="w-auto" onClick={onClick} disabled={disabled}>
       {children}
-    </button>
+    </ActionButton>
   )
 }
 
@@ -414,13 +410,14 @@ function Danger({
   disabled?: boolean
 }) {
   return (
-    <button
-      type="button"
+    <ActionButton
+      variant="danger"
+      size="compact"
+      className="w-auto"
       onClick={onClick}
       disabled={disabled}
-      className={`${BUTTON_BASE} bg-destructive text-primary-foreground hover:opacity-90`}
     >
       {children}
-    </button>
+    </ActionButton>
   )
 }

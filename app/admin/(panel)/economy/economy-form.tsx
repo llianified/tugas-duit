@@ -16,6 +16,10 @@ import {
   type EconomyPatch,
 } from '@/domain/economy-presets'
 import type { EconomyAuditEntry, EconomyConfigSnapshot } from '@/server/economy-config'
+import { Surface } from '@/shared/components/surface'
+import { PageTitle, SectionLabel } from '@/shared/components/section-label'
+import { ActionButton } from '@/shared/components/action-button'
+import { formatDateTime } from '@/shared/lib/format'
 
 const GROUP_LABEL: Record<EconomyGroup, string> = {
   earnings: 'Plafon',
@@ -167,17 +171,17 @@ export function EconomyForm({
   return (
     <div className="flex flex-col gap-3">
       <header className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold text-foreground">Ekonomi</h2>
+        <PageTitle as="h2">Ekonomi</PageTitle>
         <p className="text-xs text-muted-foreground">
-          v{saved.version} · {new Date(saved.updatedAt).toLocaleString('id-ID')}
+          v{saved.version} · {formatDateTime(new Date(saved.updatedAt).getTime())}
         </p>
       </header>
 
       {notice ? (
-        <p className="rounded-xl bg-muted px-3 py-2.5 text-xs text-foreground">{notice}</p>
+        <Surface tone="solid" className="text-xs text-foreground">{notice}</Surface>
       ) : null}
       {errors._ ? (
-        <p className="rounded-xl bg-muted px-3 py-2.5 text-xs text-destructive">{errors._}</p>
+        <Surface tone="danger" className="text-xs">{errors._}</Surface>
       ) : null}
 
       <ConfigLoader current={saved.config} onApply={applyPatch} />
@@ -219,7 +223,7 @@ export function EconomyForm({
             <li
               key={field.key}
               className={cn(
-                'rounded-xl bg-muted',
+                'rounded-lg bg-muted',
                 changed && 'ring-1 ring-primary/50',
                 invalid && 'ring-1 ring-destructive',
               )}
@@ -232,7 +236,7 @@ export function EconomyForm({
                   >
                     {field.label}
                   </label>
-                  <span id={`economy-${field.key}-meta`} className="text-[11px] text-muted-foreground">
+                  <span id={`economy-${field.key}-meta`} className="text-meta text-muted-foreground">
                     {field.unit} · {field.min}–{field.max}
                     {changed ? ` · dari ${saved.config[field.key]}` : ''}
                   </span>
@@ -287,25 +291,21 @@ export function EconomyForm({
           <div aria-hidden="true" className="h-14" />
           <div className="admin-savebar">
             <div className="admin-savebar-row">
-              <button
-                type="button"
+              <ActionButton
+                variant="ghost"
+                size="compact"
+                className="w-auto"
                 disabled={pending}
                 onClick={() => {
                   setDraft(toDraft(saved.config))
                   setErrors({})
                 }}
-                className="focus-ring transition-ui rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground"
               >
                 Batal
-              </button>
-              <button
-                type="button"
-                disabled={pending}
-                onClick={onSubmit}
-                className="focus-ring transition-ui flex-1 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground disabled:bg-muted disabled:text-muted-foreground"
-              >
+              </ActionButton>
+              <ActionButton size="compact" className="flex-1" disabled={pending} onClick={onSubmit}>
                 {pending ? 'Menyimpan…' : `Terapkan ${changes.length} perubahan`}
-              </button>
+              </ActionButton>
             </div>
           </div>
         </>
@@ -356,8 +356,8 @@ function ConfigLoader({
   }
 
   return (
-    <details className="rounded-xl bg-muted">
-      <summary className="focus-ring cursor-pointer list-none rounded-xl px-3 py-2.5 text-sm font-medium text-foreground">
+    <details className="rounded-lg bg-muted">
+      <summary className="focus-ring cursor-pointer list-none rounded-lg p-[var(--surface-p)] text-sm font-semibold tracking-tight text-foreground">
         Muat config
         <span className="pl-1.5 text-xs font-normal text-muted-foreground">preset atau JSON</span>
       </summary>
@@ -369,20 +369,20 @@ function ConfigLoader({
               <div className="flex items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium leading-tight text-foreground">{preset.label}</p>
-                  <p className="pt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                  <p className="pt-0.5 text-meta leading-relaxed text-muted-foreground">
                     {preset.summary}
                   </p>
                 </div>
-                <button
-                  type="button"
+                <ActionButton
+                  size="micro"
+                  className="w-auto shrink-0"
                   onClick={() => {
                     setError(null)
                     onApply(preset.values as EconomyPatch, preset.label)
                   }}
-                  className="focus-ring transition-ui shrink-0 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground"
                 >
                   Muat
-                </button>
+                </ActionButton>
               </div>
             </li>
           ))}
@@ -402,7 +402,7 @@ function ConfigLoader({
           aria-describedby="economy-import-hint"
           className="focus-ring w-full rounded-lg bg-background px-2.5 py-2 font-mono text-xs text-foreground"
         />
-        <p id="economy-import-hint" className="text-[11px] leading-relaxed text-muted-foreground">
+        <p id="economy-import-hint" className="text-meta leading-relaxed text-muted-foreground">
           Boleh sebagian key saja. Key yang tidak dikenal diabaikan, dan tidak ada yang tersimpan
           sebelum kamu menekan Terapkan.
         </p>
@@ -410,20 +410,12 @@ function ConfigLoader({
         {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}
 
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onLoad}
-            className="focus-ring transition-ui flex-1 rounded-lg bg-primary px-2.5 py-2 text-xs font-semibold text-primary-foreground"
-          >
+          <ActionButton size="compact" className="flex-1" onClick={onLoad}>
             Muat ke draf
-          </button>
-          <button
-            type="button"
-            onClick={() => void onCopy()}
-            className="focus-ring transition-ui rounded-lg bg-background px-2.5 py-2 text-xs font-medium text-foreground"
-          >
+          </ActionButton>
+          <ActionButton variant="soft" size="compact" className="w-auto" onClick={() => void onCopy()}>
             {copied ? 'Tersalin' : 'Salin config aktif'}
-          </button>
+          </ActionButton>
         </div>
       </div>
     </details>
@@ -445,21 +437,21 @@ function ConfirmPanel({
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-1.5 rounded-xl bg-muted p-3">
-        <h2 className="text-sm font-semibold text-foreground">
+      <Surface tone="solid" className="flex flex-col gap-1.5">
+        <SectionLabel as="h2">
           Perubahan ini bisa menaikkan uang yang keluar
-        </h2>
+        </SectionLabel>
         <p className="text-xs leading-relaxed text-muted-foreground">
           {risky.length} dari {changes.length} perubahan menambah pembayaran ke user. Periksa sekali
           lagi sebelum menerapkannya.
         </p>
-      </div>
+      </Surface>
 
       <ul className="flex flex-col gap-2">
         {changes.map(({ field, before, after }) => {
           const isRisky = risky.some((entry) => entry.field.key === field.key)
           return (
-            <li key={field.key} className="rounded-xl bg-muted p-2.5">
+            <li key={field.key} className="rounded-lg bg-muted p-2.5">
               <div className="flex items-baseline gap-2">
                 <span className="min-w-0 flex-1 text-sm font-medium text-foreground">
                   {isRisky ? '⚠ ' : ''}
@@ -480,22 +472,12 @@ function ConfirmPanel({
       <div aria-hidden="true" className="h-14" />
       <div className="admin-savebar">
         <div className="admin-savebar-row">
-          <button
-            type="button"
-            disabled={pending}
-            onClick={onCancel}
-            className="focus-ring transition-ui rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground"
-          >
+          <ActionButton variant="ghost" size="compact" className="w-auto" disabled={pending} onClick={onCancel}>
             Kembali
-          </button>
-          <button
-            type="button"
-            disabled={pending}
-            onClick={onConfirm}
-            className="focus-ring transition-ui flex-1 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground disabled:bg-muted disabled:text-muted-foreground"
-          >
+          </ActionButton>
+          <ActionButton size="compact" className="flex-1" disabled={pending} onClick={onConfirm}>
             {pending ? 'Menyimpan…' : 'Ya, terapkan'}
-          </button>
+          </ActionButton>
         </div>
       </div>
     </div>
@@ -504,8 +486,8 @@ function ConfirmPanel({
 
 function AuditList({ entries }: { entries: EconomyAuditEntry[] }) {
   return (
-    <details className="rounded-xl bg-muted">
-      <summary className="focus-ring cursor-pointer list-none rounded-xl px-3 py-2.5 text-sm font-medium text-foreground">
+    <details className="rounded-lg bg-muted">
+      <summary className="focus-ring cursor-pointer list-none rounded-lg p-[var(--surface-p)] text-sm font-semibold tracking-tight text-foreground">
         Riwayat perubahan
         <span className="pl-1.5 text-xs font-normal text-muted-foreground">
           {entries.length === 0 ? 'belum ada' : entries.length}
@@ -526,9 +508,9 @@ function AuditList({ entries }: { entries: EconomyAuditEntry[] }) {
                   {entry.oldValue} → {entry.newValue}
                 </span>
               </div>
-              <p className="pt-0.5 text-[11px] text-muted-foreground">
+              <p className="pt-0.5 text-meta text-muted-foreground">
                 v{entry.version} · {entry.changedBy ?? 'admin dihapus'} ·{' '}
-                {new Date(entry.changedAt).toLocaleString('id-ID')}
+                {formatDateTime(new Date(entry.changedAt).getTime())}
               </p>
             </li>
           ))}

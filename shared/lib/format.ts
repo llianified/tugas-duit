@@ -39,7 +39,7 @@ export function formatUnitCountdown(totalSeconds: number): string {
   const safe = Number.isFinite(totalSeconds) && totalSeconds > 0 ? Math.ceil(totalSeconds) : 0
   const minutes = Math.floor(safe / 60)
   const seconds = safe % 60
-  return `${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}d`
+  return `${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}dtk`
 }
 
 export function formatLongCountdown(totalSeconds: number): string {
@@ -73,6 +73,17 @@ export function formatHistoryTime(timestamp: number, now: number = Date.now()): 
     timeZone: TIME_ZONE,
   })
   return `${day} · ${time}`
+}
+
+export function formatDateTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleString('id-ID', {
+    timeZone: TIME_ZONE,
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 export function formatShortDate(timestamp: number): string {

@@ -85,7 +85,7 @@ export function WatchAdToPlay({
         meta={
           <MetaBadge className="gap-1">
             <GlyphPlay className="size-3 shrink-0" aria-hidden="true" />
-            {formatCredits(viewsLeft)}/{formatCredits(adsMaxViewsPerDay())}
+            sisa {formatCredits(viewsLeft)}
           </MetaBadge>
         }
         aria-label={`Nonton iklan untuk memulai task tanpa energi, sisa ${formatCredits(viewsLeft)} dari ${formatCredits(adsMaxViewsPerDay())} kali hari ini`}

@@ -9,6 +9,10 @@ import { getSessionUser } from '@/server/session'
 import { formatCredits, formatHistoryTime, formatRupiah } from '@/shared/lib/format'
 import { CopyButton } from '../withdrawals/copy-button'
 import { UserActions } from './user-actions'
+import { Surface } from '@/shared/components/surface'
+import { PageTitle, SectionLabel } from '@/shared/components/section-label'
+import { ActionButton } from '@/shared/components/action-button'
+import { TextInput } from '@/shared/components/input'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -33,7 +37,7 @@ export default async function AdminUsersPage({
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold text-foreground">Data user</h2>
+        <PageTitle as="h2">Data user</PageTitle>
         <p className="text-sm text-muted-foreground">
           Cari akun, periksa keadaannya, dan koreksi yang perlu dibackfill. Koreksi saldo ditulis
           sebagai entri ledger — bukan menimpa angkanya.
@@ -46,34 +50,35 @@ export default async function AdminUsersPage({
           <span className="text-muted-foreground">
             Public ID, telegram_id, username, nama, atau kode referral.
           </span>
-          <input
+          <TextInput
             id="admin-user-search"
             name="q"
             defaultValue={term}
             autoComplete="off"
             placeholder="mis. 5231… atau @budi"
-            className="focus-ring rounded-md bg-muted px-3 py-2 text-foreground"
+            size="compact"
           />
         </label>
-        <button
+        <ActionButton
           type="submit"
-          className="focus-ring rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+          size="compact"
+          className="w-auto"
         >
           Cari
-        </button>
+        </ActionButton>
       </form>
 
       {term ? (
         <section className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold text-foreground">
+          <SectionLabel as="h3">
             {results.length === 0
               ? 'Tidak ada akun yang cocok'
               : `${formatCredits(results.length)} akun cocok`}
-          </h3>
+          </SectionLabel>
           {results.length === 0 ? (
-            <p className="rounded-lg bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+            <Surface as="p" tone="solid" className="text-center text-sm text-muted-foreground">
               Coba kata kunci lain. Akun baru muncul di sini setelah user membuka Mini App sekali.
-            </p>
+            </Surface>
           ) : (
             <ul className="flex flex-col gap-2">
               {results.map((user) => (
@@ -107,9 +112,9 @@ export default async function AdminUsersPage({
       ) : null}
 
       {id && !detail ? (
-        <p className="rounded-lg bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+        <Surface as="p" tone="solid" className="text-center text-sm text-muted-foreground">
           Akun itu tidak ditemukan. Mungkin sudah dihapus, atau tautannya salah.
-        </p>
+        </Surface>
       ) : null}
 
       {detail ? (
@@ -130,7 +135,7 @@ function UserDetail({
 }) {
   return (
     <div className="flex flex-col gap-6">
-      <section className="flex flex-col gap-4 rounded-lg bg-muted p-4">
+      <Surface as="section" tone="solid" className="flex flex-col gap-4">
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <div className="flex flex-wrap items-baseline gap-x-2">
             <h3 className="font-semibold text-foreground">{detail.firstName}</h3>
@@ -155,13 +160,13 @@ function UserDetail({
           <Field label="Public ID">
             <span className="flex flex-wrap items-center gap-2">
               <span className="font-medium tabular-nums text-foreground">{detail.publicId}</span>
-              <CopyButton value={detail.publicId} />
+              <CopyButton value={detail.publicId} label="Public ID" />
             </span>
           </Field>
           <Field label="Telegram ID">
             <span className="flex flex-wrap items-center gap-2">
               <span className="font-medium tabular-nums text-foreground">{detail.telegramId}</span>
-              <CopyButton value={detail.telegramId} />
+              <CopyButton value={detail.telegramId} label="Telegram ID" />
             </span>
           </Field>
           <Field label="Bergabung">
@@ -207,7 +212,7 @@ function UserDetail({
             </Field>
           ) : null}
         </dl>
-      </section>
+      </Surface>
 
       <UserActions
         publicId={detail.publicId}
@@ -222,11 +227,11 @@ function UserDetail({
       />
 
       <section className="flex flex-col gap-2">
-        <h3 className="text-sm font-semibold text-foreground">Riwayat penarikan</h3>
+        <SectionLabel as="h3">Riwayat penarikan</SectionLabel>
         {detail.withdrawals.length === 0 ? (
-          <p className="rounded-lg bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+          <Surface as="p" tone="solid" className="text-center text-sm text-muted-foreground">
             Belum pernah mengajukan penarikan.
-          </p>
+          </Surface>
         ) : (
           <ul className="flex flex-col gap-2">
             {detail.withdrawals.map((withdrawal) => {
@@ -234,7 +239,7 @@ function UserDetail({
               return (
                 <li
                   key={withdrawal.id}
-                  className="flex flex-col gap-1 rounded-lg bg-muted px-4 py-3 text-sm"
+                  className="flex flex-col gap-1 rounded-lg bg-muted p-[var(--surface-p)] text-sm"
                 >
                   <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                     <span className="flex flex-wrap items-baseline gap-x-2">
@@ -271,17 +276,17 @@ function UserDetail({
       </section>
 
       <section className="flex flex-col gap-2">
-        <h3 className="text-sm font-semibold text-foreground">20 entri ledger terakhir</h3>
+        <SectionLabel as="h3">20 entri ledger terakhir</SectionLabel>
         {detail.ledger.length === 0 ? (
-          <p className="rounded-lg bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+          <Surface as="p" tone="solid" className="text-center text-sm text-muted-foreground">
             Belum ada pergerakan saldo.
-          </p>
+          </Surface>
         ) : (
           <ul className="flex flex-col gap-2">
             {detail.ledger.map((entry) => (
               <li
                 key={entry.id}
-                className="flex flex-col gap-1 rounded-lg bg-muted px-4 py-3 text-sm"
+                className="flex flex-col gap-1 rounded-lg bg-muted p-[var(--surface-p)] text-sm"
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                   <span className="font-medium text-foreground">

@@ -23,6 +23,10 @@ const HISTORIC: EconomyConfig = {
   maxEnergy: 5, energyRegenMinutes: 60, energyCostPerTask: 1,
   adsMaxViewsPerDay: 10, adsCooldownSeconds: 120,
   adsTicketTtlSeconds: 300, adsPassTtlMinutes: 30,
+  // Sama dengan DEFAULT_IN_APP_ADS_SETTINGS yang lama, jadi pemindahan jadwal
+  // interstitial ke config tidak mengubah perilaku bawaan.
+  inAppAdsFrequency: 2, inAppAdsCappingMinutes: 6,
+  inAppAdsIntervalSeconds: 30, inAppAdsTimeoutSeconds: 5,
   withdrawalMinimumIdr: 10_000, withdrawalMinActiveReferrals: 5,
   maxPayoutIdr: 2_000_000_000, referralCommissionPercent: 10, dailyCommissionCapIdr: 6_000,
   rankTier2Tasks: 100, rankTier3Tasks: 300, rankTier4Tasks: 700, rankTier5Tasks: 1_500,

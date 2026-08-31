@@ -144,7 +144,7 @@ export function ProfileView({
         ) : null}
       </dl>
 
-      <section aria-label="Perolehan" className="region-t">
+      <section aria-label="Perolehan" className="region-t region-t-flush">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-4xl font-bold leading-none tracking-[-0.035em] tabular-nums text-foreground">

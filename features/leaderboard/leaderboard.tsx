@@ -50,7 +50,7 @@ export function LeaderboardView({
     <div className="view-min-h flex flex-col">
       <PageHeader title={VIEW_TITLE.leaderboard} />
 
-      <div role="tablist" aria-label="Tampilan papan" className="region-t flex gap-5 border-b border-border">
+      <div role="tablist" aria-label="Tampilan papan" className="region-t region-t-flush flex gap-5">
         {(
           [
             ['papan', 'Papan'],
@@ -64,7 +64,7 @@ export function LeaderboardView({
             aria-selected={surface === key}
             onClick={() => setSurface(key)}
             className={cn(
-              'focus-ring transition-ui -mb-px border-b-2 px-1 pb-2.5 text-[15px] font-bold tracking-tight',
+              'focus-ring transition-ui border-b-2 px-1 pb-2.5 text-[15px] font-bold tracking-tight',
               surface === key
                 ? 'border-primary text-foreground'
                 : 'border-transparent text-muted-foreground hover:text-foreground',

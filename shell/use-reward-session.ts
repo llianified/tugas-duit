@@ -41,6 +41,7 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     statsData,
     mutateStats,
     leaderboardData,
+    activityData,
     referralData,
     mutateReferral,
     payoutData,
@@ -159,6 +160,7 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
   )
 
   const openHistory = useCallback(() => pushView('history'), [pushView])
+  const openProfile = useCallback(() => pushView('profile'), [pushView])
   const openReferral = useCallback(() => {
     void mutateReferral()
     pushView('referral')
@@ -175,7 +177,9 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     botAppUrl: session?.botAppUrl ?? null,
     error: sessionError || taskError ? userFacingMessage(sessionError ?? taskError) : null,
     user: session?.user ?? null,
+    founder: session?.user?.founder ?? false,
     openHistory,
+    openProfile,
     openReferral,
     goBack,
     selectView,
@@ -197,6 +201,7 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     loadMoreHistory,
     stats: statsData?.stats ?? null,
     leaderboard: leaderboardData?.board ?? null,
+    activity: activityData?.entries ?? null,
     completedCount: statsData?.stats.completedCount ?? 0,
     task,
     activeChallenge,

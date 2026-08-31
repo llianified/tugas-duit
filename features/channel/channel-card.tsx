@@ -36,7 +36,7 @@ export function ChannelBonusCard({
   return (
     <section
       aria-label="Bonus join channel"
-      className="rounded-lg bg-muted/60 p-[var(--surface-p)] shadow-[0_0_0_1px_var(--border)]"
+      className="rounded-lg bg-muted/60 p-[var(--surface-p)] ring-border"
     >
       <div className="flex items-start gap-2">
         <GlyphTelegram className="mt-0.5 size-5 shrink-0 text-primary" />
@@ -59,7 +59,7 @@ export function ChannelBonusCard({
           href={bonus.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="focus-ring transition-ui press-scale-soft control-h flex flex-1 items-center justify-center rounded-lg bg-transparent text-sm font-semibold text-foreground shadow-[0_0_0_1px_var(--border)]"
+          className="focus-ring transition-ui press-scale-soft control-h flex flex-1 items-center justify-center rounded-cta btn-soft text-[15px] font-bold tracking-tight text-foreground"
         >
           Buka channel
         </a>

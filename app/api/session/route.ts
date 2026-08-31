@@ -3,6 +3,7 @@ import { economyConfig } from '@/domain/economy-config'
 import { isPremiumActive, premiumDaysLeft, premiumPerks, premiumPlans } from '@/domain/premium'
 import { loadEconomyConfig } from '@/server/economy-config'
 import { readAdsState } from '@/server/ads'
+import { FOUNDER_MAX_USER_ID } from '@/domain/prestige'
 import { readChannelGateState } from '@/server/channel'
 import { query } from '@/server/db'
 import { readEnergy } from '@/server/energy'
@@ -64,6 +65,7 @@ export async function GET(request: Request) {
         balance: user.balanceCredits,
         referralCode: user.referralCode,
         banned: Boolean(user.bannedAt),
+        founder: user.id <= FOUNDER_MAX_USER_ID,
       },
       economy: economyConfig(),
       breakdown: {

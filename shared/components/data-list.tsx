@@ -57,10 +57,10 @@ export function DataListRow({
       {marker}
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{title}</p>
-        {meta ? <p className="mt-0.5 truncate text-xs text-muted-foreground">{meta}</p> : null}
+        <p className="truncate text-[15px] font-semibold tracking-tight">{title}</p>
+        {meta ? <p className="mt-0.5 truncate text-[13px] text-muted-foreground">{meta}</p> : null}
         {note ? (
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{note}</p>
+          <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{note}</p>
         ) : null}
       </div>
 
@@ -98,11 +98,11 @@ export function DataListAmount({
   return (
     <span
       className={cn(
-        'text-sm font-semibold tabular-nums',
+        'text-[15px] font-bold tabular-nums',
         tone === 'primary' ? 'text-primary' : 'text-foreground',
       )}
     >
-      {value} <span className="text-xs font-medium text-muted-foreground">credit</span>
+      {value} <span className="text-[13px] font-semibold text-muted-foreground">credit</span>
     </span>
   )
 }

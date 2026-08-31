@@ -8,6 +8,7 @@ import { fetchJson } from '@/shell/api-client'
 import {
   loadSession,
   type HistoryResponse,
+  type ActivityResponse,
   type LeaderboardResponse,
   type ReferralResponse,
   type StatsResponse,
@@ -46,6 +47,11 @@ export function useSessionQueries(view: AppView) {
     authenticated ? '/api/stats' : null,
     fetchJson,
   )
+  const { data: activityData } = useSWR<ActivityResponse>(
+    authenticated && view === 'leaderboard' ? '/api/activity' : null,
+    fetchJson,
+    { revalidateOnFocus: true },
+  )
   const { data: leaderboardData } = useSWR<LeaderboardResponse>(
     LEADERBOARD_ENABLED && authenticated && view === 'leaderboard' ? '/api/leaderboard' : null,
     fetchJson,
@@ -74,6 +80,7 @@ export function useSessionQueries(view: AppView) {
     statsData,
     mutateStats,
     leaderboardData,
+    activityData,
     referralData,
     mutateReferral,
     payoutData,

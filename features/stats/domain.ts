@@ -12,8 +12,15 @@ interface DifficultyStat {
   share: number
 }
 
+/** Satu titik per hari WIB: berapa credit yang masuk dari task hari itu. */
+export interface EarningsPoint {
+  day: string
+  credits: number
+}
+
 export interface UserStats {
   joinedAt: number | null
+  earningsSeries: EarningsPoint[]
   earnedCredits: number
   taskCredits: number
   referralCredits: number
@@ -53,6 +60,7 @@ export interface DifficultyTally {
 
 interface StatsInput {
   joinedAt: number | null
+  earningsSeries: EarningsPoint[]
   completedCount: number
   todayCount: number
   totalStars: number
@@ -80,6 +88,7 @@ interface StatsInput {
 
 export function getUserStats({
   joinedAt,
+  earningsSeries,
   completedCount,
   todayCount,
   totalStars,
@@ -106,6 +115,7 @@ export function getUserStats({
 
   return {
     joinedAt,
+    earningsSeries,
     earnedCredits: taskCredits + referralCredits,
     taskCredits,
     referralCredits,

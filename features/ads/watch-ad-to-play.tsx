@@ -81,7 +81,7 @@ export function WatchAdToPlay({
       <TapAction
         compact
         tone="neutral"
-        label="Mulai"
+        label="Iklan"
         meta={
           <MetaBadge className="gap-1">
             <GlyphPlay className="size-3 shrink-0" aria-hidden="true" />

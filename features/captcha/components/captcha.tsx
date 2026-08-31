@@ -174,7 +174,6 @@ function VerifyButton({
   return (
     <ActionButton
       ref={ref}
-      size="cta"
       onClick={onVerify}
       disabled={disabled}
       className={!disabled && !verifying ? 'cta-sheen' : undefined}

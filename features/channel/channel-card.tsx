@@ -59,7 +59,7 @@ export function ChannelBonusCard({
           href={bonus.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="focus-ring transition-ui press-scale-soft control-h flex flex-1 items-center justify-center rounded-cta bg-transparent text-[15px] font-bold tracking-tight text-foreground ring-border"
+          className="focus-ring transition-ui press-scale-soft control-h flex flex-1 items-center justify-center rounded-cta btn-soft text-[15px] font-bold tracking-tight text-foreground"
         >
           Buka channel
         </a>

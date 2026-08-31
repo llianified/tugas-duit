@@ -17,6 +17,7 @@ export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> 
   const rows = await query<{
     public_id: string
     first_name: string
+    photo_url: string | null
     position: number
     task_count: number
     task_credits: number
@@ -30,6 +31,7 @@ export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> 
        select u.id,
               u.public_id,
               u.first_name,
+              u.photo_url,
               count(tc.id)::int                                  as task_count,
               coalesce(sum(tc.reward), 0)::int                    as task_credits,
               (rank() over (order by coalesce(sum(tc.reward), 0) desc,
@@ -46,7 +48,7 @@ export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> 
         where u.banned_at is null
         group by u.id
      )
-     select public_id, first_name, task_count, task_credits, position, participants,
+     select public_id, first_name, photo_url, task_count, task_credits, position, participants,
             premium_members, is_premium, is_founder,
             (id = $1) as is_you
        from ranked
@@ -58,6 +60,7 @@ export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> 
   const toEntry = (row: (typeof rows)[number]): LeaderboardEntry => ({
     id: row.public_id,
     displayName: row.first_name || 'Pengguna',
+    photoUrl: row.photo_url,
     position: row.position,
     taskCount: row.task_count,
     credits: row.task_credits,

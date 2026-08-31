@@ -67,7 +67,7 @@ function HeroActionTile({
         // Same hairline edge as .task-card below: a 1px --border ring instead of
         // a real border, so both surfaces read as one family. No fill, so the
         // tiles sit directly on the hero band.
-        'bg-card text-foreground ring-border',
+        'btn-soft text-foreground',
       )}
     >
       {icon}

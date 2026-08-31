@@ -10,8 +10,8 @@ import { CreditAmount } from '@/shared/components/credit-amount'
 import { EmptyState } from '@/shared/components/empty-state'
 import { ActionButton } from '@/shared/components/action-button'
 import { GlyphCrown, GlyphTrophy } from '@/shared/components/glyph'
-import { IconCircle } from '@/shared/components/icon-circle'
 import { SegmentedTabs, type SegmentedTab } from '@/shared/components/segmented-tabs'
+import { ProfileAvatar } from '@/features/home/profile-avatar'
 import { TierGlyph } from '@/features/home/tier-glyph'
 import { cn } from '@/shared/lib/utils'
 import { BADGE_SHAPE, MetaBadge } from '@/shared/components/meta-badge'
@@ -249,31 +249,44 @@ function BoardFrame({
   position,
   tier,
   premium,
+  photoUrl,
 }: {
   position: number
   tier: number
   premium: boolean
+  photoUrl: string | null
 }) {
   return (
     <span className="relative flex shrink-0">
-      <IconCircle
-        aria-hidden="true"
-        size="sm"
-        tone={premium ? 'muted' : position <= 3 ? 'primary' : 'muted'}
+      <ProfileAvatar
+        photoUrl={photoUrl}
         className={cn(
-          'font-semibold tabular-nums',
-          premium &&
-            'bg-[color-mix(in_oklab,var(--premium)_16%,transparent)] text-premium shadow-[0_0_0_1.5px_color-mix(in_oklab,var(--premium)_55%,transparent)]',
+          'size-10',
+          premium
+            ? 'shadow-[0_0_0_1.5px_color-mix(in_oklab,var(--premium)_60%,transparent)]'
+            : position <= 3
+              ? 'shadow-[0_0_0_1.5px_color-mix(in_oklab,var(--primary)_60%,transparent)]'
+              : 'ring-border',
         )}
-      >
-        {formatCredits(position)}
-      </IconCircle>
+        glyphClassName="size-5"
+      />
 
       <span
         aria-hidden="true"
         className={cn(
-          'absolute -bottom-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full bg-card',
-          'shadow-[0_0_0_1px_var(--background)]',
+          'absolute -bottom-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1',
+          'text-[10px] font-bold tabular-nums shadow-[0_0_0_1.5px_var(--background)]',
+          position <= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
+        )}
+      >
+        {formatCredits(position)}
+      </span>
+
+      <span
+        aria-hidden="true"
+        className={cn(
+          'absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-card',
+          'shadow-[0_0_0_1.5px_var(--background)]',
           premium ? 'text-premium' : 'text-foreground/65',
         )}
       >
@@ -342,7 +355,12 @@ function BoardListItem({
     <DataListRow
       showDivider={showDivider}
       marker={
-        <BoardFrame position={entry.position} tier={rank.tier} premium={entry.premium} />
+        <BoardFrame
+          position={entry.position}
+          tier={rank.tier}
+          premium={entry.premium}
+          photoUrl={entry.photoUrl}
+        />
       }
       title={
         <span className="flex min-w-0 items-center gap-1.5">

@@ -1,5 +1,6 @@
 
 import type { LeaderboardBoard, LeaderboardEntry } from '@/features/leaderboard/domain'
+import { FOUNDER_MAX_USER_ID } from '@/domain/prestige'
 import { query } from './db'
 
 /**
@@ -23,6 +24,7 @@ export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> 
     premium_members: number
     is_you: boolean
     is_premium: boolean
+    is_founder: boolean
   }>(
     `with ranked as (
        select u.id,
@@ -35,6 +37,7 @@ export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> 
                                      u.id))::int                  as position,
               (count(*) over ())::int                             as participants,
               (u.premium_until is not null and u.premium_until > now()) as is_premium,
+              (u.id <= $3) as is_founder,
               (count(*) filter (
                  where u.premium_until is not null and u.premium_until > now()
                ) over ())::int                                    as premium_members
@@ -44,12 +47,12 @@ export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> 
         group by u.id
      )
      select public_id, first_name, task_count, task_credits, position, participants,
-            premium_members, is_premium,
+            premium_members, is_premium, is_founder,
             (id = $1) as is_you
        from ranked
       where position <= $2 or id = $1
       order by position`,
-    [userId, BOARD_SIZE],
+    [userId, BOARD_SIZE, FOUNDER_MAX_USER_ID],
   )
 
   const toEntry = (row: (typeof rows)[number]): LeaderboardEntry => ({
@@ -60,6 +63,7 @@ export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> 
     credits: row.task_credits,
     you: row.is_you,
     premium: row.is_premium,
+    founder: row.is_founder,
   })
 
   return {

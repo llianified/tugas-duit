@@ -14,13 +14,14 @@ import { IconCircle } from '@/shared/components/icon-circle'
 import { SegmentedTabs, type SegmentedTab } from '@/shared/components/segmented-tabs'
 import { TierGlyph } from '@/features/home/tier-glyph'
 import { cn } from '@/shared/lib/utils'
-import { MetaBadge } from '@/shared/components/meta-badge'
+import { BADGE_SHAPE, MetaBadge } from '@/shared/components/meta-badge'
 import { PageHeader } from '@/shared/components/page-header'
 import { PageRegion } from '@/shared/components/page-region'
 import { InfoHint } from '@/shared/components/info-hint'
 import { SectionLabel } from '@/shared/components/section-label'
 import { VIEW_TITLE } from '@/navigation/app-view'
 import { getRank } from '@/features/home/progression'
+import { prestigeBadges, type PrestigeKey } from '@/domain/prestige'
 import { formatCredits } from '@/shared/lib/format'
 import type { LeaderboardBoard, LeaderboardEntry } from '@/features/leaderboard/domain'
 
@@ -282,6 +283,47 @@ function BoardFrame({
   )
 }
 
+/**
+ * Lencana prestise: seluruhnya turunan dari kolom yang sudah dibaca papan ini
+ * (`task_count`, `task_credits`, `users.id`), jadi tidak ada tabel baru, tidak ada
+ * jalur tulis baru, dan tidak ada satu credit pun yang berpindah. Itu syaratnya —
+ * rank berhenti membayar di `rankPoolCapBonus`, dan gengsi tidak boleh menambah
+ * liabilitas yang harus dibayar kolam reward.
+ *
+ * `premium` sengaja tidak ikut dirender di sini: mahkotanya sudah berdiri di
+ * sebelah nama, dan dua penanda untuk satu hal membuat barisnya berisik.
+ */
+const CHIP_TONE: Record<PrestigeKey, string> = {
+  founder: 'bg-foreground/10 text-foreground',
+  milestone: 'bg-primary/10 text-primary',
+  precision: 'bg-success/10 text-success',
+  premium: '',
+}
+
+function PrestigeChips({ entry }: { entry: LeaderboardEntry }) {
+  const badges = prestigeBadges({
+    taskCount: entry.taskCount,
+    credits: entry.credits,
+    founder: entry.founder,
+    premium: false,
+  })
+  if (badges.length === 0) return null
+
+  return (
+    <>
+      {badges.map((badge) => (
+        <span
+          key={badge.key}
+          title={badge.detail}
+          className={cn(BADGE_SHAPE, 'shrink-0 font-bold', CHIP_TONE[badge.key])}
+        >
+          {badge.label}
+        </span>
+      ))}
+    </>
+  )
+}
+
 function BoardListItem({
   entry,
   showDivider,
@@ -304,6 +346,7 @@ function BoardListItem({
             <GlyphCrown className="size-3.5 shrink-0 text-premium" aria-label="Anggota premium" />
           ) : null}
           {entry.you ? <MetaBadge tone="accent">Kamu</MetaBadge> : null}
+          <PrestigeChips entry={entry} />
         </span>
       }
       meta={`${rank.name} · ${formatCredits(entry.taskCount)} task`}

@@ -11,6 +11,18 @@ function required(name: string): string {
 
 export const env = {
   get databaseUrl() { return required('DATABASE_URL') },
+  /**
+   * Migrasi memakai `pg_advisory_lock`, yaitu lock tingkat SESI. Connection pooler Neon
+   * berjalan di mode transaksi: koneksi yang sama bisa berpindah pemilik di antara dua
+   * transaksi, sehingga lock-nya bisa dibuka oleh sesi lain atau tidak terbuka sama
+   * sekali. Jadi migrasi wajib lewat endpoint langsung (tanpa `-pooler`), sementara
+   * runtime app justru harus lewat yang pooled. Integrasi Neon–Vercel mengisi
+   * DATABASE_URL_UNPOOLED sendiri; kalau tidak ada, jatuh ke DATABASE_URL.
+   */
+  get databaseUrlForMigrations() {
+    return process.env.DATABASE_URL_UNPOOLED?.trim() || required('DATABASE_URL')
+  },
+  get cronSecretOrNull() { return process.env.CRON_SECRET?.trim() || null },
   get botToken() { return required('TELEGRAM_BOT_TOKEN') },
   get botUsername() { return required('TELEGRAM_BOT_USERNAME') },
   get botUsernameOrNull() { return process.env.TELEGRAM_BOT_USERNAME ?? null },

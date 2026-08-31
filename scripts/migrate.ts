@@ -1,20 +1,18 @@
 import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { pool } from '../server/db.ts'
+import { createPool } from '../server/db.ts'
+import { env } from '../server/env.ts'
 
 const directory = path.join(process.cwd(), 'db/migrations')
 
 const LOCK_KEY = 8_421_207
 
-// Dipakai saat migrasi jalan sebagai bagian dari startCommand: kegagalan hanya
-// dilaporkan, tidak mematikan proses, supaya `next start` tetap menyala dan
-// /api/health bisa melaporkan sebab aslinya.
-const allowFailure = process.argv.includes('--allow-failure')
-
-// Jaringan privat Railway (*.railway.internal) kadang belum resolve tepat saat
-// container baru naik, jadi kegagalan konek pertama sering cuma soal timing.
+// Neon menidurkan compute yang menganggur, jadi koneksi pertama setelah jeda panjang
+// sering gagal cuma karena endpoint-nya baru bangun.
 const CONNECT_ATTEMPTS = 5
 const RETRYABLE = new Set(['ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT'])
+
+const pool = createPool(env.databaseUrlForMigrations, 1)
 
 function isRetryable(error: unknown): boolean {
   const code = (error as { code?: unknown } | null)?.code
@@ -73,10 +71,6 @@ main().catch(async (error) => {
     await pool.end()
   } catch {
     // pool mungkin belum pernah terbentuk; abaikan.
-  }
-  if (allowFailure) {
-    console.error('[migrate] --allow-failure aktif: start tetap dilanjutkan, skema BISA JADI belum lengkap.')
-    return
   }
   process.exit(1)
 })

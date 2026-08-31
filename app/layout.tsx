@@ -1,4 +1,5 @@
 import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata, Viewport } from 'next'
 import { headers } from 'next/headers'
 import { Geist } from 'next/font/google'
@@ -65,6 +66,7 @@ export default async function RootLayout({
         />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
+        <SpeedInsights />
       </body>
     </html>
   )

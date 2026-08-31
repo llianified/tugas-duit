@@ -251,12 +251,27 @@ describe('FRAUD-4 — rentang sapuan tidak boleh lebih pendek dari kadensi cron'
    * jadwal cron diubah jadi lebih jarang, test ini yang harus gagal lebih dulu — bukan
    * detektornya yang diam-diam jadi buta.
    */
-  it('menyisakan margin di atas periode cron di railway.cron.json', async () => {
-    const raw = await readFile(path.join(process.cwd(), 'railway.cron.json'), 'utf8')
-    const schedule = (JSON.parse(raw) as { deploy: { cronSchedule: string } }).deploy.cronSchedule
+  /**
+   * Periode dihitung dari jadwalnya, bukan ditulis ulang sebagai angka kedua: kalau
+   * jadwalnya diubah, yang harus bergerak adalah rentang sapuan — bukan test ini yang
+   * disesuaikan supaya hijau lagi.
+   */
+  const periodeMenit = (schedule: string): number => {
+    const [menit, jam] = schedule.trim().split(/\s+/)
+    if (menit !== '*' && jam === '*') return 60
+    if (menit !== '*' && /^\d+$/.test(jam)) return 1_440
+    throw new Error(`Jadwal cron '${schedule}' belum dikenali FRAUD-4 — tambahkan bentuknya di sini.`)
+  }
 
-    expect(schedule).toBe('0 * * * *')
-    expect(SWEEP_THRESHOLDS.referralBurstLookbackMinutes).toBeGreaterThanOrEqual(120)
+  it('menyisakan margin di atas periode cron di vercel.json', async () => {
+    const raw = await readFile(path.join(process.cwd(), 'vercel.json'), 'utf8')
+    const crons = (JSON.parse(raw) as { crons: { path: string; schedule: string }[] }).crons
+    const maintenance = crons.find((cron) => cron.path === '/api/cron/maintenance')
+
+    expect(maintenance).toBeDefined()
+    expect(SWEEP_THRESHOLDS.referralBurstLookbackMinutes).toBeGreaterThan(
+      periodeMenit(maintenance!.schedule),
+    )
     expect(SWEEP_THRESHOLDS.referralBurstLookbackMinutes).toBeGreaterThan(
       SWEEP_THRESHOLDS.referralBurstWindowMinutes,
     )

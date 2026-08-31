@@ -1,7 +1,7 @@
 # tugas-duit
 
 Telegram Mini App: user mengerjakan captcha → dapat credit → bisa ditarik jadi Rupiah.
-**Produksi, uang nyata, Postgres nyata (Railway).** Bug di alur ekonomi = kerugian finansial.
+**Produksi, uang nyata, Postgres nyata (Neon).** Bug di alur ekonomi = kerugian finansial.
 
 ## Peta direktori
 
@@ -32,15 +32,27 @@ Sebelum menyatakan selesai: `pnpm exec tsc --noEmit`, `pnpm lint`, `pnpm test`, 
 
 ## Database
 
-Produksi pakai **Railway PostgreSQL** — sudah terdeploy, sudah ada datanya. Lihat `.env.example`
-untuk daftar lengkap env var.
+Produksi pakai **Neon PostgreSQL**, app-nya di **Vercel** — sudah terdeploy, sudah ada datanya.
+Lihat `.env.example` untuk daftar lengkap env var.
 
 - **Jangan pernah menyarankan instal Postgres/Docker/DB lain.** Kalau perlu `DATABASE_URL` untuk
-  kerja dengan data/skema asli, langsung minta connection string Railway ke user (tab
-  "Variables" di service Postgres-nya) — jangan tawarkan alternatif.
+  kerja dengan data/skema asli, langsung minta connection string Neon ke user — jangan tawarkan
+  alternatif.
 - Tanpa `DATABASE_URL` di env, `server/db.ts` otomatis jatuh ke PGlite in-process
   (`server/preview-db.ts`) untuk dev — ini sudah berjalan tanpa setup apa pun, bukan sesuatu
   yang perlu "diinstal" atau "disiapkan".
+- **Dua connection string, dua keperluan.** Runtime memakai endpoint *pooled* (`-pooler`);
+  `pnpm db:migrate` memakai endpoint *langsung* lewat `DATABASE_URL_UNPOOLED`, karena
+  `pg_advisory_lock` bersifat per-sesi dan pooler Neon berjalan di mode transaksi.
+- **Migrasi tidak jalan sendiri saat deploy.** Vercel tidak punya start command, jadi
+  `pnpm db:migrate` dijalankan manual sebelum deploy yang membawa migrasi baru. Jangan
+  menaruhnya di build command: build ikut jalan di tiap deploy Preview, dan branch setengah
+  jadi tidak boleh memigrasi database produksi.
+- **Pekerjaan terjadwal lewat HTTP**, bukan proses terpisah: `app/api/cron/maintenance`,
+  dijaga `CRON_SECRET`, isinya `server/maintenance.ts`. `pnpm db:cleanup` menjalankan hal yang
+  persis sama dari CLI. Jadwalnya di `vercel.json` dan harus jatuh di dalam jam kirim
+  notifikasi (08:00–20:00 WIB, `server/engagement.ts`) — di luar itu pesan bot tidak terkirim
+  sama sekali.
 
 ## Aturan keras
 

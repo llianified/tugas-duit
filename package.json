@@ -13,7 +13,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:migrate": "node --env-file-if-exists=.env.development.local --experimental-strip-types scripts/migrate.ts",
-    "db:migrate:boot": "node --env-file-if-exists=.env.development.local --experimental-strip-types scripts/migrate.ts --allow-failure",
     "db:cleanup": "node --env-file-if-exists=.env.development.local --experimental-strip-types scripts/maintenance.ts",
     "db:grant-admin": "node --env-file-if-exists=.env.development.local --experimental-strip-types scripts/grant-admin.ts",
     "db:ban-user": "node --env-file-if-exists=.env.development.local --experimental-strip-types scripts/ban-user.ts"
@@ -21,7 +20,8 @@
   "dependencies": {
     "@base-ui/react": "^1.5.0",
     "@electric-sql/pglite": "^0.5.5",
-    "@vercel/analytics": "1.6.1",
+    "@vercel/analytics": "2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "motion": "^13.1.0",

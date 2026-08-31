@@ -2,7 +2,15 @@
 import type { LeaderboardBoard, LeaderboardEntry } from '@/features/leaderboard/domain'
 import { query } from './db'
 
-const BOARD_SIZE = 20
+/**
+ * 500, naik dari 20. Papan sepanjang ini tidak dimaksudkan untuk digulir habis — UI-nya
+ * memuat 50 baris sekaligus dan menyematkan posisi user di atas — melainkan supaya
+ * peringkat masih berarti bagi orang yang tidak akan pernah masuk sepuluh besar.
+ *
+ * Muatannya tetap kecil: 500 baris berisi angka dan nama pendek, dan querinya sudah
+ * memindai seluruh peserta untuk menghitung `participants` sejak sebelum perubahan ini.
+ */
+const BOARD_SIZE = 500
 
 export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> {
   const rows = await query<{

@@ -37,14 +37,18 @@ export const ECONOMY_PRESETS: readonly EconomyPreset[] = [
     id: 'growth',
     label: 'Bakar duit',
     summary:
-      'Kolam ±288 credit/hari (≈Rp28.800) dengan kapasitas 300 credit supaya user yang buka sekali sehari tetap memanen penuh, batas task 400, dan impresi digenjot dari dua sisi: 25 tiket iklan plus 4 interstitial per 5 menit. Pakai kalau memang sedang membeli pertumbuhan, dan pantau biaya payout hariannya.',
+      'Energi yang jadi pengikat, bukan kolam: ±32 energi gratis/hari lawan kolam ±288 credit yang selalu longgar, jadi user yang mau lanjut harus menonton iklan berhadiah untuk tiket masuk (30/hari, hampir separuh entri). Batas task 400 sebagai jaring anti-bot, plus 4 interstitial per 5 menit. Pantau biaya payout hariannya.',
     values: {
       /**
-       * Kapasitas dibuat ±1× isi ulang harian, BUKAN dibiarkan kecil. Kolam yang jauh
-       * lebih kecil dari lajunya berhenti mengisi begitu penuh, jadi yang memanen penuh
-       * hanya user yang kembali tiap beberapa jam — setelan agresif dengan cap sempit
-       * justru membayar penggiling 24 jam lebih banyak daripada user yang kerja sekali
-       * duduk, kebalikan dari yang dibeli di sini.
+       * Kapasitas dan laju kolam sengaja dibuat LEBIH BESAR dari yang bisa dihabiskan
+       * oleh entri sehari (±62 entri × ±4 credit ≈ 250 credit lawan 288 isi ulang),
+       * supaya kolam berhenti menjadi dinding. Ini yang membuat tiket iklan layak
+       * ditonton: kalau kolam yang kering lebih dulu, tiket hasil menonton iklan
+       * menukar satu entri menjadi task berbayar 0 dan user berhenti menonton.
+       *
+       * Konsekuensinya harus disadari: begitu energi yang mengikat, biaya payout tidak
+       * lagi dibatasi kolam melainkan oleh (energi gratis + tiket iklan) × reward
+       * rata-rata. Kolam tinggal berfungsi sebagai plafon pengaman.
        */
       rewardPoolCapIdr: 30_000,
       rewardPoolRegenMinutes: 5,
@@ -61,22 +65,37 @@ export const ECONOMY_PRESETS: readonly EconomyPreset[] = [
        */
       maxTasksPerDay: 400,
 
-      // Energi cukup untuk menghabiskan kolam (144 regen/hari + tiket iklan, sementara
-      // kolam sebesar ini butuh ±80 task), dengan stok 8 supaya energi tidak terbuang
-      // saat user pergi sebentar.
-      maxEnergy: 8,
-      energyRegenMinutes: 10,
+      /**
+       * Energi dibuat SENGAJA habis lebih dulu daripada kolam: 5 stok + regen 45 menit
+       * = ±32 entri gratis/hari, sementara kolam sehari menyanggupi ±70 task. Sisanya
+       * hanya bisa dibuka dengan tiket iklan berhadiah, dan itulah pendorong impresinya.
+       *
+       * Stok dibatasi 5 supaya energi benar-benar mentok di tengah sesi — stok besar
+       * membuat user selesai sebelum bertemu dinding, dan dinding itu yang menjual
+       * tontonan iklan. Regen 45 menit juga menahan energi terbuang saat ia pergi.
+       */
+      maxEnergy: 5,
+      energyRegenMinutes: 45,
       energyCostPerTask: 1,
-      premiumMaxEnergy: 10,
-      premiumEnergyRegenMinutes: 5,
 
       /**
-       * Sisi impresi. Tiket berhadiah membayar ongkos masuk task, jadi ia menambah
-       * tontonan tanpa menambah credit; interstitial dirapatkan ke 4 per jendela 5
-       * menit. Jadwalnya masih muat di jendelanya: 10s tunda + 3 × 30s jeda = 100s.
+       * Nilai premium di sini bukan lagi tambahan credit (kolam sudah longgar untuk
+       * semua), melainkan bebas iklan: 10 stok + regen 20 menit = ±80 entri gratis,
+       * cukup untuk menghabiskan kolamnya tanpa menonton satu tiket pun.
        */
-      adsMaxViewsPerDay: 25,
-      adsCooldownSeconds: 45,
+      premiumMaxEnergy: 10,
+      premiumEnergyRegenMinutes: 20,
+
+      /**
+       * Sisi impresi. Tiket berhadiah kini membayar hampir separuh entri harian, jadi
+       * kuotanya dinaikkan ke 30 dan jeda dipendekkan ke 40 detik supaya kuota itu
+       * benar-benar habis dipakai, bukan tertahan cooldown. Tiket menambah tontonan
+       * tanpa menambah credit — ia menukar ongkos masuk, bukan reward.
+       *
+       * Interstitial 4 per jendela 5 menit; jadwalnya masih muat: 10s + 3 × 30s = 100s.
+       */
+      adsMaxViewsPerDay: 30,
+      adsCooldownSeconds: 40,
       adsTicketTtlSeconds: 300,
       adsPassTtlMinutes: 10,
       inAppAdsFrequency: 4,

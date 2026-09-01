@@ -1779,6 +1779,101 @@
   pointer-events: none;
 }
 
+/* Sobekannya dipasang HANYA di klaim, bukan di "Join". Membuka channel di tab
+   lain tidak menghabiskan apa pun — tabnya bisa ditutup dan kuponnya masih utuh
+   — sedangkan klaim satu-satunya langkah yang tidak bisa diulang. Kupon cuma
+   bisa sobek sekali, jadi sobekan itu milik langkah yang benar-benar memakainya.
+
+   Durasinya terikat ke `TEAR_MS` di `use-channel-bonus.ts`: penyegaran sesi
+   ditahan sampai animasi selesai, karena data barulah yang melepas kartu ini
+   dari Beranda. Kalau tidak ditahan, sobekannya terpotong di frame pertama. */
+.bonus-coupon-tearing {
+  /* Stub harus bisa keluar dari bidang kartu. Selama sobek, kedua lubangnya
+     ikut terbang bersama stub, jadi tidak ada lagi yang bergantung pada
+     kliping induknya untuk terlihat sebagai setengah lingkaran. */
+  overflow: visible;
+  /* Kartu sedang pergi: tombol "Join" dan "Klaim" tidak boleh bisa ditekan
+     lagi di tengah sobekan. */
+  pointer-events: none;
+  animation: coupon-tear-out 220ms ease-in 470ms both;
+}
+.bonus-coupon-tearing .bonus-coupon-stub {
+  /* Easing yang sama dengan getaran jawaban salah: tarikan pendek dulu, lalu
+     lepas. Itu yang membedakan "disobek" dari "digeser". */
+  animation: coupon-tear-stub 520ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  will-change: translate, rotate, opacity;
+}
+.bonus-coupon-tearing .bonus-coupon-body {
+  animation: coupon-tear-body 520ms ease-out both;
+}
+/* Perforasi yang putus. Garis putus-putusnya terbang bersama stub, dan yang
+   tertinggal di badan kupon adalah bekas sobekan sebagai garis utuh. */
+.bonus-coupon-tearing .bonus-coupon-body::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 1px;
+  background-color: var(--coupon-perf);
+  animation: fade-in 160ms ease-out 90ms both;
+}
+
+@keyframes coupon-tear-stub {
+  0% {
+    translate: 0 0;
+    rotate: 0deg;
+    opacity: 1;
+  }
+  16% {
+    translate: 2px 0;
+    rotate: 0.8deg;
+  }
+  100% {
+    translate: -14px 30px;
+    rotate: -19deg;
+    opacity: 0;
+  }
+}
+/* Badan kupon menahan tarikan sebentar, lalu balik ke tempatnya begitu
+   sobekannya lepas. Ia tidak ikut terbang — ia yang tertinggal. */
+@keyframes coupon-tear-body {
+  0% {
+    translate: 0 0;
+  }
+  16% {
+    translate: -2px 0;
+  }
+  46% {
+    translate: 3px 0;
+  }
+  100% {
+    translate: 0 0;
+  }
+}
+@keyframes coupon-tear-out {
+  0% {
+    opacity: 1;
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 0.97;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Tanpa gerak, yang tersisa cuma kepergiannya. `TEAR_MS` juga dipangkas di
+     sisi JS lewat media query yang sama, jadi jedanya tidak ikut tertinggal. */
+  .bonus-coupon-tearing {
+    overflow: hidden;
+    animation: fade-in 200ms ease-out reverse both;
+  }
+  .bonus-coupon-tearing .bonus-coupon-stub,
+  .bonus-coupon-tearing .bonus-coupon-body,
+  .bonus-coupon-tearing .bonus-coupon-body::before {
+    animation: none;
+  }
+}
+
 /* --- Transaksi: baris buku kas -------------------------------------------- */
 .home-ledger li {
   border-bottom-style: dashed;

@@ -2,9 +2,32 @@
 
 import { useCallback, useState } from 'react'
 import { userFacingMessage } from '@/shell/api-client'
-import { hapticTap } from '@/shell/haptic'
+import { hapticSuccess, hapticTap } from '@/shell/haptic'
 import { claimChannelBonus, type ChannelBonusState } from '@/shell/session-api'
 import { useToast } from '@/shell/toast'
+
+/**
+ * Panjang sobekan kupon, dikunci ke `.bonus-coupon-tearing` di globals.css:
+ * 520ms lepasnya stub + 220ms kepergian kartunya yang mulai di 470ms.
+ *
+ * Angka ini hidup di dua tempat karena memang dua hal yang berbeda — CSS yang
+ * menggambar, dan JS yang menahan penyegaran sesi supaya gambarnya selesai.
+ * Kalau salah satu diubah, yang lain ikut.
+ */
+const TEAR_MS = 690
+
+/** Versi tanpa gerak: yang tersisa hanya fade 200ms, jadi jedanya juga pendek. */
+const TEAR_REDUCED_MS = 200
+
+function tearDuration() {
+  if (typeof window === 'undefined') return TEAR_MS
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  return reduced ? TEAR_REDUCED_MS : TEAR_MS
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 /**
  * Satu tempat yang memutuskan apakah bonus ini masih ada.
@@ -34,20 +57,43 @@ export function channelBonusReachable(
  */
 export function useChannelBonus({ onClaimed }: { onClaimed: () => Promise<unknown> }) {
   const [claiming, setClaiming] = useState(false)
+  const [torn, setTorn] = useState(false)
   const showError = useToast()
 
   const claim = useCallback(async () => {
     hapticTap()
     setClaiming(true)
+
     try {
       await claimChannelBonus()
+    } catch (cause) {
+      // Gagal sebelum apa pun terjadi: kuponnya masih utuh, jadi tidak ada yang
+      // perlu disobek dan tombolnya dikembalikan supaya bisa dicoba lagi.
+      showError(userFacingMessage(cause))
+      setClaiming(false)
+      return
+    }
+
+    // Bonusnya sudah pindah ke saldo di server. Dari titik ini kuponnya habis,
+    // dan `torn` tidak pernah dikembalikan ke `false`: membatalkan sobekan
+    // setelah klaim berhasil akan menggambarkan keadaan yang tidak benar.
+    hapticSuccess()
+    setTorn(true)
+    await sleep(tearDuration())
+
+    // Sengaja setelah animasinya. `onClaimed` menyegarkan sesi, dan sesi baru
+    // membuat `channelBonusReachable` bernilai `false` — yang melepas kartu ini
+    // dari Beranda. Dipanggil lebih awal, sobekannya tidak pernah terlihat.
+    //
+    // `claiming` juga tidak pernah dikembalikan ke `false` di jalur ini: selama
+    // 700ms itu tombolnya harus tetap mati, dan sesudahnya kartunya sudah tidak
+    // ada untuk dibaca ulang.
+    try {
       await onClaimed()
     } catch (cause) {
       showError(userFacingMessage(cause))
-    } finally {
-      setClaiming(false)
     }
   }, [onClaimed, showError])
 
-  return { claiming, claim }
+  return { claiming, torn, claim }
 }

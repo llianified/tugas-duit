@@ -30,10 +30,13 @@ export function ChannelBonusCard({
   bonus: ChannelBonusState
   onClaimed: () => Promise<unknown>
 }) {
-  const { claiming, claim } = useChannelBonus({ onClaimed })
+  const { claiming, torn, claim } = useChannelBonus({ onClaimed })
 
   return (
-    <section aria-label="Bonus join channel" className="bonus-coupon">
+    <section
+      aria-label="Bonus join channel"
+      className={`bonus-coupon${torn ? ' bonus-coupon-tearing' : ''}`}
+    >
       <div className="bonus-coupon-stub" aria-hidden="true">
         <span className="bonus-coupon-stub-label">Bonus</span>
       </div>

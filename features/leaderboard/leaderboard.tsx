@@ -37,11 +37,14 @@ import type { LeaderboardBoard, LeaderboardEntry } from '@/features/leaderboard/
 type BoardSurface = 'papan' | 'aktivitas'
 
 /**
- * Varian `plain` (Langkah 6), bukan lagi tablist garis-bawah buatan sendiri:
- * pill-nya sudah dipakai untuk pemilih lain di app ini, dan `SegmentedTabs`
- * membawa haptic, `aria-controls`, serta pengabaian klik pada tab aktif yang
- * dulu ditulis ulang di sini. `aria-controls`-nya nyata — kedua cabang di bawah
- * merender `id` panel yang ditunjuk.
+ * Varian `solid`, sama seperti "Task / Penarikan" di halaman Riwayat: keduanya
+ * pemilih tingkat atas yang menukar seluruh isi halaman, jadi keduanya pantas
+ * memakai wadah `bg-track-surface` selebar layar — bukan pill `plain` yang di
+ * app ini menandai saringan di dalam satu tampilan (lihat `FilterChip` di
+ * `BoardPanel`, yang tetap `plain` dan kini tidak lagi bertabrakan arti dengan
+ * baris ini). `SegmentedTabs` juga membawa haptic, `aria-controls`, serta
+ * pengabaian klik pada tab aktif yang dulu ditulis ulang di sini; `aria-controls`
+ * itu nyata — kedua cabang di bawah merender `id` panel yang ditunjuk.
  */
 const SURFACE_TABS: readonly SegmentedTab<BoardSurface>[] = [
   { value: 'papan', label: 'Papan' },
@@ -74,7 +77,6 @@ export function LeaderboardView({
         value={surface}
         onChange={setSurface}
         ariaLabel="Tampilan papan"
-        variant="plain"
         className="region-under-brand"
       />
 

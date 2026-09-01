@@ -11,42 +11,36 @@ export type SegmentedTab<T extends string> = {
 }
 
 /**
- * `solid` — varian asli: wadah `bg-track-surface`, tab aktif berupa permukaan
- * terangkat. Wadahnya sengaja lebih gelap dari bidang tab aktif — lihat
- * `--track-surface`; dulu keduanya sama-sama #232329 dan tab aktifnya hilang.
- * Dipakai `features/stats`, `features/history`, dan `features/leaderboard`.
+ * Satu bentuk saja: wadah `bg-track-surface`, tab aktif berupa permukaan
+ * terangkat, tiap tab `flex-1` sehingga barisnya selebar induknya. Wadahnya
+ * sengaja lebih gelap dari bidang tab aktif — lihat `--track-surface`; dulu
+ * keduanya sama-sama #232329 dan tab aktifnya hilang. Dipakai `features/stats`,
+ * `features/history`, dan `features/leaderboard`.
  *
- * `plain` — varian gaya fomo (Langkah 6): tanpa wadah berlatar, tab tak aktif
- * hanya teks redam, tab aktif pill `bg-muted`. Tidak mengambil lebar penuh
- * supaya bisa berdampingan dengan `FilterChip` di satu baris.
+ * Dulu ada varian `plain` (pill tanpa wadah, lebar seisi teks) khusus untuk baris
+ * Papan/Aktivitas di papan peringkat. Baris itu kini `solid` seperti Riwayat, dan
+ * pill tanpa wadah tinggal jadi bahasa untuk saringan di dalam satu tampilan —
+ * peran yang sudah dipegang `FilterChip` di bawah. Menyisakan varian tanpa
+ * pemakai hanya mengundang pemakaian yang menghidupkan lagi tabrakan arti itu.
  */
-export type SegmentedVariant = 'solid' | 'plain'
-
 export function SegmentedTabs<T extends string>({
   tabs,
   value,
   onChange,
   ariaLabel,
-  variant = 'solid',
   className,
 }: {
   tabs: readonly SegmentedTab<T>[]
   value: T
   onChange: (value: T) => void
   ariaLabel: string
-  variant?: SegmentedVariant
   className?: string
 }) {
-  const plain = variant === 'plain'
   return (
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className={cn(
-        'flex',
-        plain ? 'gap-0.5' : 'gap-1 rounded-lg bg-track-surface p-1',
-        className,
-      )}
+      className={cn('flex gap-1 rounded-lg bg-track-surface p-1', className)}
     >
       {tabs.map((tab) => {
         const active = tab.value === value

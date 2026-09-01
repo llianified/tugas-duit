@@ -520,14 +520,48 @@ tersentuh.
 
 **Berkas baru:** `shared/components/avatar-stack.tsx`, `shared/components/rank-medal.tsx`
 
-- [ ] `AvatarStack`: terima daftar avatar + batas tampil, saling tumpuk dengan
+- [x] `AvatarStack`: terima daftar avatar + batas tampil, saling tumpuk dengan
       ring warna `background`, sisanya jadi lingkaran `bg-muted` berisi `N+`.
-- [ ] Beri `aria-label` yang bermakna; avatar individual `aria-hidden`.
-- [ ] `RankMedal`: pita untuk peringkat 1–3 (emas/perak/bronze diturunkan dari
+- [x] Beri `aria-label` yang bermakna; avatar individual `aria-hidden`.
+- [x] `RankMedal`: pita untuk peringkat 1–3 (emas/perak/bronze diturunkan dari
       token — gunakan `--premium` untuk emas, dan tambahkan token bila perlu
       untuk perak/bronze; keduanya wajib punya pasangan gelap).
-- [ ] Peringkat > 3 dirender sebagai angka biasa, bukan medali.
-- [ ] Kedua komponen harus aman ketika daftar avatar kosong / gambar gagal muat.
+- [x] Peringkat > 3 dirender sebagai angka biasa, bukan medali.
+- [x] Kedua komponen harus aman ketika daftar avatar kosong / gambar gagal muat.
+
+**Status:** SELESAI. `RankMedal` merender pita (`clip-path` bercelah "V" di sisi
+bawah) untuk peringkat 1–3 dan `12.` / `–` untuk sisanya; apa pun di luar 1–3 —
+termasuk `0`, negatif, dan `NaN` — jatuh ke cabang angka, jadi tidak ada pita
+tanpa warna. Ukuran `sm` / `md` disediakan karena lencana ini akan dipasang di
+lingkaran kecil pada baris papan (Langkah 9).
+
+Emas **tidak** memakai `--premium` seperti tertulis di rencana — lihat catatan
+penyimpangan di BAB 4. Token baru `--medal-gold/-silver/-bronze` plus pasangan
+`-fg`-nya ditambahkan di kedua tema dan didaftarkan di `@theme inline`, sehingga
+JSX cuma memakai `bg-medal-*` / `text-medal-*-fg` tanpa hex mentah.
+
+`AvatarStack` menumpuk avatar dengan margin negatif (bukan `translate`, supaya
+lebar total ikut mengecil dan baris di sebelahnya tidak perlu tahu jumlah
+avatarnya), memberi ring `background` — atau `card` lewat `ringTone` untuk
+pemakaian di dalam kartu — dan meringkas sisanya jadi `65+` di lingkaran
+`bg-muted`. Daftar kosong mengembalikan `null` alih-alih meninggalkan wadah
+ber-`aria-label` yang tidak mengumumkan apa pun.
+
+Diverifikasi lewat halaman percobaan sementara (sudah dihapus) pada 384 px:
+`scrollWidth === clientWidth === 384` di tema terang **dan** gelap; rasio
+kontras angka di atas pitanya diukur langsung di browser — terang
+7.36 / 9.18 / 6.75, gelap 11.14 / 11.55 / 5.67, semua lolos AA teks kecil;
+ring avatar terukur tepat `#fafafa` (terang) dan `#101014` (gelap); dan saat
+`error` gambar dipicu, ketiga `img` benar-benar berganti ke glyph pengganti
+(`imgs: 3 → 0`, `svg: 8`). `tsc --noEmit` bersih, `pnpm lint` bersih,
+`pnpm build` lolos. `git diff --name-only`: `app/globals.css`,
+`shared/components/avatar-stack.tsx`, `shared/components/rank-medal.tsx` +
+dokumen ini — zona terlarang tidak tersentuh.
+
+Belum dipasang ke halaman mana pun; pemasangan adalah Langkah 9. `MEDAL_CLASS`
+berisi hex mentah di `features/leaderboard/leaderboard.tsx` sengaja dibiarkan
+untuk sementara — ia baru boleh dicabut saat `RankMedal` menggantikannya di
+Langkah 9, bukan sekarang.
 
 ---
 
@@ -633,6 +667,28 @@ Diisi oleh agent selama pengerjaan. Ini penting untuk serah-terima antar agent.
   `shell/telegram-viewport.ts`. Konsekuensinya `--chip-radius` tidak dipakai di
   sini: chip filter fomo berbentuk pill penuh (`rounded-full`), sedangkan
   `--chip-radius` milik badge persegi Langkah 5.
+- **Langkah 8 — emas medali bukan `--premium`.** Rencana menyebut `--premium`
+  untuk emas. Ditolak: premium sudah memakai emas di cincin avatar dan mahkota
+  di baris papan yang sama, dan komentar di `leaderboard.tsx` sudah menyatakan
+  bahwa emas medali "tidak bertabrakan dengan emas premium" justru karena
+  keduanya hidup di tempat berbeda. Memakai satu token untuk dua arti akan
+  membatalkan itu. Selain itu `--premium` versi terang (`#b45309`) coklat, bukan
+  emas. Jadi `--medal-gold/-silver/-bronze` berdiri sendiri, nilainya diambil
+  dari `MEDAL_CLASS` yang sudah ada supaya podium tidak berubah warna, kecuali
+  perunggu terang yang dipekatkan (`#b06a3b` → `#8a4b21`) karena teks putih di
+  atas nilai lama hanya ~4.2:1.
+- **Langkah 8 — `aria-hidden` per avatar tidak dipasang.** Wadah `AvatarStack`
+  memakai `role="img"` + `aria-label`, yang sudah membuat seluruh subtree-nya
+  presentasional; menambah `aria-hidden` per avatar tidak mengubah apa pun dan
+  `ProfileAvatar` juga tidak menerima prop itu (ia sudah merender `alt=""`).
+  Penghitung sisa tetap `aria-hidden` eksplisit.
+- **Langkah 8 — `AvatarStack` memakai `ProfileAvatar` dari `features/home`.**
+  Impor `shared/` → `features/` bukan arah yang ideal, tapi menulis ulang
+  penanganan `onError` → glyph pengganti di komponen kedua lebih buruk: dua
+  jalur fallback yang bisa berbeda diam-diam. Presedennya sudah ada
+  (`shared/lib/shape-path.ts` mengimpor tipe dari `features/captcha`). Kalau
+  nanti ada fitur ketiga yang butuh avatar, `ProfileAvatar` layak dipindahkan
+  ke `shared/components/` — itu pekerjaan terpisah, bukan bagian langkah ini.
 - **Langkah 1 — `--thread-line`.** Dijadikan alias `var(--border)` di kedua tema
   (bukan warna baru), karena `--border` sudah punya nilai terang & gelap yang
   tepat untuk garis penghubung setipis ini. Token tetap ada agar Langkah 10
@@ -640,7 +696,12 @@ Diisi oleh agent selama pengerjaan. Ini penting untuk serah-terima antar agent.
 
 ### Ditemukan tapi di luar cakupan
 
-- _(belum ada)_
+- **Pita perak vs latar terang.** `--medal-silver` (`#b8bcc4`) hanya ~1.8:1
+  terhadap `--background` terang, jadi bidang pitanya sendiri nyaris tidak
+  berbatas di tema terang. Angka di dalamnya tetap 9.18:1 sehingga informasinya
+  utuh, tapi kalau kelak medali dipakai tanpa angka (mis. ikon saja), perak
+  butuh garis tepi. Tidak diubah sekarang karena akan menggeser warna podium
+  yang sudah ada.
 
 ---
 

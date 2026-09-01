@@ -593,9 +593,25 @@ tertinggal tanpa render di langkah ini ikut diperbaiki. Lihat BAB 4.
       kecuali benar-benar perlu; ini pekerjaan presentasi.
       → Keduanya tidak disentuh.
 
-Diperiksa di peramban pada 384px: kartu posisi, pita medali 1/2/3 dengan kontur
+**Status:** SELESAI. Tiga hal ditukar di `leaderboard.tsx`: tablist garis-bawah
+buatan sendiri → `SegmentedTabs` varian `plain`, tab `Semua/VIP` di dalam papan →
+`FilterChip`, dan lingkaran bernomor 1–3 di `BoardFrame` → `RankMedal`. Konstanta
+`MEDAL_CLASS` berisi hex mentah — satu-satunya sisa hex di berkas ini — dicabut
+karena `RankMedal` kini pemakai tunggal warna itu lewat token `--medal-*`.
+
+Dua pembungkus `role="tabpanel"` (`#panel-papan`, `#panel-aktivitas`) ditambahkan
+supaya `aria-controls` yang dibawa `SegmentedTabs` benar-benar menunjuk elemen
+yang ada; keduanya `flex flex-1 flex-col` agar empty state (`flex-1
+justify-center`) tetap terpusat seperti sebelum ada pembungkus. Baris filter
+dipasang `justify-between` walau sisi kanannya kosong — lihat penyimpangan di
+BAB 4 soal rentang waktu yang tidak dirender.
+
+Diperiksa di peramban lewat halaman percobaan sementara (sudah dihapus) pada
+384px, tema terang dan gelap: kartu posisi, pita medali 1/2/3 dengan kontur
 `halo`, chip `Semua 6` → `VIP 2`, perpindahan tab Papan ↔ Aktivitas, dan kedua
-empty state (papan kosong & aktivitas kosong) masih terpusat. `tsc --noEmit` bersih.
+empty state (papan kosong & aktivitas kosong) masih terpusat. Baris meta kartu
+posisi awalnya terpotong (`#3 dari 1.284 peserta · 3…`) dan dipendekkan dengan
+membuang hitungan task — lihat BAB 4. `tsc --noEmit` bersih.
 
 ---
 
@@ -719,6 +735,37 @@ Diisi oleh agent selama pengerjaan. Ini penting untuk serah-terima antar agent.
   (`shared/lib/shape-path.ts` mengimpor tipe dari `features/captcha`). Kalau
   nanti ada fitur ketiga yang butuh avatar, `ProfileAvatar` layak dipindahkan
   ke `shared/components/` — itu pekerjaan terpisah, bukan bagian langkah ini.
+- **Langkah 9 — varian `plain` dipakai untuk tab Papan/Aktivitas, bukan rentang
+  waktu.** Rencana menugaskan `plain` ke pemilih rentang waktu. Papan ini
+  kumulatif: `getLeaderboard` tidak menerima parameter waktu dan tidak ada kolom
+  bertanggal yang bisa disaring, jadi pill "24j / 7h / 30h" akan jadi kontrol
+  yang tidak menyaring apa pun. `plain` dialihkan ke pemilih yang memang ada dan
+  memang tablist — Papan ↔ Aktivitas, yang sebelumnya tablist garis-bawah
+  buatan sendiri di berkas ini. Baris filternya tetap `justify-between` agar
+  pemilih waktu bisa masuk di kanan tanpa menyusun ulang baris itu kalau jalur
+  datanya kelak ada.
+- **Langkah 9 — `FilterChip` untuk Semua/VIP, bukan untuk kategori baru.**
+  Rencana menyebut chip dropdown "untuk filter di kiri" tanpa menyebut isinya.
+  Yang dipasang adalah saringan yang sudah hidup di berkas ini (`Semua N` /
+  `VIP N`), yang sebelumnya berbentuk tab kedua. Konsekuensinya pembungkus
+  daftarnya kehilangan `role="tabpanel"`: pemilihnya kini `<select>`, jadi
+  `aria-labelledby="tab-…"` akan menunjuk id yang tidak ada. Labelnya tidak
+  hilang — `DataList` sudah membawa `<section aria-label>` sendiri.
+- **Langkah 9 — angka biasa `RankMedal` tidak dipakai di `BoardFrame`.**
+  Peringkat > 3 tetap memakai lingkaran redam bernomor milik `BoardFrame`, bukan
+  cabang angka `RankMedal`. Alasan: cabang itu teks tanpa bidang, dan ia
+  ditumpuk di sudut foto profil yang warnanya tidak bisa ditebak. Untuk pitanya,
+  masalah yang sama diurus prop `halo`.
+- **Langkah 9 — prop `halo` `RankMedal` diperbaiki di sini, bukan di Langkah 8.**
+  `halo` dideklarasikan di Langkah 8 tapi tidak pernah dirender. Langkah 9 adalah
+  konsumen pertamanya, jadi rendernya ditulis sekarang: pita kedua sedikit lebih
+  besar dengan `clip-path` yang sama, karena `ring`/`shadow` mengikuti kotak dan
+  bukan siluet ber-notch.
+- **Langkah 9 — hitungan task dibuang dari baris meta kartu posisi.** Rencana
+  menyebut "avatar + nama + `@handle • Kamu` + nilai". Susunan itu dipertahankan,
+  tapi `· N task` yang sempat ikut di baris kedua dicabut setelah terlihat
+  terpotong di 384px (kolom nama tinggal ~200px setelah avatar dan nilai).
+  Informasinya tidak hilang: baris papan user ini juga menampilkannya.
 - **Langkah 1 — `--thread-line`.** Dijadikan alias `var(--border)` di kedua tema
   (bukan warna baru), karena `--border` sudah punya nilai terang & gelap yang
   tepat untuk garis penghubung setipis ini. Token tetap ada agar Langkah 10

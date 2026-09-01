@@ -5,6 +5,7 @@ import { ActiveTask } from '@/features/home/active-task'
 import { BalanceSummary } from '@/features/home/balance-summary'
 import { RecentTransactions } from '@/features/home/recent-transactions'
 import { ChannelBonusCard } from '@/features/channel/channel-card'
+import { channelBonusReachable } from '@/features/channel/use-channel-bonus'
 import { PremiumCard } from '@/features/premium/components/premium-card'
 import { PremiumDialog } from '@/features/premium/components/premium-dialog'
 import type { Challenge, HistoryEntry } from '@/features/captcha/domain'
@@ -89,7 +90,7 @@ export function HomeView({
    * bisa hilang; transaksi hanya catatan yang tidak ke mana-mana.
    */
   const premiumReachable = Boolean(premium && (premium.active || premium.paymentEnabled))
-  const bonusReachable = Boolean(channelBonus?.enabled && !channelBonus.claimed)
+  const bonusReachable = channelBonusReachable(channelBonus)
 
   return (
     <div className="view-min-h flex flex-col">
@@ -128,7 +129,7 @@ export function HomeView({
           <PremiumCard premium={premium} onOpen={() => setPremiumOpen(true)} />
         ) : null}
 
-        {bonusReachable && channelBonus ? (
+        {bonusReachable ? (
           <div className={premium && premiumReachable ? 'region-gap-t' : undefined}>
             <ChannelBonusCard bonus={channelBonus} onClaimed={onRefreshSession} />
           </div>

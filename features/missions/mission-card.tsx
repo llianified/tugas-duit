@@ -6,6 +6,7 @@ import { MissionListSkeleton } from '@/shared/components/app-skeleton'
 import { EmptyState } from '@/shared/components/empty-state'
 import { GlyphBolt, GlyphCheck } from '@/shared/components/glyph'
 import { SectionLabel } from '@/shared/components/section-label'
+import { SURFACE_CARD_CLASS } from '@/shared/components/surface-card'
 import { formatCredits } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 
@@ -52,7 +53,7 @@ export function MissionCard({
   return (
     <section
       aria-label="Misi harian"
-      className={page ? undefined : 'rounded-lg bg-muted/60 p-[var(--surface-p)] ring-border'}
+      className={page ? undefined : SURFACE_CARD_CLASS}
     >
       <div className="flex items-baseline justify-between gap-3">
         <SectionLabel as="h2">Misi hari ini</SectionLabel>

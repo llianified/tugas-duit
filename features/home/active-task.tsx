@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useCallback, useState, type CSSProperties, type ReactNode } from 'react'
 import { WatchAdToPlay } from '@/features/ads/watch-ad-to-play'
 import { DifficultyBadge } from '@/features/captcha/components/difficulty-badge'
 import { EnergyRecoverySheet } from '@/features/home/energy-recovery-sheet'
@@ -16,6 +16,17 @@ import {
   formatRupiah,
 } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
+
+/**
+ * Lama sobekan karcis. Angkanya dipasang sebagai `--tear-ms` di elemen kartu,
+ * jadi CSS dan penahan perpindahan halaman membaca satu sumber yang sama.
+ */
+const TEAR_MS = 520
+
+function reducedMotion() {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true
+}
 
 export function ActiveTask({
   task,
@@ -45,50 +56,94 @@ export function ActiveTask({
   adCooldownSecondsLeft: number
   adPassReady: boolean
   watchingAd: boolean
-  onStart: () => void
+  /**
+   * `hold` adalah janji yang menahan perpindahan ke halaman task sampai
+   * animasi sobekan selesai. Ia dikirim ke atas, bukan dijalankan di sini,
+   * karena yang tahu kapan halaman boleh berganti adalah alur task — dan
+   * permintaan `/api/task/start` tetap jalan berbarengan dengan animasinya.
+   * Nilai kembaliannya `false` kalau task gagal dimulai, supaya karcisnya
+   * bisa dipulihkan dan user tidak melihat kartu yang hilang tanpa sebab.
+   */
+  onStart: (hold?: Promise<unknown>) => Promise<boolean>
   onStartWithAd: () => void
   onOpenMissions: () => void
   onOpenPremium: (() => void) | null
 }) {
   const [recoveryOpen, setRecoveryOpen] = useState(false)
+  const [tearing, setTearing] = useState(false)
   const poolEmpty = rewardPoolCredits === 0
   const energyEmpty = energy < energyCostPerTask()
   const waiting = poolEmpty || energyEmpty
 
+  /**
+   * Sobek dulu, pindah halaman setelah keduanya siap.
+   *
+   * Animasinya TIDAK menunda permintaan ke server: keduanya mulai di ketukan
+   * yang sama dan halaman berganti setelah dua-duanya beres. Kalau animasinya
+   * dijalankan lebih dulu lalu request menyusul, setiap ketukan jadi
+   * `TEAR_MS` lebih lambat tanpa menambah apa pun.
+   */
+  const tearAndStart = useCallback(() => {
+    if (tearing) return
+    if (reducedMotion()) {
+      void onStart()
+      return
+    }
+    setTearing(true)
+    const hold = new Promise((resolve) => {
+      window.setTimeout(resolve, TEAR_MS)
+    })
+    void onStart(hold).then((started) => {
+      if (!started) setTearing(false)
+    })
+  }, [onStart, tearing])
+
   return (
     <section aria-label="Task yang tersedia">
-      <div className="task-card">
-        <TaskHeading title={task.title} serial={task.id} difficulty={task.difficulty} />
-        {/* Perforasi memisahkan "apa tasknya" dari "berapa harganya" — sama
-            seperti karcis: bagian atas keterangan, bawah yang disobek. */}
-        <div className="block-gap-t ticket-perf" aria-hidden />
-        <TaskStats
-          maxReward={task.maxReward}
-          energy={energy}
-          energyMax={energyMax}
-          energyEmpty={energyEmpty}
-          energyFill={energyFill}
-        />
-        <div className="cta-gap flex items-stretch gap-2 [&>*]:min-w-0 [&>*]:flex-1">
-          <StartAction
-            waiting={waiting}
-            poolEmpty={poolEmpty}
+      {/* Karcisnya dua bagian yang berhimpit di perforasi, bukan satu kotak
+          dengan garis di tengahnya. Pemisahan ini yang membuat sobekannya nyata:
+          saat "Mulai" ditekan, pangkal dan sobekannya berjalan ke arah
+          berlawanan dengan tepi bergerigi. Lihat `--tear-*` di `globals.css`. */}
+      <div
+        className="task-card"
+        data-tearing={tearing ? 'true' : undefined}
+        style={{ '--tear-ms': `${TEAR_MS}ms` } as CSSProperties}
+      >
+        <div className="ticket-part ticket-part-top">
+          <TaskHeading title={task.title} serial={task.id} difficulty={task.difficulty} />
+          {/* Perforasi memisahkan "apa tasknya" dari "berapa harganya" — sama
+              seperti karcis: bagian atas keterangan, bawah yang disobek. */}
+          <div className="block-gap-t ticket-perf" aria-hidden />
+        </div>
+        <div className="ticket-part ticket-part-bottom">
+          <TaskStats
+            maxReward={task.maxReward}
             energy={energy}
             energyMax={energyMax}
+            energyEmpty={energyEmpty}
             energyFill={energyFill}
-            rewardPoolSecondsToNext={rewardPoolSecondsToNext}
-            onStart={onStart}
-            onRecover={() => setRecoveryOpen(true)}
           />
-          <WatchAdToPlay
-            enabled={adsEnabled}
-            viewsLeft={adViewsLeft}
-            cooldownSecondsLeft={adCooldownSecondsLeft}
-            passReady={adPassReady}
-            watching={watchingAd}
-            poolEmpty={poolEmpty}
-            onWatch={onStartWithAd}
-          />
+          <div className="cta-gap flex items-stretch gap-2 [&>*]:min-w-0 [&>*]:flex-1">
+            <StartAction
+              waiting={waiting}
+              poolEmpty={poolEmpty}
+              energy={energy}
+              energyMax={energyMax}
+              energyFill={energyFill}
+              rewardPoolSecondsToNext={rewardPoolSecondsToNext}
+              onStart={tearAndStart}
+              onRecover={() => setRecoveryOpen(true)}
+            />
+            <WatchAdToPlay
+              enabled={adsEnabled}
+              viewsLeft={adViewsLeft}
+              cooldownSecondsLeft={adCooldownSecondsLeft}
+              passReady={adPassReady}
+              watching={watchingAd}
+              poolEmpty={poolEmpty}
+              onWatch={onStartWithAd}
+            />
+          </div>
         </div>
       </div>
 

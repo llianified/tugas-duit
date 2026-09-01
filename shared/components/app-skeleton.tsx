@@ -277,57 +277,64 @@ export function AppViewSkeleton() {
         </div>
 
         <div className="region-gap-t">
+          {/* Dua bagian karcis, sama seperti `ActiveTask`: paddingnya sekarang ada
+              di `.ticket-part`, bukan di `.task-card`. Kerangka yang masih memakai
+              satu kotak akan tergambar tanpa bidang kartu sama sekali. */}
           <div className="task-card">
-            {/* `TaskHeading`: baris cetakan (nomor seri + lencana kesulitan) DI ATAS
-                judul 22px. Judulnya dulu tidak digambar sama sekali, jadi kartunya
-                tumbuh ~28px begitu task-nya datang dan mendorong tombol CTA. */}
-            <div>
-              <div className="flex items-center justify-between gap-3">
-                <Line sample="KARCIS #A1B2C" className="home-tag" bar="h-2.5 w-24" />
-                <Bar className="h-5 w-16 shrink-0 rounded-[var(--chip-radius)]" />
-              </div>
-              <Line
-                sample="Judul task beranda"
-                className="stack-gap-t text-[22px] font-bold leading-tight tracking-[-0.02em]"
-                bar="h-4 w-44"
-              />
-            </div>
-
-            {/* Perforasi karcis: garis nyata, bukan bar berdenyut — ia sudah tergambar
-                penuh dan tidak sedang menunggu data apa pun. */}
-            <div className="block-gap-t ticket-perf" />
-
-            <div className="mt-3 grid grid-cols-3 gap-x-3">
-              {[0, 1, 2].map((column) => (
-                <div className="stat-tile" key={column}>
-                  <Line sample="MAKS" className="home-tag" bar="h-2.5 w-8" tone="on-muted" />
-                  <Line
-                    sample="+120"
-                    className="mt-1 text-lg font-bold tracking-tight"
-                    bar="h-4 w-12"
-                    tone="on-muted"
-                  />
-                  <Line
-                    sample="Rp 1.200"
-                    className="text-[11px]"
-                    bar="h-2.5 w-10"
-                    tone="on-muted"
-                  />
+            <div className="ticket-part ticket-part-top">
+              {/* `TaskHeading`: baris cetakan (nomor seri + lencana kesulitan) DI ATAS
+                  judul 22px. Judulnya dulu tidak digambar sama sekali, jadi kartunya
+                  tumbuh ~28px begitu task-nya datang dan mendorong tombol CTA. */}
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <Line sample="KARCIS #A1B2C" className="home-tag" bar="h-2.5 w-24" />
+                  <Bar className="h-5 w-16 shrink-0 rounded-[var(--chip-radius)]" />
                 </div>
-              ))}
+                <Line
+                  sample="Judul task beranda"
+                  className="stack-gap-t text-[22px] font-bold leading-tight tracking-[-0.02em]"
+                  bar="h-4 w-44"
+                />
+              </div>
+
+              {/* Perforasi karcis: garis nyata, bukan bar berdenyut — ia sudah tergambar
+                  penuh dan tidak sedang menunggu data apa pun. */}
+              <div className="block-gap-t ticket-perf" />
             </div>
 
-            {/*
-              Dua tombol berdampingan, sesuai `ActiveTask`: "Mulai" selalu ada, tombol
-              iklan hanya muncul kalau iklan menyala. Slot iklan disembunyikan lewat
-              `data-ads-hint` yang dipasang script di `app/layout.tsx` dari tontonan
-              terakhir user, bukan lewat state React — sesi belum termuat saat kerangka
-              ini tergambar, dan membaca localStorage saat render akan membuat HTML
-              server dan klien berbeda.
-            */}
-            <div className="cta-gap flex items-stretch gap-2 [&>*]:min-w-0 [&>*]:flex-1">
-              <Bar className="cta-h rounded-cta" />
-              <Bar className="skeleton-ad-slot cta-h rounded-cta" />
+            <div className="ticket-part ticket-part-bottom">
+              <div className="mt-3 grid grid-cols-3 gap-x-3">
+                {[0, 1, 2].map((column) => (
+                  <div className="stat-tile" key={column}>
+                    <Line sample="MAKS" className="home-tag" bar="h-2.5 w-8" tone="on-muted" />
+                    <Line
+                      sample="+120"
+                      className="mt-1 text-lg font-bold tracking-tight"
+                      bar="h-4 w-12"
+                      tone="on-muted"
+                    />
+                    <Line
+                      sample="Rp 1.200"
+                      className="text-[11px]"
+                      bar="h-2.5 w-10"
+                      tone="on-muted"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/*
+                Dua tombol berdampingan, sesuai `ActiveTask`: "Mulai" selalu ada, tombol
+                iklan hanya muncul kalau iklan menyala. Slot iklan disembunyikan lewat
+                `data-ads-hint` yang dipasang script di `app/layout.tsx` dari tontonan
+                terakhir user, bukan lewat state React — sesi belum termuat saat kerangka
+                ini tergambar, dan membaca localStorage saat render akan membuat HTML
+                server dan klien berbeda.
+              */}
+              <div className="cta-gap flex items-stretch gap-2 [&>*]:min-w-0 [&>*]:flex-1">
+                <Bar className="cta-h rounded-cta" />
+                <Bar className="skeleton-ad-slot cta-h rounded-cta" />
+              </div>
             </div>
           </div>
         </div>

@@ -183,7 +183,7 @@ export function AppViewRouter({
       adCooldownSecondsLeft={session.adCooldownSecondsLeft}
       adPassReady={session.adPassReady}
       watchingAd={session.watchingAd}
-      onStart={session.startTask}
+      onStart={(hold) => session.startTask('energy', hold)}
       onStartWithAd={session.startTaskWithAd}
       withdrawals={session.withdrawals}
       withdrawalEligibility={session.withdrawalEligibility}

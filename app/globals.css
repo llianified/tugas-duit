@@ -1497,6 +1497,12 @@
   --hero-curve: 0rem;
   --hero-band: #08080c;
   --ticket-notch: 0.8rem;
+  /* Radius lubang sobek di ujung perforasi. Lubangnya dilubangi tepat di tepi
+     kartu, jadi yang terlihat separuhnya — sama seperti karcis sungguhan. */
+  --ticket-hole: 0.3125rem;
+  /* Ukuran gerigi robekan. Hanya terpakai saat karcisnya disobek. */
+  --tear-tooth: 0.6875rem;
+  --tear-depth: 0.28rem;
   --ticket-edge: color-mix(in oklab, var(--primary) 42%, var(--border));
   --perf: color-mix(in oklab, var(--foreground) 26%, transparent);
   /* `--cta-radius` dan `--radius` dulu ditimpa di sini. Keduanya sudah pindah ke
@@ -1548,37 +1554,68 @@
 }
 
 /* --- Kartu task jadi karcis ------------------------------------------------
-   Sudutnya benar-benar digunting (`clip-path`), jadi border biasa ikut terpotong
-   dan tak bisa dipakai. Tepinya dibuat dengan cara lama: elemen luar berisi
-   warna garis, lapisan `::before` sejauh 1px di dalamnya berisi warna kartu.
-   `isolation` di induknya yang membuat `z-index: -1` berhenti di situ dan tidak
-   tenggelam ke belakang halaman. */
+   Karcisnya bukan satu bidang lagi, melainkan DUA lembar yang berhimpit di
+   garis perforasi: pangkal (nomor seri + judul) dan sobekan (harga + tombol).
+   Pemecahan ini bukan struktur demi struktur — saat "Mulai" ditekan karcisnya
+   benar-benar disobek, dan sobekan hanya bisa nyata kalau kertasnya memang dua
+   bagian yang bisa berjalan ke arah berlawanan.
+
+   Sudutnya digunting (`clip-path`), jadi border biasa ikut terpotong dan tak
+   bisa dipakai. Tepinya dibuat dengan cara lama: elemen berisi warna garis,
+   lapisan `::before` sejauh 1px di dalamnya berisi bidang kartu. Insetnya HANYA
+   di sisi luar; di garis pertemuan kedua bagian insetnya nol, supaya seam-nya
+   tidak menyisakan pita warna tepi selebar 2px di tengah karcis. `isolation` di
+   tiap bagian yang membuat `z-index: -1` berhenti di situ.
+
+   Dua lubang sobek di ujung perforasi dilubangi dengan `mask` (dua radial yang
+   di-`intersect`), bukan lagi titik yang ditempel dengan warna latar halaman.
+   Bedanya baru terasa saat disobek: lubang yang dilubangi tetap jadi lubang
+   ketika kedua bagian berpisah, sementara titik tempel akan ikut terbang. */
 .home-skin .task-card {
   position: relative;
   isolation: isolate;
   border-radius: 0;
-  padding: 0.875rem 1rem 1rem;
-  background-color: var(--ticket-edge);
+  padding: 0;
+  background-color: transparent;
   box-shadow: none;
+  clip-path: none;
+}
+
+.home-skin .ticket-part {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--ticket-edge);
+}
+.home-skin .ticket-part::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: 1px;
+  right: 1px;
+  background-color: var(--card);
+}
+
+.home-skin .ticket-part-top {
+  padding: 0.875rem 1rem 0;
   clip-path: polygon(
     var(--ticket-notch) 0,
     calc(100% - var(--ticket-notch)) 0,
     100% var(--ticket-notch),
-    100% calc(100% - var(--ticket-notch)),
-    calc(100% - var(--ticket-notch)) 100%,
-    var(--ticket-notch) 100%,
-    0 calc(100% - var(--ticket-notch)),
+    100% 100%,
+    0 100%,
     0 var(--ticket-notch)
   );
+  mask-image:
+    radial-gradient(var(--ticket-hole) at 0 100%, #0000 98%, #000),
+    radial-gradient(var(--ticket-hole) at 100% 100%, #0000 98%, #000);
+  mask-composite: intersect;
 }
-.home-skin .task-card::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 1px;
-  /* Dua lapis: serat diagonal tipis gaya kertas berpengaman di bagian atas
-     karcis, lalu bidang kartunya. Seratnya berhenti sebelum separuh tinggi
-     supaya angka dan tombol di bawah tetap duduk di bidang rata. */
+.home-skin .ticket-part-top::before {
+  top: 1px;
+  bottom: 0;
+  /* Dua lapis: serat diagonal tipis gaya kertas berpengaman, lalu bidang
+     kartunya. Seratnya tinggal di pangkal karcis saja supaya angka dan tombol
+     di bagian bawah tetap duduk di bidang rata. */
   background-image:
     repeating-linear-gradient(
       45deg,
@@ -1588,27 +1625,52 @@
     linear-gradient(
       180deg,
       color-mix(in oklab, var(--card) 82%, var(--primary) 6%),
-      var(--card) 42%,
       var(--card)
     );
-  background-repeat: no-repeat, no-repeat;
-  background-size:
-    100% 5.25rem,
-    100% 100%;
   clip-path: polygon(
     calc(var(--ticket-notch) - 1px) 0,
     calc(100% - var(--ticket-notch) + 1px) 0,
     100% calc(var(--ticket-notch) - 1px),
-    100% calc(100% - var(--ticket-notch) + 1px),
-    calc(100% - var(--ticket-notch) + 1px) 100%,
-    calc(var(--ticket-notch) - 1px) 100%,
-    0 calc(100% - var(--ticket-notch) + 1px),
+    100% 100%,
+    0 100%,
     0 calc(var(--ticket-notch) - 1px)
   );
 }
 
-/* Garis perforasi di dalam tiket. Titik cekung di kedua ujungnya bukan hiasan
-   tempel: itu lubang sobek karcis, dan letaknya menembus tepi kartu. */
+.home-skin .ticket-part-bottom {
+  /* Jarak 0.75rem di bawah perforasi ada di PADDING bagian ini, bukan di
+     `margin-top` isinya. Sebagai margin ia akan runtuh ke luar (bagian ini
+     tidak punya padding atas) dan menyeret sobekannya turun 12px, jadi kedua
+     bagian karcis berhenti berhimpit dan seam-nya kelihatan menganga. */
+  padding: 0.75rem 1rem 1rem;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--ticket-notch)),
+    calc(100% - var(--ticket-notch)) 100%,
+    var(--ticket-notch) 100%,
+    0 calc(100% - var(--ticket-notch))
+  );
+  mask-image:
+    radial-gradient(var(--ticket-hole) at 0 0, #0000 98%, #000),
+    radial-gradient(var(--ticket-hole) at 100% 0, #0000 98%, #000);
+  mask-composite: intersect;
+}
+.home-skin .ticket-part-bottom::before {
+  top: 0;
+  bottom: 1px;
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--ticket-notch) + 1px),
+    calc(100% - var(--ticket-notch) + 1px) 100%,
+    calc(var(--ticket-notch) - 1px) 100%,
+    0 calc(100% - var(--ticket-notch) + 1px)
+  );
+}
+
+/* Garis perforasi: titik-titik yang duduk persis di tepi bawah pangkal karcis,
+   jadi ia berhimpit dengan lubang sobek di kedua ujungnya. */
 .home-skin .ticket-perf {
   position: relative;
   height: 1px;
@@ -1618,23 +1680,103 @@
     transparent 0.25rem 0.5rem
   );
 }
-.home-skin .ticket-perf::before,
-.home-skin .ticket-perf::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 9999px;
-  background-color: var(--background);
-  box-shadow: 0 0 0 1px var(--ticket-edge);
-  translate: 0 -50%;
+
+/* --- Sobekan ---------------------------------------------------------------
+   Yang membuat sobekan terbaca sebagai sobekan bukan gerakannya, tapi TEPINYA:
+   selama tak disobek kedua bagian bertemu lurus, dan begitu `data-tearing`
+   menyala tepi pertemuannya berganti jadi gerigi (`mask` gigi segitiga yang
+   ditumpuk di atas badan kertas). Gerigi hanya ada saat menyobek — kalau ia
+   selalu ada, di keadaan diam ia cuma jadi celah bergerigi yang tak masuk akal.
+
+   Lubang sobek dilepas di sini justru karena itu titik pangkal robekan: setelah
+   kertasnya terbelah, lubangnya sudah jadi bagian dari gerigi. Durasinya datang
+   dari `--tear-ms` yang dipasang komponen, supaya angka di JS (yang menahan
+   perpindahan halaman) dan angka di CSS tidak bisa berbeda. */
+.home-skin .task-card[data-tearing='true'] {
+  pointer-events: none;
 }
-.home-skin .ticket-perf::before {
-  left: calc(var(--surface-p) * -1 - 0.25rem);
+.home-skin .task-card[data-tearing='true'] .ticket-part-top {
+  mask-image:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg),
+    linear-gradient(#000, #000);
+  mask-size:
+    var(--tear-tooth) var(--tear-depth),
+    100% calc(100% - var(--tear-depth));
+  mask-position:
+    left bottom,
+    left top;
+  mask-repeat: repeat-x, no-repeat;
+  mask-composite: add;
+  animation: ticket-tear-top var(--tear-ms, 520ms) cubic-bezier(0.22, 0.68, 0.24, 1) forwards;
+  will-change: translate, rotate, opacity;
 }
-.home-skin .ticket-perf::after {
-  right: calc(var(--surface-p) * -1 - 0.25rem);
+.home-skin .task-card[data-tearing='true'] .ticket-part-bottom {
+  mask-image:
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg),
+    linear-gradient(#000, #000);
+  /* Gigi bawah sengaja sedikit lebih rapat dan digeser setengah gigi: dua tepi
+     yang berpola identik terbaca sebagai guntingan mesin, bukan robekan. */
+  mask-size:
+    calc(var(--tear-tooth) * 0.82) var(--tear-depth),
+    100% calc(100% - var(--tear-depth));
+  mask-position:
+    calc(var(--tear-tooth) / 2) top,
+    left bottom;
+  mask-repeat: repeat-x, no-repeat;
+  mask-composite: add;
+  animation: ticket-tear-bottom var(--tear-ms, 520ms) cubic-bezier(0.22, 0.68, 0.24, 1) forwards;
+  will-change: translate, rotate, opacity;
+}
+/* Perforasinya hilang lebih dulu: begitu kertasnya putus, panduan sobeknya
+   sudah tidak menandai apa pun. */
+.home-skin .task-card[data-tearing='true'] .ticket-perf {
+  animation: ticket-perf-snap 140ms linear forwards;
+}
+
+@keyframes ticket-tear-top {
+  0% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  /* Kertas ditarik dan menahan sebentar sebelum putus — tanpa jeda ini kedua
+     bagian cuma bergeser, tidak terasa ada yang disobek. */
+  16% {
+    translate: 0 2px;
+    rotate: -0.5deg;
+  }
+  100% {
+    translate: -0.75rem -3.5rem;
+    rotate: -4deg;
+    opacity: 0;
+  }
+}
+@keyframes ticket-tear-bottom {
+  0% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  16% {
+    translate: 0 -2px;
+    rotate: 0.4deg;
+  }
+  100% {
+    translate: 0.5rem 3rem;
+    rotate: 3deg;
+    opacity: 0;
+  }
+}
+@keyframes ticket-perf-snap {
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-skin .task-card[data-tearing='true'] .ticket-part-top,
+  .home-skin .task-card[data-tearing='true'] .ticket-part-bottom,
+  .home-skin .task-card[data-tearing='true'] .ticket-perf {
+    animation: none;
+    mask-image: none;
+  }
 }
 
 /* --- Statistik: kolom struk, bukan tiga kotak -----------------------------

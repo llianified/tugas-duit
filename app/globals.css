@@ -28,6 +28,7 @@
   --color-medal-bronze: var(--medal-bronze);
   --color-medal-bronze-fg: var(--medal-bronze-fg);
   --color-scrim: var(--scrim);
+  --color-track-surface: var(--track-surface);
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
@@ -136,6 +137,13 @@
      cincin luarnya dibuang tombol tenang ikut tenggelam. Bidangnya diangkat ke
      nada `--muted`, sementara kartu tetap #18181d. */
   --btn-quiet-surface: #232329;
+  /* Alas track segmented (wadah di belakang deretan tab). Sengaja LEBIH GELAP
+     dari bidang tab aktif, bukan senada dengannya: track dulu memakai `--muted`
+     sementara tab aktifnya memakai `--btn-quiet-surface`, dan keduanya bernilai
+     #232329 — jadi tab aktif lenyap total di dalam wadahnya dan yang tersisa
+     hanya hairline `--bevel-sheen`. Nilainya ditaruh di bawah `--card` supaya
+     tangga elevasinya terbaca satu arah: track < kartu < tab aktif. */
+  --track-surface: #15151a;
   --rail-card-w: 9.5rem;
   --rail-gap: 0.75rem;
   /* Ruang vertikal di dalam kotak gulir rail. `overflow-x: auto` memaksa
@@ -376,8 +384,14 @@
     letter-spacing: -0.01em;
     white-space: nowrap;
   }
+  /* Satu-satunya nada yang dulu memakai warna SOLID (`--muted`) dan karena itu
+     melanggar janji di `--chip-tint`: chip harus aman di atas latar apa pun.
+     `--muted` sama nilainya dengan `--btn-quiet-surface`, jadi chip ini hilang
+     total begitu dipakai di dalam tombol tenang — persis yang terjadi pada pill
+     jatah di tombol "Iklan". Sekarang ikut pola nada lain: tint transparan, jadi
+     ia selalu selangkah lebih terang dari apa pun yang ada di belakangnya. */
   .chip-muted {
-    background-color: var(--muted);
+    background-color: color-mix(in oklab, var(--foreground) 9%, transparent);
     color: var(--chip-fg-muted);
   }
   .chip-primary {

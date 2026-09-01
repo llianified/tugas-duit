@@ -8,7 +8,14 @@ const CREDIT_SIZE_CLASS = {
   sm: 'flex-row items-baseline gap-1 text-sm font-semibold',
   xl: 'flex-col items-stretch gap-1.5 text-4xl font-bold leading-none tracking-[-0.03em]',
   '2xl': 'flex-row flex-wrap items-baseline gap-x-2 text-5xl font-bold leading-none tracking-[-0.035em]',
-  display: 'num-display flex-row flex-wrap items-baseline gap-x-1.5 text-[3rem]',
+  /* Angka hero: ukurannya CAIR, bukan tetap 3rem. Nilai tetap itu dipatok ke
+     layar lebar, jadi begitu saldo sampai 4 digit ("3.646") lebarnya ~156px —
+     bersama unit "credit" ia tidak lagi muat di sebelah CTA, "credit" jatuh ke
+     baris kedua, dan tinggi bloknya melonjak dari ~48px ke ~77px sampai baris
+     Rp di bawahnya ikut terlipat. `clamp()` mengikat batas atasnya ke lebar
+     viewport, jadi di layar sempit angkanya menyusut lebih dulu daripada
+     memaksa tata letaknya pecah. */
+  display: 'num-display flex-row flex-wrap items-baseline gap-x-1.5 text-[clamp(2rem,11vw,3rem)]',
 } as const
 
 const CREDIT_STACKED = { sm: false, xl: true, '2xl': false, display: false } as const

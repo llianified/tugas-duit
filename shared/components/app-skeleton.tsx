@@ -6,9 +6,9 @@ import { SURFACE_CARD_CLASS } from '@/shared/components/surface-card'
  * `tone="on-muted"` untuk bar yang berdiri di atas permukaan `--muted`.
  *
  * Bar default berwarna `--muted` supaya terlihat di atas latar view. Di dalam kartu
- * yang latarnya sendiri `--muted` (kartu misi, strip tab) bar itu lenyap — bukan
- * "kalem", tapi benar-benar tidak terlihat, sehingga kerangkanya menggambar kotak
- * kosong alih-alih baris yang sedang dimuat.
+ * yang latarnya sendiri `--muted` (kartu misi, tab aktif strip tab) bar itu lenyap —
+ * bukan "kalem", tapi benar-benar tidak terlihat, sehingga kerangkanya menggambar
+ * kotak kosong alih-alih baris yang sedang dimuat.
  */
 function Bar({
   className,
@@ -120,21 +120,31 @@ function PanelTabsSkeleton({
   className?: string
 }) {
   return (
-    <div className={['flex gap-1 rounded-lg bg-muted p-1', className].filter(Boolean).join(' ')}>
+    <div
+      className={['flex gap-1 rounded-lg bg-track-surface p-1', className]
+        .filter(Boolean)
+        .join(' ')}
+    >
       {labels.map((label, index) => (
         <div
           key={label}
           className={[
             'relative flex flex-1 items-center justify-center rounded-md px-3 py-2 text-[13px] font-bold tracking-tight',
-            index === 0 ? 'bg-card' : '',
+            /* Bidang tab aktif mengikuti `SegmentedTabs`: senada `--muted`. Dulu
+               `bg-card`, yang justru LEBIH GELAP dari wadahnya — arah elevasinya
+               terbalik dari komponen yang akan menggantikan kerangka ini. */
+            index === 0 ? 'bg-muted' : '',
           ]
             .filter(Boolean)
             .join(' ')}
         >
           <span className="invisible">{label}</span>
+          {/* Nada bar ikut terbalik setelah warna di atas ditukar: bar tab aktif
+              kini berdiri di atas `--muted`, bar tab lain di atas track yang
+              lebih gelap. */}
           <Bar
             className="absolute h-3 w-10"
-            tone={index === 0 ? 'default' : 'on-muted'}
+            tone={index === 0 ? 'on-muted' : 'default'}
           />
         </div>
       ))}

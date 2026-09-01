@@ -1,6 +1,6 @@
 'use client'
 
-import { Children, type ReactNode } from 'react'
+import { Children, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { cn } from '@/shared/lib/utils'
 
 /**
@@ -36,9 +36,13 @@ export function CardRail({
 }) {
   // `Children.count` menghitung hasil `.map()` yang kosong sebagai 0, sekaligus
   // mengabaikan `null` / `false` dari kartu yang dirender bersyarat.
-  const isEmpty = Children.count(children) === 0
+  const count = Children.count(children)
+  // Jumlah kartu ikut masuk supaya pengukurannya diulang saat isi rail berganti:
+  // menambah kartu mengubah `scrollWidth` tanpa mengubah ukuran rail-nya sendiri,
+  // jadi `ResizeObserver` di dalam hook tidak akan terpicu.
+  const { ref, hasMore } = useRailOverflow(count)
 
-  if (isEmpty) {
+  if (count === 0) {
     // Tanpa `.bleed-x`: status kosong adalah blok terpusat, bukan rail, jadi
     // ia harus tetap berada di dalam padding halaman.
     return empty ? <div className={cn('flex', className)}>{empty}</div> : null
@@ -46,15 +50,69 @@ export function CardRail({
 
   return (
     <ul
+      ref={ref}
       // `role="list"` dipertahankan secara eksplisit karena `list-style: none`
       // dari preflight menghapus semantik daftar di Safari/VoiceOver.
       role="list"
       aria-label={ariaLabel}
-      className={cn('rail no-scrollbar bleed-x', className)}
+      /* `.rail-fade-e` hanya dipasang selama masih ada kartu di kanan yang belum
+      terlihat: fade adalah petunjuk "geser lagi", jadi menyisakannya saat gulir
+      sudah di ujung justru menjanjikan lanjutan yang tidak ada — dan kartu
+      terakhir tampil separuh pudar tanpa alasan. Lihat `useRailOverflow`. */
+      className={cn('rail no-scrollbar bleed-x', hasMore && 'rail-fade-e', className)}
     >
       {children}
     </ul>
   )
+}
+
+/**
+ * Menjawab satu pertanyaan: masih ada isi di kanan tepi gulir atau tidak.
+ *
+ * Diukur, bukan disimpulkan dari jumlah kartu — tiga kartu `--rail-card-w` meluap
+ * di 384px tapi tidak di layar lebar, dan menebaknya lewat hitungan kartu berarti
+ * fade tetap tergambar di rail yang sudah muat seluruhnya.
+ *
+ * Ambang 1px menyerap `scrollWidth` / `scrollLeft` pecahan yang muncul di layar
+ * ber-DPR bukan-bulat; tanpa itu rail yang sudah di ujung tetap menyisakan sisa
+ * ~0.5px dan fade-nya tidak pernah hilang.
+ */
+function useRailOverflow(count: number) {
+  const node = useRef<HTMLUListElement | null>(null)
+  const [hasMore, setHasMore] = useState(false)
+
+  const measure = useCallback(() => {
+    const el = node.current
+    if (!el) return
+    setHasMore(el.scrollWidth - el.clientWidth - el.scrollLeft > 1)
+  }, [])
+
+  const ref = useCallback(
+    (el: HTMLUListElement | null) => {
+      node.current = el
+      measure()
+    },
+    [measure],
+  )
+
+  useEffect(() => {
+    const el = node.current
+    if (!el) return
+
+    el.addEventListener('scroll', measure, { passive: true })
+    // Lebar rail berubah tanpa event gulir: rotasi layar, kartu yang datang
+    // belakangan, atau font yang baru selesai dimuat.
+    const observer = new ResizeObserver(measure)
+    observer.observe(el)
+    measure()
+
+    return () => {
+      el.removeEventListener('scroll', measure)
+      observer.disconnect()
+    }
+  }, [measure, count])
+
+  return { ref, hasMore }
 }
 
 /** Satu kartu di dalam `CardRail`. Lebarnya dikunci `--rail-card-w`. */

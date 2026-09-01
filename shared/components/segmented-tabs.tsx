@@ -16,27 +16,11 @@ export type SegmentedTab<T extends string> = {
  * `--track-surface`; dulu keduanya sama-sama #232329 dan tab aktifnya hilang.
  * Dipakai `features/stats`, `features/history`, dan `features/leaderboard`.
  *
- * `pill` — track bulat rapat: wadah `bg-muted` dengan pill aktif `bg-card`.
- * Bentuk yang sama dipakai pemilih rentang di `features/profile` lewat
- * `SEGMENTED_PILL_TRACK_CLASS` / `segmentedPillItemClass` di bawah — sengaja
- * satu sumber, karena keduanya kontrol pemilih sebaris yang berdampingan
- * dengan elemen lain (label sesi di profil, `FilterChip` di papan) dan dulu
- * tampil berbeda padahal perannya sama. Tidak mengambil lebar penuh.
+ * `plain` — varian gaya fomo (Langkah 6): tanpa wadah berlatar, tab tak aktif
+ * hanya teks redam, tab aktif pill `bg-muted`. Tidak mengambil lebar penuh
+ * supaya bisa berdampingan dengan `FilterChip` di satu baris.
  */
-export type SegmentedVariant = 'solid' | 'pill'
-
-/**
- * Wadah pill. `shrink-0` supaya track tidak dipadatkan saat berbagi baris
- * dengan teks yang bisa memanjang.
- */
-export const SEGMENTED_PILL_TRACK_CLASS = 'flex shrink-0 gap-1 rounded-full bg-muted p-1'
-
-export function segmentedPillItemClass(active: boolean) {
-  return cn(
-    'focus-ring transition-ui rounded-full px-2.5 py-1 text-[13px] font-bold tracking-tight',
-    active ? 'bg-card text-foreground' : 'text-muted-foreground hover:text-foreground',
-  )
-}
+export type SegmentedVariant = 'solid' | 'plain'
 
 export function SegmentedTabs<T extends string>({
   tabs,
@@ -53,13 +37,14 @@ export function SegmentedTabs<T extends string>({
   variant?: SegmentedVariant
   className?: string
 }) {
-  const pill = variant === 'pill'
+  const plain = variant === 'plain'
   return (
     <div
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        pill ? SEGMENTED_PILL_TRACK_CLASS : 'flex gap-1 rounded-lg bg-track-surface p-1',
+        'flex',
+        plain ? 'gap-0.5' : 'gap-1 rounded-lg bg-track-surface p-1',
         className,
       )}
     >
@@ -79,14 +64,13 @@ export function SegmentedTabs<T extends string>({
               onChange(tab.value)
             }}
             className={cn(
-              pill
-                ? segmentedPillItemClass(active)
-                : cn(
-                    'focus-ring transition-ui flex-1 rounded-md px-3 py-2 text-[13px] font-bold tracking-tight',
-                    active
-                      ? 'bg-card text-foreground'
-                      : 'text-muted-foreground hover:text-foreground',
-                  ),
+              'focus-ring transition-ui text-[13px] font-bold tracking-tight',
+              plain
+                ? 'rounded-full px-2.5 py-1.5'
+                : 'flex-1 rounded-md px-3 py-2',
+              active
+                ? 'btn-glass-quiet text-foreground'
+                : 'text-muted-foreground hover:text-foreground',
             )}
           >
             {tab.label}

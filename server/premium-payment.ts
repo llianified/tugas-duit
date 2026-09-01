@@ -8,6 +8,7 @@ import {
   klikqrisConfigured,
   normalizeStatus,
   readInvoiceStatus,
+  type InvoiceStatus,
 } from './klikqris'
 import { grantPremium } from './premium'
 
@@ -51,6 +52,25 @@ const EXPIRE_STALE_SQL = `update premium_payments set state='expired', updated_a
 const PENDING_SQL = `select id,user_id,order_id,months,amount_idr,total_amount_idr,state,signature,qris_url,expires_at
   from premium_payments where user_id=$1 and state='pending' limit 1`
 
+/**
+ * Tagihan yang baru saja kita tandai kedaluwarsa dan belum pernah lunas.
+ *
+ * Webhook adalah jalur utamanya, tapi ia bisa hilang sama sekali — gateway gagal memanggil,
+ * atau panggilannya mendarat saat deploy sedang berganti. Tanpa pembacaan ini tidak ada yang
+ * pernah menanyakan nasib tagihan itu lagi: `PENDING_SQL` hanya melihat baris `pending`, jadi
+ * user yang membuka checkout lagi cuma mendapat QR baru sementara pembayaran lamanya
+ * menggantung tanpa pemilik.
+ *
+ * Satu baris terbaru saja, dan hanya 24 jam ke belakang: ini penyelamat pembayaran yang baru
+ * saja terjadi, bukan sapuan rekonsiliasi. Batas itu juga yang menjaga ongkosnya — paling
+ * banyak satu panggilan gateway tambahan, dan hanya saat user benar-benar membuka checkout.
+ */
+const RECENTLY_EXPIRED_SQL = `select id,user_id,order_id,months,amount_idr,total_amount_idr,state,signature,qris_url,expires_at
+  from premium_payments
+ where user_id=$1 and state='expired' and paid_at is null
+   and expires_at > now() - interval '24 hours'
+ order by expires_at desc limit 1`
+
 const view = (row: InvoiceRow): PremiumInvoice => ({
   orderId: row.order_id,
   months: row.months as PremiumMonths,
@@ -79,6 +99,27 @@ export type CheckoutResult =
   | { ok: true; settled: false; invoice: PremiumInvoice }
   | { ok: true; settled: true; premiumUntil: number }
 
+async function settleFromGateway(
+  invoice: InvoiceRow,
+  remote: InvoiceStatus,
+): Promise<CheckoutResult> {
+  await settlePremiumPayment(
+    invoice.order_id,
+    remote.signature,
+    'gateway',
+    remote.totalAmountIdr || null,
+  )
+  const settled = await query<{ granted_until: Date | null; state: string }>(
+    'select granted_until, state from premium_payments where id=$1',
+    [invoice.id],
+  )
+  const paid = settled[0]
+  if (paid?.state === 'paid' && paid.granted_until) {
+    return { ok: true, settled: true, premiumUntil: paid.granted_until.getTime() }
+  }
+  throw new PremiumPaymentError('PAYMENT_SETTLE_FAILED', 502)
+}
+
 /**
  * Tagihan lama tidak pernah dibuang tanpa ditanyakan dulu ke gateway. User yang sudah
  * membayar tapi webhook-nya belum sampai akan kehilangan uangnya kalau barisnya kita
@@ -97,23 +138,7 @@ export async function startPremiumCheckout(
   if (open) {
     const remote = await readInvoiceStatus(open.order_id).catch(() => null)
 
-    if (remote?.status === 'SUCCESS') {
-      await settlePremiumPayment(
-        open.order_id,
-        remote.signature,
-        'gateway',
-        remote.totalAmountIdr || null,
-      )
-      const settled = await query<{ granted_until: Date | null; state: string }>(
-        'select granted_until, state from premium_payments where id=$1',
-        [open.id],
-      )
-      const paid = settled[0]
-      if (paid?.state === 'paid' && paid.granted_until) {
-        return { ok: true, settled: true, premiumUntil: paid.granted_until.getTime() }
-      }
-      throw new PremiumPaymentError('PAYMENT_SETTLE_FAILED', 502)
-    }
+    if (remote?.status === 'SUCCESS') return settleFromGateway(open, remote)
 
     /**
      * Tagihan lama hanya dibuang kalau gateway benar-benar menjawab. `remote === null`
@@ -132,6 +157,19 @@ export async function startPremiumCheckout(
     } else {
       return { ok: true, settled: false, invoice: view(open) }
     }
+  }
+
+  /**
+   * Sebelum menerbitkan QR baru, tagihan yang baru saja kedaluwarsa ditanyakan sekali ke
+   * gateway. Ini jaring untuk webhook yang hilang di jalan: tanpanya, pembayaran yang
+   * mendarat setelah `EXPIRE_STALE_SQL` menandai barisnya tidak punya satu pun pembaca lagi.
+   * Gateway bisu diperlakukan sebagai "tidak tahu", bukan "tidak dibayar" — checkout lanjut
+   * seperti biasa dan barisnya tetap menunggu untuk ditanyakan lagi nanti.
+   */
+  const stale = (await query<InvoiceRow>(RECENTLY_EXPIRED_SQL, [userId]))[0]
+  if (stale) {
+    const remote = await readInvoiceStatus(stale.order_id).catch(() => null)
+    if (remote?.status === 'SUCCESS') return settleFromGateway(stale, remote)
   }
 
   const amountIdr = premiumPriceIdr(months)
@@ -175,9 +213,22 @@ export type SettleResult =
     }
 
 /**
- * Satu-satunya pintu yang menyalakan premium. Idempotensinya bertumpu pada
- * `state='pending'` di klausa `where` update terakhir, bukan pada pengecekan sebelumnya:
- * dua webhook yang datang bersamaan membuat yang kedua tidak mengubah baris apa pun.
+ * Satu-satunya pintu yang menyalakan premium.
+ *
+ * Yang menolak pelunasan kedua hanya `state='paid'`, BUKAN "state harus 'pending'". Bedanya
+ * uang sungguhan: `expires_at` kita dihitung dari `Date.now() + expired_menit` (lihat
+ * `createInvoice`) dan sengaja jatuh lebih awal daripada kedaluwarsa milik gateway, jadi ada
+ * jendela nyata ketika user membayar tagihan yang sudah kita tandai `expired`. Versi
+ * sebelumnya menuntut `state='pending'` di klausa `where` update terakhir, sehingga
+ * pembayaran di jendela itu melempar `PAYMENT_STATE_RACE`, seluruh transaksinya di-rollback,
+ * dan webhook menjawab 500 selamanya: uang masuk, premium tidak pernah menyala, dan tidak
+ * ada satu baris pun yang mencatat bahwa itu terjadi.
+ *
+ * Idempotensinya sekarang bersandar pada `for update of p` di baris tagihannya: webhook kedua
+ * menunggu yang pertama commit, lalu membaca `state='paid'` dan berhenti di situ. Klausa
+ * `state <> 'paid'` pada update tinggal jaring terakhir — kalau ia sampai kena 0 baris,
+ * melempar adalah caranya membatalkan `grantPremium` yang sudah telanjur jalan di transaksi
+ * yang sama.
  */
 export async function settlePremiumPayment(
   orderId: string,
@@ -226,7 +277,7 @@ export async function settlePremiumPayment(
     const updated = await tx.query(
       `update premium_payments
           set state='paid', paid_at=now(), granted_until=$2, updated_at=now()
-        where id=$1 and state='pending'`,
+        where id=$1 and state <> 'paid'`,
       [row.id, premiumUntil],
     )
     if (updated.rowCount === 0) {

@@ -208,9 +208,31 @@ export async function createPayout(
     }
 
     const destination = sanitizeAccountNumber(body.accountNumber)
+
+    /**
+     * Kunci per-tujuan, diambil sebelum tujuannya dibaca.
+     *
+     * Baris `users` sudah dikunci di atas, tapi kunci itu milik pengaju — dua user berbeda
+     * yang mengirim ke rekening yang sama tidak pernah bertemu di sana, jadi keduanya
+     * membaca "belum dipakai" lalu keduanya menulis. Tidak ada unique index yang bisa
+     * menutupnya: migrasi `0011` sengaja memilih index biasa supaya baris dari sebelum
+     * aturan ini boleh berdampingan, dan aturannya sendiri melintasi channel (semua
+     * e-wallet berbagi satu ruang nomor) sehingga tidak muat dalam satu unique.
+     *
+     * `pg_advisory_xact_lock`, bukan `pg_advisory_lock`: yang pertama dilepas saat commit
+     * atau rollback dan karena itu aman di pooler Neon yang berjalan mode transaksi —
+     * bedanya persis yang membuat `scripts/migrate.ts` wajib lewat endpoint langsung.
+     * Kuncinya memakai kelompok channel yang sama dengan pemeriksaannya, jadi dua pengaju
+     * ke tujuan yang sama pasti berbaris, sementara tujuan berbeda tidak saling menunggu.
+     */
+    const shared = sharedDestinationChannels(body.channelId)
+    await tx.query('select pg_advisory_xact_lock(hashtext($1))', [
+      `${shared.join(',')}:${destination}`,
+    ])
+
     const taken = await tx.query(
       'select 1 from withdrawals where channel_id=any($1::text[]) and account_number=$2 and user_id<>$3 limit 1',
-      [sharedDestinationChannels(body.channelId), destination, userId],
+      [shared, destination, userId],
     )
     if (taken.rows.length) throw new PayoutError('ACCOUNT_NUMBER_IN_USE', 409)
 

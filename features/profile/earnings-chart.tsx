@@ -18,10 +18,15 @@ const HEIGHT = 96
 export function EarningsChart({ series }: { series: EarningsPoint[] }) {
   const gradientId = useId()
 
+  /**
+   * Deretnya sekarang selalu memuat setiap hari dalam rentangnya, termasuk yang nol
+   * (`server/stats.ts`), jadi "kosong" tidak lagi berarti `length === 0` melainkan tidak ada
+   * satu pun credit di periode itu. Garis datar di nol bukan informasi, cuma bentuk.
+   */
   const shape = useMemo(() => {
-    if (series.length === 0) return null
-
     const values = series.map((point) => point.credits)
+    if (values.length === 0 || values.every((value) => value === 0)) return null
+
     const max = Math.max(...values, 1)
     const step = series.length === 1 ? 0 : WIDTH / (series.length - 1)
 
@@ -43,7 +48,7 @@ export function EarningsChart({ series }: { series: EarningsPoint[] }) {
   if (!shape) {
     return (
       <div className="flex h-24 items-center justify-center text-[13px] text-muted-foreground">
-        Grafik muncul setelah task pertama kamu selesai.
+        Belum ada credit yang masuk di periode ini.
       </div>
     )
   }

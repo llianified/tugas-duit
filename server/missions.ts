@@ -68,12 +68,17 @@ export type MissionClaimResult =
 const PG_UNIQUE_VIOLATION = '23505'
 
 /**
- * Energi yang diberikan saat kapasitasnya sudah penuh akan hangus tanpa jejak —
- * `applyEnergyGrant` memotong di `maxEnergy()`, persis alasan `docs/keputusan-desain.md`
- * menolak energi sebagai hadiah iklan. Di sini kerugian diam-diam itu ditolak lebih dulu:
- * misinya tetap bisa diklaim nanti, dan user diberi tahu kenapa sekarang belum bisa.
- * Yang tidak boleh terjadi adalah user menekan klaim, melihat "berhasil", lalu tidak
- * menerima apa pun.
+ * Energi yang diberikan melewati kapasitas akan hangus tanpa jejak — `applyEnergyGrant`
+ * memotong di `maxEnergy()`, persis alasan `docs/keputusan-desain.md` menolak energi sebagai
+ * hadiah iklan. Di sini kerugian diam-diam itu ditolak lebih dulu: misinya tetap bisa diklaim
+ * nanti, dan user diberi tahu kenapa sekarang belum bisa.
+ *
+ * Yang diperiksa adalah apakah hadiahnya muat SELURUHNYA, bukan sekadar apakah energinya
+ * sudah penuh. Penjagaan "penuh" saja meloloskan potongan sebagian: pada 4 dari 5 energi,
+ * misi berhadiah 3 hanya menambah 1, sementara klien tetap diberi tahu 3 dan
+ * `mission_claims.energy_granted` ikut menyimpan 3 — padahal migrasi `0031` mensyaratkan
+ * kolom itu mencatat yang benar-benar diberikan. Klaimnya pun habis untuk hari itu, jadi
+ * dua credit energi hilang tanpa ada yang menyebutnya.
  */
 export async function claimMission(
   userId: number,
@@ -105,7 +110,7 @@ export async function claimMission(
     )
     const snapshot = { energy: Number(row.energy), updatedAt: row.energy_updated_at.getTime() }
     const current = projectEnergy(snapshot, now, premium)
-    if (current.current >= maxEnergy(premium)) {
+    if (current.current + mission.reward > maxEnergy(premium)) {
       return { ok: false as const, reason: 'energy_full' as const }
     }
 

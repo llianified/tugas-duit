@@ -296,7 +296,7 @@ function Profile({
   return (
     <Card
       title="Profil"
-      description="Untuk merapikan data lama. Telegram menulis ulang nama dan username ini setiap kali user membuka Mini App, jadi suntingan di sini tidak permanen."
+      description="Suntingan di sini permanen: begitu disimpan, login berikutnya berhenti menimpa nama dan username dari Telegram untuk akun ini. Foto profil tetap ikut Telegram."
     >
       <div className="flex flex-wrap gap-3">
         <label className="flex min-w-40 flex-1 flex-col gap-1 text-sm">

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatHistoryTime, formatUnitCountdown } from './format'
+import { formatDateTime, formatHistoryTime, formatUnitCountdown } from './format'
 
 describe('formatUnitCountdown', () => {
   it.each([
@@ -35,5 +35,20 @@ describe('formatHistoryTime', () => {
     const wibEarlyMorning = Date.UTC(2026, 7, 17, 22, 0)
     const wibSameDayEvening = Date.UTC(2026, 7, 18, 14, 0)
     expect(formatHistoryTime(wibEarlyMorning, wibSameDayEvening)).toBe('Hari ini · 05.00')
+  })
+})
+
+describe('formatDateTime', () => {
+  /**
+   * Dipakai jejak audit panel ekonomi, yang dibaca admin dari zona mana pun. Sama seperti
+   * `formatHistoryTime`, ia mengunci WIB alih-alih mengikuti perangkat — dan menyebutkannya,
+   * karena satu-satunya gunanya adalah bisa dirujuk ulang oleh orang lain.
+   */
+  it('memakai jam WIB dan menyebut zonanya', () => {
+    expect(formatDateTime(Date.UTC(2026, 7, 18, 5, 0))).toBe('18 Agu 2026, 12.00 WIB')
+  })
+
+  it('tidak menggeser tanggal saat UTC dan WIB berbeda hari', () => {
+    expect(formatDateTime(Date.UTC(2026, 7, 17, 20, 30))).toBe('18 Agu 2026, 03.30 WIB')
   })
 })

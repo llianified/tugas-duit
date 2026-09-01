@@ -1,7 +1,7 @@
 'use client'
 
 import { creditsToRupiah } from '@/domain/economy'
-import { getPayoutChannel, maskAccountNumber } from '@/features/withdraw/domain'
+import { getPayoutChannel, maskAccountNumber, PAYOUT_ETA_TEXT } from '@/features/withdraw/domain'
 import { ActionButton } from '@/shared/components/action-button'
 import { Surface } from '@/shared/components/surface'
 import { formatCredits, formatRupiah } from '@/shared/lib/format'
@@ -35,6 +35,10 @@ export function ConfirmStep({
           {maskAccountNumber(input.accountNumber)}
         </p>
       </Surface>
+
+      <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
+        {PAYOUT_ETA_TEXT} Kami kabarin lagi di bot begitu dananya kami kirim.
+      </p>
 
       <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
         {cooldownDays === null

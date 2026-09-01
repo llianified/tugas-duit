@@ -110,7 +110,7 @@ export interface Withdrawal {
   hasProof: boolean
 }
 
-export const PAYOUT_ETA_TEXT = 'Dana masuk paling lama 1×24 jam kerja.'
+export const PAYOUT_ETA_TEXT = 'Dana masuk dalam 1–7 hari kerja.'
 
 export const WITHDRAWAL_REJECT_REASON_MAX = 280
 

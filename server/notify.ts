@@ -66,8 +66,8 @@ export async function notifyWithdrawalPaid(
     `Tujuan: ${destination(notice)}`,
     '',
     proof
-      ? 'Bukti transfernya kami lampirin di atas. Kalau dalam 1×24 jam belum masuk, balas pesan ini aja.'
-      : 'Cek saldo kamu ya. Kalau dalam 1×24 jam belum masuk, balas pesan ini aja.',
+      ? 'Bukti transfernya kami lampirin di atas. Kalau belum masuk juga, balas pesan ini aja.'
+      : 'Cek saldo kamu ya. Kalau belum masuk juga, balas pesan ini aja.',
   ].join('\n')
   const markup = openAppMarkup('🎮 Kumpulin lagi')
 

@@ -13,6 +13,7 @@ import { formatCredits, formatHistoryTime } from '@/shared/lib/format'
 import {
   getPayoutChannel,
   maskAccountNumber,
+  PAYOUT_ETA_TEXT,
   type Withdrawal,
 } from '@/features/withdraw/domain'
 
@@ -81,7 +82,9 @@ function WithdrawalListItem({
           >
             Lihat bukti
           </button>
-        ) : null
+        ) : isPaid ? null : (
+          PAYOUT_ETA_TEXT
+        )
       }
       amount={<DataListAmount value={`−${formatCredits(withdrawal.credits)}`} tone="neutral" />}
     />

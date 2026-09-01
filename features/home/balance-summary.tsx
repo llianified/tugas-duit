@@ -51,7 +51,10 @@ export function BalanceSummary({
           kanan saldo, dan Riwayat turun jadi tombol ikon: ia tetap satu tap,
           tapi tidak lagi bersaing dengan CTA-nya. */}
       <div className="flex items-center gap-3">
-        <div className="relative min-w-0 flex-1">
+        {/* `@container` di sini bukan hiasan: ia yang menjadi acuan `cqi` bagi
+            ukuran angka hero, sehingga nominalnya menyusut mengikuti sisa ruang
+            di samping CTA — bukan mengikuti lebar jendela. */}
+        <div className="@container relative min-w-0 flex-1">
           <div className="flex">
             <CreditAmount
               value={formatCompact(displayedBalance, { from: HERO_COMPACT_FROM })}

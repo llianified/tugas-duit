@@ -16,6 +16,35 @@ export function formatCreditsPrecise(value: number): string {
   return value.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
 }
 
+/**
+ * Membelah angka yang SUDAH diformat menjadi tiga bagian, supaya penyaji bisa
+ * meredam bagian yang bukan inti (gaya angka besar fomo: bagian utama terang,
+ * desimal & satuan abu-abu).
+ *
+ * Sengaja bekerja pada string hasil `toLocaleString('id-ID')`, bukan pada angka:
+ * pemisah ribuan di sini titik dan desimalnya koma, jadi pembelahan gaya Inggris
+ * (`split('.')`) akan salah memotong "Rp1.234" menjadi "Rp1" + "234".
+ *
+ * - `lead`  : apa pun sebelum digit pertama (tanda minus, "Rp", "+").
+ * - `main`  : bagian bilangan bulat beserta pemisah ribuannya.
+ * - `trail` : koma desimal beserta digit setelahnya, kosong bila bilangannya bulat.
+ */
+export function splitAmountParts(formatted: string): {
+  lead: string
+  main: string
+  trail: string
+} {
+  const firstDigit = formatted.search(/\d/)
+  if (firstDigit === -1) return { lead: formatted, main: '', trail: '' }
+
+  const lead = formatted.slice(0, firstDigit)
+  const rest = formatted.slice(firstDigit)
+  const decimalIndex = rest.lastIndexOf(',')
+
+  if (decimalIndex === -1) return { lead, main: rest, trail: '' }
+  return { lead, main: rest.slice(0, decimalIndex), trail: rest.slice(decimalIndex) }
+}
+
 export function formatDuration(ms: number): string {
   const safeMs = Number.isFinite(ms) && ms > 0 ? ms : 0
   const roundedTenths = Math.round(safeMs / 100) / 10

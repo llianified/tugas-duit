@@ -1,5 +1,33 @@
 import { describe, expect, it } from 'vitest'
-import { formatDateTime, formatHistoryTime, formatUnitCountdown } from './format'
+import {
+  formatDateTime,
+  formatHistoryTime,
+  formatUnitCountdown,
+  splitAmountParts,
+} from './format'
+
+describe('splitAmountParts', () => {
+  it('tidak menganggap pemisah ribuan Indonesia sebagai desimal', () => {
+    expect(splitAmountParts('Rp1.234')).toEqual({ lead: 'Rp', main: '1.234', trail: '' })
+  })
+
+  it('memisahkan desimal koma dari bagian utamanya', () => {
+    expect(splitAmountParts('Rp1.234,56')).toEqual({ lead: 'Rp', main: '1.234', trail: ',56' })
+  })
+
+  it('mempertahankan tanda di depan angka', () => {
+    expect(splitAmountParts('−Rp2.500')).toEqual({ lead: '−Rp', main: '2.500', trail: '' })
+    expect(splitAmountParts('+120')).toEqual({ lead: '+', main: '120', trail: '' })
+  })
+
+  it('tidak memaksa desimal pada bilangan bulat', () => {
+    expect(splitAmountParts('0')).toEqual({ lead: '', main: '0', trail: '' })
+  })
+
+  it('aman untuk teks tanpa digit', () => {
+    expect(splitAmountParts('—')).toEqual({ lead: '—', main: '', trail: '' })
+  })
+})
 
 describe('formatUnitCountdown', () => {
   it.each([

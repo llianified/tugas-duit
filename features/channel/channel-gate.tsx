@@ -56,7 +56,7 @@ export function ChannelGate({
           href={gate.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="focus-ring transition-ui press-scale-soft control-h flex items-center justify-center rounded-cta bg-primary text-[15px] font-bold tracking-tight text-primary-foreground hover:bg-primary-hover active:bg-primary-active"
+          className="focus-ring transition-ui press-scale-soft control-h flex items-center justify-center rounded-cta btn-glass bg-primary text-[15px] font-bold tracking-tight text-primary-foreground hover:bg-primary-hover active:bg-primary-active"
         >
           Buka channel
         </a>

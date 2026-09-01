@@ -274,27 +274,8 @@
   .meter-h {
     height: var(--meter-h);
   }
-  .tap-plate {
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklab, white 15%, transparent),
-      0 1px 2px color-mix(in oklab, black 20%, transparent);
-  }
-  .tap-plate:active {
-    box-shadow: inset 0 1px 0 color-mix(in oklab, white 8%, transparent);
-  }
   .ring-border {
     box-shadow: 0 0 0 1px var(--border);
-  }
-  .btn-soft {
-    background-color: var(--card);
-    box-shadow:
-      0 0 0 1px var(--border),
-      inset 0 1px 0 color-mix(in oklab, white 6%, transparent);
-  }
-  .btn-soft:active {
-    box-shadow:
-      0 0 0 1px var(--border),
-      inset 0 1px 0 color-mix(in oklab, white 2%, transparent);
   }
   .rounded-cta {
     border-radius: var(--cta-radius);
@@ -304,17 +285,17 @@
      dan kilau sedikit lebih terang di sisi atas — efek "gelas", bukan pelat
      neobrutal. Saat ditekan tombol hanya mengecil halus dan hairline meredup;
      tidak ada bayangan offset yang turun. */
+  /* Sengaja TIDAK menyetel background maupun transform: `.btn-glass` hanya
+     perlakuan permukaan, jadi bisa ditumpuk di atas bg apa pun (bg-primary,
+     bg-muted, dst.) dan gerak tekannya tetap milik `.press-scale*`. */
   .btn-glass {
     box-shadow:
       inset 0 0 0 1px var(--hairline-edge),
       inset 0 1px 0 var(--hairline-sheen),
       0 1px 2px var(--btn-shadow);
-    transition:
-      transform var(--duration-ui) ease-out,
-      box-shadow var(--duration-ui) ease-out;
+    transition: box-shadow var(--duration-ui) ease-out;
   }
   .btn-glass:active:not(:disabled) {
-    transform: scale(0.985);
     box-shadow:
       inset 0 0 0 1px var(--hairline-edge),
       inset 0 1px 0 color-mix(in oklab, var(--hairline-sheen) 45%, transparent);
@@ -327,12 +308,9 @@
       inset 0 0 0 1px var(--border),
       inset 0 1px 0 color-mix(in oklab, var(--hairline-sheen) 40%, transparent),
       0 1px 2px color-mix(in oklab, var(--btn-shadow) 60%, transparent);
-    transition:
-      transform var(--duration-ui) ease-out,
-      box-shadow var(--duration-ui) ease-out;
+    transition: box-shadow var(--duration-ui) ease-out;
   }
   .btn-glass-quiet:active:not(:disabled) {
-    transform: scale(0.985);
     box-shadow: inset 0 0 0 1px var(--border);
   }
   .num-display {
@@ -1394,10 +1372,6 @@
     .btn-glass,
     .btn-glass-quiet {
       transition: none;
-    }
-    .btn-glass:active:not(:disabled),
-    .btn-glass-quiet:active:not(:disabled) {
-      transform: none;
     }
     .channel-popup[data-starting-style],
     .channel-popup[data-ending-style] {

@@ -1499,8 +1499,16 @@
    `.region-t`, jadi batas antara karcis dan kartu di bawahnya ditandai DUA kali
    oleh dua garis sejajar yang berbeda gaya. Yang bertahan garis `.region-t` di
    bawah ini, karena dialah yang benar-benar memisahkan kedua region; pita hero
-   cukup diselesaikan oleh perubahan warna bidangnya. */
+   cukup diselesaikan oleh perubahan warna bidangnya.
+
+   Karena garisnya yang jadi pembatas, bidang gelapnya harus BERHENTI di garis
+   itu — bukan lewat setengah `--region-gap` melewatinya seperti default
+   `.hero-band`. Overshoot itu membuat warna hero menyeberang ke region kartu:
+   pangkal kupon kebagian bidang gelap sementara sisanya tidak, jadi garis
+   putus-putusnya berdiri di tengah warna alih-alih di batasnya. `.region-t`
+   berjarak `--region-gap` dari kotak isi pita, jadi persis segitu offsetnya. */
 .home-skin .hero-band::before {
+  bottom: calc(var(--region-gap) * -1);
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
@@ -1717,17 +1725,33 @@
   color: var(--chip-fg-primary);
 }
 
-/* Pesawat kertas Telegram, dibesarkan dan dibiarkan keluar dari tepi kanan atas.
-   Motif, bukan bentuk hias: ia benda yang sama dengan yang ada di tombolnya. */
+/* Pesawat kertas Telegram, dibiarkan keluar dari tepi kanan atas. Motif, bukan
+   bentuk hias: ia benda yang sama dengan yang ada di tombolnya.
+
+   Ia pernah 6.5rem dengan tint 30% dan duduk persis di jalur teks — nominal dan
+   kalimat penjelasnya lewat di atas badan pesawat, jadi dua-duanya saling
+   memakan. Yang diperbaiki BUKAN cuma kepekatannya: bentuk sebesar itu tetap
+   bersaing walau diredam. Jadi ia dikecilkan dan digeser lebih jauh ke sudut
+   sampai yang tersisa di dalam kartu hanya pucuk sayapnya — cap sudut, bukan
+   ilustrasi — dan kalimatnya (`.bonus-coupon-copy`) dipagari supaya tidak
+   pernah masuk ke wilayah itu. */
 .bonus-coupon-plane {
   position: absolute;
-  top: -0.75rem;
-  right: -0.5rem;
-  width: 6.5rem;
-  height: 6.5rem;
+  top: -1.25rem;
+  right: -1.5rem;
+  width: 5rem;
+  height: 5rem;
   rotate: 8deg;
-  color: color-mix(in oklab, var(--primary) 30%, transparent);
+  color: color-mix(in oklab, var(--primary) 16%, transparent);
   pointer-events: none;
+}
+
+/* Pagar teks terhadap pucuk sayap di sudut kanan atas. Angkanya berdiri di kiri
+   dan aman sendiri; yang dulu bertabrakan adalah kalimat dua barisnya, yang
+   membentang penuh sampai ke bawah pesawat. Dipagari di sini, bukan dengan
+   `pr-*` di JSX, supaya lebarnya ikut motifnya kalau ukuran pesawatnya berubah. */
+.bonus-coupon-copy {
+  max-width: 25ch;
 }
 
 /* --- Transaksi: baris buku kas -------------------------------------------- */

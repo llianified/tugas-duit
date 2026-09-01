@@ -75,6 +75,26 @@ export function formatHistoryTime(timestamp: number, now: number = Date.now()): 
   return `${day} · ${time}`
 }
 
+/**
+ * Tanggal + jam lengkap, dikunci WIB dan diberi labelnya.
+ *
+ * Dipakai untuk jejak yang harus bisa dirujuk ulang oleh orang lain — audit perubahan
+ * ekonomi, misalnya — jadi zonanya disebut di teksnya. Sama seperti `formatHistoryTime`,
+ * ia sengaja tidak memakai zona perangkat: admin bisa membacanya dari mana saja, sementara
+ * seluruh konsep "hari" di repo ini WIB.
+ */
+export function formatDateTime(timestamp: number): string {
+  const value = new Date(timestamp).toLocaleString('id-ID', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: TIME_ZONE,
+  })
+  return `${value} WIB`
+}
+
 export function formatShortDate(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString('id-ID', {
     day: 'numeric',

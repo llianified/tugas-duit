@@ -50,8 +50,35 @@ export const PAYOUT_CHANNELS: readonly PayoutChannel[] = [
 
 export const DEFAULT_PAYOUT_CHANNEL_ID = PAYOUT_CHANNELS[0].id
 
+/**
+ * Channel yang tidak ada di daftar dijawab dengan namanya sendiri, BUKAN dengan channel
+ * pertama.
+ *
+ * Bentuk lamanya jatuh ke `PAYOUT_CHANNELS[0]`, yaitu DANA. Constraint
+ * `withdrawals_known_channel` masih menerima `bri` dan `mandiri` dari masa ketika keduanya
+ * ditawarkan, jadi baris lama dengan channel itu akan terbaca sebagai **DANA** di dua tempat
+ * yang paling mahal salahnya: label tujuan di antrean payout — yang dibaca admin tepat
+ * sebelum mentransfer — dan pesan Telegram yang memberi tahu user ke mana uangnya dikirim.
+ * Persis mode kegagalan yang diperingatkan migrasi `0014`.
+ *
+ * Penarikan baru tidak bisa lewat sini: `createPayout` menolak channel di luar
+ * `PAYOUT_CHANNELS` sebelum validasi apa pun berjalan, dan pemilih channel hanya merender
+ * daftar itu. Jadi jalur ini murni pembacaan riwayat, dan tugasnya cuma satu — tidak
+ * berbohong.
+ */
 export function getPayoutChannel(id: string): PayoutChannel {
-  return PAYOUT_CHANNELS.find((channel) => channel.id === id) ?? PAYOUT_CHANNELS[0]
+  const known = PAYOUT_CHANNELS.find((channel) => channel.id === id)
+  if (known) return known
+
+  const label = id.trim().toUpperCase() || 'TIDAK DIKENAL'
+  return {
+    id,
+    name: label,
+    kind: 'bank',
+    accountLabel: `Nomor tujuan ${label}`,
+    accountPlaceholder: '',
+    digits: { min: 1, max: 32 },
+  }
 }
 
 type WithdrawalState = 'processing' | 'paid' | 'rejected'

@@ -1,3 +1,5 @@
+import { formatCredits } from '@/shared/lib/format'
+
 export type PrestigeKey = 'founder' | 'milestone' | 'precision' | 'premium'
 
 export interface PrestigeBadge {
@@ -75,7 +77,7 @@ export function prestigeBadges({
     badges.push({
       key: 'milestone',
       label: milestone.label,
-      detail: `Sudah menyelesaikan ${milestone.tasks.toLocaleString('id-ID')} task.`,
+      detail: `Sudah menyelesaikan ${formatCredits(milestone.tasks)} task.`,
     })
   }
 

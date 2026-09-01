@@ -77,7 +77,10 @@ Lihat `.env.example` untuk daftar lengkap env var.
 6. Batas hari memakai zona WIB dan harus sama persis dengan
    `(now() at time zone 'Asia/Jakarta')::date` di SQL.
 7. Bahasa UI dan pesan commit: Indonesia. Kode tanpa titik koma, kutip tunggal.
-8. **Tanpa komentar di kode** — repo ini sengaja dibersihkan dari komentar.
+8. **Komentar menjelaskan _kenapa_, bukan _apa_.** Repo ini memakai komentar justru untuk
+   hal yang tidak terbaca dari kodenya: trade-off, jebakan, dan keputusan yang pernah salah
+   — lihat `server/quota.ts` atau `db/migrations/`. Yang tidak boleh ditambah adalah
+   komentar yang cuma mengulang baris di bawahnya.
 9. Jangan audit/refactor skala-repo kecuali diminta eksplisit.
 
 ## Catatan yang menghemat waktu

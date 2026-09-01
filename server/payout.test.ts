@@ -98,6 +98,38 @@ describe('WD-6 — setiap channel di PAYOUT_CHANNELS diterima database', () => {
   )
 })
 
+/**
+ * Kebalikan WD-6: yang dijaga di sini bukan "channel di kode diterima database", melainkan
+ * "channel di database tidak berbohong di layar". Keduanya perlu karena keduanya pernah
+ * berselisih ke arah yang berbeda.
+ */
+describe('WD-6b — channel di luar daftar tidak pernah menyamar jadi channel lain', () => {
+  it('AUDIT-H2 — memakai id-nya sendiri sebagai nama, bukan channel pertama', async () => {
+    const { getPayoutChannel, PAYOUT_CHANNELS } = await import('@/features/withdraw/domain')
+
+    /**
+     * `withdrawals_known_channel` masih menerima `bri` dan `mandiri` dari masa keduanya
+     * ditawarkan. Bentuk lama `getPayoutChannel` jatuh ke `PAYOUT_CHANNELS[0]`, jadi baris
+     * lama itu terbaca sebagai DANA di antrean payout — label yang dibaca admin tepat
+     * sebelum mentransfer — dan di pesan Telegram ke user.
+     */
+    for (const legacy of ['bri', 'mandiri']) {
+      const channel = getPayoutChannel(legacy)
+      expect(channel.id).toBe(legacy)
+      expect(channel.name).toBe(legacy.toUpperCase())
+      expect(channel.name).not.toBe(PAYOUT_CHANNELS[0].name)
+    }
+  })
+
+  it('tetap mengembalikan channel yang sesungguhnya untuk id yang dikenal', async () => {
+    const { getPayoutChannel, PAYOUT_CHANNELS } = await import('@/features/withdraw/domain')
+
+    for (const channel of PAYOUT_CHANNELS) {
+      expect(getPayoutChannel(channel.id)).toBe(channel)
+    }
+  })
+})
+
 describe('WD-7 — satu nomor tujuan hanya untuk satu akun', () => {
   it('menolak nomor e-wallet yang sama di channel e-wallet lain', async () => {
     const { createPayout } = await import('./payout')

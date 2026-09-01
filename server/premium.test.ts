@@ -147,6 +147,51 @@ describe('PREM-DB-3 — status premium menggerakkan batas yang dibaca server', (
     await expect(openAdTicket(userId)).resolves.toMatchObject({ ok: true })
   })
 
+  it('AUDIT-H1 — melunasi tagihan yang telanjur ditandai kedaluwarsa', async () => {
+    const { query } = await import('./db')
+    const { settlePremiumPayment } = await import('./premium-payment')
+    const userId = await makeUser()
+    const orderId = await makeInvoice(userId, 1, 'sig-kedaluwarsa')
+
+    /**
+     * `expires_at` kita dihitung dari jam proses sendiri dan sengaja jatuh lebih awal
+     * daripada kedaluwarsa milik gateway, jadi ada jendela nyata ketika user membayar
+     * tagihan yang sudah kita tandai `expired`. Bentuk lamanya menuntut `state='pending'`
+     * pada update terakhir, sehingga pembayaran di jendela itu melempar PAYMENT_STATE_RACE,
+     * transaksinya rollback, dan webhook menjawab 500 selamanya: uang masuk, premium tidak
+     * pernah menyala.
+     */
+    await query(
+      "update premium_payments set state='expired', updated_at=now() where order_id=$1",
+      [orderId],
+    )
+
+    const settled = await settlePremiumPayment(orderId, 'sig-kedaluwarsa', 'webhook', 19916)
+
+    expect(settled.settled).toBe(true)
+    expect(await readPremiumUntil(userId)).not.toBeNull()
+
+    const row = await query<{ state: string; granted_until: Date | null }>(
+      'select state, granted_until from premium_payments where order_id=$1',
+      [orderId],
+    )
+    expect(row[0].state).toBe('paid')
+    expect(row[0].granted_until).not.toBeNull()
+  })
+
+  it('AUDIT-H1 — tetap menolak pelunasan kedua atas tagihan yang sudah lunas', async () => {
+    const { settlePremiumPayment } = await import('./premium-payment')
+    const userId = await makeUser()
+    const orderId = await makeInvoice(userId, 1, 'sig-sekali')
+
+    expect((await settlePremiumPayment(orderId, 'sig-sekali', 'webhook', 19916)).settled).toBe(true)
+    const first = await readPremiumUntil(userId)
+
+    const again = await settlePremiumPayment(orderId, 'sig-sekali', 'webhook', 19916)
+    expect(again).toEqual({ settled: false, reason: 'already_settled' })
+    expect(await readPremiumUntil(userId)).toEqual(first)
+  })
+
   it('memakai batas task harian premium di consumeQuota', async () => {
     const { query, transaction } = await import('./db')
     const { consumeQuota } = await import('./quota')

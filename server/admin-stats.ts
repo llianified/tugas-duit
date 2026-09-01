@@ -80,8 +80,13 @@ export async function readAdminDashboard(): Promise<AdminDashboard> {
          where created_at > now() - interval '7 days')::text as ads_opened,
        (select count(*) from ad_views
          where ready_at > now() - interval '7 days')::text as ads_ready,
+       -- Dijangkarkan ke ready_at, bukan consumed_at, supaya ia benar-benar himpunan
+       -- bagian dari ads_ready. Dua jendela yang berbeda membuat "pass terbuang"
+       -- (ads_ready dikurangi ads_consumed) bisa negatif begitu ada pass yang siap
+       -- sebelum jendelanya lalu dipakai di dalamnya.
        (select count(*) from ad_views
-         where consumed_at > now() - interval '7 days')::text as ads_consumed,
+         where ready_at > now() - interval '7 days' and consumed_at is not null)::text
+         as ads_consumed,
        (select count(*) from challenges c
          join task_completions t on t.challenge_id = c.id
          where c.ad_view_id is not null

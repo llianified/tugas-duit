@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { PAYOUT_PROOF_ACCEPT, WITHDRAWAL_REJECT_REASON_MAX } from '@/features/withdraw/domain'
 import { ApiError, sendFormData, sendJson } from '@/shell/api-client'
 
@@ -138,17 +138,20 @@ function ProofField({
   disabled: boolean
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
+  // Satu antrean bisa membuka lebih dari satu panel, jadi id-nya tidak boleh tetap:
+  // id ganda membuat label menyorot input milik payout lain.
+  const fieldId = useId()
 
   return (
     <div className="flex flex-col gap-1 text-sm">
-      <label htmlFor="payout-proof" className="font-medium text-foreground">
+      <label htmlFor={fieldId} className="font-medium text-foreground">
         Bukti transfer (opsional)
       </label>
       <span className="text-muted-foreground">
         Dikirim langsung ke chat user sebagai gambar. JPEG, PNG, atau WebP, maksimum 5 MB.
       </span>
       <input
-        id="payout-proof"
+        id={fieldId}
         ref={inputRef}
         type="file"
         accept={PAYOUT_PROOF_ACCEPT}

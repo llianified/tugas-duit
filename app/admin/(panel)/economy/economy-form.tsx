@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { formatDateTime } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import {
   ECONOMY_FIELDS,
@@ -169,7 +170,7 @@ export function EconomyForm({
       <header className="flex flex-col gap-1">
         <h2 className="text-base font-semibold text-foreground">Ekonomi</h2>
         <p className="text-xs text-muted-foreground">
-          v{saved.version} · {new Date(saved.updatedAt).toLocaleString('id-ID')}
+          v{saved.version} · {formatDateTime(saved.updatedAt)}
         </p>
       </header>
 
@@ -528,7 +529,7 @@ function AuditList({ entries }: { entries: EconomyAuditEntry[] }) {
               </div>
               <p className="pt-0.5 text-[11px] text-muted-foreground">
                 v{entry.version} · {entry.changedBy ?? 'admin dihapus'} ·{' '}
-                {new Date(entry.changedAt).toLocaleString('id-ID')}
+                {formatDateTime(entry.changedAt)}
               </p>
             </li>
           ))}

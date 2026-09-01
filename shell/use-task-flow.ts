@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { KeyedMutator } from 'swr'
 import type { SWRInfiniteKeyedMutator } from 'swr/infinite'
+import { energyCostPerTask } from '@/domain/energy'
 import type { Challenge, TaskSubmission } from '@/features/captcha/domain'
 import type { AppView } from '@/navigation/app-view'
 import { ApiError, sendJson, userFacingMessage } from '@/shell/api-client'
@@ -77,11 +78,16 @@ export function useTaskFlow({
   const startTask = useCallback(
     (payWith: TaskPayment = 'energy') => {
       if (!task || startingTask) return
-      if (payWith === 'energy' && energy < 1) {
+      /**
+       * Ambangnya `energyCostPerTask()`, bukan 1: biaya energi per task bisa disetel dari
+       * panel admin, dan `< 1` membuat klien meloloskan permintaan yang pasti ditolak server
+       * begitu biayanya dinaikkan. Bentuknya sama dengan `energyEmpty` di `active-task.tsx`.
+       */
+      if (payWith === 'energy' && energy < energyCostPerTask()) {
         notifyError(
           energySecondsToNext === null
-            ? 'Energi kamu habis. Tunggu energi berikutnya ya.'
-            : `Energi habis. Energi berikutnya dalam ${formatCountdown(energySecondsToNext)}.`,
+            ? 'Energi kamu belum cukup. Tunggu energi berikutnya ya.'
+            : `Energi belum cukup. Energi berikutnya dalam ${formatCountdown(energySecondsToNext)}.`,
         )
         return
       }

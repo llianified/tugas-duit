@@ -100,6 +100,68 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
     expect(stars?.progress).toBe(0)
   })
 
+  it('AUDIT-M1 — menolak klaim yang hadiahnya tidak muat utuh, bukan hanya saat energi penuh', async () => {
+    const { claimMission } = await import('./missions')
+    const { maxEnergy } = await import('@/domain/energy')
+    const { query } = await import('./db')
+
+    const ads = MISSIONS.find((mission) => mission.key === 'ads')
+    if (!ads) throw new Error('misi ads hilang dari daftar')
+
+    /**
+     * Satu energi di bawah kapasitas, dengan hadiah 3: bentuk lamanya meloloskan ini karena
+     * energinya belum PENUH, lalu `applyEnergyGrant` memotong di kapasitas. User diberi tahu
+     * 3, menerima 1, dan `mission_claims.energy_granted` menyimpan 3 — padahal migrasi 0031
+     * mensyaratkan kolom itu mencatat yang benar-benar diberikan. Klaimnya habis untuk hari
+     * itu, jadi selisihnya hilang tanpa jejak.
+     */
+    const userId = await makeUser(maxEnergy() - 1)
+    for (let index = 0; index < ads.target; index += 1) {
+      await query(
+        `insert into ad_views(user_id,block_id,expires_at,state,ready_at,consumed_at)
+         values($1,'uji',now()+interval '1 hour','consumed',now(),now())`,
+        [userId],
+      )
+    }
+
+    expect(await claimMission(userId, 'ads')).toEqual({ ok: false, reason: 'energy_full' })
+    expect(await readEnergyValue(userId)).toBe(maxEnergy() - 1)
+
+    const claims = await query<{ mission_key: string }>(
+      'select mission_key from mission_claims where user_id=$1',
+      [userId],
+    )
+    expect(claims).toHaveLength(0)
+  })
+
+  it('AUDIT-M1 — membayar penuh begitu hadiahnya muat, dan mencatat angka yang sama', async () => {
+    const { claimMission } = await import('./missions')
+    const { maxEnergy } = await import('@/domain/energy')
+    const { query } = await import('./db')
+
+    const ads = MISSIONS.find((mission) => mission.key === 'ads')
+    if (!ads) throw new Error('misi ads hilang dari daftar')
+
+    const userId = await makeUser(maxEnergy() - ads.reward)
+    for (let index = 0; index < ads.target; index += 1) {
+      await query(
+        `insert into ad_views(user_id,block_id,expires_at,state,ready_at,consumed_at)
+         values($1,'uji',now()+interval '1 hour','consumed',now(),now())`,
+        [userId],
+      )
+    }
+
+    const claimed = await claimMission(userId, 'ads')
+    expect(claimed).toMatchObject({ ok: true, energyGranted: ads.reward })
+    expect(await readEnergyValue(userId)).toBe(maxEnergy())
+
+    const stored = await query<{ energy_granted: number }>(
+      'select energy_granted from mission_claims where user_id=$1',
+      [userId],
+    )
+    expect(Number(stored[0].energy_granted)).toBe(ads.reward)
+  })
+
   it('menolak kunci misi karangan', async () => {
     const { claimMission } = await import('./missions')
     const userId = await makeUser(0)

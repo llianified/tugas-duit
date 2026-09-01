@@ -288,18 +288,25 @@ pada 384 px di tema terang & gelap (`scrollWidth === clientWidth === 384`),
 
 **Berkas:** `app/layout.tsx`, `app/globals.css`
 
-- [ ] Muat **Plus Jakarta Sans** lewat `next/font/google`, subset `latin`,
+- [x] Muat **Plus Jakarta Sans** lewat `next/font/google`, subset `latin`,
       bobot 700 & 800, dengan `variable: '--font-display'`.
-- [ ] Terapkan variabel font pada elemen `<html>` (jangan hapus kelas
+- [x] Terapkan variabel font pada elemen `<html>` (jangan hapus kelas
       `bg-background` yang sudah ada di sana).
-- [ ] Di `globals.css`, set `--font-display` untuk memakai variabel tersebut
+- [x] Di `globals.css`, set `--font-display` untuk memakai variabel tersebut
       dengan fallback ke `var(--font-sans)`.
-- [ ] Daftarkan sebagai utility yang bisa dipakai (`font-display`) melalui
+- [x] Daftarkan sebagai utility yang bisa dipakai (`font-display`) melalui
       `@theme`, mengikuti cara `--font-sans` / `--font-mono` didaftarkan.
-- [ ] **Jangan** mengubah `--font-sans`. Body tetap tumpukan sistem.
-- [ ] Terapkan `font-display` pada `shared/components/page-header.tsx` dan
+- [x] **Jangan** mengubah `--font-sans`. Body tetap tumpukan sistem.
+- [x] Terapkan `font-display` pada `shared/components/page-header.tsx` dan
       `section-label.tsx` saja untuk langkah ini.
-- [ ] Cek: tidak ada pergeseran tata letak (CLS) yang kentara saat font dimuat.
+- [x] Cek: tidak ada pergeseran tata letak (CLS) yang kentara saat font dimuat.
+
+**Status:** SELESAI. `pnpm build` lolos, tanpa error TypeScript baru, CLS terukur
+`0` pada 384 px di tema terang & gelap (`scrollWidth === clientWidth === 384`).
+`document.fonts` mengonfirmasi "Plus Jakarta Sans" 700 termuat; bobot 800 masih
+`unloaded` karena belum ada pemakai (`.num-display` baru dipakai pada Langkah 4).
+`git diff --name-only`: `app/globals.css`, `app/layout.tsx`,
+`shared/components/page-header.tsx`, `shared/components/section-label.tsx`.
 
 ---
 
@@ -479,6 +486,20 @@ Diisi oleh agent selama pengerjaan. Ini penting untuk serah-terima antar agent.
 - **Langkah 1 — `--font-display`.** Token sudah ditambahkan sekarang dengan
   nilai `var(--font-sans)` supaya `.num-display` tidak menunjuk variabel kosong.
   Langkah 2 hanya perlu mengarahkannya ke variabel font Plus Jakarta Sans.
+  (Sudah dilakukan: lihat catatan Langkah 2 di bawah.)
+- **Langkah 2 — nama variabel font.** Rencana menyebut `variable: '--font-display'`.
+  Itu akan bertabrakan dengan token tema bernama sama, jadi `next/font` memakai
+  `variable: '--font-plus-jakarta'`, lalu `--font-display` di `@theme inline`
+  disusun sebagai `var(--font-plus-jakarta), var(--font-sans)`. Hasilnya sama
+  (`font-display` tetap jadi utility), tanpa rantai `var()` melingkar.
+- **Langkah 2 — deklarasi `:root` dihapus.** Placeholder `--font-display` yang
+  ditambahkan di `:root` pada Langkah 1 dicabut; nilai sebenarnya kini hidup di
+  `@theme inline` (yang tetap menerbitkannya ke `:root`), agar tidak ada dua
+  sumber kebenaran untuk token yang sama.
+- **Langkah 2 — `page-header.tsx` tanpa efek tampak.** `PageHeader` hanya
+  merender `<h1 className="sr-only">`, jadi `font-display` di sana murni
+  persiapan bila judul kelak ditampilkan. Efek nyata Langkah 2 datang dari
+  `section-label.tsx` (`EYEBROW_CLASS`).
 - **Langkah 1 — `--thread-line`.** Dijadikan alias `var(--border)` di kedua tema
   (bukan warna baru), karena `--border` sudah punya nilai terang & gelap yang
   tepat untuk garis penghubung setipis ini. Token tetap ada agar Langkah 10

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { cn } from '@/shared/lib/utils'
 
 export const EYEBROW_CLASS =
-  'text-[13px] font-bold tracking-tight text-muted-foreground'
+  'font-display text-[13px] font-bold tracking-tight text-muted-foreground'
 
 export function SectionLabel({
   as: Element = 'p',

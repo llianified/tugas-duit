@@ -116,7 +116,7 @@ function AmountPresets({
               'focus-ring focus-ring-strong transition-ui control-h rounded-full px-3 text-xs font-medium tabular-nums',
               selected
                 ? 'bg-primary/15 text-primary'
-                : 'bg-muted text-foreground hover:bg-muted-foreground/15',
+                : 'btn-glass-quiet text-foreground hover:bg-muted-foreground/15',
             )}
           >
             {formatCredits(credits)} credit

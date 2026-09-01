@@ -67,9 +67,7 @@ export function SegmentedTabs<T extends string>({
                 ? 'rounded-full px-2.5 py-1.5'
                 : 'flex-1 rounded-md px-3 py-2',
               active
-                ? plain
-                  ? 'bg-muted text-foreground'
-                  : 'bg-card text-foreground'
+                ? 'btn-glass-quiet text-foreground'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >

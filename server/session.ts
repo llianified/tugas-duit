@@ -1,10 +1,39 @@
 import { createHash, randomBytes } from 'node:crypto'
-import { cookies } from 'next/headers'
-import { query } from './db'
+import { cookies, headers } from 'next/headers'
+import { isPreviewDb, query } from './db'
 import { env } from './env'
 
 const COOKIE_NAME = 'td_session'
+
+/**
+ * Jalur cadangan KHUSUS preview, dan hanya aktif saat `isPreviewDb()` — yaitu
+ * NODE_ENV bukan production DAN tidak ada DATABASE_URL. Di produksi header ini
+ * tidak pernah dibaca, jadi tidak ada cara memakai token sesi dari JavaScript.
+ *
+ * Alasannya: preview selalu tampil di dalam iframe milik situs lain, dan cookie
+ * sesinya jadi cookie pihak ketiga. `Partitioned` (CHIPS) memperbaikinya di Chrome
+ * modern, tapi tidak di Safari/Firefox dan tidak saat user memblokir cookie pihak
+ * ketiga sepenuhnya — di sana cookie apa pun yang dikirim server dibuang tanpa
+ * suara, dan satu-satunya gejalanya adalah "Kami belum kenal sesi kamu" yang tidak
+ * bisa dilewati. Header tidak lewat cookie jar, jadi ia lolos dari semua aturan itu.
+ */
+const HEADER_NAME = 'x-td-session'
 const hashToken = (token: string) => createHash('sha256').update(token).digest()
+
+/**
+ * Token mentah dikembalikan supaya `/api/dev/login` bisa menyerahkannya ke klien
+ * preview. Null di produksi: di sana cookie adalah satu-satunya pembawa sesi.
+ */
+export function previewSessionToken(token: string): string | null {
+  return isPreviewDb() ? token : null
+}
+
+async function readSessionToken(): Promise<string | null> {
+  const cookieToken = (await cookies()).get(COOKIE_NAME)?.value
+  if (cookieToken) return cookieToken
+  if (!isPreviewDb()) return null
+  return (await headers()).get(HEADER_NAME)?.trim() || null
+}
 
 interface SessionUser {
   id: number
@@ -37,17 +66,36 @@ export async function createSession(userId: number, userAgent: string | null) {
     `update sessions set revoked_at=now() where id in (select id from sessions where user_id=$1 and revoked_at is null order by created_at desc offset 5)`,
     [userId],
   )
+  /**
+   * `sameSite: 'none'` saja TIDAK cukup lagi. App ini selalu dijalankan di dalam iframe
+   * milik situs lain — preview v0 (`v0.app` membingkai `*.vusercontent.net`) dan Telegram
+   * Web (`web.telegram.org`) — jadi cookie sesi ini adalah cookie pihak ketiga. Chrome
+   * (dan Safari sejak lama) MEMBUANG cookie pihak ketiga yang tidak dipartisi, sehingga
+   * `POST /api/dev/login` sukses 204 tapi `GET /api/session` berikutnya datang tanpa
+   * cookie: `user: null`, dan layarnya berhenti di "Kami belum kenal sesi kamu".
+   *
+   * `partitioned: true` (CHIPS) meminta cookie yang tetap dikirim di dalam iframe,
+   * dengan jar terpisah per situs induk. Syaratnya `Secure` + `SameSite=None`, yang
+   * keduanya sudah dipakai di sini. Browser lama mengabaikan atribut yang tidak
+   * dikenalnya, jadi perilaku sebelumnya tidak berubah di sana.
+   *
+   * Konsekuensi yang disengaja: sesi tidak lagi dibagi antar situs induk yang berbeda
+   * (mis. preview v0 dan Telegram Web punya sesi masing-masing). Itu tidak merugikan —
+   * setiap pembukaan memang login ulang lewat `initData` atau `/api/dev/login`.
+   */
   ;(await cookies()).set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: true,
     sameSite: 'none',
+    partitioned: true,
     path: '/',
     expires: expiresAt,
   })
+  return token
 }
 
 export async function getSessionUser(): Promise<SessionUser | null> {
-  const token = (await cookies()).get(COOKIE_NAME)?.value
+  const token = await readSessionToken()
   if (!token) return null
   const rows = await query<{
     id: string
@@ -110,9 +158,14 @@ export async function requireAdmin() {
 
 export async function destroySession() {
   const jar = await cookies()
-  const token = jar.get(COOKIE_NAME)?.value
+  const token = await readSessionToken()
   if (token) {
     await query('update sessions set revoked_at=now() where token_hash=$1', [hashToken(token)])
   }
-  jar.delete(COOKIE_NAME)
+  /**
+   * Atributnya harus sama dengan saat ditulis. Cookie berpartisi punya kunci yang
+   * berbeda dari cookie biasa dengan nama yang sama, jadi `delete(COOKIE_NAME)` polos
+   * mengirim Set-Cookie tanpa `Partitioned` dan browser membiarkan yang asli hidup.
+   */
+  jar.delete({ name: COOKIE_NAME, path: '/', secure: true, sameSite: 'none', partitioned: true })
 }

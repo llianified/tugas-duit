@@ -2,7 +2,7 @@ import { isPreviewDb, query } from '@/server/db'
 import { assertSameOrigin, clientIp, handleRouteError, rateLimited } from '@/server/http'
 import { checkRateLimit } from '@/server/ratelimit'
 import { generateReferralCode } from '@/server/referral'
-import { createSession } from '@/server/session'
+import { createSession, previewSessionToken } from '@/server/session'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -30,8 +30,15 @@ export async function POST(request: Request) {
     const user = rows[0]
     if (user.banned_at) return new Response(null, { status: 403 })
 
-    await createSession(Number(user.id), 'dev-preview')
-    return new Response(null, { status: 204 })
+    const token = await createSession(Number(user.id), 'dev-preview')
+    /**
+     * Token dikembalikan ke klien supaya preview tetap punya sesi walau cookie-nya
+     * dibuang browser — preview selalu dibingkai situs lain, jadi cookie sesinya
+     * adalah cookie pihak ketiga. Route ini sudah 404 kalau bukan preview
+     * (`isPreviewDb()` di atas), dan `previewSessionToken` menolak lagi di produksi,
+     * jadi tidak ada jalan token ini bocor ke deploy sungguhan.
+     */
+    return Response.json({ token: previewSessionToken(token) })
   } catch (error) {
     return handleRouteError(error)
   }

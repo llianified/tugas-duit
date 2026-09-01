@@ -10,7 +10,7 @@ import type { ActivityEntry } from '@/features/activity/domain'
 import type { LeaderboardBoard } from '@/features/leaderboard/domain'
 import type { UserStats } from '@/features/stats/domain'
 import type { Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
-import { fetchJson, sendJson } from '@/shell/api-client'
+import { fetchJson, sendJson, setPreviewSessionToken } from '@/shell/api-client'
 
 export type SessionResponse = {
   economy?: EconomyConfig
@@ -172,7 +172,14 @@ export async function loadSession(): Promise<SessionResponse> {
   const initData = telegram?.initData
   if (!initData) {
     if (process.env.NODE_ENV === 'production') return session
-    await sendJson('/api/dev/login', 'POST')
+    /**
+     * Token yang dikembalikan dipasang sebagai pembawa sesi cadangan. Cookie tetap
+     * jalur utamanya; ini hanya menolong saat browser membuang cookie pihak ketiga
+     * di dalam iframe preview. Route ini 404 di luar preview, jadi `token` null
+     * di sana dan pemasangannya jadi no-op.
+     */
+    const dev = await sendJson<{ token: string | null }>('/api/dev/login', 'POST')
+    setPreviewSessionToken(dev?.token ?? null)
     return fetchSession()
   }
 

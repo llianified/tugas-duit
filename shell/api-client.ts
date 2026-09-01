@@ -17,8 +17,35 @@ export function userFacingMessage(error: unknown, fallback = NETWORK_ERROR_MESSA
   return error instanceof ApiError ? error.message : fallback
 }
 
+/**
+ * Pembawa sesi cadangan untuk PREVIEW saja.
+ *
+ * Preview v0 dan Telegram Web sama-sama membingkai app ini dari situs lain, jadi cookie
+ * sesinya adalah cookie pihak ketiga. `Partitioned` menyelamatkannya di Chrome modern,
+ * tapi Safari/Firefox dan setelan "blokir cookie pihak ketiga" tetap membuangnya tanpa
+ * suara — dan gejalanya hanya "Kami belum kenal sesi kamu" yang mustahil dilewati.
+ * Header tidak lewat cookie jar sama sekali, jadi ia lolos dari semua aturan itu.
+ *
+ * Nilainya hanya pernah ada di preview: `/api/dev/login` 404 di produksi, dan
+ * `previewSessionToken` di server mengembalikan null di luar preview. Di produksi
+ * variabel ini tetap null dan header-nya tidak pernah terkirim.
+ *
+ * Ditaruh di memori modul, bukan `localStorage`: umurnya cukup selama tab hidup, dan
+ * token sesi tidak perlu ditulis ke storage yang bisa dibaca skrip lain.
+ */
+let previewSessionToken: string | null = null
+
+export function setPreviewSessionToken(token: string | null): void {
+  previewSessionToken = token
+}
+
+function authHeaders(base?: Record<string, string>): Record<string, string> | undefined {
+  if (!previewSessionToken) return base
+  return { ...base, 'x-td-session': previewSessionToken }
+}
+
 export async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, { headers: { accept: 'application/json' } })
+  const response = await fetch(url, { headers: authHeaders({ accept: 'application/json' }) })
   return readJson<T>(response)
 }
 
@@ -29,7 +56,7 @@ export async function sendJson<T>(
 ): Promise<T> {
   const response = await fetch(url, {
     method,
-    headers: body === undefined ? undefined : { 'content-type': 'application/json' },
+    headers: authHeaders(body === undefined ? undefined : { 'content-type': 'application/json' }),
     body: body === undefined ? undefined : JSON.stringify(body),
   })
   return readJson<T>(response)
@@ -40,7 +67,8 @@ export async function sendFormData<T>(
   method: 'POST' | 'PATCH',
   form: FormData,
 ): Promise<T> {
-  const response = await fetch(url, { method, body: form })
+  // Sengaja tanpa `content-type`: fetch harus menyusunnya sendiri beserta boundary.
+  const response = await fetch(url, { method, body: form, headers: authHeaders() })
   return readJson<T>(response)
 }
 

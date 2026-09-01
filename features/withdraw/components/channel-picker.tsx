@@ -31,7 +31,7 @@ export function ChannelSelect({
     >
       <Select.Trigger
         aria-label={`Tujuan transfer: ${channel.name}. Ketuk untuk mengganti.`}
-        className="focus-ring transition-ui press-scale-soft control-h flex w-full items-center gap-2 rounded-lg bg-muted px-3 text-left hover:bg-muted-foreground/15"
+        className="focus-ring transition-ui press-scale-soft btn-glass-quiet control-h flex w-full items-center gap-2 rounded-lg px-3 text-left hover:bg-muted-foreground/15"
       >
         <GlyphWallet className="size-4 shrink-0 text-primary" />
         <span className="min-w-0 truncate text-sm font-medium text-foreground">{channel.name}</span>

@@ -5,7 +5,7 @@ import { hapticTap } from '@/shell/haptic'
 import { cn } from '@/shared/lib/utils'
 
 export const KEYPAD_KEY_CLASS =
-  'focus-ring transition-ui flex items-center justify-center rounded-lg bg-muted font-semibold text-foreground hover:bg-muted-foreground/15 active:bg-primary/15 active:text-primary disabled:opacity-40'
+  'focus-ring transition-ui btn-glass-quiet flex items-center justify-center rounded-lg font-semibold text-foreground hover:bg-muted-foreground/15 active:bg-primary/15 active:text-primary disabled:opacity-40'
 
 export const KEYPAD_HEIGHT_CLASS = 'h-[14.5rem] min-h-[12rem]'
 

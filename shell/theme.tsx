@@ -106,7 +106,7 @@ export function ThemeToggle({ hidden = false }: { hidden?: boolean }) {
       tabIndex={hidden ? -1 : undefined}
       data-aside={hidden ? '' : undefined}
       className={cn(
-        'focus-ring brand-band-control h-[var(--brand-pill-h)] aspect-square rounded-[calc(var(--brand-pill-h)/2)] flex shrink-0 items-center justify-center bg-muted text-muted-foreground hover:text-foreground active:text-foreground',
+        'focus-ring brand-band-control bg-card h-[var(--brand-pill-h)] aspect-square rounded-[calc(var(--brand-pill-h)/2)] flex shrink-0 items-center justify-center text-muted-foreground hover:text-foreground active:text-foreground',
       )}
     >
       <span

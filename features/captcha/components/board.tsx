@@ -152,7 +152,7 @@ export function ChallengeSelect({
 
 function optionStateClass(isSelected: boolean, status: CaptchaAttemptStatus): string {
   if (!isSelected) {
-    return 'bg-muted text-foreground hover:bg-muted-foreground/15 active:bg-muted-foreground/25'
+    return 'btn-glass-quiet text-foreground hover:bg-muted-foreground/15 active:bg-muted-foreground/25'
   }
   if (status === 'error') return 'bg-destructive/15 text-destructive'
   if (status === 'success') return 'bg-success/15 text-success'

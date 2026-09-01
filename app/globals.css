@@ -183,6 +183,10 @@
      setinggi rail). Padding ini yang memberi ruangnya; lihat `.rail` untuk cara
      mengembalikan jaraknya agar tata letak tak bergeser. */
   --rail-py: 0.75rem;
+  /* Lebar pemudaran tepi kanan rail (lihat `.rail-fade-e`). Sengaja lebih sempit
+     dari `--rail-gap` supaya yang memudar hanya sisi kartu yang terpotong, bukan
+     seluruh kartu terakhir yang masih terlihat. */
+  --rail-fade-w: 1.5rem;
   --chip-radius: 0.5rem;
   /* Chip padat: latar tinted transparan (alpha, bukan campur ke --card) supaya
      chip aman dipakai di atas background maupun card. Di gelap token nada sudah
@@ -502,6 +506,24 @@
        negatif di sisi itu tidak akan pernah terpakai. */
     padding-block: var(--rail-py);
     margin-block-end: calc(var(--rail-py) * -1);
+  }
+  /* Tepi kanan rail dilembutkan, bukan dipotong tegak. Pakai `mask-image`, bukan
+     elemen gradien menumpuk: rail ini digulir, jadi overlay harus dipaku ke tepi
+     kotak gulir (butuh wadah `position: relative` tambahan) sementara mask sudah
+     mengikuti kotak padding elemennya sendiri. Mask juga tidak menutupi apa pun,
+     jadi kartu di bawah fade tetap bisa disentuh dan digulir.
+
+     Fade hanya di sisi kanan (arah lanjutan gulir); sisi kiri sengaja tegak
+     supaya kartu pertama berbaris lurus dengan label "Podium" di atasnya.
+
+     Tinggi mask dibiarkan penuh — pemudaran vertikal akan memakan `--rail-py`
+     yang justru ada untuk melindungi bayangan dan cincin fokus kartu. */
+  .rail-fade-e {
+    mask-image: linear-gradient(
+      to right,
+      #000 calc(100% - var(--rail-fade-w)),
+      transparent 100%
+    );
   }
   .rail-item {
     flex: 0 0 var(--rail-card-w);

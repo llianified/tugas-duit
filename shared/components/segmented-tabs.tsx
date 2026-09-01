@@ -1,7 +1,8 @@
 'use client'
 
+import { Select } from '@base-ui/react/select'
 import { hapticSelect } from '@/shell/haptic'
-import { GlyphChevron } from '@/shared/components/glyph'
+import { GlyphCheck, GlyphChevron } from '@/shared/components/glyph'
 import { cn } from '@/shared/lib/utils'
 
 export type SegmentedTab<T extends string> = {
@@ -86,11 +87,13 @@ export type FilterChipOption<T extends string> = {
 }
 
 /**
- * Chip dropdown "Semua ⌄" ala fomo. Pemilihnya adalah `<select>` asli yang
- * ditumpuk transparan di atas chip: papan tombol, pembaca layar, dan pemilih
- * bawaan Telegram/OS ikut bekerja tanpa manajemen fokus manual. Overlay-nya
- * dilebihkan ke atas & bawah supaya target sentuh tetap ≥ 44 px meski chip-nya
- * sendiri hanya 2rem.
+ * Chip dropdown "Semua ⌄" ala fomo. Sebelumnya ini `<select>` asli yang ditumpuk
+ * transparan di atas chip — gratis secara aksesibilitas, tapi tampilannya diserahkan
+ * ke OS: di mobile pemilih bawaan muncul sebagai lembar dialog berisi daftar radio
+ * setinggi layar untuk dua pilihan saja. Sekarang memakai `Select` dari Base UI,
+ * pola yang sudah dipakai `ChannelSelect`, supaya yang terbuka benar-benar menu
+ * kecil menempel di chip-nya. Papan tombol dan pembaca layar tetap terlayani
+ * karena Base UI yang mengurus peran serta manajemen fokusnya.
  */
 export function FilterChip<T extends string>({
   options,
@@ -107,31 +110,57 @@ export function FilterChip<T extends string>({
 }) {
   const selected = options.find((option) => option.value === value)
   return (
-    <span
-      className={cn(
-        'transition-ui relative inline-flex h-8 items-center gap-1 rounded-full bg-card px-3 text-[13px] font-bold tracking-tight text-foreground ring-1 ring-border ring-inset',
-        // Cincin fokus dipindahkan ke chip karena `<select>`-nya transparan.
-        'has-[select:focus-visible]:outline-2 has-[select:focus-visible]:outline-offset-2 has-[select:focus-visible]:outline-ring',
-        className,
-      )}
+    <Select.Root
+      value={value}
+      onValueChange={(next) => {
+        if (typeof next !== 'string' || next === value) return
+        hapticSelect()
+        onChange(next as T)
+      }}
     >
-      {selected?.label ?? ''}
-      <GlyphChevron direction="down" className="size-3.5 text-muted-foreground" />
-      <select
+      <Select.Trigger
         aria-label={ariaLabel}
-        value={value}
-        onChange={(event) => {
-          hapticSelect()
-          onChange(event.target.value as T)
-        }}
-        className="absolute inset-x-0 -inset-y-1.5 appearance-none rounded-full bg-transparent opacity-0 outline-none"
+        className={cn(
+          'focus-ring transition-ui group/trigger inline-flex h-8 items-center gap-1 rounded-full bg-card px-3 text-[13px] font-bold tracking-tight text-foreground ring-1 ring-border ring-inset',
+          className,
+        )}
       >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </span>
+        {selected?.label ?? ''}
+        <Select.Icon className="flex shrink-0 text-muted-foreground">
+          <GlyphChevron
+            direction="down"
+            className="size-3.5 transition-transform duration-150 ease-out group-data-[popup-open]/trigger:rotate-180 motion-reduce:transition-none"
+          />
+        </Select.Icon>
+      </Select.Trigger>
+
+      <Select.Portal>
+        <Select.Positioner
+          side="bottom"
+          align="start"
+          sideOffset={6}
+          alignItemWithTrigger={false}
+          className="z-50 outline-none"
+        >
+          <Select.Popup className="min-w-[var(--anchor-width)] rounded-lg border border-border bg-card p-1 shadow-lg outline-none">
+            {options.map((option) => (
+              <Select.Item
+                key={option.value}
+                value={option.value}
+                className={cn(
+                  'focus-ring transition-ui flex cursor-default items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] font-bold tracking-tight',
+                  'data-[highlighted]:bg-muted data-[selected]:text-primary',
+                )}
+              >
+                <Select.ItemText className="min-w-0 flex-1 truncate">{option.label}</Select.ItemText>
+                <Select.ItemIndicator className="flex shrink-0">
+                  <GlyphCheck className="size-3.5 text-primary" />
+                </Select.ItemIndicator>
+              </Select.Item>
+            ))}
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Portal>
+    </Select.Root>
   )
 }

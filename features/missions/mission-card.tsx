@@ -1,28 +1,14 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
 import type { MissionProgress } from '@/domain/missions'
+import { useMissions } from '@/features/missions/use-missions'
 import { MissionListSkeleton } from '@/shared/components/app-skeleton'
 import { EmptyState } from '@/shared/components/empty-state'
 import { GlyphBolt, GlyphCheck } from '@/shared/components/glyph'
-import { MetaBadge } from '@/shared/components/meta-badge'
 import { SectionLabel } from '@/shared/components/section-label'
-import { fetchJson, sendJson, userFacingMessage } from '@/shell/api-client'
-import { hapticTap } from '@/shell/haptic'
-import { useToast } from '@/shell/toast'
 import { formatCredits } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 
-type ClaimResponse = { energyGranted: number; energy: number; energyMax: number }
-
-/**
- * Kartu ini memuat datanya sendiri, tidak menumpang `/api/session`.
- *
- * Kemajuan misi berubah setiap kali satu task selesai, sementara payload sesi dibaca
- * jauh lebih jarang. Menitipkannya di sana berarti angka misi tertinggal di belakang
- * apa yang baru saja dikerjakan user — bentuk kesalahan yang paling merusak untuk
- * sebuah daftar yang seluruh gunanya adalah menunjukkan progres.
- */
 export function MissionCard({
   refreshKey,
   onClaimed,
@@ -39,40 +25,7 @@ export function MissionCard({
    */
   variant?: 'card' | 'page'
 }) {
-  const [missions, setMissions] = useState<MissionProgress[] | null>(null)
-  const [claiming, setClaiming] = useState<string | null>(null)
-  const showError = useToast()
-
-  const load = useCallback(async () => {
-    try {
-      const data = await fetchJson<{ missions: MissionProgress[] }>('/api/missions')
-      setMissions(data.missions)
-    } catch {
-      setMissions([])
-    }
-  }, [])
-
-  useEffect(() => {
-    void load()
-  }, [load, refreshKey])
-
-  const claim = useCallback(
-    async (key: string) => {
-      hapticTap()
-      setClaiming(key)
-      try {
-        await sendJson<ClaimResponse>('/api/missions/claim', 'POST', { key })
-        await Promise.all([load(), onClaimed()])
-      } catch (cause) {
-        showError(userFacingMessage(cause))
-        await load()
-      } finally {
-        setClaiming(null)
-      }
-    },
-    [load, onClaimed, showError],
-  )
-
+  const { missions, claiming, claim } = useMissions({ refreshKey, onClaimed })
   const page = variant === 'page'
 
   /**
@@ -101,14 +54,19 @@ export function MissionCard({
       aria-label="Misi harian"
       className={page ? undefined : 'rounded-lg bg-muted/60 p-[var(--surface-p)] ring-border'}
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-baseline justify-between gap-3">
         <SectionLabel as="h2">Misi hari ini</SectionLabel>
-        <MetaBadge>
-          {formatCredits(done)}/{formatCredits(missions.length)} selesai
-        </MetaBadge>
+        {/* Kata "selesai" dibuang: label di sebelahnya sudah menyebut misi, dan rasio
+            bertanda tabular terbaca sendiri tanpa perlu dijelaskan. */}
+        <span className="shrink-0 text-[11px] font-semibold tabular-nums text-muted-foreground">
+          {formatCredits(done)}
+          <span aria-hidden="true">/</span>
+          <span className="sr-only"> dari </span>
+          {formatCredits(missions.length)}
+        </span>
       </div>
 
-      <ul className={cn('label-gap-t flex flex-col', page ? 'gap-4' : 'gap-3')}>
+      <ul className={cn('label-gap-t flex flex-col', page ? 'gap-3' : 'gap-2.5')}>
         {missions.map((mission) => (
           <MissionRow
             key={mission.key}
@@ -123,12 +81,14 @@ export function MissionCard({
 }
 
 /**
- * Judul dan hadiah berbagi satu baris, bar progres berdiri sendiri di bawahnya.
+ * Satu misi = satu baris: judul, meter segmen, lalu satu slot aksi.
  *
- * Bentuk sebelumnya menaruh hadiah di kolom kanan yang membentang setinggi seluruh
- * baris, sehingga ia berhenti di tengah — tidak sebaris dengan judulnya, tidak pula
- * dengan barnya. Angka progres diberi lebar minimum supaya bar setiap baris berakhir
- * di titik yang sama walau "0/5" dan "0/3" berbeda lebar.
+ * Bentuk sebelumnya menumpuk empat hal per misi — judul, chip hadiah, bar progres, dan
+ * angka "0/5" — sehingga tiga misi saja sudah menjadi dua belas potong teks dan angka.
+ * Meter segmen menggantikan pasangan bar + angka: target misi selalu 3–5, jadi jumlah
+ * kotaknya bisa dihitung sekali lihat, dan rasio persisnya tetap ada untuk pembaca layar
+ * lewat `aria-valuetext`. Lebar meter dan slot aksi dipatok supaya ketiga baris berhenti
+ * di kolom yang sama, apa pun panjang judul dan status misinya.
  */
 function MissionRow({
   mission,
@@ -139,41 +99,71 @@ function MissionRow({
   claiming: boolean
   onClaim: () => void
 }) {
-  const ratio = mission.target === 0 ? 0 : Math.min(1, mission.progress / mission.target)
-
   return (
-    <li>
-      <div className="flex items-center justify-between gap-3">
-        <p
-          className={cn(
-            'min-w-0 flex-1 truncate text-sm font-medium',
-            mission.claimed ? 'text-muted-foreground line-through' : 'text-foreground',
-          )}
-        >
-          {mission.title}
-        </p>
+    <li className="flex items-center gap-2.5">
+      <p
+        className={cn(
+          'min-w-0 flex-1 truncate text-[13px] font-medium',
+          mission.claimed ? 'text-muted-foreground line-through' : 'text-foreground',
+        )}
+      >
+        {mission.title}
+      </p>
 
-        <MissionAction mission={mission} claiming={claiming} onClaim={onClaim} />
-      </div>
+      <MissionMeter
+        progress={mission.progress}
+        target={mission.target}
+        muted={mission.claimed}
+        className="w-14 shrink-0"
+      />
 
-      <div className="mt-1.5 flex items-center gap-2">
-        <span
-          aria-hidden="true"
-          className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-muted-foreground/20"
-        >
-          <span
-            className="block h-full rounded-full bg-primary transition-[width] duration-300 ease-out motion-reduce:transition-none"
-            style={{ width: `${ratio * 100}%` }}
-          />
-        </span>
-        <span className="min-w-[2.5rem] shrink-0 text-right text-[11px] tabular-nums text-muted-foreground">
-          {formatCredits(mission.progress)}/{formatCredits(mission.target)}
-        </span>
-      </div>
+      <MissionAction mission={mission} claiming={claiming} onClaim={onClaim} />
     </li>
   )
 }
 
+function MissionMeter({
+  progress,
+  target,
+  muted,
+  className,
+}: {
+  progress: number
+  target: number
+  muted: boolean
+  className?: string
+}) {
+  const filled = Math.max(0, Math.min(target, progress))
+
+  return (
+    <div
+      role="meter"
+      aria-valuemin={0}
+      aria-valuemax={target}
+      aria-valuenow={filled}
+      aria-valuetext={`${formatCredits(filled)} dari ${formatCredits(target)}`}
+      className={cn('flex items-center gap-1', className)}
+    >
+      {Array.from({ length: Math.max(1, target) }, (_, index) => (
+        <span key={index} className="meter-h flex-1 overflow-hidden rounded-full bg-border">
+          {index < filled ? (
+            <span
+              className={cn(
+                'block h-full rounded-full transition-colors duration-300 ease-out motion-reduce:transition-none',
+                muted ? 'bg-muted-foreground/40' : 'bg-primary',
+              )}
+            />
+          ) : null}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Slot aksi dengan lebar minimum yang sama untuk ketiga statusnya, supaya baris misi
+ * yang sudah diambil tidak menggeser kolom baris di atas dan bawahnya.
+ */
 function MissionAction({
   mission,
   claiming,
@@ -183,33 +173,37 @@ function MissionAction({
   claiming: boolean
   onClaim: () => void
 }) {
+  const slot = 'flex h-7 min-w-[3.25rem] shrink-0 items-center justify-end gap-1 text-xs'
+
   if (mission.claimed) {
     return (
-      <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground">
+      <span className={cn(slot, 'font-medium text-muted-foreground')}>
         <GlyphCheck className="size-3.5" />
-        Diambil
+        <span className="sr-only">Hadiah sudah diambil</span>
       </span>
     )
   }
 
   if (!mission.done) {
     return (
-      <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground">
+      <span className={cn(slot, 'font-medium tabular-nums text-muted-foreground')}>
         <GlyphBolt className="size-3.5" />+{formatCredits(mission.reward)}
       </span>
     )
   }
 
   return (
-    <button
-      type="button"
-      onClick={onClaim}
-      disabled={claiming}
-      aria-label={`Ambil ${formatCredits(mission.reward)} energi dari misi ${mission.title}`}
-      className="focus-ring transition-ui press-scale-soft flex shrink-0 items-center gap-1 rounded-md bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground"
-    >
-      <GlyphBolt className="size-3.5" />
-      {claiming ? 'Mengambil…' : `+${formatCredits(mission.reward)}`}
-    </button>
+    <div className={cn(slot, 'justify-end')}>
+      <button
+        type="button"
+        onClick={onClaim}
+        disabled={claiming}
+        aria-label={`Ambil ${formatCredits(mission.reward)} energi dari misi ${mission.title}`}
+        className="focus-ring transition-ui press-scale-soft flex h-7 items-center gap-1 rounded-md bg-primary px-2.5 text-xs font-semibold tabular-nums text-primary-foreground"
+      >
+        <GlyphBolt className="size-3.5" />
+        {claiming ? '…' : `+${formatCredits(mission.reward)}`}
+      </button>
+    </div>
   )
 }

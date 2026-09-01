@@ -1733,25 +1733,26 @@
    memakan. Yang diperbaiki BUKAN cuma kepekatannya: bentuk sebesar itu tetap
    bersaing walau diredam. Jadi ia dikecilkan dan digeser lebih jauh ke sudut
    sampai yang tersisa di dalam kartu hanya pucuk sayapnya — cap sudut, bukan
-   ilustrasi — dan kalimatnya (`.bonus-coupon-copy`) dipagari supaya tidak
-   pernah masuk ke wilayah itu. */
+   ilustrasi.
+
+   Kalimatnya dulu dipagari `max-width: 25ch` supaya tidak masuk ke wilayah
+   pesawat. Pagar itu menyelesaikan tabrakannya dengan harga yang salah: teks
+   berhenti ~100px sebelum tepi kanan, jadi kartu selebar layar berisi blok
+   teks sempit dengan lubang kosong di kanannya — rapi di satu sisi, tidak di
+   sisi yang lain. Yang diperbaiki sekarang bukan teksnya melainkan pesawatnya:
+   digeser lebih jauh keluar dan dikecilkan sampai pucuknya berhenti DI ATAS
+   baris pertama kalimat, bukan di sampingnya. Tidak ada lagi wilayah yang
+   perlu dihindari secara horizontal, jadi kalimatnya boleh penuh kiri-kanan
+   seperti tombol-tombol di bawahnya. */
 .bonus-coupon-plane {
   position: absolute;
-  top: -1.25rem;
-  right: -1.5rem;
-  width: 5rem;
-  height: 5rem;
+  top: -1.75rem;
+  right: -1.75rem;
+  width: 4.5rem;
+  height: 4.5rem;
   rotate: 8deg;
   color: color-mix(in oklab, var(--primary) 16%, transparent);
   pointer-events: none;
-}
-
-/* Pagar teks terhadap pucuk sayap di sudut kanan atas. Angkanya berdiri di kiri
-   dan aman sendiri; yang dulu bertabrakan adalah kalimat dua barisnya, yang
-   membentang penuh sampai ke bawah pesawat. Dipagari di sini, bukan dengan
-   `pr-*` di JSX, supaya lebarnya ikut motifnya kalau ukuran pesawatnya berubah. */
-.bonus-coupon-copy {
-  max-width: 25ch;
 }
 
 /* --- Transaksi: baris buku kas -------------------------------------------- */

@@ -44,7 +44,7 @@ export function ChannelBonusCard({
           <p className="home-tag pb-0.5">credit</p>
         </div>
 
-        <p className="bonus-coupon-copy relative stack-gap-t text-xs leading-snug text-muted-foreground">
+        <p className="relative stack-gap-t text-xs leading-snug text-muted-foreground">
           Bonus join channel · cair {formatRupiah(creditsToRupiah(bonus.credits))} ke saldo,
           sekali seumur akun.
         </p>

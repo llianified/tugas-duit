@@ -10,6 +10,8 @@ import { EmptyState } from '@/shared/components/empty-state'
 import { ActionButton } from '@/shared/components/action-button'
 import { GlyphCrown, GlyphTrophy } from '@/shared/components/glyph'
 import { RankMedal } from '@/shared/components/rank-medal'
+import { AvatarStack } from '@/shared/components/avatar-stack'
+import { CardRail, CardRailItem } from '@/shared/components/card-rail'
 import {
   FilterChip,
   SegmentedTabs,
@@ -111,6 +113,8 @@ export function LeaderboardView({
             />
           ) : (
             <>
+              <PodiumRail entries={entries} />
+
               <YourPosition you={you} participants={participants} />
 
               <BoardPanel
@@ -137,6 +141,113 @@ export function LeaderboardComingSoon() {
         title="Segera hadir"
         description="Papan peringkat sedang disiapkan. Perolehan kamu tetap tercatat, jadi posisimu langsung terisi saat papannya dibuka."
       />
+    </div>
+  )
+}
+
+/** Tiga, karena itu jumlah tempat di podium — bukan angka yang boleh disetel. */
+const PODIUM_SIZE = 3
+
+/**
+ * Padanan rail "Clans" fomo yang akhirnya ketemu: bukan grup (app ini tidak punya
+ * entitas grup), melainkan **podium** — tiga teratas diangkat keluar dari daftar
+ * jadi kartu yang bisa digeser, persis posisi rail di tab Leaderboard fomo.
+ *
+ * Datanya nol tambahan: `entries[0..2]` yang sudah dibaca papan ini, dan tidak ada
+ * kolom, tabel, atau query baru. Itu yang membedakannya dari "Clans" yang dilewati
+ * di Langkah 9 — di sana yang harus dikarang adalah entitasnya, di sini yang berubah
+ * cuma di mana tiga baris yang sama itu digambar.
+ *
+ * Duplikasi dengan daftar di bawah disengaja dan juga apa yang fomo lakukan (rail
+ * "Weekly Top Trades" berisi orang yang sama dengan papan di bawahnya): podium
+ * menjawab "siapa yang menang", daftar menjawab "di mana aku relatif terhadap
+ * mereka". Baris papan yang sama harus tetap ada di daftar, kalau tidak nomor 4
+ * akan tampak sebagai baris pertama tanpa apa pun di atasnya.
+ *
+ * Rail-nya baru muncul kalau ada tiga peserta. Podium berisi satu kartu bukan
+ * podium — ia cuma baris papan pertama yang dipindahkan, dan daftar di bawah sudah
+ * mengerjakannya lebih baik.
+ */
+function PodiumRail({ entries }: { entries: LeaderboardEntry[] }) {
+  if (entries.length < PODIUM_SIZE) return null
+
+  const podium = entries.slice(0, PODIUM_SIZE)
+  // Peserta di bawah podium, diringkas jadi tumpukan avatar. Ini pemakaian
+  // `AvatarStack` yang datanya benar-benar ada: satu tumpukan = beberapa orang,
+  // bukan beberapa token milik satu orang (yang tidak punya padanan di sini).
+  const chasing = entries.slice(PODIUM_SIZE)
+
+  return (
+    <section aria-label="Podium papan peringkat" className="region-under-brand">
+      <div className="flex items-center justify-between gap-3">
+        <SectionLabel as="h2">Podium</SectionLabel>
+        <AvatarStack
+          items={chasing}
+          size="sm"
+          ariaLabel={`${formatCredits(chasing.length)} peserta lain di bawah podium`}
+        />
+      </div>
+
+      <CardRail ariaLabel="Tiga peserta teratas" className="label-gap-t">
+        {podium.map((entry) => (
+          <CardRailItem key={entry.id}>
+            <PodiumCard entry={entry} />
+          </CardRailItem>
+        ))}
+      </CardRail>
+    </section>
+  )
+}
+
+/**
+ * Kartu podium. Lebarnya dikunci `--rail-card-w` (9.5rem), jadi setelah padding
+ * tersisa ~7rem untuk nama — karena itu `truncate`, dan karena itu pula chip
+ * prestise serta jumlah peserta TIDAK ikut: keduanya sudah tampil di baris papan
+ * orang yang sama, dan di ruang ini keduanya cuma memotong namanya.
+ *
+ * `halo="card"` pada medalinya, bukan `background`: pitanya ditumpuk di sudut
+ * avatar yang berdiri di atas `.task-card`, jadi kontur pemisahnya harus berwarna
+ * kartu — `background` akan menggambar lubang berwarna halaman di dalam kartu.
+ */
+function PodiumCard({ entry }: { entry: LeaderboardEntry }) {
+  return (
+    <div className="task-card [--surface-p:0.75rem] flex h-full flex-col items-center gap-1.5 text-center">
+      <span className="relative flex">
+        <ProfileAvatar
+          photoUrl={entry.photoUrl}
+          className={cn(
+            'size-12',
+            entry.premium
+              ? 'shadow-[0_0_0_1.5px_color-mix(in_oklab,var(--premium)_60%,transparent)]'
+              : 'shadow-[0_0_0_1.5px_color-mix(in_oklab,var(--primary)_60%,transparent)]',
+          )}
+          glyphClassName="size-6"
+        />
+
+        <RankMedal
+          position={entry.position}
+          size="md"
+          halo="card"
+          className="absolute -bottom-1.5 -left-1"
+        />
+      </span>
+
+      <p className="flex min-w-0 max-w-full items-center gap-1 text-[13px] font-semibold tracking-tight">
+        <span className="truncate">{entry.displayName}</span>
+        {entry.premium ? (
+          <GlyphCrown className="size-3 shrink-0 text-premium" aria-label="Anggota premium" />
+        ) : null}
+      </p>
+
+      {/* Satuannya ikut, meski ruangnya mahal: angka sebesar ini tanpa satuan bisa
+      terbaca sebagai Rupiah, dan itu kesalahpahaman yang paling merugikan di app
+      yang memang menukar credit ke Rupiah. Ditaruh sebaris di bawah supaya angkanya
+      tetap boleh selebar kartu. */}
+      <p className="num-display text-[15px]">{formatCredits(entry.credits)}</p>
+
+      <p className="text-[11px] tabular-nums text-muted-foreground">
+        credit · {formatCredits(entry.taskCount)} task
+      </p>
     </div>
   )
 }

@@ -164,6 +164,12 @@
   --medal-silver-fg: #1c1917;
   --medal-bronze: #8a4b21;
   --medal-bronze-fg: #ffffff;
+  /* Pelat di belakang kode QRIS. Nilainya putih di KEDUA tema, dan itu bukan
+     kelalaian: pemindai QR menuntut modul gelap di atas latar terang, jadi
+     warnanya kebutuhan fungsional — bukan warna tema yang boleh ikut gelap.
+     Ia tetap jadi token supaya alasan itu tertulis satu kali di sini alih-alih
+     jadi `bg-white` mentah yang terlihat seperti kelolosan audit. */
+  --qr-plate: #ffffff;
   --duration-ui: 150ms;
   --control-h: 3.25rem;
   --cta-h: var(--control-h);
@@ -431,6 +437,10 @@
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+  /* Lihat `--qr-plate`: sengaja tidak ikut tema. */
+  .qr-plate {
+    background-color: var(--qr-plate);
   }
   .clamp-3 {
     display: -webkit-box;

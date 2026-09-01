@@ -28,6 +28,5 @@ it('menyiapkan user preview yang layak menarik dana', async () => {
   await clearWithdrawalCooldown(id)
 
   const { eligibility } = await getPayouts(id)
-  console.log('[v0] eligibility', eligibility)
   expect(eligibility.activeDays).toBeGreaterThanOrEqual(eligibility.requiredActiveDays)
 })

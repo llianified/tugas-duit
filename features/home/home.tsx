@@ -99,6 +99,7 @@ export function HomeView({
       <div className="hero-band region-under-brand relative z-10">
         <BalanceSummary
           balance={balance}
+          history={history}
           onWithdraw={() => setWithdrawOpen(true)}
           onHistory={onOpenHistory}
         />

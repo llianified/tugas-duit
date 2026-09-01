@@ -86,6 +86,17 @@ function wibDayKey(date: Date): string {
   return date.toLocaleDateString('en-CA', { timeZone: TIME_ZONE })
 }
 
+/**
+ * Apakah dua cap waktu jatuh pada hari WIB yang sama.
+ *
+ * Diekspor supaya penyaji tidak menyusun definisi "hari ini" sendiri lewat
+ * `new Date().getDate()` — itu memakai zona perangkat, sementara seluruh konsep
+ * "hari" di repo ini WIB (lihat `formatHistoryTime`).
+ */
+export function isSameWibDay(timestamp: number, now: number = Date.now()): boolean {
+  return wibDayKey(new Date(timestamp)) === wibDayKey(new Date(now))
+}
+
 export function formatHistoryTime(timestamp: number, now: number = Date.now()): string {
   const date = new Date(timestamp)
   const time = date.toLocaleTimeString('id-ID', {

@@ -1,24 +1,39 @@
 'use client'
 
-import { type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { useMemo, type ButtonHTMLAttributes, type ReactNode } from 'react'
 import { CreditAmount } from '@/shared/components/credit-amount'
 import { GlyphHistory, GlyphWithdraw } from '@/shared/components/glyph'
 import { InfoHint } from '@/shared/components/info-hint'
+import type { HistoryEntry } from '@/features/captcha/domain'
 import { creditsToRupiah } from '@/domain/economy'
-import { formatCredits, formatRupiah } from '@/shared/lib/format'
+import { formatCredits, formatRupiah, isSameWibDay } from '@/shared/lib/format'
 import { useCountUp } from '@/shared/lib/use-count-up'
 import { cn } from '@/shared/lib/utils'
 
 export function BalanceSummary({
   balance,
+  history,
   onWithdraw,
   onHistory,
 }: {
   balance: number
+  history: HistoryEntry[]
   onWithdraw: () => void
   onHistory: () => void
 }) {
   const displayedBalance = useCountUp(balance)
+
+  /**
+   * "Hari ini" di sini adalah hari WIB, bukan hari perangkat — sama seperti
+   * label waktu di riwayat, supaya angka ini tidak pernah berbeda dari daftar
+   * yang menjadi sumbernya hanya karena zona ponsel pengguna.
+   */
+  const earnedToday = useMemo(
+    () =>
+      history.reduce((total, entry) => 
+        (isSameWibDay(entry.completedAt) ? total + entry.reward : total), 0),
+    [history],
+  )
 
   return (
     <section aria-label="Saldo reward">
@@ -26,7 +41,7 @@ export function BalanceSummary({
         <div className="flex">
           <CreditAmount
             value={formatCredits(displayedBalance)}
-            size="2xl"
+            size="display"
             tone="neutral"
             hint={
               <InfoHint label="Saldo reward">
@@ -42,6 +57,11 @@ export function BalanceSummary({
           className="stack-gap-t text-sm leading-none tabular-nums text-muted-foreground"
         >
           {formatRupiah(creditsToRupiah(displayedBalance))}
+          <span aria-hidden> · </span>
+          {/* Hijau hanya kalau memang ada penambahan nyata hari ini; nol tetap diredam. */}
+          <span className={earnedToday > 0 ? 'text-success' : undefined}>
+            +{formatCredits(earnedToday)} hari ini
+          </span>
         </p>
       </div>
 

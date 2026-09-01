@@ -44,7 +44,11 @@ export function ActivityFeed({ entries }: { entries: ActivityEntry[] | null }) {
 
   return (
     <div className="region-under-brand">
-      <DataList label="Aktivitas terbaru" ariaLabel="Aktivitas semua pemain">
+      {/* Judulnya disembunyikan, bukan diganti: tab "Aktivitas" yang aktif tepat
+      di atas daftar ini sudah menamainya, dan "Aktivitas terbaru" cuma
+      mengulangnya sekali lagi dua baris di bawah. Namanya tetap hidup di
+      `label`/`ariaLabel` untuk pembaca layar. */}
+      <DataList label="Aktivitas terbaru" ariaLabel="Aktivitas semua pemain" hideLabel>
         {entries.map((entry, index) => (
           <FeedItem key={entry.id} entry={entry} showDivider={index < entries.length - 1} />
         ))}

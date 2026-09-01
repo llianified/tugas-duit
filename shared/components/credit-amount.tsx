@@ -26,8 +26,10 @@ const CREDIT_STACKED = { sm: false, xl: true, '2xl': false, display: false } as 
  */
 const HERO_DIGIT_EM = 0.571 // satu angka
 const HERO_SEPARATOR_EM = 0.375 // titik ribuan / koma — lebih sempit dari angka
-const HERO_UNIT_EM = 1.78 // tulisan " credit"
-const HERO_FIXED_PX = 34 // ikon hint (ukurannya tetap) + gap + sisa aman
+/* Satuan "credit" TIDAK ikut mengecil bersama nominalnya: ukurannya dipatok
+   `text-sm` sama seperti hero referral, jadi lebarnya konstan (≈42px) dan
+   masuk ke bagian tetap di bawah, bukan ke lebar-per-em. */
+const HERO_FIXED_PX = 76 // satuan + ikon hint (ukurannya tetap) + gap + sisa aman
 
 /**
  * Ukuran angka hero, dihitung dari ruang yang benar-benar tersedia.
@@ -51,8 +53,7 @@ const HERO_FIXED_PX = 34 // ikon hint (ukurannya tetap) + gap + sisa aman
 function heroFontSize(text: string) {
   const digits = text.replace(/\D/g, '').length
   const separators = text.length - digits
-  const widthPerEm =
-    HERO_DIGIT_EM * digits + HERO_SEPARATOR_EM * separators + HERO_UNIT_EM
+  const widthPerEm = HERO_DIGIT_EM * digits + HERO_SEPARATOR_EM * separators
 
   return `clamp(1.25rem, calc((100cqi - ${HERO_FIXED_PX}px) / ${widthPerEm.toFixed(3)}), 3rem)`
 }
@@ -61,7 +62,11 @@ const CREDIT_UNIT_CLASS = {
   sm: 'text-xs font-medium',
   xl: 'text-sm font-medium',
   '2xl': 'text-sm font-semibold',
-  display: 'text-[0.6em] font-extrabold',
+  /* Sama seperti hero referral (`2xl`): satuannya keterangan, bukan bagian dari
+     angkanya. Nilai relatif (`0.6em` dari nominal ~43px) membuat "credit"
+     tumbuh jadi ~26px — hampir sebesar nominal `2xl` itu sendiri — dan bobot
+     `extrabold` menyeret mata ke kata yang paling sedikit isinya. */
+  display: 'text-sm font-semibold',
 } as const
 
 export function CreditAmount({

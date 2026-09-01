@@ -75,9 +75,17 @@ export function useTaskFlow({
     [mutateSession],
   )
 
+  /**
+   * `hold` datang dari animasi sobekan karcis di beranda (`ActiveTask`).
+   *
+   * Permintaan ke server dan animasinya jalan BERBARENGAN; yang ditunggu di
+   * sini hanya sisa waktu animasi setelah server menjawab, jadi ketukan tidak
+   * pernah jadi lebih lambat dari salah satu di antaranya. Kembaliannya
+   * dipakai pemanggil untuk memulihkan karcis kalau task gagal dimulai.
+   */
   const startTask = useCallback(
-    (payWith: TaskPayment = 'energy') => {
-      if (!task || startingTask) return
+    async (payWith: TaskPayment = 'energy', hold?: Promise<unknown>): Promise<boolean> => {
+      if (!task || startingTask) return false
       /**
        * Ambangnya `energyCostPerTask()`, bukan 1: biaya energi per task bisa disetel dari
        * panel admin, dan `< 1` membuat klien meloloskan permintaan yang pasti ditolak server
@@ -89,7 +97,7 @@ export function useTaskFlow({
             ? 'Energi kamu belum cukup. Tunggu energi berikutnya ya.'
             : `Energi belum cukup. Energi berikutnya dalam ${formatCountdown(energySecondsToNext)}.`,
         )
-        return
+        return false
       }
       if (rewardPoolCredits === 0) {
         notifyError(
@@ -97,33 +105,38 @@ export function useTaskFlow({
             ? 'Stok reward kamu lagi kosong. Tunggu keisi lagi ya, tiket dan energi kamu nggak kepakai.'
             : `Stok reward kamu lagi kosong. Nambah lagi dalam ${formatCountdown(rewardPoolSecondsToNext)}, tiket dan energi kamu nggak kepakai.`,
         )
-        return
+        return false
       }
       setStartingTask(true)
-      void (async () => {
+      try {
         try {
-          try {
-            await beginChallenge(task, payWith)
-          } catch (cause) {
-            if (!(cause instanceof ApiError) || cause.code !== 'CHALLENGE_NOT_STARTABLE') throw cause
-            const refreshed = (await mutateTask())?.challenge
-            if (!refreshed || refreshed.id === task.id) throw cause
-            await beginChallenge(refreshed, payWith)
-          }
-          selectView('captcha')
+          await beginChallenge(task, payWith)
         } catch (cause) {
-          notifyError(userFacingMessage(cause))
-          if (
-            cause instanceof ApiError &&
-            (cause.code === 'ENERGY_EMPTY' ||
-              cause.code === 'REWARD_POOL_EMPTY' ||
-              cause.code === 'AD_PASS_MISSING')
-          )
-            void mutateSession()
-        } finally {
-          setStartingTask(false)
+          if (!(cause instanceof ApiError) || cause.code !== 'CHALLENGE_NOT_STARTABLE') throw cause
+          const refreshed = (await mutateTask())?.challenge
+          if (!refreshed || refreshed.id === task.id) throw cause
+          await beginChallenge(refreshed, payWith)
         }
-      })()
+        /**
+         * Server sudah oke; sisa waktu animasi sobekan dihabiskan di sini
+         * supaya halaman task tidak muncul di tengah kertas yang belum putus.
+         */
+        if (hold) await hold
+        selectView('captcha')
+        return true
+      } catch (cause) {
+        notifyError(userFacingMessage(cause))
+        if (
+          cause instanceof ApiError &&
+          (cause.code === 'ENERGY_EMPTY' ||
+            cause.code === 'REWARD_POOL_EMPTY' ||
+            cause.code === 'AD_PASS_MISSING')
+        )
+          void mutateSession()
+        return false
+      } finally {
+        setStartingTask(false)
+      }
     },
     [
       beginChallenge,

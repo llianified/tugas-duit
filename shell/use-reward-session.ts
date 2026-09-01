@@ -106,7 +106,7 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
 
   const startTaskWithAd = useCallback(async () => {
     if (!hasPass && !(await watchAd())) return
-    startTask('ad')
+    void startTask('ad')
   }, [hasPass, startTask, watchAd])
 
   const history = useMemo(

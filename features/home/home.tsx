@@ -34,7 +34,8 @@ interface HomeViewProps {
   adCooldownSecondsLeft: number
   adPassReady: boolean
   watchingAd: boolean
-  onStart: () => void
+  /** Lihat `ActiveTask`: `hold` menahan perpindahan halaman selama karcisnya disobek. */
+  onStart: (hold?: Promise<unknown>) => Promise<boolean>
   onStartWithAd: () => void
   withdrawals: Withdrawal[]
   withdrawalEligibility: WithdrawalEligibility | null

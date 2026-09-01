@@ -1,5 +1,7 @@
 'use client'
 
+import { SURFACE_CARD_CLASS } from '@/shared/components/surface-card'
+
 /**
  * `tone="on-muted"` untuk bar yang berdiri di atas permukaan `--muted`.
  *
@@ -156,11 +158,9 @@ export function MissionListSkeleton({ surface = true }: { surface?: boolean }) {
   return (
     <div
       aria-hidden
-      className={
-        surface
-          ? 'animate-fade-in rounded-lg bg-muted/60 p-[var(--surface-p)] ring-border'
-          : 'animate-fade-in'
-      }
+      className={['animate-fade-in', surface ? SURFACE_CARD_CLASS : '']
+        .filter(Boolean)
+        .join(' ')}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex h-6 items-center">

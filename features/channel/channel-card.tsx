@@ -1,15 +1,20 @@
 'use client'
 
-import { useCallback, useState } from 'react'
 import { creditsToRupiah } from '@/domain/economy'
+import { useChannelBonus } from '@/features/channel/use-channel-bonus'
 import { ActionButton } from '@/shared/components/action-button'
 import { GlyphTelegram } from '@/shared/components/glyph'
 import { IconCircle } from '@/shared/components/icon-circle'
-import { userFacingMessage } from '@/shell/api-client'
-import { claimChannelBonus, type ChannelBonusState } from '@/shell/session-api'
-import { useToast } from '@/shell/toast'
+import { SURFACE_CARD_CLASS } from '@/shared/components/surface-card'
+import type { ChannelBonusState } from '@/shell/session-api'
 import { formatCredits, formatRupiah } from '@/shared/lib/format'
 
+/**
+ * Kartu ini tidak lagi menjaga dirinya sendiri: syarat "bonusnya masih ada" hidup di
+ * `channelBonusReachable`, dipanggil oleh `HomeView` yang juga memakai jawabannya untuk
+ * memutuskan jarak antar kartu. Kartu yang mengembalikan `null` sendiri berarti aturan
+ * yang sama tertulis di dua lapisan, dan lapisan yang di atas yang menyisakan jaraknya.
+ */
 export function ChannelBonusCard({
   bonus,
   onClaimed,
@@ -17,28 +22,10 @@ export function ChannelBonusCard({
   bonus: ChannelBonusState
   onClaimed: () => Promise<unknown>
 }) {
-  const [claiming, setClaiming] = useState(false)
-  const showError = useToast()
-
-  const claim = useCallback(async () => {
-    setClaiming(true)
-    try {
-      await claimChannelBonus()
-      await onClaimed()
-    } catch (cause) {
-      showError(userFacingMessage(cause))
-    } finally {
-      setClaiming(false)
-    }
-  }, [onClaimed, showError])
-
-  if (!bonus.enabled || bonus.claimed) return null
+  const { claiming, claim } = useChannelBonus({ onClaimed })
 
   return (
-    <section
-      aria-label="Bonus join channel"
-      className="rounded-lg bg-muted/60 p-[var(--surface-p)] ring-border"
-    >
+    <section aria-label="Bonus join channel" className={SURFACE_CARD_CLASS}>
       <div className="flex items-center gap-2">
         <IconCircle size="sm" tone="primary">
           <GlyphTelegram className="size-4" />

@@ -132,6 +132,24 @@
      penuhnya sudah dibuang di `.btn-glass`, jadi yang tersisa hanya kilau
      setengah atas ini. */
   --bevel-sheen: color-mix(in oklab, white 11%, transparent);
+  /* Kilau untuk bidang AKSEN (`.btn-glass` di atas `bg-primary`). Persentasenya
+     jauh lebih besar dari `--bevel-sheen` bukan karena mau tampak lebih tebal —
+     targetnya justru SAMA — tapi karena putih 11% tak berarti apa-apa di atas
+     warna yang sudah terang.
+
+     Angkanya dihitung, bukan dikira: `--primary` itu rgb(145,139,255), dan
+     kanal birunya SUDAH mentok di 255, jadi ditumpuk putih pun ia tak bisa
+     lebih terang. Di bidang tenang rgb(35,35,41) putih 11% mengangkat
+     kecerahan (OKLab L) sebesar 0.096, sedangkan di bidang aksen angka yang
+     sama hanya memberi 0.033 — tiga kali lebih lemah, itulah sebabnya
+     hairline-nya seolah tidak ada. Untuk mencapai kenaikan 0.096 yang sama di
+     atas aksen dibutuhkan 32%, yang menghasilkan tepi rgb(180,176,255).
+
+     Jadi kedua tombol kini punya kilau yang setara di MATA, bukan setara di
+     angka alfa. Efek sampingnya wajar: karena birunya tak bisa naik, kelebihan
+     putihnya turun sebagai sedikit desaturasi — tepinya terbaca biru muda,
+     bukan putih. */
+  --bevel-sheen-accent: color-mix(in oklab, white 32%, transparent);
   /* Bidang tombol tenang (`.btn-glass-quiet`). Token sendiri, BUKAN `--card`
      langsung: `--card` (#18181d) cuma 8 poin di atas latar (#101014), jadi begitu
      cincin luarnya dibuang tombol tenang ikut tenggelam. Bidangnya diangkat ke
@@ -329,7 +347,15 @@
      Karena tidak rata, hairline-nya tak bisa dibuat dari `inset box-shadow`
      (selalu satu warna solid). Jadi dipakai ::after ber-`padding: 1px` + `mask`
      yang menyisakan cincin 1px saja, diisi gradien vertikal. */
+  /* Tiap bidang menyetel `--sheen` miliknya sendiri, lalu SEMUA aturan di bawah
+     memakai `var(--sheen)`. Dengan begitu geometri hairline-nya (posisi, mask,
+     titik habis 50%, perilaku saat ditekan) tetap satu sumber untuk kedua
+     tombol — yang berbeda hanya kekuatan kilaunya, sesuai terang bidangnya. */
+  .btn-glass {
+    --sheen: var(--bevel-sheen-accent);
+  }
   .btn-glass-quiet {
+    --sheen: var(--bevel-sheen);
     background-color: var(--btn-quiet-surface);
   }
   .btn-glass::after,
@@ -339,7 +365,7 @@
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(to bottom, var(--bevel-sheen), transparent 50%);
+    background: linear-gradient(to bottom, var(--sheen), transparent 50%);
     /* Menyisakan HANYA area padding 1px: lapis penuh dikurangi kotak isi. */
     -webkit-mask:
       linear-gradient(#000 0 0) content-box,
@@ -357,7 +383,7 @@
   .btn-glass-quiet:active:not(:disabled)::after {
     background: linear-gradient(
       to bottom,
-      color-mix(in oklab, var(--bevel-sheen) 45%, transparent),
+      color-mix(in oklab, var(--sheen) 45%, transparent),
       transparent 50%
     );
   }

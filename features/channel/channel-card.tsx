@@ -13,12 +13,15 @@ import { formatCredits, formatRupiah } from '@/shared/lib/format'
  * memutuskan jarak antar kartu. Kartu yang mengembalikan `null` sendiri berarti aturan
  * yang sama tertulis di dua lapisan, dan lapisan yang di atas yang menyisakan jaraknya.
  *
- * Bentuknya satu entri channel Telegram (lihat `.tg-channel` di globals.css): avatar
- * bulat, nama channel, lalu gelembung pesan masuk yang isinya penawarannya sendiri.
+ * Bentuknya kupon dengan stub yang disobek (lihat `.bonus-coupon` di globals.css).
  * Alasannya bukan selera: ini satu-satunya kartu di beranda yang bisa HILANG kalau
  * diabaikan, dan sebagai pelat rata ia terbaca sederajat dengan daftar transaksi yang
- * tidak ke mana-mana. Bentuk sebelumnya kupon sobek — logikanya benar (sekali pakai)
- * tapi bendanya salah: yang diminta user bukan menukar kupon, tapi masuk ke channel.
+ * tidak ke mana-mana. Kupon punya arah — ada yang disobek, dan sobekannya sekali.
+ *
+ * Isinya dirapatkan jadi tiga baris: nominal (dengan syarat "sekali seumur akun" ikut
+ * di baris yang sama sebagai keterangan, bukan kalimat sendiri), satu kalimat cair, lalu
+ * tombolnya. Versi sebelumnya memisah keduanya jadi dua paragraf, dan di layar 384px itu
+ * satu baris tinggi yang tidak menambah satu pun informasi baru.
  */
 export function ChannelBonusCard({
   bonus,
@@ -30,45 +33,37 @@ export function ChannelBonusCard({
   const { claiming, claim } = useChannelBonus({ onClaimed })
 
   return (
-    <section aria-label="Bonus join channel" className="tg-channel">
-      <div className="tg-channel-body">
-        {/* Kepala: pengirimnya. Nama channel jadi baris utama dan syarat "sekali
-            seumur akun" pindah ke sini sebagai keterangan pengirim — tempat yang
-            benar untuk sebuah syarat, karena ia bukan bagian dari penawarannya. */}
-        <div className="flex items-center gap-2.5">
-          <span className="tg-channel-avatar">
-            {/* `GlyphSvg` sudah menyetel `aria-hidden` sendiri, jadi tidak diulang. */}
-            <GlyphTelegram className="size-[1.125rem]" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-bold tracking-tight text-foreground">
-              Channel Tugas Duit
-            </p>
-            <p className="truncate text-[11px] leading-snug text-muted-foreground">
-              Sekali seumur akun
-            </p>
-          </div>
-        </div>
+    <section aria-label="Bonus join channel" className="bonus-coupon">
+      <div className="bonus-coupon-stub" aria-hidden="true">
+        <span className="bonus-coupon-stub-label">Bonus</span>
+      </div>
 
-        {/* Gelembung pesan: nominalnya dikirim oleh channel, bukan dilabeli oleh
-            kartu. Nilai rupiah tetap di baris kedua sebagai turunan angka di
-            atasnya, jadi tidak ada satu nilai yang dibaca dua kali. */}
-        <div className="label-gap-t tg-channel-bubble">
-          <div className="flex items-baseline gap-1.5">
-            <p className="num-display text-[1.75rem] text-primary">
-              +{formatCredits(bonus.credits)}
-            </p>
-            <p className="home-tag pb-0.5">credit</p>
-          </div>
-          <p className="text-xs leading-snug text-muted-foreground">
-            Cair {formatRupiah(creditsToRupiah(bonus.credits))} ke saldo begitu kamu join.
+      <div className="bonus-coupon-body">
+        {/* `GlyphSvg` sudah menyetel `aria-hidden` sendiri, jadi tidak diulang. */}
+        <GlyphTelegram className="bonus-coupon-plane" />
+
+        {/* Nominal dan syaratnya satu baris. "Sekali seumur akun" adalah keterangan
+            dari angkanya, jadi ia duduk di garis dasar yang sama sebagai ekor baris —
+            bukan paragraf sendiri yang menuntut tinggi barisnya. */}
+        <div className="relative flex flex-wrap items-baseline gap-x-1.5">
+          <p className="num-display text-[1.625rem] leading-none text-primary">
+            +{formatCredits(bonus.credits)}
+          </p>
+          <p className="home-tag">credit</p>
+          <p className="text-[11px] leading-none text-muted-foreground">
+            · sekali seumur akun
           </p>
         </div>
+
+        <p className="relative mt-1.5 text-xs leading-snug text-muted-foreground">
+          Cair {formatRupiah(creditsToRupiah(bonus.credits))} ke saldo begitu kamu join
+          channel.
+        </p>
 
         {/* Dua tombol berbagi satu baris, dan keduanya memakai `--btn-label` seperti
             "Mulai" di karcis. Yang membedakan derajatnya bidangnya — tenang vs aksen —
             bukan ukuran hurufnya. */}
-        <div className="label-gap-t flex gap-2">
+        <div className="relative mt-2.5 flex gap-2">
           <a
             href={bonus.url}
             target="_blank"

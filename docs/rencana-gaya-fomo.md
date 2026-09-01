@@ -448,13 +448,16 @@ bukan penambahan credit.
       berukuran kecil dengan glyph chevron dari `glyph.tsx`.
 - [x] Pertahankan navigasi papan tombol dan `aria-*` yang sudah ada.
 
-**Status:** SELESAI. `SegmentedTabs` dapat prop `variant?: 'solid' | 'plain'`
-(default `solid`, jadi `features/stats`, `features/history`, dan
-`features/leaderboard` tidak berubah satu piksel pun). Varian `plain` melepas
-wadah `bg-muted` + `p-1`, melepas `flex-1` (supaya lebarnya mengikuti isi dan
-bisa berdampingan dengan chip filter di satu baris), dan menandai tab aktif
-sebagai pill `bg-muted` `rounded-full`. `role="tablist"` / `aria-selected` /
-`aria-controls` dan `hapticSelect()` tetap sama untuk kedua varian.
+**Status:** SELESAI, lalu DIBATALKAN sebagian. `SegmentedTabs` sempat punya prop
+`variant?: 'solid' | 'plain'`; varian `plain` melepas wadah `bg-muted` + `p-1`
+dan `flex-1`, lalu menandai tab aktif sebagai pill `bg-muted` `rounded-full`.
+Satu-satunya pemakainya, baris Papan/Aktivitas di papan peringkat, kini kembali
+`solid` supaya sebentuk dengan Task/Penarikan di Riwayat: keduanya pemilih
+tingkat atas yang menukar seluruh isi halaman, sementara pill tanpa wadah di app
+ini sudah berarti "saringan di dalam satu tampilan" — peran `FilterChip`. Prop
+`variant` dan tipe `SegmentedVariant` ikut dihapus karena tak bersisa pemakai.
+`role="tablist"` / `aria-selected` / `aria-controls` dan `hapticSelect()` tidak
+pernah tersentuh perubahan ini.
 
 `FilterChip` ditambahkan di berkas yang sama. Pemilihnya `<select>` asli yang
 ditumpuk transparan di atas chip, bukan popover buatan sendiri — papan tombol,

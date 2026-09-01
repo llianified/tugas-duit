@@ -1725,33 +1725,32 @@
   color: var(--chip-fg-primary);
 }
 
-/* Pesawat kertas Telegram, dibiarkan keluar dari tepi kanan atas. Motif, bukan
-   bentuk hias: ia benda yang sama dengan yang ada di tombolnya.
+/* Pesawat kertas Telegram di sudut kanan atas. Motif, bukan bentuk hias: ia
+   benda yang sama dengan yang ada di tombol "Buka" di bawahnya.
 
-   Ia pernah 6.5rem dengan tint 30% dan duduk persis di jalur teks — nominal dan
-   kalimat penjelasnya lewat di atas badan pesawat, jadi dua-duanya saling
-   memakan. Yang diperbaiki BUKAN cuma kepekatannya: bentuk sebesar itu tetap
-   bersaing walau diredam. Jadi ia dikecilkan dan digeser lebih jauh ke sudut
-   sampai yang tersisa di dalam kartu hanya pucuk sayapnya — cap sudut, bukan
-   ilustrasi.
+   Dua percobaan sebelumnya salah dengan cara yang sama — keduanya mengatur
+   seberapa besar pesawat boleh MENGGANGGU, bukan apakah ia masih terbaca.
+   Mula-mula 6.5rem duduk di jalur teks: nominal dan kalimatnya lewat di atas
+   badan pesawat. Lalu ia digeser −1.75rem ke dua sisi supaya teks bebas penuh
+   kiri-kanan, dan `overflow: hidden` memakan dua pertiga bentuknya: yang
+   tersisa cuma potongan ekor yang tidak dikenali siapa pun sebagai pesawat.
+   Motif yang tidak terbaca bukan cap sudut, cuma noda.
 
-   Kalimatnya dulu dipagari `max-width: 25ch` supaya tidak masuk ke wilayah
-   pesawat. Pagar itu menyelesaikan tabrakannya dengan harga yang salah: teks
-   berhenti ~100px sebelum tepi kanan, jadi kartu selebar layar berisi blok
-   teks sempit dengan lubang kosong di kanannya — rapi di satu sisi, tidak di
-   sisi yang lain. Yang diperbaiki sekarang bukan teksnya melainkan pesawatnya:
-   digeser lebih jauh keluar dan dikecilkan sampai pucuknya berhenti DI ATAS
-   baris pertama kalimat, bukan di sampingnya. Tidak ada lagi wilayah yang
-   perlu dihindari secara horizontal, jadi kalimatnya boleh penuh kiri-kanan
-   seperti tombol-tombol di bawahnya. */
+   Jadi sekarang ia utuh DI DALAM kartu, dan tempatnya didapat bukan dengan
+   menyempitkan teks: baris nominal hanya seselebar angka, jadi sudut kanan
+   atas memang kosong. Ukurannya dipatok setinggi baris nominal itu supaya
+   pucuk bawahnya berhenti sebelum baris pertama kalimat — kalimat dan
+   tombolnya tetap penuh kiri-kanan, tanpa wilayah yang perlu dihindari. */
 .bonus-coupon-plane {
   position: absolute;
-  top: -1.75rem;
-  right: -1.75rem;
-  width: 4.5rem;
-  height: 4.5rem;
-  rotate: 8deg;
-  color: color-mix(in oklab, var(--primary) 16%, transparent);
+  top: 0.875rem;
+  right: 0.875rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  rotate: -6deg;
+  /* Utuh dan lebih kecil, jadi tintnya boleh sedikit naik tanpa bersaing
+     dengan angkanya. */
+  color: color-mix(in oklab, var(--primary) 22%, transparent);
   pointer-events: none;
 }
 

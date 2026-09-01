@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy-config'
-import { MISSIONS } from '@/domain/missions'
+import { missions, type MissionDefinition } from '@/domain/missions'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
@@ -44,7 +44,7 @@ const readEnergyValue = async (userId: number) => {
   return Number(rows[0].energy)
 }
 
-const tasksMission = MISSIONS.find((mission) => mission.key === 'tasks')!
+const tasksMission = missions().find((mission: MissionDefinition) => mission.key === 'tasks')!
 
 describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () => {
   it('menolak klaim untuk misi yang belum kelar', async () => {
@@ -105,7 +105,7 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
     const { maxEnergy } = await import('@/domain/energy')
     const { query } = await import('./db')
 
-    const ads = MISSIONS.find((mission) => mission.key === 'ads')
+    const ads = missions().find((mission: MissionDefinition) => mission.key === 'ads')
     if (!ads) throw new Error('misi ads hilang dari daftar')
 
     /**
@@ -139,7 +139,7 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
     const { maxEnergy } = await import('@/domain/energy')
     const { query } = await import('./db')
 
-    const ads = MISSIONS.find((mission) => mission.key === 'ads')
+    const ads = missions().find((mission: MissionDefinition) => mission.key === 'ads')
     if (!ads) throw new Error('misi ads hilang dari daftar')
 
     const userId = await makeUser(maxEnergy() - ads.reward)

@@ -219,7 +219,88 @@ function UserDetail({
         isSelf={detail.publicId === adminPublicId}
         balanceCredits={detail.balanceCredits}
         maxAdjust={maxAdjust}
+        premiumUntil={detail.premiumUntil}
+        premiumActive={detail.premiumActive}
+        notificationsMuted={detail.notificationsMutedAt !== null}
+        channelMember={detail.channelMember}
       />
+
+      <section className="flex flex-col gap-2">
+        <h3 className="text-sm font-semibold text-foreground">
+          Sinyal fraud{' '}
+          <span className="font-normal text-muted-foreground">
+            · skor {formatCredits(detail.riskScore)} (7 hari)
+          </span>
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Sinyal hanya mencatat — tidak pernah mengubah reward maupun menolak pembayaran.
+          Bacanya sebagai konteks sebelum menyetujui payout, bukan sebagai vonis.
+        </p>
+        {detail.fraudSignals.length === 0 ? (
+          <p className="rounded-lg bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+            Belum ada sinyal untuk akun ini.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {detail.fraudSignals.map((signal, index) => (
+              <li
+                key={`${signal.at}-${signal.signal}-${index}`}
+                className="flex flex-col gap-1 rounded-lg bg-muted px-4 py-3 text-sm"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <span className="font-medium text-foreground">
+                    {SIGNAL_LABEL[signal.signal] ?? signal.signal}
+                  </span>
+                  <span className="tabular-nums text-muted-foreground">
+                    bobot {formatCredits(signal.severity)} · {formatHistoryTime(signal.at)}
+                  </span>
+                </div>
+                {signal.detail ? (
+                  <span className="break-all text-muted-foreground">
+                    {JSON.stringify(signal.detail)}
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h3 className="text-sm font-semibold text-foreground">Jejak aksi admin</h3>
+        {detail.adminActions.length === 0 ? (
+          <p className="rounded-lg bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
+            Belum ada aksi admin pada akun ini. Koreksi saldo tercatat di ledger, bukan di sini.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {detail.adminActions.map((entry, index) => (
+              <li
+                key={`${entry.at}-${entry.action}-${index}`}
+                className="flex flex-col gap-1 rounded-lg bg-muted px-4 py-3 text-sm"
+              >
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <span className="font-medium text-foreground">
+                    {ADMIN_ACTION_LABEL[entry.action] ?? entry.action}
+                  </span>
+                  <span className="tabular-nums text-muted-foreground">
+                    {formatHistoryTime(entry.at)}
+                  </span>
+                </div>
+                <span className="text-muted-foreground">
+                  {entry.reason}
+                  {entry.adminName ? ` — oleh ${entry.adminName}` : ''}
+                </span>
+                {entry.detail ? (
+                  <span className="break-all text-muted-foreground">
+                    {JSON.stringify(entry.detail)}
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="flex flex-col gap-2">
         <h3 className="text-sm font-semibold text-foreground">Riwayat penarikan</h3>
@@ -310,6 +391,27 @@ const STATE_LABEL: Record<string, string> = {
   processing: 'diproses',
   paid: 'terkirim',
   rejected: 'ditolak',
+}
+
+const SIGNAL_LABEL: Record<string, string> = {
+  impossibly_fast: 'Jawaban terlalu cepat untuk manusia',
+  submit_without_start: 'Mengirim jawaban tanpa memulai task',
+  identical_timing: 'Waktu pengerjaan terlalu seragam',
+  no_wrong_attempts: 'Nyaris tidak pernah salah',
+  referral_burst: 'Pendaftar referral menumpuk dalam waktu singkat',
+  ad_claim_without_ticket: 'Klaim iklan tanpa tiket',
+  ad_claim_too_fast: 'Klaim iklan terlalu cepat setelah dibuka',
+  ad_claim_burst: 'Klaim iklan beruntun',
+}
+
+const ADMIN_ACTION_LABEL: Record<string, string> = {
+  premium_grant: 'Premium diberikan',
+  premium_revoke: 'Premium dicabut',
+  energy_grant: 'Energi diisi',
+  pool_refill: 'Stok reward diisi',
+  notifications_mute: 'Pesan ajakan disetop',
+  notifications_unmute: 'Pesan ajakan dinyalakan',
+  channel_gate_reset: 'Cache gerbang channel direset',
 }
 
 const LEDGER_LABEL: Record<string, string> = {

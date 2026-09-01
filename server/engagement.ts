@@ -6,7 +6,7 @@ import { projectRewardPool, rewardPoolCapacity } from '../domain/reward-pool.ts'
 import { getRank } from '../features/home/progression.ts'
 import { formatCredits, formatRupiah } from '../shared/lib/format.ts'
 import { query } from './db.ts'
-import { REQUIRED_ACTIVE_DAYS, requiredActiveReferrals } from './payout-rules.ts'
+import { requiredActiveDays, requiredActiveReferrals } from './payout-rules.ts'
 import { escapeTelegramHtml as escapeHtml, openAppMarkup, sendTelegramMessage } from './telegram.ts'
 
 export type EngagementKind =
@@ -177,7 +177,7 @@ function withdrawReady(row: CandidateRow, balance: number, premium: boolean): bo
   if (balance < withdrawalMinimumCredits()) return false
   if (row.processing_withdrawals > 0) return false
   if (row.active_referrals < requiredActiveReferrals()) return false
-  if (row.active_days < REQUIRED_ACTIVE_DAYS) return false
+  if (row.active_days < requiredActiveDays()) return false
   if (!row.last_withdrawal_at) return true
   return row.last_withdrawal_at.getTime() + withdrawalCooldownMs(premium) <= row.now.getTime()
 }

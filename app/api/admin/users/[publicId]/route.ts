@@ -1,4 +1,14 @@
 import {
+  AdminGrantError,
+  GRANT_REASON_MAX,
+  grantUserEnergy,
+  grantUserPremium,
+  refillUserRewardPool,
+  resetUserChannelGate,
+  revokeUserPremium,
+  setUserNotificationsMuted,
+} from '@/server/admin-grants'
+import {
   AdminUserError,
   BAN_REASON_MAX,
   setUserAdminFlag,
@@ -14,20 +24,36 @@ export const dynamic = 'force-dynamic'
 
 const MESSAGE: Record<string, string> = {
   REASON_REQUIRED: 'Alasan penangguhan wajib diisi.',
-  REASON_TOO_LONG: `Alasan maksimum ${BAN_REASON_MAX} karakter.`,
+  REASON_TOO_LONG: `Alasan maksimum ${BAN_REASON_MAX} karakter (aksi hibah: ${GRANT_REASON_MAX}).`,
   SELF_SUSPENSION_FORBIDDEN:
     'Akun sendiri tidak bisa ditangguhkan — panel ini akan langsung tertutup.',
   SELF_DEMOTION_FORBIDDEN:
     'Hak admin sendiri tidak bisa dicabut dari sini. Cabut dari akun admin lain.',
   INVALID_FIRST_NAME: 'Nama wajib diisi, maksimum 64 karakter.',
   INVALID_USERNAME: 'Username hanya boleh huruf, angka, dan garis bawah.',
+  INVALID_AMOUNT: 'Jumlahnya di luar batas yang diterima.',
 }
 
 type Body = {
-  action?: 'suspend' | 'restore' | 'grant-admin' | 'revoke-admin' | 'profile'
+  action?:
+    | 'suspend'
+    | 'restore'
+    | 'grant-admin'
+    | 'revoke-admin'
+    | 'profile'
+    | 'premium-grant'
+    | 'premium-revoke'
+    | 'energy-grant'
+    | 'pool-refill'
+    | 'notifications-mute'
+    | 'notifications-unmute'
+    | 'channel-gate-reset'
   reason?: string
   firstName?: string
   username?: string | null
+  days?: number
+  amount?: number
+  credits?: number
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ publicId: string }> }) {
@@ -76,10 +102,72 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ pu
         if (!result) return new Response(null, { status: 404 })
         return Response.json(result)
       }
+      case 'premium-grant': {
+        const result = await grantUserPremium({
+          adminId: admin.id,
+          publicId,
+          days: body.days ?? 0,
+          reason: body.reason ?? '',
+        })
+        if (!result) return new Response(null, { status: 404 })
+        return Response.json(result)
+      }
+      case 'premium-revoke': {
+        const result = await revokeUserPremium({
+          adminId: admin.id,
+          publicId,
+          reason: body.reason ?? '',
+        })
+        if (!result) return new Response(null, { status: 404 })
+        return Response.json(result)
+      }
+      case 'energy-grant': {
+        const result = await grantUserEnergy({
+          adminId: admin.id,
+          publicId,
+          amount: body.amount ?? 0,
+          reason: body.reason ?? '',
+        })
+        if (!result) return new Response(null, { status: 404 })
+        return Response.json(result)
+      }
+      case 'pool-refill': {
+        const result = await refillUserRewardPool({
+          adminId: admin.id,
+          publicId,
+          credits: body.credits ?? 0,
+          reason: body.reason ?? '',
+        })
+        if (!result) return new Response(null, { status: 404 })
+        return Response.json(result)
+      }
+      case 'notifications-mute':
+      case 'notifications-unmute': {
+        const result = await setUserNotificationsMuted({
+          adminId: admin.id,
+          publicId,
+          muted: body.action === 'notifications-mute',
+          reason: body.reason ?? '',
+        })
+        if (!result) return new Response(null, { status: 404 })
+        return Response.json(result)
+      }
+      case 'channel-gate-reset': {
+        const result = await resetUserChannelGate({
+          adminId: admin.id,
+          publicId,
+          reason: body.reason ?? '',
+        })
+        if (!result) return new Response(null, { status: 404 })
+        return Response.json(result)
+      }
       default:
         return apiError('VALIDATION_FAILED', 'Aksi tidak valid.', 400)
     }
   } catch (error) {
+    if (error instanceof AdminGrantError) {
+      return apiError(error.code, MESSAGE[error.code] ?? 'Aksi tidak bisa diterapkan.', error.status)
+    }
     if (error instanceof AdminUserError) {
       return apiError(error.code, MESSAGE[error.code] ?? 'Perubahan tidak bisa diterapkan.', error.status)
     }

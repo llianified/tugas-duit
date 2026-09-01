@@ -2,7 +2,7 @@
 
 import useSWR from 'swr'
 import useSWRInfinite from 'swr/infinite'
-import { LEADERBOARD_ENABLED } from '@/features/leaderboard/availability'
+import { leaderboardEnabled } from '@/features/leaderboard/availability'
 import type { AppView } from '@/navigation/app-view'
 import { fetchJson } from '@/shell/api-client'
 import {
@@ -69,7 +69,7 @@ export function useSessionQueries(view: AppView) {
     },
   )
   const { data: leaderboardData } = useSWR<LeaderboardResponse>(
-    LEADERBOARD_ENABLED && authenticated && view === 'leaderboard' ? '/api/leaderboard' : null,
+    leaderboardEnabled() && authenticated && view === 'leaderboard' ? '/api/leaderboard' : null,
     fetchJson,
     { revalidateOnFocus: false },
   )

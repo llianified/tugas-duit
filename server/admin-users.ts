@@ -1,3 +1,4 @@
+import { readAdminActions, type AdminActionEntry } from './admin-grants'
 import { query, transaction } from './db'
 import { env } from './env'
 import { requireAdmin } from './session'
@@ -34,8 +35,24 @@ export interface AdminUserSummary {
   createdAt: number
 }
 
+export interface AdminFraudSignal {
+  signal: string
+  severity: number
+  detail: Record<string, unknown> | null
+  at: number
+}
+
 export interface AdminUserDetail extends AdminUserSummary {
   banReason: string | null
+  premiumUntil: number | null
+  premiumActive: boolean
+  rewardPool: number
+  notificationsMutedAt: number | null
+  channelMember: boolean | null
+  channelCheckedAt: number | null
+  riskScore: number
+  fraudSignals: AdminFraudSignal[]
+  adminActions: AdminActionEntry[]
   referralCode: string
   energy: number
   streak: number
@@ -129,6 +146,13 @@ export async function getAdminUserDetail(publicId: string): Promise<AdminUserDet
     banned_at: Date | null
     ban_reason: string | null
     created_at: Date
+    premium_until: Date | null
+    premium_active: boolean
+    reward_pool: number
+    notifications_muted_at: Date | null
+    channel_member: boolean | null
+    channel_checked_at: Date | null
+    risk_score: number
     streak: number
     tasks_completed: number
     credits_earned_today: number
@@ -150,6 +174,12 @@ export async function getAdminUserDetail(publicId: string): Promise<AdminUserDet
      )
      select u.id,u.public_id,u.telegram_id,u.first_name,u.username,u.balance_credits,u.energy,
             u.referral_code,u.is_admin,u.banned_at,u.ban_reason,u.created_at,
+            u.premium_until,(u.premium_until is not null and u.premium_until > now()) as premium_active,
+            u.reward_pool,u.notifications_muted_at,
+            u.channel_member,u.channel_checked_at,
+            coalesce((select sum(severity) from fraud_signals f
+                      where f.user_id=u.id and f.created_at > now() - interval '7 days'),0)::int
+              as risk_score,
             ${STREAK_EXPRESSION} as streak,
             (select count(*) from task_completions where user_id=u.id)::int as tasks_completed,
             coalesce((select credits_earned from daily_quotas
@@ -166,7 +196,7 @@ export async function getAdminUserDetail(publicId: string): Promise<AdminUserDet
   const profile = profileRows[0]
   if (!profile) return null
 
-  const [withdrawalRows, ledgerRows] = await Promise.all([
+  const [withdrawalRows, ledgerRows, fraudRows, adminActions] = await Promise.all([
     query<{
       id: string
       channel_id: string
@@ -204,6 +234,18 @@ export async function getAdminUserDetail(publicId: string): Promise<AdminUserDet
        from credit_ledger where user_id=$1 order by id desc limit 20`,
       [profile.id],
     ),
+    /**
+     * Sinyal fraud ditampilkan di detail akunnya, bukan cuma dihitung di dashboard.
+     * Angka "N akun bersinyal" tanpa daftar sinyalnya memberi tahu admin bahwa ada yang
+     * mencurigakan tanpa memberi tahu apa — dan keputusan yang paling butuh ini, menyetujui
+     * atau menolak payout, diambil di halaman ini.
+     */
+    query<{ signal: string; severity: number; detail: Record<string, unknown> | null; created_at: Date }>(
+      `select signal, severity, detail, created_at
+       from fraud_signals where user_id=$1 order by created_at desc limit 20`,
+      [profile.id],
+    ),
+    readAdminActions(Number(profile.id)),
   ])
 
   return {
@@ -218,6 +260,20 @@ export async function getAdminUserDetail(publicId: string): Promise<AdminUserDet
     bannedAt: asTime(profile.banned_at),
     banReason: profile.ban_reason,
     createdAt: new Date(profile.created_at).getTime(),
+    premiumUntil: asTime(profile.premium_until),
+    premiumActive: profile.premium_active,
+    rewardPool: Number(profile.reward_pool),
+    notificationsMutedAt: asTime(profile.notifications_muted_at),
+    channelMember: profile.channel_member,
+    channelCheckedAt: asTime(profile.channel_checked_at),
+    riskScore: Number(profile.risk_score),
+    fraudSignals: fraudRows.map((row) => ({
+      signal: row.signal,
+      severity: Number(row.severity),
+      detail: row.detail,
+      at: new Date(row.created_at).getTime(),
+    })),
+    adminActions,
     referralCode: profile.referral_code,
     energy: Number(profile.energy),
     streak: Number(profile.streak),

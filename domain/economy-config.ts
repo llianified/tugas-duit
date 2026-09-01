@@ -52,6 +52,15 @@ export interface EconomyConfig {
   withdrawalMinimumIdr: number
   maxPayoutIdr: number
   withdrawalMinActiveReferrals: number
+  withdrawalMinActiveDays: number
+  withdrawalCooldownDays: number
+  leaderboardEnabled: number
+  missionTasksTarget: number
+  missionTasksReward: number
+  missionStarsTarget: number
+  missionStarsReward: number
+  missionAdsTarget: number
+  missionAdsReward: number
   referralCommissionPercent: number
   dailyCommissionCapIdr: number
   rankTier2Tasks: number
@@ -122,6 +131,15 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   withdrawalMinimumIdr: 10_000,
   maxPayoutIdr: 2_000_000_000,
   withdrawalMinActiveReferrals: 5,
+  withdrawalMinActiveDays: 7,
+  withdrawalCooldownDays: 7,
+  leaderboardEnabled: 1,
+  missionTasksTarget: 5,
+  missionTasksReward: 2,
+  missionStarsTarget: 3,
+  missionStarsReward: 2,
+  missionAdsTarget: 3,
+  missionAdsReward: 3,
   referralCommissionPercent: 10,
   dailyCommissionCapIdr: 6_000,
   rankTier2Tasks: 100,
@@ -152,6 +170,8 @@ export type EconomyGroup =
   | 'progression'
   | 'channel'
   | 'premium'
+  | 'mission'
+  | 'feature'
 
 export interface EconomyFieldMeta {
   key: EconomyConfigKey
@@ -382,6 +402,18 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     min: 0, max: 50, riskyWhen: 'lower',
   },
   {
+    key: 'withdrawalMinActiveDays', group: 'withdrawal', label: 'Hari aktif minimum', unit: 'hari',
+    description: 'Berapa hari WIB berbeda yang harus pernah punya minimal satu task selesai sebelum penarikan pertama bisa diajukan. Tidak harus berturut-turut, jadi satu hari bolong tidak menghapus progres. Sengaja bukan umur akun: pabrik akun cukup menunggu, sedangkan ini menuntut task betulan di hari-hari terpisah.',
+    impact: 'Menurunkannya mempercepat penarikan pertama untuk semua orang, termasuk akun yang dibuat massal — ini gerbang waktu yang paling menahan pabrik akun.',
+    min: 1, max: 365, riskyWhen: 'lower',
+  },
+  {
+    key: 'withdrawalCooldownDays', group: 'withdrawal', label: 'Jeda antar penarikan', unit: 'hari',
+    description: 'Jarak minimum antara dua pengajuan penarikan untuk user biasa. Jedanya berjalan dari tanggal pengajuan, termasuk pengajuan yang akhirnya ditolak. Tidak boleh lebih pendek daripada jeda premium — kalau sama, premium berhenti punya keunggulan di sini.',
+    impact: 'Menurunkannya membuat penarikan lebih sering, sehingga biaya transfer per rupiah naik.',
+    min: 1, max: 365, riskyWhen: 'lower',
+  },
+  {
     key: 'maxPayoutIdr', group: 'withdrawal', label: 'Maksimum penarikan', unit: 'Rp/pengajuan',
     description: 'Langit-langit satu pengajuan. Lantai kewarasan, bukan batas harian — saldo membatasi lebih dulu.',
     impact: 'Menaikkannya memperbesar nominal terbesar yang bisa diajukan sekali kirim.',
@@ -463,6 +495,32 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     description: 'Jaring anti-bot untuk user premium. Tidak boleh di bawah batas task harian biasa.',
     impact: 'Menaikkannya melonggarkan jaring anti-bot premium; tidak menaikkan payout karena kolam reward tetap mengikat.',
     min: 1, max: 100_000, riskyWhen: 'never',
+  },
+  ...(
+    [
+      ['missionTasksTarget', 'missionTasksReward', 'Selesaikan task', 'task'],
+      ['missionStarsTarget', 'missionStarsReward', 'Task bintang tiga', 'task'],
+      ['missionAdsTarget', 'missionAdsReward', 'Tonton iklan', 'tayangan'],
+    ] as [EconomyConfigKey, EconomyConfigKey, string, string][]
+  ).flatMap(([targetKey, rewardKey, label, unit]): EconomyFieldMeta[] => [
+    {
+      key: targetKey, group: 'mission', label: `Target · ${label}`, unit,
+      description: `Berapa yang harus dikumpulkan dalam satu hari WIB supaya misi "${label}" bisa diklaim. Kemajuannya dihitung ulang dari task dan tayangan yang sudah tercatat, jadi mengubah angka ini langsung menggeser misi yang sedang berjalan hari itu.`,
+      impact: 'Menurunkannya membuat misi lebih cepat kelar, sehingga energi bonusnya lebih sering keluar.',
+      min: 1, max: 100, riskyWhen: 'lower',
+    },
+    {
+      key: rewardKey, group: 'mission', label: `Hadiah · ${label}`, unit: 'energi',
+      description: `Energi yang diberikan saat misi "${label}" diklaim. Tidak boleh melebihi kapasitas energi biasa: hadiah yang tidak muat utuh ditolak saat diklaim, jadi angka yang terlalu besar membuat misinya tidak pernah bisa diambil siapa pun.`,
+      impact: 'Menaikkannya menambah energi gratis per hari, sehingga user sampai ke plafon kolamnya lebih cepat.',
+      min: 1, max: 10, riskyWhen: 'higher',
+    },
+  ]),
+  {
+    key: 'leaderboardEnabled', group: 'feature', label: 'Papan peringkat', unit: '0/1',
+    description: 'Isi 1 untuk menyalakan view Peringkat beserta umpan aktivitasnya, 0 untuk menggantinya dengan layar "segera hadir". Papan ini memajang nama depan, foto Telegram, dan status premium ke seluruh user — itu satu-satunya permukaan publik di aplikasi ini.',
+    impact: 'Menyalakannya membuka data peringkat ke semua user; mematikannya menutup view-nya tanpa menghapus datanya.',
+    min: 0, max: 1, riskyWhen: 'never',
   },
   {
     key: 'premiumWithdrawalCooldownDays', group: 'premium', label: 'Jeda penarikan premium', unit: 'hari',
@@ -603,6 +661,29 @@ export function validateEconomyConfig(
   if (config.premiumEnergyRegenMinutes > config.energyRegenMinutes) {
     errors.premiumEnergyRegenMinutes =
       `Regen energi premium tidak boleh lebih lambat daripada regen biasa (${config.energyRegenMinutes} menit).`
+  }
+
+  /**
+   * Hadiah misi harus muat di kapasitas energi biasa, bukan premium: `claimMission` menolak
+   * klaim yang hadiahnya terpotong, jadi hadiah yang lebih besar dari kapasitas membuat
+   * misinya tidak pernah bisa diambil user non-premium — gagal diam-diam, karena yang
+   * terlihat cuma tombol klaim yang selalu menolak.
+   */
+  const missionRewards: [EconomyConfigKey, string][] = [
+    ['missionTasksReward', 'Selesaikan task'],
+    ['missionStarsReward', 'Task bintang tiga'],
+    ['missionAdsReward', 'Tonton iklan'],
+  ]
+  for (const [key, label] of missionRewards) {
+    if (config[key] > config.maxEnergy) {
+      errors[key] =
+        `Hadiah misi "${label}" tidak boleh melebihi kapasitas energi (${config.maxEnergy}), karena hadiah yang tidak muat utuh akan ditolak saat diklaim.`
+    }
+  }
+
+  if (config.premiumWithdrawalCooldownDays > config.withdrawalCooldownDays) {
+    errors.premiumWithdrawalCooldownDays =
+      `Jeda penarikan premium tidak boleh lebih panjang daripada jeda biasa (${config.withdrawalCooldownDays} hari).`
   }
 
   if (config.premiumMaxTasksPerDay < config.maxTasksPerDay) {

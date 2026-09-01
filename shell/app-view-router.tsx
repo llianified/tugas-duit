@@ -10,7 +10,7 @@ import { CaptchaView } from '@/features/captcha/components/captcha'
 import type { Challenge } from '@/features/captcha/domain'
 import { HistoryView } from '@/features/history/history'
 import { HomeView } from '@/features/home/home'
-import { LEADERBOARD_ENABLED } from '@/features/leaderboard/availability'
+import { leaderboardEnabled } from '@/features/leaderboard/availability'
 import { LeaderboardComingSoon, LeaderboardView } from '@/features/leaderboard/leaderboard'
 import { MissionsView } from '@/features/missions/missions'
 import { ProfileView } from '@/features/profile/profile'
@@ -148,7 +148,7 @@ export function AppViewRouter({
   }
 
   if (effectiveView === 'leaderboard') {
-    if (!LEADERBOARD_ENABLED) return <LeaderboardComingSoon key="leaderboard" />
+    if (!leaderboardEnabled()) return <LeaderboardComingSoon key="leaderboard" />
     if (!session.leaderboard) return <LeaderboardSkeleton key="leaderboard" />
     return (
       <LeaderboardView

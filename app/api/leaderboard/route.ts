@@ -1,5 +1,5 @@
 import { loadEconomyConfig } from '@/server/economy-config'
-import { LEADERBOARD_ENABLED } from '@/features/leaderboard/availability'
+import { leaderboardEnabled } from '@/features/leaderboard/availability'
 import { handleRouteError, rateLimited } from '@/server/http'
 import { getLeaderboard } from '@/server/leaderboard'
 import { checkRateLimit } from '@/server/ratelimit'
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   try {
     await loadEconomyConfig()
-    if (!LEADERBOARD_ENABLED) return new Response('Not Found', { status: 404 })
+    if (!leaderboardEnabled()) return new Response('Not Found', { status: 404 })
 
     const user = await requireUser()
     const limit = await checkRateLimit(`leaderboard:${user.id}`, 100, 3_600)

@@ -1,7 +1,5 @@
 import { economyConfig } from './economy-config.ts'
 
-export const WITHDRAWAL_COOLDOWN_DAYS = 7
-
 export type PremiumMonths = 1 | 2 | 3
 
 export const PREMIUM_MONTHS: readonly PremiumMonths[] = [1, 2, 3]
@@ -50,8 +48,19 @@ export function premiumWithdrawalCooldownMs(): number {
   return economyConfig().premiumWithdrawalCooldownDays * 86_400_000
 }
 
+/**
+ * Jeda antar penarikan. Keduanya sekarang setelan panel: yang biasa dulu konstanta
+ * `WITHDRAWAL_COOLDOWN_DAYS = 7`, sementara versi premium-nya sudah bisa disetel sejak
+ * migrasi 0027 — selisih yang membuat panel bisa memperpendek jeda premium sampai di bawah
+ * jeda biasa tanpa ada yang bisa menaikkan jeda biasanya. `validateEconomyConfig` sekarang
+ * menuntut jeda premium tidak pernah lebih panjang daripada jeda biasa.
+ */
+export function baseWithdrawalCooldownDays(): number {
+  return economyConfig().withdrawalCooldownDays
+}
+
 export function withdrawalCooldownMs(premium: boolean): number {
-  return premium ? premiumWithdrawalCooldownMs() : WITHDRAWAL_COOLDOWN_DAYS * 86_400_000
+  return premium ? premiumWithdrawalCooldownMs() : baseWithdrawalCooldownDays() * 86_400_000
 }
 
 export function isPremiumActive(premiumUntil: number | null, now: number): boolean {
@@ -86,6 +95,6 @@ export function premiumPerks(): PremiumPerks {
     maxTasksPerDay: config.premiumMaxTasksPerDay,
     baseMaxTasksPerDay: config.maxTasksPerDay,
     withdrawalCooldownDays: config.premiumWithdrawalCooldownDays,
-    baseWithdrawalCooldownDays: WITHDRAWAL_COOLDOWN_DAYS,
+    baseWithdrawalCooldownDays: config.withdrawalCooldownDays,
   }
 }

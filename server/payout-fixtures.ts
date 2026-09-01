@@ -1,8 +1,8 @@
 import { query } from './db'
 import {
-  REQUIRED_ACTIVE_DAYS,
+  requiredActiveDays,
   requiredActiveReferrals,
-  WITHDRAWAL_COOLDOWN_MS,
+  withdrawalCooldownMsForBase,
 } from './payout-rules'
 import { generateReferralCode } from './referral'
 
@@ -46,7 +46,7 @@ export async function clearWithdrawalCooldown(userId: number): Promise<void> {
   await query(
     `update withdrawals set requested_at=now()-($2::bigint * interval '1 millisecond')
       where user_id=$1`,
-    [userId, WITHDRAWAL_COOLDOWN_MS + 60_000],
+    [userId, withdrawalCooldownMsForBase() + 60_000],
   )
 }
 
@@ -57,7 +57,7 @@ export async function clearWithdrawalCooldown(userId: number): Promise<void> {
  */
 export async function seedActiveDays(
   userId: number,
-  days = REQUIRED_ACTIVE_DAYS,
+  days = requiredActiveDays(),
 ): Promise<void> {
   if (days <= 0) return
   await query(

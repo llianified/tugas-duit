@@ -1730,7 +1730,7 @@
 /* Perforasinya hilang lebih dulu: begitu kertasnya putus, panduan sobeknya
    sudah tidak menandai apa pun. */
 .home-skin .task-card[data-tearing='true'] .ticket-perf {
-  animation: ticket-perf-snap 140ms linear forwards;
+  animation: tear-perf-snap 140ms linear forwards;
 }
 
 @keyframes ticket-tear-top {
@@ -1765,7 +1765,9 @@
     opacity: 0;
   }
 }
-@keyframes ticket-perf-snap {
+/* Dipakai dua kali: karcis di atas dan kupon bonus di bawahnya. Namanya netral
+   justru karena itu — panduan sobek yang putus berlaku sama untuk keduanya. */
+@keyframes tear-perf-snap {
   to {
     opacity: 0;
   }
@@ -1824,63 +1826,59 @@
   --coupon-p: 0.75rem;
   --coupon-edge: color-mix(in oklab, var(--primary) 38%, var(--border));
   --coupon-perf: color-mix(in oklab, var(--primary) 52%, var(--foreground) 16%);
-  --coupon-hole: 0.5rem;
+  /* Sekarang RADIUS lubang, bukan diameternya: lubangnya dilubangi dengan
+     `mask` seperti di karcis, jadi angkanya masuk ke `radial-gradient()`. */
+  --coupon-hole: 0.3125rem;
+  /* Ukuran gerigi robekan — angka yang sama dengan karcis, karena sobekannya
+     memang sobekan yang sama. Hanya terpakai saat kuponnya disobek. */
+  --tear-tooth: 0.6875rem;
+  --tear-depth: 0.28rem;
   position: relative;
   isolation: isolate;
   display: flex;
   align-items: stretch;
-  overflow: hidden;
-  border-radius: var(--radius);
-  /* Tepi 1px dibuat dengan cara yang sama seperti karcis: elemen luar berisi
-     warna garis, lapisan `::before` sejauh 1px di dalamnya berisi bidangnya.
-     Konsisten dengan `.task-card` di atasnya, dan tahan terhadap `overflow`. */
+}
+
+/* Kuponnya DUA lembar yang berhimpit, bukan satu bidang dengan garis di
+   dalamnya — persis alasan yang sama seperti karcis di atasnya: sobekan hanya
+   bisa nyata kalau kertasnya memang dua bagian yang bisa berjalan ke arah
+   berlawanan. Tiap bagian membawa tepinya sendiri (elemen berisi warna garis,
+   `::before` sejauh 1px di dalamnya berisi bidangnya), dan insetnya nol di
+   garis pertemuan supaya seam-nya tidak menyisakan pita 2px di tengah kupon. */
+.bonus-coupon-part {
+  position: relative;
+  isolation: isolate;
   background-color: var(--coupon-edge);
 }
-.bonus-coupon::before {
+.bonus-coupon-part::before {
   content: '';
   position: absolute;
   z-index: -1;
-  inset: 1px;
-  border-radius: calc(var(--radius) - 1px);
-  /* Cahaya datang dari sudut kanan atas, tempat pesawat kertasnya lewat. */
-  background-image:
-    radial-gradient(
-      120% 130% at 100% 0%,
-      color-mix(in oklab, var(--primary) 14%, transparent),
-      transparent 62%
-    ),
-    linear-gradient(180deg, var(--card), var(--card));
+  top: 1px;
+  bottom: 1px;
 }
 
-/* Stub kiri: bidang bertint, teks tegak, dan tepi kanan yang memang sobekan. */
+/* Stub kiri: bidang bertint dan teks tegak. */
 .bonus-coupon-stub {
-  position: relative;
   flex: none;
   width: var(--coupon-stub-w);
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: color-mix(in oklab, var(--primary) 12%, transparent);
-  border-right: 1px dashed var(--coupon-perf);
-}
-/* Dua lubang sobek. Letaknya MENEMBUS tepi kartu — separuhnya terpotong oleh
-   `overflow: hidden` di induknya, jadi yang terlihat setengah lingkaran seperti
-   lubang yang benar-benar dilubangi di kertasnya, bukan titik yang ditempel. */
-.bonus-coupon-stub::before,
-.bonus-coupon-stub::after {
-  content: '';
-  position: absolute;
-  right: calc(var(--coupon-hole) / -2);
-  width: var(--coupon-hole);
-  height: var(--coupon-hole);
-  border-radius: 9999px;
-  background-color: var(--background);
+  border-radius: var(--radius) 0 0 var(--radius);
+  /* Lubang sobek atas dan bawah, dilubangi tepat di tepi kartu sehingga yang
+     terlihat separuhnya. Separuh sisanya milik badan kupon di sebelahnya, jadi
+     berdua mereka membentuk satu lubang utuh di garis perforasi. */
+  mask-image:
+    radial-gradient(var(--coupon-hole) at 100% 0, #0000 98%, #000),
+    radial-gradient(var(--coupon-hole) at 100% 100%, #0000 98%, #000);
+  mask-composite: intersect;
 }
 .bonus-coupon-stub::before {
-  top: calc(var(--coupon-hole) / -2);
-}
-.bonus-coupon-stub::after {
-  bottom: calc(var(--coupon-hole) / -2);
+  left: 1px;
+  right: 0;
+  border-radius: calc(var(--radius) - 1px) 0 0 calc(var(--radius) - 1px);
+  background-color: color-mix(in oklab, var(--primary) 12%, var(--card));
 }
 .bonus-coupon-stub-label {
   writing-mode: vertical-rl;
@@ -1899,10 +1897,44 @@
 /* Isi kanan. Padding sendiri, bukan `--surface-p`: kartu ini satu penawaran
    satu angka, jadi ia tidak perlu ruang seluas kartu yang memuat daftar. */
 .bonus-coupon-body {
-  position: relative;
   min-width: 0;
   flex: 1;
   padding: var(--coupon-p);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  mask-image:
+    radial-gradient(var(--coupon-hole) at 0 0, #0000 98%, #000),
+    radial-gradient(var(--coupon-hole) at 0 100%, #0000 98%, #000);
+  mask-composite: intersect;
+}
+.bonus-coupon-body::before {
+  left: 0;
+  right: 1px;
+  border-radius: 0 calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0;
+  /* Cahaya datang dari sudut kanan atas, tempat pesawat kertasnya lewat. */
+  background-image:
+    radial-gradient(
+      120% 130% at 100% 0%,
+      color-mix(in oklab, var(--primary) 14%, transparent),
+      transparent 62%
+    ),
+    linear-gradient(180deg, var(--card), var(--card));
+}
+
+/* Garis perforasi: elemen sendiri, bukan `border-right` milik stub. Bedanya
+   baru terasa saat disobek — sebagai garis milik stub ia ikut terbang, padahal
+   panduan sobek harus PUTUS lebih dulu, sama seperti `.ticket-perf` di karcis.
+   Ditaruh paling akhir di DOM supaya ia berdiri di atas kedua bagian. */
+.bonus-coupon-perf {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--coupon-stub-w);
+  width: 1px;
+  background-image: repeating-linear-gradient(
+    180deg,
+    var(--coupon-perf) 0 0.25rem,
+    transparent 0.25rem 0.5rem
+  );
 }
 
 /* Pesawat kertas Telegram di sudut kanan atas. Motif, bukan bentuk hias: ia
@@ -1926,93 +1958,110 @@
    — sedangkan klaim satu-satunya langkah yang tidak bisa diulang. Kupon cuma
    bisa sobek sekali, jadi sobekan itu milik langkah yang benar-benar memakainya.
 
-   Durasinya terikat ke `TEAR_MS` di `use-channel-bonus.ts`: penyegaran sesi
-   ditahan sampai animasi selesai, karena data barulah yang melepas kartu ini
-   dari Beranda. Kalau tidak ditahan, sobekannya terpotong di frame pertama. */
-.bonus-coupon-tearing {
-  /* Stub harus bisa keluar dari bidang kartu. Selama sobek, kedua lubangnya
-     ikut terbang bersama stub, jadi tidak ada lagi yang bergantung pada
-     kliping induknya untuk terlihat sebagai setengah lingkaran. */
-  overflow: visible;
+   Mekanikanya sekarang sama dengan karcis di atasnya: yang membuat sobekan
+   terbaca sebagai sobekan bukan gerakannya, tapi TEPINYA — kedua bagian bertemu
+   lurus selama diam, dan begitu `data-tearing` menyala tepi pertemuannya
+   berganti jadi gerigi lalu keduanya berjalan ke arah berlawanan. Versi lama
+   hanya menerbangkan stub dan memudarkan sisanya, jadi dua kartu yang berdiri
+   berdampingan di Beranda memakai dua bahasa sobekan yang berbeda.
+
+   Durasinya datang dari `--tear-ms` yang dipasang komponen, seperti karcis:
+   penyegaran sesi ditahan selama itu, karena data barulah yang melepas kartu
+   ini dari Beranda. Kalau tidak ditahan, sobekannya terpotong di frame
+   pertama — dan dengan satu variabel, angka di JS dan CSS tak bisa berbeda. */
+.bonus-coupon[data-tearing='true'] {
   /* Kartu sedang pergi: tombol "Join" dan "Klaim" tidak boleh bisa ditekan
      lagi di tengah sobekan. */
   pointer-events: none;
-  animation: coupon-tear-out 220ms ease-in 470ms both;
 }
-.bonus-coupon-tearing .bonus-coupon-stub {
-  /* Easing yang sama dengan getaran jawaban salah: tarikan pendek dulu, lalu
-     lepas. Itu yang membedakan "disobek" dari "digeser". */
-  animation: coupon-tear-stub 520ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+.bonus-coupon[data-tearing='true'] .bonus-coupon-stub {
+  /* Gerigi ditumpuk di atas badan kertas dan HANYA ada saat menyobek — kalau
+     ia selalu ada, di keadaan diam ia cuma celah bergerigi yang tak masuk akal.
+     Bentuknya sama dengan karcis, cuma diputar: giginya tumbuh ke kanan, jadi
+     tilenya berulang ke bawah (`repeat-y`) alih-alih ke samping. Lubang sobek
+     dilepas di sini justru karena itu titik pangkal robekan — setelah kertasnya
+     terbelah, lubangnya sudah jadi bagian dari geriginya. */
+  mask-image:
+    conic-gradient(from -135deg at right, #0000, #000 1deg 89deg, #0000 90deg),
+    linear-gradient(#000, #000);
+  mask-size:
+    var(--tear-depth) var(--tear-tooth),
+    calc(100% - var(--tear-depth)) 100%;
+  mask-position:
+    right top,
+    left top;
+  mask-repeat: repeat-y, no-repeat;
+  mask-composite: add;
+  animation: coupon-tear-stub var(--tear-ms, 520ms) cubic-bezier(0.22, 0.68, 0.24, 1) forwards;
   will-change: translate, rotate, opacity;
 }
-.bonus-coupon-tearing .bonus-coupon-body {
-  animation: coupon-tear-body 520ms ease-out both;
+.bonus-coupon[data-tearing='true'] .bonus-coupon-body {
+  mask-image:
+    conic-gradient(from 45deg at left, #0000, #000 1deg 89deg, #0000 90deg),
+    linear-gradient(#000, #000);
+  /* Gigi badan sengaja sedikit lebih rapat dan digeser setengah gigi: dua tepi
+     yang berpola identik terbaca sebagai guntingan mesin, bukan robekan. */
+  mask-size:
+    var(--tear-depth) calc(var(--tear-tooth) * 0.82),
+    calc(100% - var(--tear-depth)) 100%;
+  mask-position:
+    left calc(var(--tear-tooth) / 2),
+    right top;
+  mask-repeat: repeat-y, no-repeat;
+  mask-composite: add;
+  animation: coupon-tear-body var(--tear-ms, 520ms) cubic-bezier(0.22, 0.68, 0.24, 1) forwards;
+  will-change: translate, rotate, opacity;
 }
-/* Perforasi yang putus. Garis putus-putusnya terbang bersama stub, dan yang
-   tertinggal di badan kupon adalah bekas sobekan sebagai garis utuh. */
-.bonus-coupon-tearing .bonus-coupon-body::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 1px;
-  background-color: var(--coupon-perf);
-  animation: fade-in 160ms ease-out 90ms both;
+/* Perforasinya hilang lebih dulu: begitu kertasnya putus, panduan sobeknya
+   sudah tidak menandai apa pun. */
+.bonus-coupon[data-tearing='true'] .bonus-coupon-perf {
+  animation: tear-perf-snap 140ms linear forwards;
 }
 
 @keyframes coupon-tear-stub {
   0% {
     translate: 0 0;
     rotate: 0deg;
-    opacity: 1;
   }
+  /* Kertas ditarik dan menahan sebentar sebelum putus — tanpa jeda ini kedua
+     bagian cuma bergeser, tidak terasa ada yang disobek. */
   16% {
     translate: 2px 0;
     rotate: 0.8deg;
   }
   100% {
-    translate: -14px 30px;
-    rotate: -19deg;
+    translate: -1.25rem 1.5rem;
+    rotate: -14deg;
     opacity: 0;
   }
 }
-/* Badan kupon menahan tarikan sebentar, lalu balik ke tempatnya begitu
-   sobekannya lepas. Ia tidak ikut terbang — ia yang tertinggal. */
 @keyframes coupon-tear-body {
   0% {
     translate: 0 0;
+    rotate: 0deg;
   }
   16% {
     translate: -2px 0;
-  }
-  46% {
-    translate: 3px 0;
+    rotate: -0.3deg;
   }
   100% {
-    translate: 0 0;
-  }
-}
-@keyframes coupon-tear-out {
-  0% {
-    opacity: 1;
-    scale: 1;
-  }
-  100% {
+    translate: 2.5rem -0.75rem;
+    rotate: 2.5deg;
     opacity: 0;
-    scale: 0.97;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   /* Tanpa gerak, yang tersisa cuma kepergiannya. `TEAR_MS` juga dipangkas di
      sisi JS lewat media query yang sama, jadi jedanya tidak ikut tertinggal. */
-  .bonus-coupon-tearing {
-    overflow: hidden;
+  .bonus-coupon[data-tearing='true'] {
     animation: fade-in 200ms ease-out reverse both;
   }
-  .bonus-coupon-tearing .bonus-coupon-stub,
-  .bonus-coupon-tearing .bonus-coupon-body,
-  .bonus-coupon-tearing .bonus-coupon-body::before {
+  .bonus-coupon[data-tearing='true'] .bonus-coupon-stub,
+  .bonus-coupon[data-tearing='true'] .bonus-coupon-body,
+  .bonus-coupon[data-tearing='true'] .bonus-coupon-perf {
     animation: none;
+    mask-image: none;
   }
 }
 

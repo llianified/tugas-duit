@@ -442,12 +442,6 @@
   .qr-plate {
     background-color: var(--qr-plate);
   }
-  .clamp-3 {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-    overflow: hidden;
-  }
   /* Garis penghubung berbentuk L dari kolom avatar ke isi item feed. */
   .thread-line {
     position: relative;

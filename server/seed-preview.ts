@@ -565,11 +565,11 @@ async function seedPayouts(tx: PoolClient, userId: number): Promise<void> {
  * bersandar padanya.
  */
 async function settleBalance(tx: PoolClient, userId: number, target: number): Promise<number> {
-  const rows = await tx.query<{ balance_credits: string }>(
+  const current = await tx.query<{ balance_credits: string }>(
     'select balance_credits from users where id = $1',
     [userId],
   )
-  const delta = target - Number(rows[0].balance_credits)
+  const delta = target - Number(current.rows[0].balance_credits)
   if (delta === 0) return target
   await appendLedger(tx, {
     userId,

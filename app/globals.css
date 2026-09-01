@@ -108,15 +108,20 @@
   --background: #101014;
   --foreground: #f4f4f5;
   --card: #18181d;
-  --primary: #918bff;
-  --primary-foreground: #101014;
-  --primary-hover: #a8a3ff;
-  --primary-active: #7a73ff;
+  --primary: #4f56f2;
+  /* Aksennya kini jauh lebih pekat dari periwinkle lama, jadi label gelap tidak
+     lagi lolos: teks di atas bidang aksen memakai putih. */
+  --primary-foreground: #ffffff;
+  --primary-hover: #666cf5;
+  --primary-active: #3f45d9;
   --muted: #232329;
   --muted-foreground: #a1a1aa;
   --destructive: #f87171;
   --border: #2c2c34;
-  --ring: #918bff;
+  /* Cincin fokus tergambar di atas latar gelap, bukan di atas bidang aksen,
+     jadi ia memakai nada terang yang sama dengan `--chip-fg-primary` — biru
+     pekat `--primary` tak cukup terbaca sebagai garis 2px di atas #101014. */
+  --ring: #9095ff;
   --success: #4ade80;
   --star: #facc15;
   --premium: #fbbf24;
@@ -137,19 +142,16 @@
      targetnya justru SAMA — tapi karena putih 11% tak berarti apa-apa di atas
      warna yang sudah terang.
 
-     Angkanya dihitung, bukan dikira: `--primary` itu rgb(145,139,255), dan
-     kanal birunya SUDAH mentok di 255, jadi ditumpuk putih pun ia tak bisa
-     lebih terang. Di bidang tenang rgb(35,35,41) putih 11% mengangkat
-     kecerahan (OKLab L) sebesar 0.096, sedangkan di bidang aksen angka yang
-     sama hanya memberi 0.033 — tiga kali lebih lemah, itulah sebabnya
-     hairline-nya seolah tidak ada. Untuk mencapai kenaikan 0.096 yang sama di
-     atas aksen dibutuhkan 32%, yang menghasilkan tepi rgb(180,176,255).
+     Angkanya dihitung, bukan dikira, dan ikut berubah tiap kali `--primary`
+     berubah. Sekarang `--primary` itu rgb(79,86,242) dengan kecerahan OKLab
+     L = 0.547 — jauh lebih pekat dari periwinkle lama, jadi putih tak lagi
+     mentok di kanal biru dan tak perlu setebal dulu. Di bidang tenang
+     rgb(35,35,41) putih 11% mengangkat L sebesar 0.096; untuk kenaikan yang
+     sama di atas aksen kini cukup 21% (0.547 + 0.21 x 0.453 = 0.643).
 
-     Jadi kedua tombol kini punya kilau yang setara di MATA, bukan setara di
-     angka alfa. Efek sampingnya wajar: karena birunya tak bisa naik, kelebihan
-     putihnya turun sebagai sedikit desaturasi — tepinya terbaca biru muda,
-     bukan putih. */
-  --bevel-sheen-accent: color-mix(in oklab, white 32%, transparent);
+     Jadi kedua tombol punya kilau yang setara di MATA, bukan setara di angka
+     alfa — dan tepinya tetap terbaca biru muda, bukan putih. */
+  --bevel-sheen-accent: color-mix(in oklab, white 21%, transparent);
   /* Bidang tombol tenang (`.btn-glass-quiet`). Token sendiri, BUKAN `--card`
      langsung: `--card` (#18181d) cuma 8 poin di atas latar (#101014), jadi begitu
      cincin luarnya dibuang tombol tenang ikut tenggelam. Bidangnya diangkat ke
@@ -177,7 +179,11 @@
      tetap terbaca di atas #101014. */
   --chip-tint: 18%;
   --chip-fg-muted: var(--muted-foreground);
-  --chip-fg-primary: var(--primary);
+  /* Satu-satunya nada yang TIDAK memakai tokennya sendiri mentah-mentah:
+     `--primary` sekarang biru pekat (rgb(79,86,242)), dan sebagai teks 11px di
+     atas #101014 kontrasnya hanya ~3.5:1 — gagal untuk teks kecil. Bidangnya
+     tetap biru pekat itu, tapi teksnya diangkat ke nada yang lebih terang. */
+  --chip-fg-primary: #9095ff;
   --chip-fg-success: var(--success);
   --chip-fg-destructive: var(--destructive);
   --chip-fg-premium: var(--premium);

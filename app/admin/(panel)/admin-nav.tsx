@@ -9,6 +9,7 @@ const AREAS = [
   { href: '/admin/withdrawals', label: 'Payout' },
   { href: '/admin/users', label: 'User' },
   { href: '/admin/economy', label: 'Ekonomi' },
+  { href: '/admin/ops', label: 'Operasi' },
 ] as const
 
 export function AdminNav() {

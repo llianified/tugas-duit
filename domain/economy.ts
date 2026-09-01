@@ -11,6 +11,10 @@ export function withdrawalMinActiveReferrals(): number {
   return economyConfig().withdrawalMinActiveReferrals
 }
 
+export function withdrawalMinActiveDays(): number {
+  return economyConfig().withdrawalMinActiveDays
+}
+
 export function maxPayoutCredits(): number {
   const config = economyConfig()
   return config.maxPayoutIdr / config.creditValueIdr

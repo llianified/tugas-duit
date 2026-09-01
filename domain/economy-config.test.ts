@@ -28,6 +28,16 @@ const HISTORIC: EconomyConfig = {
   inAppAdsFrequency: 2, inAppAdsCappingMinutes: 6,
   inAppAdsIntervalSeconds: 30, inAppAdsTimeoutSeconds: 5,
   withdrawalMinimumIdr: 10_000, withdrawalMinActiveReferrals: 5,
+  // Dulu konstanta kode: REQUIRED_ACTIVE_DAYS di payout-rules.ts dan
+  // WITHDRAWAL_COOLDOWN_DAYS di domain/premium.ts. Angkanya sama persis, jadi
+  // memindahkannya ke panel tidak menggeser satu pun gerbang yang berjalan.
+  withdrawalMinActiveDays: 7, withdrawalCooldownDays: 7,
+  // Dulu LEADERBOARD_ENABLED = true di features/leaderboard/availability.ts.
+  leaderboardEnabled: 1,
+  // Dulu MISSIONS di domain/missions.ts.
+  missionTasksTarget: 5, missionTasksReward: 2,
+  missionStarsTarget: 3, missionStarsReward: 2,
+  missionAdsTarget: 3, missionAdsReward: 3,
   maxPayoutIdr: 2_000_000_000, referralCommissionPercent: 10, dailyCommissionCapIdr: 6_000,
   rankTier2Tasks: 100, rankTier3Tasks: 300, rankTier4Tasks: 700, rankTier5Tasks: 1_500,
   channelJoinBonusCredits: 25, channelGateEnabled: 1,
@@ -174,5 +184,53 @@ describe('konfigurasi aktif', () => {
     expect(economyConfig().rewardHard3).toBe(7)
     setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
     expect(economyConfig()).toEqual(DEFAULT_ECONOMY_CONFIG)
+  })
+})
+
+describe('invarian setelan panel yang baru dipindah dari kode', () => {
+  /**
+   * Hadiah misi yang tidak muat di kapasitas energi membuat misinya tidak pernah bisa
+   * diklaim siapa pun: `claimMission` menolak klaim yang hadiahnya terpotong. Gagalnya
+   * diam — yang terlihat cuma tombol klaim yang selalu menolak — jadi ditangkap di validasi.
+   */
+  it('menolak hadiah misi yang melewati kapasitas energi', () => {
+    const result = validateEconomyConfig(withField({ maxEnergy: 5, missionAdsReward: 6 }))
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(Object.keys(result.errors)).toContain('missionAdsReward')
+  })
+
+  it('menerima hadiah misi yang pas di kapasitas', () => {
+    expect(validateEconomyConfig(withField({ maxEnergy: 5, missionAdsReward: 5 })).ok).toBe(true)
+  })
+
+  /**
+   * Jeda premium yang lebih panjang daripada jeda biasa membuat premium jadi kerugian:
+   * pembeli menunggu lebih lama daripada yang tidak membayar. Sebelum `withdrawalCooldownDays`
+   * bisa disetel, ini mustahil karena jeda biasa terpaku 7 di kode.
+   */
+  it('menolak jeda penarikan premium yang lebih panjang daripada jeda biasa', () => {
+    const result = validateEconomyConfig(
+      withField({ withdrawalCooldownDays: 3, premiumWithdrawalCooldownDays: 7 }),
+    )
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(Object.keys(result.errors)).toContain('premiumWithdrawalCooldownDays')
+  })
+
+  it('menerima jeda premium yang sama panjang dengan jeda biasa', () => {
+    expect(
+      validateEconomyConfig(
+        withField({ withdrawalCooldownDays: 5, premiumWithdrawalCooldownDays: 5 }),
+      ).ok,
+    ).toBe(true)
+  })
+
+  it('papan peringkat hanya menerima 0 atau 1', () => {
+    expect(validateEconomyConfig(withField({ leaderboardEnabled: 2 })).ok).toBe(false)
+    expect(validateEconomyConfig(withField({ leaderboardEnabled: -1 })).ok).toBe(false)
+    expect(validateEconomyConfig(withField({ leaderboardEnabled: 0 })).ok).toBe(true)
+  })
+
+  it('hari aktif minimum tidak boleh nol — itu mencabut gerbang waktunya sama sekali', () => {
+    expect(validateEconomyConfig(withField({ withdrawalMinActiveDays: 0 })).ok).toBe(false)
   })
 })

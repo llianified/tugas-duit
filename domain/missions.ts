@@ -14,6 +14,8 @@
  * keduanya pasti berselisih suatu saat.
  */
 
+import { economyConfig } from './economy-config.ts'
+
 export type MissionKey = 'tasks' | 'stars' | 'ads'
 
 export interface MissionDefinition {
@@ -25,20 +27,51 @@ export interface MissionDefinition {
   reward: number
 }
 
-export const MISSIONS: readonly MissionDefinition[] = [
-  { key: 'tasks', title: 'Selesaikan 5 task', target: 5, reward: 2 },
-  { key: 'stars', title: 'Dapat 3 task bintang tiga', target: 3, reward: 2 },
-  { key: 'ads', title: 'Tonton 3 iklan', target: 3, reward: 3 },
-]
+/**
+ * Kuncinya tetap konstanta, targetnya dan hadiahnya tidak.
+ *
+ * Tiga kunci ini terpaku pada `mission_claims_known_key` di migrasi 0031, jadi menambah misi
+ * baru memang menuntut migrasi — dan memang seharusnya, karena kemajuan tiap misi dihitung
+ * dari kolom yang berbeda. Yang tidak punya alasan untuk menuntut deploy adalah besarannya:
+ * berapa yang harus dikumpulkan, dan berapa energi yang dibayarkan. Keduanya sekarang dari
+ * `economy-config`, seperti seluruh besaran lain di aplikasi ini.
+ *
+ * Judulnya ikut menyebut targetnya, jadi ia ikut berubah begitu targetnya disetel — teks
+ * misi yang mengatakan "5 task" sementara servernya menuntut 8 adalah bentuk kesalahan yang
+ * paling merusak untuk daftar yang seluruh gunanya menunjukkan progres.
+ */
+export const MISSION_KEYS: readonly MissionKey[] = ['tasks', 'stars', 'ads']
 
-export const MISSION_KEYS: readonly MissionKey[] = MISSIONS.map((mission) => mission.key)
+export function missions(): MissionDefinition[] {
+  const config = economyConfig()
+  return [
+    {
+      key: 'tasks',
+      title: `Selesaikan ${config.missionTasksTarget} task`,
+      target: config.missionTasksTarget,
+      reward: config.missionTasksReward,
+    },
+    {
+      key: 'stars',
+      title: `Dapat ${config.missionStarsTarget} task bintang tiga`,
+      target: config.missionStarsTarget,
+      reward: config.missionStarsReward,
+    },
+    {
+      key: 'ads',
+      title: `Tonton ${config.missionAdsTarget} iklan`,
+      target: config.missionAdsTarget,
+      reward: config.missionAdsReward,
+    },
+  ]
+}
 
 export function isMissionKey(value: unknown): value is MissionKey {
   return typeof value === 'string' && MISSION_KEYS.includes(value as MissionKey)
 }
 
 export function missionDefinition(key: MissionKey): MissionDefinition {
-  const found = MISSIONS.find((mission) => mission.key === key)
+  const found = missions().find((mission) => mission.key === key)
   if (!found) throw new Error(`Misi tidak dikenal: ${key}`)
   return found
 }
@@ -63,7 +96,7 @@ export function buildMissionProgress(
   counts: MissionCounts,
   claimed: readonly MissionKey[],
 ): MissionProgress[] {
-  return MISSIONS.map((mission) => {
+  return missions().map((mission) => {
     const progress = Math.max(0, Math.min(mission.target, counts[mission.key]))
     return {
       key: mission.key,

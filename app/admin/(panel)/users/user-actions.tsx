@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState, type ReactNode } from 'react'
 import { ApiError, sendJson } from '@/shell/api-client'
-import { formatCredits } from '@/shared/lib/format'
+import { formatCredits, formatDateTime } from '@/shared/lib/format'
 
 export function UserActions({
   publicId,
@@ -15,6 +15,10 @@ export function UserActions({
   isSelf,
   balanceCredits,
   maxAdjust,
+  premiumUntil,
+  premiumActive,
+  notificationsMuted,
+  channelMember,
 }: {
   publicId: string
   firstName: string
@@ -25,11 +29,24 @@ export function UserActions({
   isSelf: boolean
   balanceCredits: number
   maxAdjust: number
+  premiumUntil: number | null
+  premiumActive: boolean
+  notificationsMuted: boolean
+  channelMember: boolean | null
 }) {
   return (
     <div className="flex flex-col gap-4">
       <h3 className="text-sm font-semibold text-foreground">Aksi admin</h3>
       <AdjustBalance publicId={publicId} balanceCredits={balanceCredits} maxAdjust={maxAdjust} />
+      <Premium
+        publicId={publicId}
+        firstName={firstName}
+        premiumUntil={premiumUntil}
+        active={premiumActive}
+      />
+      <TopUp publicId={publicId} />
+      <Notifications publicId={publicId} muted={notificationsMuted} />
+      <ChannelGate publicId={publicId} channelMember={channelMember} />
       <Suspension publicId={publicId} firstName={firstName} isSuspended={isSuspended} isSelf={isSelf} />
       <AdminFlag
         publicId={publicId}
@@ -323,6 +340,295 @@ function Profile({
       <Actions>
         <Primary onClick={submit} disabled={state.pending || !changed || !name.trim()}>
           {state.pending ? 'Menyimpan…' : 'Simpan profil'}
+        </Primary>
+      </Actions>
+    </Card>
+  )
+}
+
+/**
+ * Premium yang diberikan admin memakai satuan HARI dan menumpuk dari tanggal berakhir yang
+ * masih berlaku — bentuk yang sama dengan pembelian, jadi memberi bonus di tengah langganan
+ * berbayar tidak memotong hari yang sudah dibayar user.
+ */
+function Premium({
+  publicId,
+  firstName,
+  premiumUntil,
+  active,
+}: {
+  publicId: string
+  firstName: string
+  premiumUntil: number | null
+  /**
+   * Datang dari server, dihitung dengan `now()` milik database. Menghitungnya di sini akan
+   * memanggil `Date.now()` saat render — hasil yang bisa berubah tiap render, dan jam yang
+   * berbeda dari yang dipakai server saat menerima aksinya.
+   */
+  active: boolean
+}) {
+  const router = useRouter()
+  const [days, setDays] = useState('30')
+  const [reason, setReason] = useState('')
+  const [state, setState] = useState<ActionState>({ pending: false })
+
+  const parsed = Number(days)
+  const validDays = Number.isSafeInteger(parsed) && parsed > 0 && parsed <= 730
+
+  async function submit(action: 'premium-grant' | 'premium-revoke') {
+    setState({ pending: true })
+    try {
+      await sendJson(`/api/admin/users/${publicId}`, 'PATCH', {
+        action,
+        days: action === 'premium-grant' ? parsed : undefined,
+        reason: reason.trim(),
+      })
+      setReason('')
+      setState({
+        pending: false,
+        notice: action === 'premium-grant' ? 'Premium ditambahkan.' : 'Premium dicabut.',
+      })
+      router.refresh()
+    } catch (cause) {
+      setState({ pending: false, error: describe(cause) })
+    }
+  }
+
+  return (
+    <Card
+      title="Premium"
+      description={
+        active && premiumUntil
+          ? `Aktif sampai ${formatDateTime(premiumUntil)}. Penambahan menumpuk dari tanggal itu, bukan dari hari ini.`
+          : 'Belum premium. Penambahan dihitung dari hari ini.'
+      }
+    >
+      <div className="flex flex-wrap gap-3">
+        <label className="flex min-w-32 flex-col gap-1 text-sm">
+          <span className="font-medium text-foreground">Berapa hari</span>
+          <input
+            inputMode="numeric"
+            value={days}
+            onChange={(event) => setDays(event.target.value)}
+            className="focus-ring rounded-md bg-background px-3 py-2 tabular-nums text-foreground"
+          />
+        </label>
+        <label className="flex min-w-56 flex-[2] flex-col gap-1 text-sm">
+          <span className="font-medium text-foreground">Alasan (wajib)</span>
+          <input
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+            maxLength={280}
+            placeholder="Hadiah giveaway Agustus"
+            className="focus-ring rounded-md bg-background px-3 py-2 text-foreground"
+          />
+        </label>
+      </div>
+      <Feedback state={state} />
+      <Actions>
+        <Primary
+          onClick={() => submit('premium-grant')}
+          disabled={state.pending || !validDays || !reason.trim()}
+        >
+          {state.pending ? 'Menyimpan…' : `Beri ${validDays ? parsed : 0} hari premium`}
+        </Primary>
+        {active ? (
+          <Danger onClick={() => submit('premium-revoke')} disabled={state.pending || !reason.trim()}>
+            Cabut premium {firstName}
+          </Danger>
+        ) : null}
+      </Actions>
+    </Card>
+  )
+}
+
+/**
+ * Energi dan stok reward mengembalikan KESEMPATAN menghasilkan, bukan mencetak credit.
+ * Itu bedanya dengan koreksi saldo, dan alasan keduanya ada di kartu terpisah: user yang
+ * dirugikan gangguan sebaiknya dipulihkan lewat sini, bukan lewat saldo yang menambah
+ * liabilitas di luar kolam.
+ */
+function TopUp({ publicId }: { publicId: string }) {
+  const router = useRouter()
+  const [energy, setEnergy] = useState('5')
+  const [credits, setCredits] = useState('30')
+  const [reason, setReason] = useState('')
+  const [state, setState] = useState<ActionState>({ pending: false })
+
+  const parsedEnergy = Number(energy)
+  const parsedCredits = Number(credits)
+  const validEnergy = Number.isSafeInteger(parsedEnergy) && parsedEnergy > 0 && parsedEnergy <= 10
+  const validCredits =
+    Number.isSafeInteger(parsedCredits) && parsedCredits > 0 && parsedCredits <= 10_000
+
+  async function submit(action: 'energy-grant' | 'pool-refill') {
+    setState({ pending: true })
+    try {
+      await sendJson(`/api/admin/users/${publicId}`, 'PATCH', {
+        action,
+        amount: action === 'energy-grant' ? parsedEnergy : undefined,
+        credits: action === 'pool-refill' ? parsedCredits : undefined,
+        reason: reason.trim(),
+      })
+      setReason('')
+      setState({ pending: false, notice: 'Tersimpan. Keduanya dijepit di kapasitas user.' })
+      router.refresh()
+    } catch (cause) {
+      setState({ pending: false, error: describe(cause) })
+    }
+  }
+
+  return (
+    <Card
+      title="Energi & stok reward"
+      description="Memulihkan kesempatan menghasilkan, bukan mencetak credit. Keduanya dijepit di kapasitas user — kelebihannya tidak disimpan."
+    >
+      <div className="flex flex-wrap gap-3">
+        <label className="flex min-w-32 flex-col gap-1 text-sm">
+          <span className="font-medium text-foreground">Energi</span>
+          <input
+            inputMode="numeric"
+            value={energy}
+            onChange={(event) => setEnergy(event.target.value)}
+            className="focus-ring rounded-md bg-background px-3 py-2 tabular-nums text-foreground"
+          />
+        </label>
+        <label className="flex min-w-32 flex-col gap-1 text-sm">
+          <span className="font-medium text-foreground">Stok reward (credit)</span>
+          <input
+            inputMode="numeric"
+            value={credits}
+            onChange={(event) => setCredits(event.target.value)}
+            className="focus-ring rounded-md bg-background px-3 py-2 tabular-nums text-foreground"
+          />
+        </label>
+      </div>
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="font-medium text-foreground">Alasan (wajib)</span>
+        <input
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          maxLength={280}
+          placeholder="Kompensasi gangguan 3 Sep"
+          className="focus-ring rounded-md bg-background px-3 py-2 text-foreground"
+        />
+      </label>
+      <Feedback state={state} />
+      <Actions>
+        <Primary
+          onClick={() => submit('energy-grant')}
+          disabled={state.pending || !validEnergy || !reason.trim()}
+        >
+          Isi energi
+        </Primary>
+        <Primary
+          onClick={() => submit('pool-refill')}
+          disabled={state.pending || !validCredits || !reason.trim()}
+        >
+          Isi stok reward
+        </Primary>
+      </Actions>
+    </Card>
+  )
+}
+
+function Notifications({ publicId, muted }: { publicId: string; muted: boolean }) {
+  const router = useRouter()
+  const [reason, setReason] = useState('')
+  const [state, setState] = useState<ActionState>({ pending: false })
+
+  async function submit() {
+    setState({ pending: true })
+    try {
+      await sendJson(`/api/admin/users/${publicId}`, 'PATCH', {
+        action: muted ? 'notifications-unmute' : 'notifications-mute',
+        reason: reason.trim(),
+      })
+      setReason('')
+      setState({ pending: false })
+      router.refresh()
+    } catch (cause) {
+      setState({ pending: false, error: describe(cause) })
+    }
+  }
+
+  return (
+    <Card
+      title="Pesan ajakan bot"
+      description={
+        muted
+          ? 'User ini menekan /stop, jadi pesan ajakan dimatikan. Kabar penarikan tetap terkirim.'
+          : 'Pesan ajakan menyala. Mematikannya dari sini setara dengan user mengirim /stop.'
+      }
+    >
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="font-medium text-foreground">Alasan (wajib)</span>
+        <input
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          maxLength={280}
+          placeholder={muted ? 'User minta dinyalakan lagi lewat chat' : 'User minta disetop'}
+          className="focus-ring rounded-md bg-background px-3 py-2 text-foreground"
+        />
+      </label>
+      <Feedback state={state} />
+      <Actions>
+        <Primary onClick={submit} disabled={state.pending || !reason.trim()}>
+          {muted ? 'Nyalakan lagi' : 'Setop pesan ajakan'}
+        </Primary>
+      </Actions>
+    </Card>
+  )
+}
+
+function ChannelGate({
+  publicId,
+  channelMember,
+}: {
+  publicId: string
+  channelMember: boolean | null
+}) {
+  const router = useRouter()
+  const [reason, setReason] = useState('')
+  const [state, setState] = useState<ActionState>({ pending: false })
+
+  async function submit() {
+    setState({ pending: true })
+    try {
+      await sendJson(`/api/admin/users/${publicId}`, 'PATCH', {
+        action: 'channel-gate-reset',
+        reason: reason.trim(),
+      })
+      setReason('')
+      setState({ pending: false, notice: 'Cache dihapus. Pemeriksaan berikutnya menanyakan Telegram lagi.' })
+      router.refresh()
+    } catch (cause) {
+      setState({ pending: false, error: describe(cause) })
+    }
+  }
+
+  const label =
+    channelMember === null ? 'belum pernah dicek' : channelMember ? 'anggota' : 'bukan anggota'
+
+  return (
+    <Card
+      title="Gerbang channel"
+      description={`Hasil tersimpan: ${label}. Hasil "anggota" bertahan berjam-jam, jadi user yang keluar channel atau tercatat salah saat Telegram bermasalah butuh reset ini.`}
+    >
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="font-medium text-foreground">Alasan (wajib)</span>
+        <input
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          maxLength={280}
+          placeholder="User lapor tertahan gerbang padahal sudah join"
+          className="focus-ring rounded-md bg-background px-3 py-2 text-foreground"
+        />
+      </label>
+      <Feedback state={state} />
+      <Actions>
+        <Primary onClick={submit} disabled={state.pending || !reason.trim()}>
+          Reset hasil pemeriksaan
         </Primary>
       </Actions>
     </Card>

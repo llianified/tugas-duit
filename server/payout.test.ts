@@ -49,7 +49,7 @@ describe('gating withdrawal', () => {
   })
 
   it('menerapkan cooldown 7 hari sejak pengajuan meskipun ditolak', async () => {
-    const { createPayout, WITHDRAWAL_COOLDOWN_MS } = await import('./payout')
+    const { createPayout, withdrawalCooldownMsForBase } = await import('./payout')
     const { query } = await import('./db')
     const credits = withdrawalMinimumCredits()
     const userId = await makeUser(credits * 2)
@@ -71,7 +71,7 @@ describe('gating withdrawal', () => {
 
     await query('update withdrawals set requested_at=now()-($2::bigint * interval \'1 millisecond\') where id=$1', [
       first.withdrawal.id,
-      WITHDRAWAL_COOLDOWN_MS + 1,
+      withdrawalCooldownMsForBase() + 1,
     ])
     await expect(createPayout(userId, input)).resolves.toHaveProperty('withdrawal')
   })
@@ -310,19 +310,19 @@ describe('WD-11 — syarat hari aktif sebelum penarikan pertama', () => {
   })
 
   it('menolak user yang saldonya cukup tapi belum punya hari aktif', async () => {
-    const { createPayout, REQUIRED_ACTIVE_DAYS } = await import('./payout')
+    const { createPayout, requiredActiveDays } = await import('./payout')
     const userId = await makeUser(withdrawalMinimumCredits(), 5, 0)
 
     await expect(createPayout(userId, input())).rejects.toMatchObject({
       code: 'ACTIVE_DAYS_REQUIRED',
       status: 403,
-      fields: { activeDays: '0', requiredActiveDays: String(REQUIRED_ACTIVE_DAYS) },
+      fields: { activeDays: '0', requiredActiveDays: String(requiredActiveDays()) },
     })
   })
 
   it('masih menolak saat kurang satu hari', async () => {
-    const { createPayout, REQUIRED_ACTIVE_DAYS } = await import('./payout')
-    const userId = await makeUser(withdrawalMinimumCredits(), 5, REQUIRED_ACTIVE_DAYS - 1)
+    const { createPayout, requiredActiveDays } = await import('./payout')
+    const userId = await makeUser(withdrawalMinimumCredits(), 5, requiredActiveDays() - 1)
 
     await expect(createPayout(userId, input())).rejects.toMatchObject({
       code: 'ACTIVE_DAYS_REQUIRED',
@@ -343,7 +343,7 @@ describe('WD-11 — syarat hari aktif sebelum penarikan pertama', () => {
    */
   it('menghitung hari yang tidak berturut-turut', async () => {
     const { query } = await import('./db')
-    const { createPayout, getPayouts, REQUIRED_ACTIVE_DAYS } = await import('./payout')
+    const { createPayout, getPayouts, requiredActiveDays } = await import('./payout')
     const userId = await makeUser(withdrawalMinimumCredits(), 5, 0)
 
     await query(
@@ -357,12 +357,12 @@ describe('WD-11 — syarat hari aktif sebelum penarikan pertama', () => {
        )
        insert into task_completions(user_id,challenge_id,type,difficulty,elapsed_ms,stars,reward,completed_at)
        select $1, id, 'text', 'Easy', 1000, 3, 1, now() - (rn * 2 * interval '1 day') from bernomor`,
-      [userId, REQUIRED_ACTIVE_DAYS],
+      [userId, requiredActiveDays()],
     )
 
     const eligibility = (await getPayouts(userId)).eligibility
-    expect(eligibility.activeDays).toBe(REQUIRED_ACTIVE_DAYS)
-    expect(eligibility.requiredActiveDays).toBe(REQUIRED_ACTIVE_DAYS)
+    expect(eligibility.activeDays).toBe(requiredActiveDays())
+    expect(eligibility.requiredActiveDays).toBe(requiredActiveDays())
     await expect(createPayout(userId, input())).resolves.toHaveProperty('withdrawal')
   })
 

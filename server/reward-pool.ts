@@ -1,5 +1,6 @@
 import type { PoolClient } from 'pg'
 import {
+  applyRewardPoolRefund,
   applyRewardPoolSpend,
   projectRewardPool,
   rewardPoolCapacity,
@@ -115,4 +116,35 @@ export async function spendRewardPool(
     new Date(change.snapshot.updatedAt),
   ])
   return { paid: change.paid, state: { ...change.state, now } }
+}
+
+/**
+ * Mengisi kembali kolam seorang user, dijepit di kapasitasnya. Dipakai panel admin untuk
+ * memulihkan user yang dirugikan gangguan — tanpa ini satu-satunya obat adalah koreksi
+ * saldo, yang mencetak credit alih-alih mengembalikan kesempatan menghasilkannya.
+ *
+ * Bentuknya mengikuti `spendRewardPool`: kapasitas dibaca terpisah, baris `users` dikunci
+ * `for update`, dan jam acuan regen digeser lewat `applyRewardPoolRefund` supaya menit
+ * yang belum genap tidak hangus.
+ */
+export async function refillRewardPool(
+  tx: PoolClient,
+  userId: number,
+  credits: number,
+): Promise<{ before: number; after: number; capacity: number }> {
+  const capacity = await readRewardPoolCapacity(userId, tx)
+  const locked = await tx.query<PoolRow>(`${POOL_SELECT} for update`, [userId])
+  const row = locked.rows[0]
+  if (!row) return { before: 0, after: 0, capacity }
+
+  const now = row.now.getTime()
+  const before = projectRewardPool(snapshotOf(row), capacity, now).current
+  const change = applyRewardPoolRefund(snapshotOf(row), capacity, now, credits)
+
+  await tx.query('update users set reward_pool=$2, reward_pool_updated_at=$3 where id=$1', [
+    userId,
+    change.snapshot.credits,
+    new Date(change.snapshot.updatedAt),
+  ])
+  return { before, after: change.state.current, capacity }
 }

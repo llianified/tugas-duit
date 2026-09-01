@@ -30,6 +30,8 @@ const GROUP_LABEL: Record<EconomyGroup, string> = {
   progression: 'Rank',
   channel: 'Channel',
   premium: 'Premium',
+  mission: 'Misi',
+  feature: 'Fitur',
 }
 
 const GROUP_ORDER: EconomyGroup[] = [
@@ -44,6 +46,8 @@ const GROUP_ORDER: EconomyGroup[] = [
   'progression',
   'channel',
   'premium',
+  'mission',
+  'feature',
 ]
 
 type Draft = Record<EconomyConfigKey, string>

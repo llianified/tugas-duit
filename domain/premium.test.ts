@@ -9,7 +9,7 @@ import {
   premiumPerks,
   premiumPlan,
   premiumPlans,
-  WITHDRAWAL_COOLDOWN_DAYS,
+  baseWithdrawalCooldownDays,
   withdrawalCooldownMs,
 } from './premium'
 import { rewardPoolCapacity } from './reward-pool'
@@ -86,7 +86,7 @@ describe('PREM-2 — premium hanya mempercepat, tidak menaikkan plafon penghasil
 
 describe('PREM-3 — jeda penarikan', () => {
   it('memakai jeda premium hanya untuk yang aktif', () => {
-    expect(withdrawalCooldownMs(false)).toBe(WITHDRAWAL_COOLDOWN_DAYS * 86_400_000)
+    expect(withdrawalCooldownMs(false)).toBe(baseWithdrawalCooldownDays() * 86_400_000)
     expect(withdrawalCooldownMs(true)).toBe(
       DEFAULT_ECONOMY_CONFIG.premiumWithdrawalCooldownDays * 86_400_000,
     )

@@ -35,8 +35,6 @@
   --radius-lg: var(--radius);
   --radius-cta: var(--cta-radius);
   --radius-bubble: 1rem;
-  --shadow-bubble: 0 1px 2px -1.5px var(--shadow-bubble-near),
-    0 3px 6px -3px var(--shadow-bubble-far);
   --ease-out-quart: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -122,8 +120,6 @@
   --star: #eab308;
   --premium: #b45309;
   --scrim: oklch(0 0 0 / 0.28);
-  --shadow-bubble-near: oklch(0 0 0 / 0.07);
-  --shadow-bubble-far: oklch(0 0 0 / 0.05);
   --hero-band: #f1f1f4;
   --hero-curve: 1.5rem;
   --radius: 0.875rem;
@@ -238,13 +234,9 @@
   --premium: #fbbf24;
   --hero-band: #08080b;
   --scrim: oklch(0 0 0 / 0.62);
-  --shadow-bubble-near: oklch(0 0 0 / 0.55);
-  --shadow-bubble-far: oklch(0 0 0 / 0.4);
-  /* Di gelap hairline dibuat lebih redup supaya tidak jadi garis putih keras,
-     dan bayangannya lebih pekat agar tombol tetap terangkat dari latar. */
+  /* Di gelap hairline dibuat lebih redup supaya tidak jadi garis putih keras. */
   --hairline-edge: color-mix(in oklab, white 13%, transparent);
   --hairline-sheen: color-mix(in oklab, white 22%, transparent);
-  --btn-shadow: color-mix(in oklab, black 55%, transparent);
   /* Di gelap token nada sudah terang, jadi dipakai langsung; tint-nya perlu
      sedikit lebih kuat supaya latar chip tetap terbaca di atas #101014. */
   --chip-tint: 18%;
@@ -353,8 +345,7 @@
   .btn-glass {
     box-shadow:
       inset 0 0 0 1px var(--hairline-edge),
-      inset 0 1px 0 var(--hairline-sheen),
-      0 1px 2px var(--btn-shadow);
+      inset 0 1px 0 var(--hairline-sheen);
     transition: box-shadow var(--duration-ui) ease-out;
   }
   .btn-glass:active:not(:disabled) {
@@ -368,8 +359,7 @@
     background-color: var(--card);
     box-shadow:
       inset 0 0 0 1px var(--border),
-      inset 0 1px 0 color-mix(in oklab, var(--hairline-sheen) 40%, transparent),
-      0 1px 2px color-mix(in oklab, var(--btn-shadow) 60%, transparent);
+      inset 0 1px 0 color-mix(in oklab, var(--hairline-sheen) 40%, transparent);
     transition: box-shadow var(--duration-ui) ease-out;
   }
   .btn-glass-quiet:active:not(:disabled) {

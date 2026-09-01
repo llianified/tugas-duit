@@ -478,14 +478,41 @@ tersentuh.
 
 **Berkas baru:** `shared/components/card-rail.tsx`
 
-- [ ] Buat `CardRail` + `CardRailItem` memakai `.rail` / `.rail-item`.
-- [ ] Gunakan `.bleed-x` yang sudah ada agar rail menembus padding halaman
+- [x] Buat `CardRail` + `CardRailItem` memakai `.rail` / `.rail-item`.
+- [x] Gunakan `.bleed-x` yang sudah ada agar rail menembus padding halaman
       dan kartu terpotong di tepi kanan.
-- [ ] Sembunyikan scrollbar, aktifkan scroll-snap, pertahankan gulir dengan
+- [x] Sembunyikan scrollbar, aktifkan scroll-snap, pertahankan gulir dengan
       papan tombol (`overflow-x-auto` sudah memberi ini secara alami —
       pastikan `tabIndex` tidak dirusak).
-- [ ] Sediakan status kosong lewat `empty-state.tsx` yang sudah ada.
-- [ ] Uji pada 384 px: tidak boleh menyebabkan halaman ikut bergulir horizontal.
+- [x] Sediakan status kosong lewat `empty-state.tsx` yang sudah ada.
+- [x] Uji pada 384 px: tidak boleh menyebabkan halaman ikut bergulir horizontal.
+
+**Status:** SELESAI. `CardRail` merender `<ul class="rail no-scrollbar bleed-x">`
+dan `CardRailItem` merender `<li class="rail-item">` — komponennya tidak
+menambah CSS baru, hanya mengunci urutan keempat utilitas Langkah 1 supaya tidak
+pernah dipasang separuh. `role="list"` disetel eksplisit karena `list-style:
+none` dari preflight menghapus semantik daftar di Safari/VoiceOver.
+
+`tabIndex` sengaja tidak disetel sama sekali: `tabIndex={0}` pada wadahnya hanya
+menambah perhentian fokus yang tidak mengumumkan apa pun, dan `tabIndex={-1}`
+akan mematikan gulir bawaan. Status kosong lewat prop `empty` dan dirender
+**tanpa** `.bleed-x`, karena blok terpusat harus tetap di dalam padding halaman;
+`Children.count === 0` juga menganggap kartu bersyarat yang bernilai `null`
+sebagai kosong.
+
+Belum dipasang ke halaman mana pun; pemasangan adalah Langkah 9.
+
+Diverifikasi lewat halaman percobaan sementara (sudah dihapus) pada 384 px:
+`document.scrollWidth === clientWidth === 384` walau `rail.scrollWidth = 676`
+(rail yang bergulir, bukan halaman), tepi kiri rail di `0` dengan kartu pertama
+di `16` (bleed bekerja), kartu ketiga terpotong di tepi kanan, `scrollLeft = 60`
+kembali ke `0` (scroll-snap aktif), `scrollbar-width: none`, padding akhir tetap
+utuh (`scrollLeft` maksimum `292` = `676 − 384`), dan memfokuskan tombol di
+kartu terakhir menggulirkan rail `0 → 292` sendiri (gulir papan tombol utuh).
+Status kosong tampil benar. `tsc --noEmit` bersih, `pnpm lint` bersih,
+`pnpm build` lolos. `git diff --name-only`:
+`shared/components/card-rail.tsx` (baru) + dokumen ini — zona terlarang tidak
+tersentuh.
 
 ---
 

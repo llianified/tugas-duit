@@ -76,11 +76,18 @@ export function LeaderboardView({
       </div>
 
       {surface === 'aktivitas' ? (
-        /* `region-under-brand`, bukan `region-t`: umpan ini blok pertama di bawah baris
-        tab, jadi tidak ada apa pun di atasnya untuk dipisahkan. Garis `region-t` di
-        posisi ini memisahkan konten dari ruang kosong — sama seperti `YourPosition`
-        di tab sebelahnya, yang memakai kelas ini persis karena alasan yang sama. */
-        <div className="region-under-brand">
+        /* `flex flex-1 flex-col`, dan jaraknya dibawa masing-masing cabang di dalam
+        `ActivityFeed` — bukan `region-under-brand` di pembungkus ini. Empty state
+        memusatkan diri lewat `flex-1 justify-center`, jadi pembungkus tanpa tinggi
+        membuatnya mengecil ke tinggi isinya dan menempel ke baris tab, sementara empty
+        state tab Papan — anak langsung `view-min-h` — tetap di tengah. Kelas di sini
+        yang memberi tinggi sisa itu; `region-under-brand` dipindah ke daftar dan
+        kerangkanya, satu-satunya cabang yang memang butuh jarak ke baris tab.
+
+        Catatan `region-under-brand`, bukan `region-t`, tetap berlaku untuk daftarnya:
+        umpan ini blok pertama di bawah baris tab, jadi tidak ada apa pun di atasnya
+        untuk dipisahkan garis. */
+        <div className="flex flex-1 flex-col">
           <ActivityFeed entries={activity} />
         </div>
       ) : entries.length === 0 ? (

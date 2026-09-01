@@ -169,8 +169,16 @@ function MissionMeter({
 }
 
 /**
- * Slot aksi dengan lebar minimum yang sama untuk ketiga statusnya, supaya baris misi
- * yang sudah diambil tidak menggeser kolom baris di atas dan bawahnya.
+ * Slot aksi dengan tinggi dan lebar minimum yang sama untuk ketiga statusnya, supaya
+ * baris misi yang sudah diambil tidak menggeser kolom baris di atas dan bawahnya.
+ *
+ * Status "sudah diambil" TETAP sebuah tombol, hanya `disabled`: bentuk sebelumnya
+ * menukar tombol berbidang (`h-8`, punya padding) dengan seuntai centang tanpa bidang
+ * (`h-7`), jadi tepat pada detik user menekan Ambil barisnya mengempis ~4px dan kolom
+ * meter di seluruh daftar ikut bergeser — gerakan yang datangnya justru dari aksi yang
+ * mestinya terasa selesai. Karena label tetap `+N` dengan kelas yang sama, satu-satunya
+ * yang berubah saat diklaim adalah warna bidang dan bolt yang menjadi centang; lebar
+ * tombolnya identik, jadi tidak ada satu piksel pun yang bergerak.
  */
 function MissionAction({
   mission,
@@ -181,33 +189,46 @@ function MissionAction({
   claiming: boolean
   onClaim: () => void
 }) {
-  const slot = 'flex h-7 min-w-[3.25rem] shrink-0 items-center justify-end gap-1 text-xs'
+  const slot = 'flex h-8 min-w-[3.75rem] shrink-0 items-center justify-end'
+  const box =
+    'btn-label flex h-8 items-center gap-1 rounded-md px-2.5 font-bold tabular-nums'
 
   if (mission.claimed) {
     return (
-      <span className={cn(slot, 'font-medium text-muted-foreground')}>
-        <GlyphCheck className="size-3.5" />
-        <span className="sr-only">Hadiah sudah diambil</span>
-      </span>
+      <div className={slot}>
+        <button
+          type="button"
+          disabled
+          aria-label={`Hadiah misi ${mission.title} sudah diambil`}
+          className={cn(box, 'bg-muted text-muted-foreground')}
+        >
+          <GlyphCheck className="size-3.5" />+{formatCredits(mission.reward)}
+        </button>
+      </div>
     )
   }
 
   if (!mission.done) {
     return (
-      <span className={cn(slot, 'font-medium tabular-nums text-muted-foreground')}>
+      <span
+        className={cn(slot, 'gap-1 text-xs font-medium tabular-nums text-muted-foreground')}
+      >
         <GlyphBolt className="size-3.5" />+{formatCredits(mission.reward)}
       </span>
     )
   }
 
   return (
-    <div className={cn(slot, 'justify-end')}>
+    <div className={slot}>
       <button
         type="button"
         onClick={onClaim}
         disabled={claiming}
         aria-label={`Ambil ${formatCredits(mission.reward)} energi dari misi ${mission.title}`}
-        className="focus-ring transition-ui press-scale-soft btn-glass btn-label flex h-8 items-center gap-1 rounded-md bg-primary px-2.5 font-bold tabular-nums text-primary-foreground"
+        className={cn(
+          box,
+          'focus-ring transition-ui press-scale-soft btn-glass bg-primary text-primary-foreground',
+        )}
       >
         <GlyphBolt className="size-3.5" />
         {claiming ? '…' : `+${formatCredits(mission.reward)}`}

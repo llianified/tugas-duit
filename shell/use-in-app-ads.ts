@@ -4,10 +4,10 @@ import { useEffect } from 'react'
 import { MONETAG_DEFAULT_ZONE_ID, monetagSdkName } from '@/domain/ads'
 import {
   DEFAULT_IN_APP_ADS_SETTINGS,
+  inAppShowParams,
   msUntilInAppWindowReset,
   newInAppSession,
   nextInAppDelayMs,
-  oneShotInAppParams,
   parseInAppSession,
   recordInAppShown,
   rollInAppSession,
@@ -140,8 +140,9 @@ export function useInAppAds({
       try {
         // `type: 'inApp'` wajib dikirim agar impresinya terhitung sebagai InApp
         // Interstitial; `show()` polos membuatnya masuk bucket berhadiah yang CPM-nya
-        // jauh lebih rendah. Bentuk one-shot-nya dijelaskan di `oneShotInAppParams()`.
-        await show(oneShotInAppParams())
+        // jauh lebih rendah. Jadwal yang dikirim sama dengan jadwal yang dipakai
+        // penjadwal di sini, jadi plafonnya tidak bisa terlampaui.
+        await show(inAppShowParams(settings))
       } catch (error) {
         // Reject di sini tidak merugikan siapa pun — tidak ada tiket dan tidak ada credit
         // yang bergantung padanya, beda dengan sisi berhadiah. Cukup dicatat.

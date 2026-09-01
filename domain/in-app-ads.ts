@@ -96,22 +96,15 @@ export function inAppAdsSettings(config: {
  * berhadiah yang CPM-nya jauh lebih rendah (0.83 vs 2.83 di dashboard) — itu sebabnya
  * trafik naik tapi pemasukan jalan di tempat.
  *
- * `inAppSettings` di sini SENGAJA bukan jadwal yang sebenarnya. Jadwal aslinya tetap
- * dipegang `nextInAppDelayMs()` di modul ini, karena penjadwal milik SDK tidak bisa dijeda
- * saat iklan berhadiah sedang jalan (lihat komentar kepala modul). Yang dikirim adalah
- * bentuk "one-shot": satu iklan, tanpa tunda, lalu plafonnya habis.
+ * Yang dikirim adalah jadwal apa adanya — nilai bawaan Monetag (`frequency: 2`,
+ * `capping: 0.1`, `interval: 30`, `timeout: 5`, `everyPage: false`) atau apa pun yang
+ * sedang aktif di config ekonomi. Tidak ada angka sintetis: `inAppSettings` yang dilihat
+ * SDK sama dengan yang dipakai `nextInAppDelayMs()` di sisi kita, jadi kalau penjadwal SDK
+ * ikut jalan, plafonnya identik dan tidak bisa lebih sering daripada jadwal kita sendiri.
  *
- * - `frequency: 1` + `capping: 24` → penjadwal yang tertinggal di dalam SDK sudah kehabisan
- *   kuota begitu iklannya tayang, jadi tidak ada iklan susulan yang nongol di luar kendali.
- *   Jendela panjang dipilih justru supaya kuota itu TIDAK pernah pulih; `capping` kecil
- *   akan menggulung jendelanya dan membangunkan penjadwal itu lagi.
- * - `timeout: 0` → tayang sekarang. Tundanya sudah dihitung di sisi kita.
- * - `interval: 0` → tidak berpengaruh karena kuotanya cuma satu.
- * - `everyPage: true` → sesi milik SDK tidak disimpan lintas halaman, sehingga plafon
- *   one-shot di atas tidak ikut membungkam panggilan kita berikutnya. Plafon lintas
- *   halaman yang sebenarnya dijaga `sessionStorage` di `shell/use-in-app-ads.ts`.
+ * `capping` dikirim dalam JAM (satuan Monetag), bukan menit seperti di config.
  */
-export function oneShotInAppParams(): {
+export function inAppShowParams(settings: InAppAdsSettings): {
   type: 'inApp'
   inAppSettings: {
     frequency: number
@@ -123,7 +116,13 @@ export function oneShotInAppParams(): {
 } {
   return {
     type: 'inApp',
-    inAppSettings: { frequency: 1, capping: 24, interval: 0, timeout: 0, everyPage: true },
+    inAppSettings: {
+      frequency: settings.frequency,
+      capping: settings.cappingHours,
+      interval: settings.intervalSeconds,
+      timeout: settings.timeoutSeconds,
+      everyPage: settings.everyPage,
+    },
   }
 }
 

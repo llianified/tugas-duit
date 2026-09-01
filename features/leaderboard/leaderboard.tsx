@@ -6,11 +6,16 @@ import {
   DataListAmount,
   DataListRow,
 } from '@/shared/components/data-list'
-import { CreditAmount } from '@/shared/components/credit-amount'
 import { EmptyState } from '@/shared/components/empty-state'
 import { ActionButton } from '@/shared/components/action-button'
 import { GlyphCrown, GlyphTrophy } from '@/shared/components/glyph'
-import { SegmentedTabs, type SegmentedTab } from '@/shared/components/segmented-tabs'
+import { RankMedal } from '@/shared/components/rank-medal'
+import {
+  FilterChip,
+  SegmentedTabs,
+  type FilterChipOption,
+  type SegmentedTab,
+} from '@/shared/components/segmented-tabs'
 import { ProfileAvatar } from '@/features/home/profile-avatar'
 import { ActivityFeed } from '@/features/activity/activity-feed'
 import type { ActivityEntry } from '@/features/activity/domain'
@@ -28,6 +33,18 @@ import { formatCredits } from '@/shared/lib/format'
 import type { LeaderboardBoard, LeaderboardEntry } from '@/features/leaderboard/domain'
 
 type BoardSurface = 'papan' | 'aktivitas'
+
+/**
+ * Varian `plain` (Langkah 6), bukan lagi tablist garis-bawah buatan sendiri:
+ * pill-nya sudah dipakai untuk pemilih lain di app ini, dan `SegmentedTabs`
+ * membawa haptic, `aria-controls`, serta pengabaian klik pada tab aktif yang
+ * dulu ditulis ulang di sini. `aria-controls`-nya nyata — kedua cabang di bawah
+ * merender `id` panel yang ditunjuk.
+ */
+const SURFACE_TABS: readonly SegmentedTab<BoardSurface>[] = [
+  { value: 'papan', label: 'Papan' },
+  { value: 'aktivitas', label: 'Aktivitas' },
+]
 
 /**
  * Dua tab tingkat atas, bukan dua item nav. Papan dan umpan aktivitas menjawab
@@ -50,30 +67,14 @@ export function LeaderboardView({
     <div className="view-min-h flex flex-col">
       <PageHeader title={VIEW_TITLE.leaderboard} />
 
-      <div role="tablist" aria-label="Tampilan papan" className="region-under-brand flex gap-5">
-        {(
-          [
-            ['papan', 'Papan'],
-            ['aktivitas', 'Aktivitas'],
-          ] as [BoardSurface, string][]
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            role="tab"
-            aria-selected={surface === key}
-            onClick={() => setSurface(key)}
-            className={cn(
-              'focus-ring transition-ui border-b-2 px-1 pb-2.5 text-[15px] font-bold tracking-tight',
-              surface === key
-                ? 'border-primary text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <SegmentedTabs
+        tabs={SURFACE_TABS}
+        value={surface}
+        onChange={setSurface}
+        ariaLabel="Tampilan papan"
+        variant="plain"
+        className="region-under-brand"
+      />
 
       {surface === 'aktivitas' ? (
         /* `flex flex-1 flex-col`, dan jaraknya dibawa masing-masing cabang di dalam
@@ -87,26 +88,40 @@ export function LeaderboardView({
         Catatan `region-under-brand`, bukan `region-t`, tetap berlaku untuk daftarnya:
         umpan ini blok pertama di bawah baris tab, jadi tidak ada apa pun di atasnya
         untuk dipisahkan garis. */
-        <div className="flex flex-1 flex-col">
+        <div
+          role="tabpanel"
+          id="panel-aktivitas"
+          aria-labelledby="tab-aktivitas"
+          className="flex flex-1 flex-col"
+        >
           <ActivityFeed entries={activity} />
         </div>
-      ) : entries.length === 0 ? (
-        <EmptyState
-          icon={<GlyphTrophy className="glyph-md text-muted-foreground" />}
-          title="Papan masih kosong"
-          description="Belum ada task yang diselesaikan. Task pertama yang tuntas langsung menempati puncak papan."
-        />
       ) : (
-        <>
-          <YourPosition you={you} participants={participants} />
+        /* Pembungkus `flex flex-1 flex-col` di sini mengambil alih peran yang dulu
+        dipegang `view-min-h`: anak-anaknya tetap kolom flex dengan tinggi sisa yang
+        sama, jadi empty state (`flex-1 justify-center`) dan pengganjal `view-trim-b
+        flex-1` di dalam `BoardPanel` berperilaku persis seperti sebelumnya. Ia ada
+        karena `aria-controls` tab Papan butuh satu elemen untuk ditunjuk. */
+        <div role="tabpanel" id="panel-papan" aria-labelledby="tab-papan" className="flex flex-1 flex-col">
+          {entries.length === 0 ? (
+            <EmptyState
+              icon={<GlyphTrophy className="glyph-md text-muted-foreground" />}
+              title="Papan masih kosong"
+              description="Belum ada task yang diselesaikan. Task pertama yang tuntas langsung menempati puncak papan."
+            />
+          ) : (
+            <>
+              <YourPosition you={you} participants={participants} />
 
-          <BoardPanel
-            entries={entries}
-            you={you}
-            participants={participants}
-            premiumMembers={premiumMembers}
-          />
-        </>
+              <BoardPanel
+                entries={entries}
+                you={you}
+                participants={participants}
+                premiumMembers={premiumMembers}
+              />
+            </>
+          )}
+        </div>
       )}
     </div>
   )
@@ -135,7 +150,7 @@ function YourPosition({
 }) {
   if (!you) {
     return (
-      <section aria-label="Posisi kamu" className="region-under-brand">
+      <section aria-label="Posisi kamu" className="region-under-brand task-card">
         <SectionLabel>Posisi kamu</SectionLabel>
         <p className="label-gap-t text-base font-semibold tracking-tight">
           Belum masuk papan
@@ -148,8 +163,10 @@ function YourPosition({
     )
   }
 
+  const rank = getRank(you.taskCount)
+
   return (
-    <section aria-label="Posisi kamu" className="region-under-brand">
+    <section aria-label="Posisi kamu" className="region-under-brand task-card">
       <div className="relative">
         <SectionLabel>
           Posisi kamu
@@ -160,18 +177,36 @@ function YourPosition({
         </SectionLabel>
       </div>
 
-      <CreditAmount
-        prefix="#"
-        value={formatCredits(you.position)}
-        unit={`dari ${formatCredits(participants)} peserta`}
-        size="2xl"
-        tone="neutral"
-        className="label-gap-t"
-      />
+      {/* Barisnya sengaja disusun sama dengan `BoardListItem` — bingkai peringkat,
+      nama, meta, nilai di kanan — karena ini memang baris papan yang sama, cuma
+      diangkat ke kartu. Angka `#` raksasa yang dulu di sini membaca seperti metrik
+      hero, padahal yang dicari user adalah "di mana aku di daftar ini". */}
+      <div className="label-gap-t flex items-center gap-3">
+        <BoardFrame
+          position={you.position}
+          tier={rank.tier}
+          premium={you.premium}
+          photoUrl={you.photoUrl}
+        />
 
-      <p className="stack-gap-t text-sm leading-none tabular-nums text-muted-foreground">
-        {formatCredits(you.credits)} credit · {formatCredits(you.taskCount)} task
-      </p>
+        <div className="min-w-0 flex-1">
+          <p className="flex min-w-0 items-center gap-1.5 text-[15px] font-semibold tracking-tight">
+            <span className="truncate">{you.displayName}</span>
+            {you.premium ? (
+              <GlyphCrown className="size-3.5 shrink-0 text-premium" aria-label="Anggota premium" />
+            ) : null}
+            <MetaBadge tone="primary">Kamu</MetaBadge>
+          </p>
+          {/* Jumlah task tidak ikut di baris ini. Pada 384px kolom nama tinggal ~200px
+          setelah avatar dan nilai, dan "#3 dari 1.284 peserta · 326 task" terpotong di
+          tengah — hitungan task-nya sudah tampil di baris papan user ini juga. */}
+          <p className="mt-0.5 truncate text-[13px] tabular-nums text-muted-foreground">
+            #{formatCredits(you.position)} dari {formatCredits(participants)} peserta
+          </p>
+        </div>
+
+        <DataListAmount value={formatCredits(you.credits)} tone="neutral" />
+      </div>
     </section>
   )
 }
@@ -210,7 +245,7 @@ function BoardPanel({
   const visible = list.slice(0, shown)
   const hasMore = visible.length < list.length
 
-  const tabs: readonly SegmentedTab<BoardTab>[] = [
+  const filters: readonly FilterChipOption<BoardTab>[] = [
     { value: 'all', label: `Semua ${formatCredits(entries.length)}` },
     { value: 'vip', label: `VIP ${formatCredits(vip.length)}` },
   ]
@@ -222,21 +257,25 @@ function BoardPanel({
 
   return (
     <>
-      <SegmentedTabs
-        tabs={tabs}
-        value={tab}
-        onChange={select}
-        ariaLabel="Saringan papan peringkat"
-        className="region-gap-t"
-      />
+      {/* Baris kontrol gaya fomo: saringan di kiri. Sisi kanan — tempat fomo menaruh
+      pemilih rentang waktu — dibiarkan kosong dengan sengaja: papan ini kumulatif,
+      `getLeaderboard` tidak menerima parameter waktu, dan pill "24j / 7h / 30h" yang
+      tidak menyaring apa pun cuma kebohongan berbentuk kontrol. `justify-between`
+      sudah dipasang supaya pemilih itu bisa masuk tanpa menyusun ulang baris ini
+      kalau datanya kelak ada. */}
+      <div className="region-gap-t flex items-center justify-between gap-3">
+        <FilterChip
+          options={filters}
+          value={tab}
+          onChange={select}
+          ariaLabel="Saringan papan peringkat"
+        />
+      </div>
 
-      <div
-        key={tab}
-        role="tabpanel"
-        id={`panel-${tab}`}
-        aria-labelledby={`tab-${tab}`}
-        className="animate-fade-in flex flex-1 flex-col"
-      >
+      {/* Bukan lagi `role="tabpanel"`: pemilihnya kini `<select>`, bukan tablist, jadi
+      `aria-labelledby="tab-…"` akan menunjuk id yang tidak ada. Daftar di dalamnya
+      sudah membawa `<section aria-label>` sendiri lewat `DataList`. */}
+      <div key={tab} className="animate-fade-in flex flex-1 flex-col">
         {tab === 'vip' && vip.length === 0 ? (
           <EmptyState
             icon={<GlyphCrown className="glyph-md text-premium" />}
@@ -294,7 +333,12 @@ function BoardPanel({
 }
 
 /**
- * Bingkai peringkat: lingkaran posisi plus lencana bentuk tier yang menempel di sudutnya.
+ * Bingkai peringkat: penanda posisi plus lencana bentuk tier yang menempel di sudut avatar.
+ *
+ * Tiga teratas memakai `RankMedal` (pita ber-notch, lihat berkasnya untuk alasan
+ * bentuk & warnanya), sisanya lingkaran redam bernomor. Angka biasa milik `RankMedal`
+ * TIDAK dipakai di sini: ia teks tanpa bidang, dan di atas foto profil yang warnanya
+ * tidak bisa ditebak ia hilang. Kontur `halo` mengurus masalah yang sama untuk pita.
  *
  * Tier dibedakan lewat BENTUK (`TierGlyph`), bukan lewat lima warna baru. Lima warna
  * yang harus tetap terbaca di tema terang dan gelap sekaligus akan menambah palet yang
@@ -329,16 +373,25 @@ function BoardFrame({
         glyphClassName="size-5"
       />
 
-      <span
-        aria-hidden="true"
-        className={cn(
-          'absolute -bottom-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1',
-          'text-[10px] font-bold tabular-nums shadow-[0_0_0_1.5px_var(--background)]',
-          MEDAL_CLASS[position] ?? 'bg-muted text-muted-foreground',
-        )}
-      >
-        {formatCredits(position)}
-      </span>
+      {position <= 3 ? (
+        <RankMedal
+          position={position}
+          size="sm"
+          halo="background"
+          className="absolute -bottom-1.5 -left-1"
+        />
+      ) : (
+        <span
+          aria-hidden="true"
+          className={cn(
+            'absolute -bottom-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1',
+            'bg-muted text-[10px] font-bold tabular-nums text-muted-foreground',
+            'shadow-[0_0_0_1.5px_var(--background)]',
+          )}
+        >
+          {formatCredits(position)}
+        </span>
+      )}
 
       <span
         aria-hidden="true"
@@ -368,19 +421,6 @@ function BoardFrame({
  * batas sebelum nama mulai terpotong, dan `prestigeBadges` sudah mengurutkan dari yang
  * paling langka jadi yang terpotong selalu yang paling murah. */
 const BOARD_CHIP_LIMIT = 2
-
-/**
- * Tiga besar dapat warna sendiri — emas, perak, perunggu — bukan warna primary yang
- * sama untuk ketiganya. Podium yang seluruhnya seragam menghapus satu-satunya hal yang
- * membuat posisi 1 berbeda dari posisi 3, padahal jarak antara keduanya justru yang
- * paling diperebutkan. Emas di sini TIDAK bertabrakan dengan emas premium: yang premium
- * hidup di cincin avatar dan mahkota, yang ini di lencana nomor.
- */
-const MEDAL_CLASS: Record<number, string> = {
-  1: 'bg-[#d4a017] text-black',
-  2: 'bg-[#b8bcc4] text-black',
-  3: 'bg-[#b06a3b] text-white',
-}
 
 const CHIP_TONE: Record<PrestigeKey, ChipTone> = {
   founder: 'neutral',

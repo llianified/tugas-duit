@@ -89,6 +89,20 @@ export function RankMedal({
 
   return (
     <span className={cn('relative inline-flex shrink-0', MEDAL_BOX[size], className)}>
+      {/* Pita kontur digambar lebih dulu supaya pita berwarna menimpanya, dan
+          radiusnya sedikit lebih besar agar sudut atasnya tidak menonjol keluar
+          dari lengkung pita utama. */}
+      {halo ? (
+        <span
+          aria-hidden="true"
+          className={cn(
+            'absolute -inset-[1.5px] rounded-t-[0.375rem] rounded-b-[0.1875rem]',
+            '[clip-path:polygon(0_0,100%_0,100%_100%,50%_72%,0_100%)]',
+            HALO_TONE[halo],
+          )}
+        />
+      ) : null}
+
       {/* Celah "V" di sisi bawah dibuat lewat clip-path, bukan dua segitiga
           tambahan: satu elemen lebih murah dan tidak bisa bergeser sendiri saat
           ukurannya diubah. Radius atas tetap berlaku karena clip-path memotong

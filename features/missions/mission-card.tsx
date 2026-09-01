@@ -210,11 +210,16 @@ function MissionAction({
 
   if (!mission.done) {
     return (
-      <span
-        className={cn(slot, 'gap-1 text-xs font-medium tabular-nums text-muted-foreground')}
-      >
-        <GlyphBolt className="size-3.5" />+{formatCredits(mission.reward)}
-      </span>
+      <div className={slot}>
+        <button
+          type="button"
+          disabled
+          aria-label={`Hadiah misi ${mission.title} belum bisa diambil, selesaikan dulu`}
+          className={cn(box, 'btn-glass-quiet text-muted-foreground')}
+        >
+          <GlyphBolt className="size-3.5" />+{formatCredits(mission.reward)}
+        </button>
+      </div>
     )
   }
 

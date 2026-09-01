@@ -42,19 +42,25 @@ export function ChannelBonusCard({
       </p>
 
       <div className="stack-gap-t flex gap-2">
-        {/* Ukuran labelnya mengikuti `ActionButton` (17px, tracking-tight) — bukan
-            15px seperti tile hero — karena tombol ini berdiri sebaris dengan
-            "Klaim bonus" yang memakai komponen itu. Dua ukuran huruf dalam satu
-            baris terbaca sebagai salah satunya lebih penting, padahal sederajat. */}
+        {/* Label tombol di app ini seragam 15px/bold/tracking-tight — "Mulai" di
+            kartu task atasnya, "Tarik dana" & "Riwayat" di tile hero, dan
+            "Buka channel" versi `ChannelGate`. 17px bawaan `ActionButton`
+            dipakai untuk CTA yang berdiri sendiri selebar kartu; di sini dua
+            tombol berbagi satu baris di dalam kartu, jadi keduanya ikut ukuran
+            baris di atasnya supaya tidak terbaca lebih penting dari task-nya. */}
         <a
           href={bonus.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="focus-ring transition-ui press-scale-soft control-h flex flex-1 items-center justify-center gap-2 rounded-cta btn-glass-quiet text-[17px] font-bold tracking-tight text-foreground"
+          className="focus-ring transition-ui press-scale-soft control-h flex flex-1 items-center justify-center gap-2 rounded-cta btn-glass-quiet text-[15px] font-bold tracking-tight text-foreground"
         >
           Buka channel
         </a>
-        <ActionButton className="flex-1" onClick={claim} disabled={claiming}>
+        <ActionButton
+          className="flex-1 text-[15px] font-bold"
+          onClick={claim}
+          disabled={claiming}
+        >
           {claiming ? 'Mengecek…' : 'Klaim bonus'}
         </ActionButton>
       </div>

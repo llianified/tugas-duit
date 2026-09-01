@@ -8,11 +8,11 @@ type TapActionTone = 'primary' | 'neutral'
 
 const TONE_CLASS = {
   primary: [
-    'tap-plate bg-primary text-primary-foreground',
+    'btn-glass bg-primary text-primary-foreground',
     'hover:bg-primary-hover active:bg-primary-active',
   ].join(' '),
   neutral: [
-    'border border-border bg-card text-foreground',
+    'btn-glass-quiet text-foreground',
     'hover:bg-foreground/[0.04] active:bg-foreground/[0.07]',
   ].join(' '),
 } as const
@@ -102,7 +102,7 @@ export function TapActionWaiting({
         'flex w-full items-center rounded-cta text-[15px] font-semibold text-muted-foreground',
         compact ? 'justify-center gap-2 px-3 text-center' : 'gap-3 px-4',
         'control-h',
-        tone === 'neutral' ? 'border border-border' : 'bg-muted',
+        tone === 'neutral' ? 'ring-border' : 'bg-muted',
         className,
       )}
     >

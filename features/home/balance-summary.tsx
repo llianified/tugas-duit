@@ -64,10 +64,9 @@ function HeroActionTile({
       {...props}
       className={cn(
         'focus-ring transition-ui press-scale-soft control-h flex flex-1 items-center justify-center gap-2 rounded-cta px-3',
-        // Same hairline edge as .task-card below: a 1px --border ring instead of
-        // a real border, so both surfaces read as one family. No fill, so the
-        // tiles sit directly on the hero band.
-        'btn-soft text-foreground',
+        // Hairline gelas yang sama dengan tombol lain: ring 1px --border di
+        // dalam, bukan border asli, supaya semua permukaan terbaca satu keluarga.
+        'btn-glass-quiet text-foreground',
       )}
     >
       {icon}

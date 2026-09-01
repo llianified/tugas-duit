@@ -121,7 +121,7 @@ export function ProfileView({
               mengulangnya lagi sebagai fakta inline cuma bikin tiga salinan hal yang sama. */}
           <span
             aria-hidden="true"
-            className="btn-soft absolute -bottom-0.5 -right-0.5 flex size-6 items-center justify-center rounded-full text-foreground"
+            className="btn-glass-quiet absolute -bottom-0.5 -right-0.5 flex size-6 items-center justify-center rounded-full text-foreground"
           >
             <TierGlyph tier={rank.tier} className="size-3.5" />
           </span>

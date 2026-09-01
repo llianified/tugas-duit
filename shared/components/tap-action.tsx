@@ -55,7 +55,10 @@ export function TapAction({
       {icon ? <span className="flex shrink-0 items-center">{icon}</span> : null}
       <span
         className={cn(
-          'truncate text-[15px] font-bold tracking-tight',
+          /* Tombol ini yang jadi kiblat ukuran label seluruh app; angkanya kini
+             hidup di `--btn-label` lewat `.btn-label` supaya tombol lain
+             mengikutinya dari satu tempat, bukan dari salinan 15px. */
+          'btn-label truncate font-bold tracking-tight',
           compact ? 'min-w-0' : 'min-w-0 flex-1',
         )}
       >
@@ -99,7 +102,7 @@ export function TapActionWaiting({
       role="status"
       aria-live="polite"
       className={cn(
-        'flex w-full items-center rounded-cta text-[15px] font-semibold text-muted-foreground',
+        'btn-label flex w-full items-center rounded-cta font-semibold text-muted-foreground',
         compact ? 'justify-center gap-2 px-3 text-center' : 'gap-3 px-4',
         'control-h',
         tone === 'neutral' ? 'ring-border' : 'bg-muted',

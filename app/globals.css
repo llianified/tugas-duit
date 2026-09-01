@@ -128,8 +128,19 @@
   --scrim: oklch(0 0 0 / 0.62);
   --hero-band: #08080b;
   --hero-curve: 1.5rem;
-  --radius: 0.875rem;
-  --cta-radius: 1.25rem;
+  /* Sudut kartu & kontrol untuk SELURUH app.
+     Nilainya dulu hidup di `.home-skin` — beranda memangkas sudutnya supaya
+     kapsul 1.25rem tidak berdiri di dalam karcis yang sudutnya digunting lurus —
+     dan sisa app masih memakai 0.875rem/1.25rem. Dua keluarga bentuk di satu
+     aplikasi, dan yang terlihat justru bahwa halaman lain "belum diurus". Jadi
+     bentuk beranda yang menang dan pindah ke sini.
+
+     Yang TIDAK ikut ke sini, dan itu disengaja: `--radius-bubble` dan radius
+     island yang diturunkan dari `--brand-pill-h`. Island atas disamakan dengan
+     komponen fullscreen Telegram, bukan dengan kartu — memaksanya ikut token ini
+     akan memutus kesamaan yang justru sedang dijaga. */
+  --radius: 0.5rem;
+  --cta-radius: 0.625rem;
   /* Gaya tombol fomo: tombol solid biasa, bukan pelat neobrutal. Yang membuatnya
      terasa "kaca" hanyalah hairline 1px di setengah atas tepinya — `inset`,
      tanpa cincin penuh dan tanpa bayangan yang jatuh ke luar. */
@@ -208,7 +219,18 @@
   --qr-plate: #ffffff;
   --duration-ui: 150ms;
   --control-h: 3.25rem;
+  /* Tombol yang berada di bawah tombol lain dalam hirarki. Yang mengecil
+     KOTAKNYA, bukan labelnya — lihat `--btn-label`. */
+  --control-h-sm: 2.5rem;
   --cta-h: var(--control-h);
+  /* Satu ukuran label untuk SEMUA tombol, kiblatnya "Mulai" di karcis beranda.
+     Sebelum ini `ActionButton` memakai 17px sementara `TapAction` 15px, jadi dua
+     tombol yang berdampingan di kartu yang sama terbaca beda tanpa alasan yang
+     bisa dijelaskan ke user. Hirarki antar tombol dinyatakan lewat bidang dan
+     tinggi kotaknya (`--control-h-sm`), bukan lewat ukuran hurufnya: label yang
+     mengecil membuat tombol lebih SULIT dibaca, padahal yang dimaksud cuma
+     "yang ini bukan aksi utama". */
+  --btn-label: 0.9375rem;
   --meter-h: 0.1875rem;
   --panel-gap: 0.75rem;
   --surface-p: 1rem;
@@ -321,8 +343,20 @@
   .control-h {
     height: var(--control-h);
   }
+  .control-h-sm {
+    height: var(--control-h-sm);
+  }
   .cta-h {
     height: var(--cta-h);
+  }
+  /* Label tombol. Dipakai oleh SETIAP tombol berlabel di app — `ActionButton`,
+     `TapAction`, dan anchor yang berperan sebagai tombol — supaya ukurannya tak
+     bisa lagi menyimpang satu per satu di className pemakainya.
+     Hanya UKURAN: berat huruf dibiarkan milik masing-masing varian (`primary`
+     lebih tebal dari `ghost`), jadi tak ada dua aturan yang berebut satu
+     properti di layer yang sama. */
+  .btn-label {
+    font-size: var(--btn-label);
   }
   .meter-h {
     height: var(--meter-h);
@@ -1443,14 +1477,9 @@
   --ticket-notch: 0.8rem;
   --ticket-edge: color-mix(in oklab, var(--primary) 42%, var(--border));
   --perf: color-mix(in oklab, var(--foreground) 26%, transparent);
-  /* Sudut kontrol ikut turun supaya kapsul 1.25rem tidak lagi berdiri di dalam
-     kartu yang sudutnya justru dipangkas lurus. Satu token, dan seluruh turunan
-     beranda yang memakai `rounded-cta` ikut — dialog di-portal ke luar pohon
-     ini, jadi bentuk aslinya di sana tidak berubah. */
-  --cta-radius: 0.625rem;
-  /* Kartu bonus & premium di bawah karcis ikut mengeras sudutnya. Dibiarkan
-     0.875rem, keduanya terbaca dari keluarga bentuk yang lain sama sekali. */
-  --radius: 0.5rem;
+  /* `--cta-radius` dan `--radius` dulu ditimpa di sini. Keduanya sudah pindah ke
+     `:root`: bentuk yang lahir di beranda ini sekarang bentuk seluruh app, jadi
+     menuliskannya lagi di sini hanya menyisakan dua sumber untuk satu nilai. */
 }
 
 /* Label kecil huruf besar berjarak — nada "cetakan mesin", dipakai untuk
@@ -1587,6 +1616,111 @@
 .home-skin .stat-tile:first-child {
   padding-left: 0;
   border-left: 0;
+}
+
+/* ============================================================================
+   Kartu bonus channel: "kupon sobek"
+   ============================================================================
+   Kartu ini sebelumnya pelat `--muted` rata — bentuk yang sama dengan kerangka
+   memuat dan dengan daftar misi, jadi satu-satunya hal di beranda yang bisa
+   HILANG kalau tidak diklaim justru yang paling tidak menuntut dilihat.
+
+   Bentuknya diambil dari benda yang persis begitu cara kerjanya: kupon dengan
+   stub yang disobek. Sobekannya nyata — garis putus-putus vertikal dengan dua
+   lubang yang menembus tepi kartu — dan stub-nya berisi satu kata dicetak
+   tegak. Itu satu-satunya elemen yang berani di sini; isi kanannya dibiarkan
+   tenang supaya angka dan dua tombolnya tetap yang pertama terbaca.
+
+   Tidak di-scope ke `.home-skin`: yang dibentuk adalah kartunya sendiri, bukan
+   kulit halaman yang menumpanginya.
+   ========================================================================== */
+.bonus-coupon {
+  --coupon-stub-w: 2.375rem;
+  --coupon-edge: color-mix(in oklab, var(--primary) 40%, var(--border));
+  --coupon-perf: color-mix(in oklab, var(--primary) 55%, var(--foreground) 18%);
+  --coupon-hole: 0.625rem;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border-radius: var(--radius);
+  /* Tepi 1px dibuat dengan cara yang sama seperti karcis: elemen luar berisi
+     warna garis, lapisan `::before` sejauh 1px di dalamnya berisi bidangnya.
+     Konsisten dengan `.task-card` di atasnya, dan tahan terhadap `overflow`. */
+  background-color: var(--coupon-edge);
+}
+.bonus-coupon::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  border-radius: calc(var(--radius) - 1px);
+  /* Cahaya datang dari sudut kanan atas, tempat pesawat kertasnya lewat. */
+  background-image:
+    radial-gradient(
+      120% 130% at 100% 0%,
+      color-mix(in oklab, var(--primary) 15%, transparent),
+      transparent 62%
+    ),
+    linear-gradient(180deg, var(--card), var(--card));
+}
+
+/* Stub kiri: bidang bertint, teks tegak, dan tepi kanan yang memang sobekan. */
+.bonus-coupon-stub {
+  position: relative;
+  flex: none;
+  width: var(--coupon-stub-w);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: color-mix(in oklab, var(--primary) 13%, transparent);
+  border-right: 1px dashed var(--coupon-perf);
+}
+/* Dua lubang sobek. Letaknya MENEMBUS tepi kartu — separuhnya terpotong oleh
+   `overflow: hidden` di induknya, jadi yang terlihat setengah lingkaran seperti
+   lubang yang benar-benar dilubangi di kertasnya, bukan titik yang ditempel. */
+.bonus-coupon-stub::before,
+.bonus-coupon-stub::after {
+  content: '';
+  position: absolute;
+  right: calc(var(--coupon-hole) / -2);
+  width: var(--coupon-hole);
+  height: var(--coupon-hole);
+  border-radius: 9999px;
+  background-color: var(--background);
+}
+.bonus-coupon-stub::before {
+  top: calc(var(--coupon-hole) / -2);
+}
+.bonus-coupon-stub::after {
+  bottom: calc(var(--coupon-hole) / -2);
+}
+.bonus-coupon-stub-label {
+  writing-mode: vertical-rl;
+  rotate: 180deg;
+  font-family: var(--font-display);
+  font-size: 0.625rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  /* `--primary` sebagai teks 10px di atas bidang gelap tidak lolos kontras;
+     nada terangnya sudah ada tokennya sejak chip. */
+  color: var(--chip-fg-primary);
+}
+
+/* Pesawat kertas Telegram, dibesarkan dan dibiarkan keluar dari tepi kanan atas.
+   Motif, bukan bentuk hias: ia benda yang sama dengan yang ada di tombolnya. */
+.bonus-coupon-plane {
+  position: absolute;
+  top: -0.75rem;
+  right: -0.5rem;
+  width: 6.5rem;
+  height: 6.5rem;
+  rotate: 8deg;
+  color: color-mix(in oklab, var(--primary) 30%, transparent);
+  pointer-events: none;
 }
 
 /* --- Transaksi: baris buku kas -------------------------------------------- */

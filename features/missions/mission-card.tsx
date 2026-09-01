@@ -200,7 +200,7 @@ function MissionAction({
         onClick={onClaim}
         disabled={claiming}
         aria-label={`Ambil ${formatCredits(mission.reward)} energi dari misi ${mission.title}`}
-        className="focus-ring transition-ui press-scale-soft btn-glass flex h-7 items-center gap-1 rounded-md bg-primary px-2.5 text-xs font-semibold tabular-nums text-primary-foreground"
+        className="focus-ring transition-ui press-scale-soft btn-glass btn-label flex h-8 items-center gap-1 rounded-md bg-primary px-2.5 font-bold tabular-nums text-primary-foreground"
       >
         <GlyphBolt className="size-3.5" />
         {claiming ? '…' : `+${formatCredits(mission.reward)}`}

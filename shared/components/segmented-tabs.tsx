@@ -58,10 +58,7 @@ export function SegmentedTabs<T extends string>({
               onChange(tab.value)
             }}
             className={cn(
-              'focus-ring transition-ui text-[13px] font-bold tracking-tight',
-              plain
-                ? 'rounded-full px-2.5 py-1.5'
-                : 'flex-1 rounded-md px-3 py-2',
+              'focus-ring transition-ui flex-1 rounded-md px-3 py-2 text-[13px] font-bold tracking-tight',
               active
                 ? 'btn-glass-quiet text-foreground'
                 : 'text-muted-foreground hover:text-foreground',

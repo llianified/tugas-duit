@@ -1,7 +1,8 @@
 'use client'
 
+import type { CSSProperties } from 'react'
 import { creditsToRupiah } from '@/domain/economy'
-import { useChannelBonus } from '@/features/channel/use-channel-bonus'
+import { COUPON_TEAR_MS, useChannelBonus } from '@/features/channel/use-channel-bonus'
 import { ActionButton } from '@/shared/components/action-button'
 import { GlyphTelegram } from '@/shared/components/glyph'
 import type { ChannelBonusState } from '@/shell/session-api'
@@ -35,13 +36,15 @@ export function ChannelBonusCard({
   return (
     <section
       aria-label="Bonus join channel"
-      className={`bonus-coupon${torn ? ' bonus-coupon-tearing' : ''}`}
+      className="bonus-coupon"
+      data-tearing={torn ? 'true' : undefined}
+      style={{ '--tear-ms': `${COUPON_TEAR_MS}ms` } as CSSProperties}
     >
-      <div className="bonus-coupon-stub" aria-hidden="true">
+      <div className="bonus-coupon-part bonus-coupon-stub" aria-hidden="true">
         <span className="bonus-coupon-stub-label">Bonus</span>
       </div>
 
-      <div className="bonus-coupon-body">
+      <div className="bonus-coupon-part bonus-coupon-body">
         {/* `GlyphSvg` sudah menyetel `aria-hidden` sendiri, jadi tidak diulang. */}
         <GlyphTelegram className="bonus-coupon-plane" />
 
@@ -87,6 +90,11 @@ export function ChannelBonusCard({
           </ActionButton>
         </div>
       </div>
+
+      {/* Garis perforasinya elemen sendiri, ditaruh paling akhir supaya ia
+          berdiri di atas kedua bagian kupon — dan supaya ia bisa putus lebih
+          dulu saat disobek, bukan ikut terbang bersama salah satu bagian. */}
+      <div className="bonus-coupon-perf" aria-hidden="true" />
     </section>
   )
 }

@@ -7,22 +7,23 @@ import { claimChannelBonus, type ChannelBonusState } from '@/shell/session-api'
 import { useToast } from '@/shell/toast'
 
 /**
- * Panjang sobekan kupon, dikunci ke `.bonus-coupon-tearing` di globals.css:
- * 520ms lepasnya stub + 220ms kepergian kartunya yang mulai di 470ms.
+ * Panjang sobekan kupon, dan satu-satunya tempat angkanya ditulis.
  *
- * Angka ini hidup di dua tempat karena memang dua hal yang berbeda — CSS yang
- * menggambar, dan JS yang menahan penyegaran sesi supaya gambarnya selesai.
- * Kalau salah satu diubah, yang lain ikut.
+ * Sebelumnya nilainya (690ms) harus dicocokkan dengan tangan ke tiga durasi
+ * terpisah di CSS, dan mengubah salah satunya diam-diam memotong yang lain.
+ * Sekarang kartunya memasang angka ini sebagai `--tear-ms` — CSS yang
+ * menggambar dan JS yang menahan penyegaran sesi membaca sumber yang sama,
+ * persis seperti `TEAR_MS` di karcis task.
  */
-const TEAR_MS = 690
+export const COUPON_TEAR_MS = 520
 
 /** Versi tanpa gerak: yang tersisa hanya fade 200ms, jadi jedanya juga pendek. */
 const TEAR_REDUCED_MS = 200
 
 function tearDuration() {
-  if (typeof window === 'undefined') return TEAR_MS
+  if (typeof window === 'undefined') return COUPON_TEAR_MS
   const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  return reduced ? TEAR_REDUCED_MS : TEAR_MS
+  return reduced ? TEAR_REDUCED_MS : COUPON_TEAR_MS
 }
 
 function sleep(ms: number) {
@@ -86,7 +87,7 @@ export function useChannelBonus({ onClaimed }: { onClaimed: () => Promise<unknow
     // dari Beranda. Dipanggil lebih awal, sobekannya tidak pernah terlihat.
     //
     // `claiming` juga tidak pernah dikembalikan ke `false` di jalur ini: selama
-    // 700ms itu tombolnya harus tetap mati, dan sesudahnya kartunya sudah tidak
+    // sobekannya tombolnya harus tetap mati, dan sesudahnya kartunya sudah tidak
     // ada untuk dibaca ulang.
     try {
       await onClaimed()

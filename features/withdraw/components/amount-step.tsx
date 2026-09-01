@@ -113,7 +113,12 @@ function AmountPresets({
             aria-checked={selected}
             onClick={() => onSelect(String(credits))}
             className={cn(
-              'focus-ring focus-ring-strong transition-ui control-h rounded-full px-3 text-xs font-medium tabular-nums',
+              /* Dulu label 12px di dalam kotak setinggi 3.25rem — huruf terkecil
+                 di app justru di tombol yang paling besar. Sekarang kebalikannya:
+                 labelnya ikut `--btn-label` seperti tombol lain, dan derajatnya
+                 yang lebih rendah dari "Lanjut" dinyatakan lewat kotak yang
+                 memang lebih pendek. */
+              'focus-ring focus-ring-strong transition-ui btn-label control-h-sm rounded-full px-3.5 font-semibold tabular-nums',
               selected
                 ? 'bg-primary/15 text-primary'
                 : 'btn-glass-quiet text-foreground hover:bg-muted-foreground/15',

@@ -347,21 +347,39 @@ pada 384 px di tema terang & gelap tanpa overflow horizontal.
 
 **Berkas:** `shared/components/credit-amount.tsx`, `features/home/balance-summary.tsx`
 
-- [ ] Tambah ukuran/mode baru pada `CreditAmount` (mis. `size="display"`)
+- [x] Tambah ukuran/mode baru pada `CreditAmount` (mis. `size="display"`)
       yang: memakai `.num-display`, membelah hasil format sehingga
       **bagian desimal dan simbol satuan** dirender dalam `span` terpisah
       ber-`text-muted-foreground` dan ~60% ukuran.
-- [ ] Pembelahan harus aman untuk format Indonesia (`Rp1.234,56` — pemisah
+- [x] Pembelahan harus aman untuk format Indonesia (`Rp1.234,56` — pemisah
       ribuan titik, desimal koma). **Jangan** mengasumsikan format Inggris.
       Gunakan helper yang ada di `shared/lib/format.ts`; jika perlu, tambahkan
       helper pembelah di sana dan uji lewat `format.test.ts`.
-- [ ] Jika nilainya bulat tanpa desimal, jangan paksa memunculkan `,00` —
+- [x] Jika nilainya bulat tanpa desimal, jangan paksa memunculkan `,00` —
       cukup redam simbol satuan.
-- [ ] Terapkan di `balance-summary.tsx`, dengan baris pendukung kecil & redam
+- [x] Terapkan di `balance-summary.tsx`, dengan baris pendukung kecil & redam
       di bawahnya (mengikuti pola `+$0 24h` fomo, tapi berbahasa Indonesia,
       mis. "+Rp0 hari ini").
-- [ ] Pastikan `use-count-up.ts` masih bekerja dengan mode baru ini.
-- [ ] Mode/ukuran lama **tidak boleh berubah perilakunya**.
+- [x] Pastikan `use-count-up.ts` masih bekerja dengan mode baru ini.
+- [x] Mode/ukuran lama **tidak boleh berubah perilakunya**.
+
+**Status:** SELESAI. `CreditAmount` dapat `size="display"` yang memakai
+`.num-display` dan membelah nilai lewat `splitAmountParts()` baru di
+`shared/lib/format.ts` — pembelahan bekerja pada string hasil format `id-ID`
+(bukan pada angka), sehingga titik ribuan tidak pernah salah dibaca sebagai
+desimal; bilangan bulat tidak mendapat `,00` paksaan karena bagian `trail`
+cuma kosong. Ukuran `sm` / `xl` / `2xl` tidak disentuh.
+
+Baris pendukung di `balance-summary.tsx` sekarang "Rp900 · +9 hari ini".
+Angka "hari ini" dijumlahkan dari `history` yang sudah ada di `home.tsx` (tidak
+ada sumber data baru) dan memakai `isSameWibDay()` — juga baru di `format.ts` —
+supaya definisi "hari ini" sama dengan label waktu riwayat, bukan mengikuti
+zona perangkat. Nada hijau hanya muncul kalau tambahannya benar-benar > 0.
+
+Diverifikasi: `pnpm vitest run` 382 tes lolos (termasuk 5 tes baru untuk
+`splitAmountParts`), `tsc --noEmit` bersih, dan warna hasil render diperiksa
+langsung di browser pada 384 px tema gelap — bagian utama `#f4f4f5`, satuan
+`#a1a1aa` pada 0.6em.
 
 ---
 

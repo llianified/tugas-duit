@@ -8,7 +8,6 @@ import { DataList } from '@/shared/components/data-list'
 import { EmptyState } from '@/shared/components/empty-state'
 import { GlyphBolt } from '@/shared/components/glyph'
 import { MetaBadge } from '@/shared/components/meta-badge'
-import { PinnedNotice, type PinnedNoticeContent } from '@/shared/components/pinned-notice'
 import { formatCredits, formatHistoryTime, formatRupiah } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 
@@ -19,57 +18,38 @@ import { cn } from '@/shared/lib/utils'
  * pusat itu ke bawah, membuat posisinya beda dari empty state tab Papan yang duduk
  * langsung sebagai anak `view-min-h`. Daftar dan kerangkanya tetap butuh jaraknya.
  *
- * `notice` adalah pengumuman yang disematkan di pucuk umpan. Sengaja opsional dan
- * belum ada yang mengisinya: satu-satunya sumber pengumuman di repo ini adalah
- * tabel `broadcasts`, yang isinya pesan Telegram bersegmen — lihat catatan
- * Langkah 10 di `docs/rencana-gaya-fomo.md`. Tidak ada teks pengumuman yang
- * ditanam di sini sebagai pengganti.
+ * Umpan ini tidak punya slot pengumuman tersemat. Satu-satunya sumber pengumuman
+ * di repo ini adalah tabel `broadcasts`, yang isinya pesan Telegram bersegmen dan
+ * tidak layak disiarkan ke semua orang — lihat catatan Langkah 11 di
+ * `docs/rencana-gaya-fomo.md`.
  */
-export function ActivityFeed({
-  entries,
-  notice,
-}: {
-  entries: ActivityEntry[] | null
-  notice?: PinnedNoticeContent | null
-}) {
-  const pinned =
-    notice != null ? <PinnedNotice {...notice} className="region-under-brand" /> : null
-
+export function ActivityFeed({ entries }: { entries: ActivityEntry[] | null }) {
   if (entries === null) {
     return (
-      <>
-        {pinned}
-        <div className="region-under-brand">
-          <DataListSkeleton marker />
-        </div>
-      </>
+      <div className="region-under-brand">
+        <DataListSkeleton marker />
+      </div>
     )
   }
 
   if (entries.length === 0) {
     return (
-      <>
-        {pinned}
-        <EmptyState
-          icon={<GlyphBolt className="size-5" />}
-          title="Belum ada aktivitas"
-          description="Task bintang tiga dan penarikan yang sudah dibayar bakal muncul di sini."
-        />
-      </>
+      <EmptyState
+        icon={<GlyphBolt className="size-5" />}
+        title="Belum ada aktivitas"
+        description="Task bintang tiga dan penarikan yang sudah dibayar bakal muncul di sini."
+      />
     )
   }
 
   return (
-    <>
-      {pinned}
-      <div className="region-under-brand">
-        <DataList label="Aktivitas terbaru" ariaLabel="Aktivitas semua pemain">
-          {entries.map((entry, index) => (
-            <FeedItem key={entry.id} entry={entry} showDivider={index < entries.length - 1} />
-          ))}
-        </DataList>
-      </div>
-    </>
+    <div className="region-under-brand">
+      <DataList label="Aktivitas terbaru" ariaLabel="Aktivitas semua pemain">
+        {entries.map((entry, index) => (
+          <FeedItem key={entry.id} entry={entry} showDivider={index < entries.length - 1} />
+        ))}
+      </DataList>
+    </div>
   )
 }
 

@@ -2,7 +2,6 @@
 
 import { MissionCard } from '@/features/missions/mission-card'
 import { PageHeader } from '@/shared/components/page-header'
-import { SectionLabel } from '@/shared/components/section-label'
 import { VIEW_TITLE } from '@/navigation/app-view'
 
 /**
@@ -31,8 +30,8 @@ export function MissionsView({
       <PageHeader title={VIEW_TITLE.missions} />
 
       <section aria-label="Cara kerja misi" className="region-under-brand">
-        <SectionLabel as="h2">Cara kerjanya</SectionLabel>
-        <p className="label-gap-t text-sm leading-relaxed text-muted-foreground text-pretty">
+        <h2 className="text-base font-semibold tracking-tight">Cara kerjanya</h2>
+        <p className="stack-gap-t text-sm leading-relaxed text-muted-foreground text-pretty">
           Progres misi kebaca sendiri dari task yang kamu kerjakan — nggak ada yang perlu
           diaktifkan dulu. Begitu targetnya kena, energinya tinggal diambil di daftar bawah.
         </p>

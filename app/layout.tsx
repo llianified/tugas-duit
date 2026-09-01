@@ -6,7 +6,6 @@ import { Geist, Plus_Jakarta_Sans } from 'next/font/google'
 import Script from 'next/script'
 import { MONETAG_DEFAULT_ZONE_ID, monetagSdkName } from '@/domain/ads'
 import { ADS_HINT_INIT_SCRIPT } from '@/shell/ads-hint'
-import { THEME_INIT_SCRIPT } from '@/shell/theme-init'
 import './globals.css'
 
 const geistSans = Geist({
@@ -34,11 +33,10 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'light dark',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#fafafa' },
-    { media: '(prefers-color-scheme: dark)', color: '#101014' },
-  ],
+  // Gelap-saja: tidak ada toggle dan tidak ada varian terang, jadi `colorScheme`
+  // dikunci supaya kontrol bawaan browser (scrollbar, form) ikut gelap.
+  colorScheme: 'dark',
+  themeColor: '#101014',
   width: 'device-width',
   initialScale: 1,
 }
@@ -60,7 +58,6 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: ADS_HINT_INIT_SCRIPT }} />
       </head>
       <body className="antialiased font-sans">

@@ -1,20 +1,11 @@
 import type { ReactNode } from 'react'
 
-export function BrandBand({
-  children,
-  control,
-}: {
-  children?: ReactNode
-  control?: ReactNode
-}) {
-  if (!children && !control) return null
+export function BrandBand({ children }: { children?: ReactNode }) {
+  if (!children) return null
 
   return (
     <div className="brand-band">
-      <div className="brand-band-row">
-        {children}
-        {control}
-      </div>
+      <div className="brand-band-row">{children}</div>
     </div>
   )
 }

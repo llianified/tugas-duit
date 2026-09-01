@@ -10,28 +10,23 @@ import { ProgressionBadges } from '@/features/home/progression-badges'
 import { NavPill } from '@/navigation/nav-pill'
 import { AppFrame } from '@/shell/app-frame'
 import { AppViewRouter } from '@/shell/app-view-router'
-import { ThemeProvider, useTheme } from '@/shell/theme'
 import { ToastProvider, useToast } from '@/shell/toast'
-import { useTelegramChromeColor, useTelegramViewport } from '@/shell/telegram-viewport'
+import { useTelegramViewport } from '@/shell/telegram-viewport'
 import { inAppZoneId, useInAppAds } from '@/shell/use-in-app-ads'
 import { useRewardSession } from '@/shell/use-reward-session'
 
 export function AppShell() {
   return (
     <MotionConfig reducedMotion="user">
-      <ThemeProvider>
-        <ToastProvider>
-          <AppShellInner />
-        </ToastProvider>
-      </ThemeProvider>
+      <ToastProvider>
+        <AppShellInner />
+      </ToastProvider>
     </MotionConfig>
   )
 }
 
 function AppShellInner() {
   useTelegramViewport()
-  const { resolved: resolvedTheme } = useTheme()
-  useTelegramChromeColor(resolvedTheme)
   const showError = useToast()
   const session = useRewardSession({ onError: showError })
   const [progressionPanelOpen, setProgressionPanelOpen] = useState(false)
@@ -112,8 +107,6 @@ function AppShellInner() {
 
   const navVisible = shellReady && !channelBlocked && effectiveView !== 'captcha'
 
-  const themeToggleVisible = shellReady || session.sessionFailed || session.unauthenticated
-
   const viewKey = session.loading
     ? 'loading'
     : session.sessionFailed
@@ -142,8 +135,6 @@ function AppShellInner() {
     <AppFrame
       viewKey={viewKey}
       direction={depthTracker.direction}
-      showThemeToggle={themeToggleVisible}
-      hideThemeToggle={progressionPanelOpen || effectiveView === 'captcha'}
       heroBand={session.loading || (!channelBlocked && !activeChallenge && effectiveView === 'home')}
       badges={
         badgesVisible ? (

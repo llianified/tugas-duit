@@ -563,27 +563,39 @@ berisi hex mentah di `features/leaderboard/leaderboard.tsx` sengaja dibiarkan
 untuk sementara — ia baru boleh dicabut saat `RankMedal` menggantikannya di
 Langkah 9, bukan sekarang.
 
+**Sudah dilakukan di Langkah 9:** `MEDAL_CLASS` dicabut, dan prop `halo` yang
+tertinggal tanpa render di langkah ini ikut diperbaiki. Lihat BAB 4.
+
 ---
 
 ### Langkah 9 — Halaman Peringkat
 
 **Berkas:** `features/leaderboard/leaderboard.tsx`
 
-- [ ] Ubah blok "posisi kamu" menjadi **kartu tersorot**: `bg-card`, radius
+- [x] Ubah blok "posisi kamu" menjadi **kartu tersorot**: `bg-card`, radius
       besar, avatar + nama + `@handle • Kamu` + nilai di kanan.
-- [ ] Pakai varian segmented `plain` untuk rentang waktu, dan chip dropdown
+      → Pakai `.task-card` (Langkah 1) yang sudah tepat `bg-card` + radius besar.
+      `@handle` **dilewati**: tidak ada kolomnya di `LeaderboardEntry`. Lihat BAB 4.
+- [x] Pakai varian segmented `plain` untuk rentang waktu, dan chip dropdown
       untuk filter di kiri (mengikuti tata letak fomo: filter kiri, waktu kanan).
-- [ ] Terapkan `RankMedal` untuk 3 teratas.
-- [ ] Terapkan `AvatarStack` pada baris peringkat bila datanya tersedia; jika
+      → `FilterChip` untuk Semua/VIP; `plain` dipakai untuk tab Papan/Aktivitas
+      karena papan ini tidak punya rentang waktu. Lihat BAB 4.
+- [x] Terapkan `RankMedal` untuk 3 teratas.
+- [x] Terapkan `AvatarStack` pada baris peringkat bila datanya tersedia; jika
       tidak ada data lencana/avatar pendukung, **jangan** mengarang data —
-      lewati saja bagian ini dan catat di BAB 4.
-- [ ] Terapkan `CardRail` untuk seksi ringkasan di atas (padanan "Clans"),
+      lewati saja bagian ini dan catat di BAB 4. → **Dilewati**, tidak ada datanya.
+- [x] Terapkan `CardRail` untuk seksi ringkasan di atas (padanan "Clans"),
       **hanya jika** sudah ada data nyata untuk itu. Kalau belum ada,
-      lewati dan catat.
-- [ ] Perhatikan komentar tentang keterbatasan lebar 384 px yang sudah ada di
+      lewati dan catat. → **Dilewati**, tidak ada padanan "Clans" di app ini.
+- [x] Perhatikan komentar tentang keterbatasan lebar 384 px yang sudah ada di
       berkas ini — jangan menambah tekanan lebar.
-- [ ] Jangan mengubah `features/leaderboard/domain.ts` atau `availability.ts`
+- [x] Jangan mengubah `features/leaderboard/domain.ts` atau `availability.ts`
       kecuali benar-benar perlu; ini pekerjaan presentasi.
+      → Keduanya tidak disentuh.
+
+Diperiksa di peramban pada 384px: kartu posisi, pita medali 1/2/3 dengan kontur
+`halo`, chip `Semua 6` → `VIP 2`, perpindahan tab Papan ↔ Aktivitas, dan kedua
+empty state (papan kosong & aktivitas kosong) masih terpusat. `tsc --noEmit` bersih.
 
 ---
 
@@ -633,7 +645,25 @@ Diisi oleh agent selama pengerjaan. Ini penting untuk serah-terima antar agent.
 
 ### Yang dilewati dan alasannya
 
-- _(belum ada)_
+- **Langkah 9 — `AvatarStack` di baris papan.** Dilewati: tidak ada datanya.
+  `LeaderboardEntry` cuma punya satu `photoUrl` milik peserta itu sendiri, dan
+  tumpukan avatar di fomo berisi **token yang dipegang** trader — konsep yang
+  tidak ada padanannya di app ini. Lencana prestise di baris papan adalah chip
+  teks (`MetaBadge`), bukan avatar, jadi ia juga bukan sumber yang cocok.
+  `AvatarStack` (Langkah 7) karena itu masih tanpa pemakai; jangan hapus dulu,
+  Langkah 10 (feed) belum diperiksa.
+- **Langkah 9 — `CardRail` untuk padanan "Clans".** Dilewati: tidak ada padanannya.
+  "Clans" di fomo adalah grup yang PnL anggotanya dijumlahkan; app ini tidak punya
+  entitas grup apa pun — tidak ada tabel, tidak ada relasi, tidak ada UI. Kandidat
+  terdekat (statistik papan seperti jumlah peserta/premium) sudah tampil sebagai
+  badge di `DataList` dan tidak butuh rail yang bisa digeser. Membuatnya berarti
+  mengarang entitas, bukan cuma mengarang data.
+- **Langkah 9 — `@handle` di kartu posisi.** Dilewati: `LeaderboardEntry` tidak
+  punya kolom username/handle, dan `server/leaderboard.ts` tidak membacanya.
+  Menambahkannya berarti mengubah domain + query, sementara langkah ini eksplisit
+  "pekerjaan presentasi". Barisnya jadi `Nama` + mahkota + chip "Kamu" di atas, dan
+  `#3 dari 1.284 peserta` di bawah — informasi yang sama posisinya seperti
+  `@handle • You` di fomo.
 
 ### Penyimpangan dari rencana
 

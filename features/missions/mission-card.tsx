@@ -5,6 +5,7 @@ import { useMissions } from '@/features/missions/use-missions'
 import { MissionListSkeleton } from '@/shared/components/app-skeleton'
 import { EmptyState } from '@/shared/components/empty-state'
 import { GlyphBolt, GlyphCheck } from '@/shared/components/glyph'
+import { MetaBadge } from '@/shared/components/meta-badge'
 import { SectionLabel } from '@/shared/components/section-label'
 import { SURFACE_CARD_CLASS } from '@/shared/components/surface-card'
 import { formatCredits } from '@/shared/lib/format'
@@ -55,16 +56,22 @@ export function MissionCard({
       aria-label="Misi harian"
       className={page ? undefined : SURFACE_CARD_CLASS}
     >
-      <div className="flex items-baseline justify-between gap-3">
+      {/* `items-center`, bukan `items-baseline`: sisi kanan kini chip berbidang, dan
+          menyejajarkan baseline teks di dalamnya dengan baseline label membuat bidang
+          chip menggantung ~2px di bawah garis label. */}
+      <div className="flex items-center justify-between gap-3">
         <SectionLabel as="h2">Misi hari ini</SectionLabel>
-        {/* Kata "selesai" dibuang: label di sebelahnya sudah menyebut misi, dan rasio
-            bertanda tabular terbaca sendiri tanpa perlu dijelaskan. */}
-        <span className="shrink-0 text-[11px] font-semibold tabular-nums text-muted-foreground">
+        {/* Rasio ini ringkasan angka di kanan kepala daftar — peran yang persis sama
+            dengan `badge` di `DataList` (dan sudah dipakai di Riwayat serta papan
+            peringkat), jadi ia memakai chip yang sama alih-alih teks redam sendiri.
+            Kata "selesai" tetap dibuang: label di sebelahnya sudah menyebut misi, dan
+            rasio bertanda tabular terbaca sendiri tanpa perlu dijelaskan. */}
+        <MetaBadge>
           {formatCredits(done)}
           <span aria-hidden="true">/</span>
           <span className="sr-only"> dari </span>
           {formatCredits(missions.length)}
-        </span>
+        </MetaBadge>
       </div>
 
       <ul className={cn('label-gap-t flex flex-col', page ? 'gap-3' : 'gap-2.5')}>

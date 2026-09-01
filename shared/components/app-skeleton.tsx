@@ -223,19 +223,18 @@ export function MissionListSkeleton({ surface = true }: { surface?: boolean }) {
 
   return (
     <div aria-hidden className={cn('animate-fade-in', surface && SURFACE_CARD_CLASS)}>
-      <div className="flex items-baseline justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <Line
           sample="Misi hari ini"
           className="font-display text-[13px] font-bold tracking-tight"
           bar="h-3 w-24"
           tone={tone}
         />
-        <Line
-          sample="0/3"
-          className="shrink-0 text-[11px] font-semibold"
-          bar="h-3 w-7"
-          tone={tone}
-        />
+        {/* Rasio "0/3" sekarang `MetaBadge` di `MissionCard`, jadi kerangkanya ikut
+            menggambar bidang chip — teks redam setinggi 3px yang dulu di sini
+            menyusut ~7px begitu chip 20px datang. Ukurannya sama dengan badge di
+            `DataListSkeleton`, hanya lebih sempit karena isinya cuma rasio. */}
+        <Bar className="h-5 w-9 shrink-0 rounded-[var(--chip-radius)]" tone={tone} />
       </div>
 
       <div className={cn('label-gap-t flex flex-col', surface ? 'gap-2.5' : 'gap-3')}>

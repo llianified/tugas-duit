@@ -1,14 +1,16 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { cookies, headers } from 'next/headers'
-import { isPreviewDb, query } from './db'
+import { isPreviewShell, query } from './db'
 import { env } from './env'
 
 const COOKIE_NAME = 'td_session'
 
 /**
- * Jalur cadangan KHUSUS preview, dan hanya aktif saat `isPreviewDb()` — yaitu
- * NODE_ENV bukan production DAN tidak ada DATABASE_URL. Di produksi header ini
- * tidak pernah dibaca, jadi tidak ada cara memakai token sesi dari JavaScript.
+ * Jalur cadangan KHUSUS preview, dan hanya aktif saat `isPreviewShell()` — yaitu
+ * NODE_ENV bukan production, tidak ada DATABASE_URL, dan bukan proses `pnpm test`.
+ * Di produksi header ini tidak pernah dibaca, jadi tidak ada cara memakai token
+ * sesi dari JavaScript. Di tes juga tidak, supaya suite tetap membuktikan bahwa
+ * cookie sendirian cukup untuk membawa sesi.
  *
  * Alasannya: preview selalu tampil di dalam iframe milik situs lain, dan cookie
  * sesinya jadi cookie pihak ketiga. `Partitioned` (CHIPS) memperbaikinya di Chrome
@@ -25,13 +27,13 @@ const hashToken = (token: string) => createHash('sha256').update(token).digest()
  * preview. Null di produksi: di sana cookie adalah satu-satunya pembawa sesi.
  */
 export function previewSessionToken(token: string): string | null {
-  return isPreviewDb() ? token : null
+  return isPreviewShell() ? token : null
 }
 
 async function readSessionToken(): Promise<string | null> {
   const cookieToken = (await cookies()).get(COOKIE_NAME)?.value
   if (cookieToken) return cookieToken
-  if (!isPreviewDb()) return null
+  if (!isPreviewShell()) return null
   return (await headers()).get(HEADER_NAME)?.trim() || null
 }
 

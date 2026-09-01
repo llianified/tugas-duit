@@ -189,12 +189,18 @@ export function AppViewSkeleton() {
   return (
     <div className="animate-fade-in view-min-h flex flex-col" aria-hidden>
       <div className="hero-band region-under-brand">
-        <Bar className="h-12 w-44" />
-        <Bar className="stack-gap-t h-3.5 w-24" />
-
-        <div className="mt-[var(--region-gap)] flex gap-2">
-          <Bar className="control-h flex-1 rounded-cta" />
-          <Bar className="control-h flex-1 rounded-cta" />
+        {/* Mengikuti `BalanceSummary`: saldo + sub-line di kiri, tombol ikon
+            Riwayat dan CTA "Tarik dana" sebaris di kanan. Bentuknya harus sama
+            dengan yang asli, kalau tidak barisnya bergeser saat data masuk. */}
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <Bar className="h-12 w-28" />
+            <Bar className="stack-gap-t h-3.5 w-24" />
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Bar className="control-h aspect-square rounded-cta" />
+            <Bar className="control-h w-28 rounded-cta" />
+          </div>
         </div>
 
         <div className="region-gap-t">

@@ -103,38 +103,39 @@
 }
 
 :root {
-  color-scheme: light;
-  --background: #fafafa;
-  --foreground: #18181b;
-  --card: #ffffff;
-  --primary: #635bff;
-  --primary-foreground: #ffffff;
-  --primary-hover: #7a73ff;
-  --primary-active: #4f47e6;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --destructive: #dc2626;
-  --border: #e4e4e7;
-  --ring: #635bff;
-  --success: #16a34a;
-  --star: #eab308;
-  --premium: #b45309;
-  --scrim: oklch(0 0 0 / 0.28);
-  --hero-band: #f1f1f4;
+  color-scheme: dark;
+  --background: #101014;
+  --foreground: #f4f4f5;
+  --card: #18181d;
+  --primary: #918bff;
+  --primary-foreground: #101014;
+  --primary-hover: #a8a3ff;
+  --primary-active: #7a73ff;
+  --muted: #232329;
+  --muted-foreground: #a1a1aa;
+  --destructive: #f87171;
+  --border: #2c2c34;
+  --ring: #918bff;
+  --success: #4ade80;
+  --star: #facc15;
+  --premium: #fbbf24;
+  --scrim: oklch(0 0 0 / 0.62);
+  --hero-band: #08080b;
   --hero-curve: 1.5rem;
   --radius: 0.875rem;
   --cta-radius: 1.25rem;
   /* Gaya tombol fomo: tombol solid biasa, bukan pelat neobrutal. Yang membuatnya
      terasa "kaca" hanyalah hairline 1px di setengah atas tepinya — `inset`,
      tanpa cincin penuh dan tanpa bayangan yang jatuh ke luar. */
-  /* Diukur langsung dari tombol putih di foto referensi: di permukaan terang
-     kilaunya justru GELAP (putih tak bisa lebih putih) — 5% hitam di sisi atas,
-     meluruh sampai habis di tinggi 50%. */
-  --bevel-sheen: color-mix(in oklab, black 5%, transparent);
+  /* Di permukaan gelap hairline-nya TERANG (gelap tak bisa lebih gelap). Cincin
+     penuhnya sudah dibuang di `.btn-glass`, jadi yang tersisa hanya kilau
+     setengah atas ini. */
+  --bevel-sheen: color-mix(in oklab, white 11%, transparent);
   /* Bidang tombol tenang (`.btn-glass-quiet`). Token sendiri, BUKAN `--card`
-     langsung: tombol harus naik dari latar sementara kartu tetap sewarna kartu.
-     Di terang `--card` sudah putih di atas latar abu, jadi kontrasnya cukup. */
-  --btn-quiet-surface: var(--card);
+     langsung: `--card` (#18181d) cuma 8 poin di atas latar (#101014), jadi begitu
+     cincin luarnya dibuang tombol tenang ikut tenggelam. Bidangnya diangkat ke
+     nada `--muted`, sementara kartu tetap #18181d. */
+  --btn-quiet-surface: #232329;
   --rail-card-w: 9.5rem;
   --rail-gap: 0.75rem;
   /* Ruang vertikal di dalam kotak gulir rail. `overflow-x: auto` memaksa
@@ -145,37 +146,33 @@
   --rail-py: 0.75rem;
   --chip-radius: 0.5rem;
   /* Chip padat: latar tinted transparan (alpha, bukan campur ke --card) supaya
-     chip aman dipakai di atas background maupun card. Warna teksnya TIDAK
-     memakai token nada apa adanya: --success / --destructive / --primary versi
-     terang terlalu muda untuk teks 11px di atas latar terang, jadi di tema
-     terang dipakai varian yang lebih pekat agar kontrasnya lolos. */
-  --chip-tint: 12%;
-  /* --muted-foreground di atas --muted hanya 4.40:1 — di bawah 4.5:1 untuk teks
-     kecil. Chip netral karena itu memakai foreground sendiri yang sedikit lebih
-     pekat, tanpa menggeser --muted-foreground yang dipakai di seluruh aplikasi. */
-  --chip-fg-muted: #52525b;
-  --chip-fg-primary: var(--primary-active);
-  --chip-fg-success: #166534;
-  --chip-fg-destructive: #b91c1c;
-  --chip-fg-premium: #92400e;
+     chip aman dipakai di atas background maupun card. Di gelap token nada sudah
+     terang, jadi dipakai langsung; tint-nya perlu cukup kuat supaya latar chip
+     tetap terbaca di atas #101014. */
+  --chip-tint: 18%;
+  --chip-fg-muted: var(--muted-foreground);
+  --chip-fg-primary: var(--primary);
+  --chip-fg-success: var(--success);
+  --chip-fg-destructive: var(--destructive);
+  --chip-fg-premium: var(--premium);
   --thread-line: var(--border);
   /* Medali podium. Sengaja TIDAK memakai --premium untuk emas: premium sudah
      memakai emas di cincin avatar dan mahkota, dan dua hal berbeda dengan warna
      yang sama membuat baris papan tidak bisa dibaca. Ketiganya adalah bidang
      padat berisi teks 11px, jadi pasangan latar/teks dipilih agar kontrasnya
-     lolos AA teks kecil (perunggu dipekatkan supaya teks putih di atasnya
-     tembus 4.5:1 — versi terang bronze biasa hanya ~4.2:1). */
-  --medal-gold: #d4a017;
-  --medal-gold-fg: #1c1917;
-  --medal-silver: #b8bcc4;
-  --medal-silver-fg: #1c1917;
-  --medal-bronze: #8a4b21;
-  --medal-bronze-fg: #ffffff;
-  /* Pelat di belakang kode QRIS. Nilainya putih di KEDUA tema, dan itu bukan
-     kelalaian: pemindai QR menuntut modul gelap di atas latar terang, jadi
-     warnanya kebutuhan fungsional — bukan warna tema yang boleh ikut gelap.
-     Ia tetap jadi token supaya alasan itu tertulis satu kali di sini alih-alih
-     jadi `bg-white` mentah yang terlihat seperti kelolosan audit. */
+     lolos AA teks kecil: ketiganya dinaikkan terangnya supaya tetap terbaca di
+     atas #101014, dan teksnya gelap untuk semuanya. */
+  --medal-gold: #f0c040;
+  --medal-gold-fg: #101014;
+  --medal-silver: #c6cad2;
+  --medal-silver-fg: #101014;
+  --medal-bronze: #c47b46;
+  --medal-bronze-fg: #101014;
+  /* Pelat di belakang kode QRIS. Nilainya putih, dan itu bukan kelalaian:
+     pemindai QR menuntut modul gelap di atas latar terang, jadi warnanya
+     kebutuhan fungsional — bukan warna tema yang boleh ikut gelap. Ia tetap
+     jadi token supaya alasan itu tertulis satu kali di sini alih-alih jadi
+     `bg-white` mentah yang terlihat seperti kelolosan audit. */
   --qr-plate: #ffffff;
   --duration-ui: 150ms;
   --control-h: 3.25rem;
@@ -217,53 +214,6 @@
     var(--telegram-safe-bottom),
     var(--telegram-content-safe-bottom)
   );
-}
-
-:root[data-theme='dark'] {
-  color-scheme: dark;
-  --background: #101014;
-  --foreground: #f4f4f5;
-  --card: #18181d;
-  --primary: #918bff;
-  --primary-foreground: #101014;
-  --primary-hover: #a8a3ff;
-  --primary-active: #7a73ff;
-  --muted: #232329;
-  --muted-foreground: #a1a1aa;
-  --destructive: #f87171;
-  --border: #2c2c34;
-  --ring: #918bff;
-  --success: #4ade80;
-  --star: #facc15;
-  --premium: #fbbf24;
-  --hero-band: #08080b;
-  --scrim: oklch(0 0 0 / 0.62);
-  /* Di permukaan gelap logikanya dibalik: hairline-nya TERANG (gelap tak bisa
-     lebih gelap). Cincin penuhnya sudah dibuang di `.btn-glass`, jadi yang
-     tersisa hanya kilau setengah atas ini. */
-  --bevel-sheen: color-mix(in oklab, white 11%, transparent);
-  /* Di gelap `--card` (#18181d) cuma 8 poin di atas latar (#101014) — begitu
-     cincin luarnya dibuang, tombol tenang ikut tenggelam ke latar. Jadi bidang
-     tombolnya diangkat sendiri ke nada `--muted`, sementara kartu tetap #18181d. */
-  --btn-quiet-surface: #232329;
-  /* Di gelap token nada sudah terang, jadi dipakai langsung; tint-nya perlu
-     sedikit lebih kuat supaya latar chip tetap terbaca di atas #101014. */
-  --chip-tint: 18%;
-  --chip-fg-muted: var(--muted-foreground);
-  --chip-fg-primary: var(--primary);
-  --chip-fg-success: var(--success);
-  --chip-fg-destructive: var(--destructive);
-  --chip-fg-premium: var(--premium);
-  --thread-line: var(--border);
-  /* Di gelap ketiganya dinaikkan terangnya supaya tetap terbaca di atas
-     #101014, dan teksnya jadi gelap untuk semuanya — termasuk perunggu, yang
-     pada nilai terang ini lebih kontras dengan teks gelap. */
-  --medal-gold: #f0c040;
-  --medal-gold-fg: #101014;
-  --medal-silver: #c6cad2;
-  --medal-silver-fg: #101014;
-  --medal-bronze: #c47b46;
-  --medal-bronze-fg: #101014;
 }
 
 [data-telegram-controls='true'] {
@@ -335,10 +285,6 @@
     transition-property: color, background-color, border-color, outline-color, opacity;
     transition-duration: var(--duration-ui);
     transition-timing-function: ease-out;
-  }
-  .theme-switching,
-  .theme-switching *:not(.theme-glyph) {
-    transition: none !important;
   }
   .control-h {
     height: var(--control-h);
@@ -762,83 +708,6 @@
     align-items: center;
     justify-content: center;
     pointer-events: auto;
-  }
-  /* The control rides inside the pill row so the tier pill and the theme pill
-     read as one centred cluster, matching the task view. When it tucks away it
-     collapses its own footprint so the remaining pills recentre. */
-  .brand-band-control {
-    position: relative;
-    margin-inline-start: 0.375rem;
-    transition:
-      color var(--duration-ui) ease-out,
-      background-color var(--duration-ui) ease-out,
-      border-color var(--duration-ui) ease-out,
-      margin-inline-start 260ms var(--ease-out-quart),
-      translate 260ms var(--ease-out-quart);
-  }
-  .brand-band-control[data-aside] {
-    pointer-events: none;
-    margin-inline-start: calc(-1 * var(--brand-pill-h));
-    translate: calc(50vw + var(--content-px) + 0.5rem);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .brand-band-control {
-      transition: none;
-    }
-    .brand-band-control::before {
-      animation: none;
-      opacity: 0;
-    }
-  }
-  .brand-band-control::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    translate: -50% -50%;
-    width: max(100%, 2.75rem);
-    height: 2.75rem;
-  }
-  @supports (mask-composite: exclude) {
-    .brand-band-control::before {
-      content: '';
-      position: absolute;
-      inset: -1px;
-      border-radius: calc(var(--brand-pill-h) / 2 + 1px);
-      padding: 1px;
-      background: conic-gradient(
-        from var(--island-edge-angle),
-        transparent 0deg,
-        color-mix(in oklab, var(--foreground) 8%, transparent) 14deg,
-        color-mix(in oklab, var(--foreground) 22%, transparent) 42deg,
-        color-mix(in oklab, var(--foreground) 6%, transparent) 110deg,
-        transparent 190deg,
-        transparent 360deg
-      );
-      mask:
-        linear-gradient(#000 0 0) content-box,
-        linear-gradient(#000 0 0);
-      mask-composite: exclude;
-      animation: island-edge-spin 4.5s linear infinite;
-      pointer-events: none;
-    }
-    .brand-band-control[data-aside]::before {
-      animation: none;
-      opacity: 0;
-    }
-  }
-  .theme-glyph {
-    transition:
-      opacity 200ms var(--ease-out-quart),
-      rotate 320ms var(--ease-spring-island),
-      scale 260ms var(--ease-out-quart);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .theme-glyph {
-      transition: opacity 120ms ease-out;
-      rotate: none !important;
-      scale: none !important;
-    }
   }
   .bleed-x {
     margin-inline: calc(var(--content-px) * -1);

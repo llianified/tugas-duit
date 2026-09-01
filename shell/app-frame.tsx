@@ -3,7 +3,6 @@
 import { useEffect, type CSSProperties, type ReactNode } from 'react'
 import { BrandBand } from '@/shared/components/brand-band'
 import { cn } from '@/shared/lib/utils'
-import { ThemeToggle } from '@/shell/theme'
 
 function useDocumentScrollLock() {
   useEffect(() => {
@@ -36,8 +35,6 @@ export function AppFrame({
   children,
   viewKey,
   direction = 1,
-  showThemeToggle = true,
-  hideThemeToggle = false,
   heroBand = false,
 }: {
   badges?: ReactNode
@@ -45,8 +42,6 @@ export function AppFrame({
   children: ReactNode
   viewKey: string
   direction?: 1 | -1
-  showThemeToggle?: boolean
-  hideThemeToggle?: boolean
   heroBand?: boolean
 }) {
   useDocumentScrollLock()
@@ -59,9 +54,7 @@ export function AppFrame({
         heroBand && '[--brand-band-tint:var(--hero-band)]',
       )}
     >
-      <BrandBand control={showThemeToggle ? <ThemeToggle hidden={hideThemeToggle} /> : null}>
-        {badges}
-      </BrandBand>
+      <BrandBand>{badges}</BrandBand>
       <div className="app-scroll flex flex-col">
         <main
           className={cn(

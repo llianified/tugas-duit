@@ -22,7 +22,7 @@ Ini bukan preferensi, ini larangan keras. Melanggar = rollback.
 | Token `--nav-pill-h`, `--nav-pill-gap` | Idem. Dipakai untuk menghitung inset konten. |
 | `.pb-nav-inset`, `--telegram-safe-*`, `--telegram-content-safe-*` | Rantai perhitungan safe-area Telegram. |
 | `features/home/*island*` + `.island*` + `--island-*` | Sistem island (geometri animasi presisi): `difficulty-island.tsx`, `profile-island.tsx`, `rank-island.tsx`, `island-pill.tsx`, `use-island-geometry.ts`. |
-| `shell/telegram-viewport.ts`, `shell/theme-init.ts` | Integrasi viewport & anti-FOUC tema. |
+| `shell/telegram-viewport.ts` | Integrasi viewport & sinkronisasi warna chrome Telegram. |
 | `features/captcha/**` | Logika + animasi papan captcha. Boleh ikut token global, tapi jangan direstruktur. |
 
 **Konsekuensi:** rencana ini **tidak** memuat "nav pill icon-only ala fomo".
@@ -724,9 +724,11 @@ Diisi oleh agent selama pengerjaan. Ini penting untuk serah-terima antar agent.
 
 ### Penyimpangan dari rencana
 
-- **Langkah 1 — selektor tema gelap.** Rencana menyebut `.dark`. Proyek ini
-  sebenarnya memakai `:root[data-theme='dark']` (dipasang `shell/theme-init.ts`).
-  Pasangan token gelap ditulis di selektor itu, bukan `.dark`.
+- **Langkah 1 — selektor tema gelap.** Rencana menyebut `.dark`, lalu proyek
+  sempat memakai `:root[data-theme='dark']`. Sekarang app-nya **gelap-saja**:
+  tema terang, toggle, dan `shell/theme.tsx` + `shell/theme-init.ts` sudah
+  dihapus. Token gelap jadi satu-satunya set nilai dan ditulis langsung di
+  `:root`, tanpa selektor tema apa pun.
 - **Langkah 1 — `--font-display`.** Token sudah ditambahkan sekarang dengan
   nilai `var(--font-sans)` supaya `.num-display` tidak menunjuk variabel kosong.
   Langkah 2 hanya perlu mengarahkannya ke variabel font Plus Jakarta Sans.

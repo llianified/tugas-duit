@@ -1,15 +1,12 @@
 'use client'
 
 import { useEffect } from 'react'
-import type { ResolvedTheme } from '@/shell/theme'
 
-const TELEGRAM_CHROME_LIGHT = '#fafafa'
-const TELEGRAM_CHROME_DARK = '#101014'
-
-function telegramChromeColor() {
-  const dark = document.documentElement.dataset.theme === 'dark'
-  return dark ? TELEGRAM_CHROME_DARK : TELEGRAM_CHROME_LIGHT
-}
+/**
+ * Aplikasinya gelap-saja, jadi chrome Telegram cukup satu nilai — sama dengan
+ * `--background` di `globals.css`. Kalau nilai itu berubah, ubah di sini juga.
+ */
+const TELEGRAM_CHROME = '#101014'
 
 type TelegramInset = { top: number; bottom: number; left: number; right: number }
 type TelegramWebApp = {
@@ -55,10 +52,9 @@ export function useTelegramViewport() {
     }
 
     const syncColors = () => {
-      const color = telegramChromeColor()
-      telegram.setHeaderColor?.(color)
-      telegram.setBackgroundColor?.(color)
-      telegram.setBottomBarColor?.(color)
+      telegram.setHeaderColor?.(TELEGRAM_CHROME)
+      telegram.setBackgroundColor?.(TELEGRAM_CHROME)
+      telegram.setBottomBarColor?.(TELEGRAM_CHROME)
     }
 
     telegram.ready?.()
@@ -87,18 +83,4 @@ export function useTelegramViewport() {
       delete document.documentElement.dataset.telegramControls
     }
   }, [])
-}
-
-export function useTelegramChromeColor(resolved: ResolvedTheme | null) {
-  useEffect(() => {
-    if (!resolved) return
-    const telegram = (window as Window & { Telegram?: { WebApp?: TelegramWebApp } }).Telegram
-      ?.WebApp
-    if (!telegram) return
-
-    const color = resolved === 'dark' ? TELEGRAM_CHROME_DARK : TELEGRAM_CHROME_LIGHT
-    telegram.setHeaderColor?.(color)
-    telegram.setBackgroundColor?.(color)
-    telegram.setBottomBarColor?.(color)
-  }, [resolved])
 }

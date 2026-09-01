@@ -131,6 +131,20 @@
   --rail-card-w: 9.5rem;
   --rail-gap: 0.75rem;
   --chip-radius: 0.5rem;
+  /* Chip padat: latar tinted transparan (alpha, bukan campur ke --card) supaya
+     chip aman dipakai di atas background maupun card. Warna teksnya TIDAK
+     memakai token nada apa adanya: --success / --destructive / --primary versi
+     terang terlalu muda untuk teks 11px di atas latar terang, jadi di tema
+     terang dipakai varian yang lebih pekat agar kontrasnya lolos. */
+  --chip-tint: 12%;
+  /* --muted-foreground di atas --muted hanya 4.40:1 — di bawah 4.5:1 untuk teks
+     kecil. Chip netral karena itu memakai foreground sendiri yang sedikit lebih
+     pekat, tanpa menggeser --muted-foreground yang dipakai di seluruh aplikasi. */
+  --chip-fg-muted: #52525b;
+  --chip-fg-primary: var(--primary-active);
+  --chip-fg-success: #166534;
+  --chip-fg-destructive: #b91c1c;
+  --chip-fg-premium: #92400e;
   --thread-line: var(--border);
   --duration-ui: 150ms;
   --control-h: 3.25rem;
@@ -200,6 +214,14 @@
   --hairline-edge: color-mix(in oklab, white 13%, transparent);
   --hairline-sheen: color-mix(in oklab, white 22%, transparent);
   --btn-shadow: color-mix(in oklab, black 55%, transparent);
+  /* Di gelap token nada sudah terang, jadi dipakai langsung; tint-nya perlu
+     sedikit lebih kuat supaya latar chip tetap terbaca di atas #101014. */
+  --chip-tint: 18%;
+  --chip-fg-muted: var(--muted-foreground);
+  --chip-fg-primary: var(--primary);
+  --chip-fg-success: var(--success);
+  --chip-fg-destructive: var(--destructive);
+  --chip-fg-premium: var(--premium);
   --thread-line: var(--border);
 }
 
@@ -331,6 +353,36 @@
     line-height: 1.25;
     letter-spacing: -0.01em;
     white-space: nowrap;
+  }
+  .chip-muted {
+    background-color: var(--muted);
+    color: var(--chip-fg-muted);
+  }
+  .chip-primary {
+    background-color: color-mix(in oklab, var(--chip-fg-primary) var(--chip-tint), transparent);
+    color: var(--chip-fg-primary);
+  }
+  .chip-success {
+    background-color: color-mix(in oklab, var(--chip-fg-success) var(--chip-tint), transparent);
+    color: var(--chip-fg-success);
+  }
+  .chip-destructive {
+    background-color: color-mix(
+      in oklab,
+      var(--chip-fg-destructive) var(--chip-tint),
+      transparent
+    );
+    color: var(--chip-fg-destructive);
+  }
+  .chip-premium {
+    background-color: color-mix(in oklab, var(--chip-fg-premium) var(--chip-tint), transparent);
+    color: var(--chip-fg-premium);
+  }
+  /* Nada netral-kuat: dipakai chip "Perintis" di papan peringkat yang harus
+     terbaca sebagai teks biasa, bukan warna nada. */
+  .chip-neutral {
+    background-color: color-mix(in oklab, var(--foreground) 10%, transparent);
+    color: var(--foreground);
   }
   .rail {
     display: flex;

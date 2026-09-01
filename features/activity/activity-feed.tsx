@@ -54,7 +54,7 @@ export function ActivityFeed({ entries }: { entries: ActivityEntry[] | null }) {
               <span className="flex min-w-0 items-center gap-1.5">
                 <span className="truncate">{entry.displayName}</span>
                 {entry.kind === 'payout' ? (
-                  <MetaBadge tone="accent">Cair</MetaBadge>
+                  <MetaBadge tone="primary">Cair</MetaBadge>
                 ) : (
                   <MetaBadge>{difficultyLabel(entry.difficulty)}</MetaBadge>
                 )}

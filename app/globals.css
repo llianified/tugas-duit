@@ -127,8 +127,10 @@
   /* Gaya tombol fomo: tombol solid biasa, bukan pelat neobrutal. Yang membuatnya
      terasa "kaca" adalah hairline 1px di seluruh sisi + kilau tipis di sisi atas.
      Keduanya `inset`; aplikasi ini tidak memakai bayangan yang jatuh ke luar. */
-  --hairline-edge: color-mix(in oklab, white 20%, transparent);
-  --hairline-sheen: color-mix(in oklab, white 32%, transparent);
+  /* Di terang cincinnya gelap: tombol putih butuh tepi yang LEBIH gelap dari
+     isiannya supaya kelihatan, bukan lebih terang. */
+  --hairline-edge: color-mix(in oklab, black 14%, transparent);
+  --hairline-sheen: color-mix(in oklab, white 55%, transparent);
   --rail-card-w: 9.5rem;
   --rail-gap: 0.75rem;
   /* Ruang vertikal di dalam kotak gulir rail. `overflow-x: auto` memaksa
@@ -232,9 +234,10 @@
   --premium: #fbbf24;
   --hero-band: #08080b;
   --scrim: oklch(0 0 0 / 0.62);
-  /* Di gelap hairline dibuat lebih redup supaya tidak jadi garis putih keras. */
-  --hairline-edge: color-mix(in oklab, white 13%, transparent);
-  --hairline-sheen: color-mix(in oklab, white 22%, transparent);
+  /* Di gelap cincinnya terang: satu-satunya yang memisahkan tombol gelap dari
+     latar gelap, jadi harus tegas — bukan hairline samar. */
+  --hairline-edge: color-mix(in oklab, white 30%, transparent);
+  --hairline-sheen: color-mix(in oklab, white 34%, transparent);
   /* Di gelap token nada sudah terang, jadi dipakai langsung; tint-nya perlu
      sedikit lebih kuat supaya latar chip tetap terbaca di atas #101014. */
   --chip-tint: 18%;
@@ -333,22 +336,25 @@
     border-radius: var(--cta-radius);
   }
   /* --- Fondasi gaya fomo (Langkah 1) ------------------------------------- */
-  /* Tombol fomo: bidang warna solid dengan hairline 1px di dalam seluruh sisi
+  /* Tombol fomo: bidang warna solid dengan cincin tepi tegas di seluruh sisi
      dan kilau sedikit lebih terang di sisi atas — efek "gelas", bukan pelat
-     neobrutal. Saat ditekan tombol hanya mengecil halus dan hairline meredup;
+     neobrutal. Saat ditekan tombol hanya mengecil halus dan kilaunya meredup;
      tidak ada bayangan offset yang turun. */
   /* Sengaja TIDAK menyetel background maupun transform: `.btn-glass` hanya
      perlakuan permukaan, jadi bisa ditumpuk di atas bg apa pun (bg-primary,
      bg-muted, dst.) dan gerak tekannya tetap milik `.press-scale*`. */
+  /* Cincin tepinya DI LUAR isian (bukan `inset`) supaya tak tertimpa warna
+     tombol: itu bedanya antara garis tegas seperti referensi dan hairline yang
+     nyaris hilang. Blur 0 + offset 0 = cincin, bukan bayangan. */
   .btn-glass {
     box-shadow:
-      inset 0 0 0 1px var(--hairline-edge),
+      0 0 0 1.5px var(--hairline-edge),
       inset 0 1px 0 var(--hairline-sheen);
     transition: box-shadow var(--duration-ui) ease-out;
   }
   .btn-glass:active:not(:disabled) {
     box-shadow:
-      inset 0 0 0 1px var(--hairline-edge),
+      0 0 0 1.5px var(--hairline-edge),
       inset 0 1px 0 color-mix(in oklab, var(--hairline-sheen) 45%, transparent);
   }
   /* Versi sekunder di atas bg-card: hairline-nya pakai --border supaya sewarna
@@ -356,12 +362,12 @@
   .btn-glass-quiet {
     background-color: var(--card);
     box-shadow:
-      inset 0 0 0 1px var(--border),
+      0 0 0 1.5px var(--border),
       inset 0 1px 0 color-mix(in oklab, var(--hairline-sheen) 40%, transparent);
     transition: box-shadow var(--duration-ui) ease-out;
   }
   .btn-glass-quiet:active:not(:disabled) {
-    box-shadow: inset 0 0 0 1px var(--border);
+    box-shadow: 0 0 0 1.5px var(--border);
   }
   .num-display {
     font-family: var(--font-display);

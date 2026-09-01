@@ -619,19 +619,60 @@ membuang hitungan task — lihat BAB 4. `tsc --noEmit` bersih.
 
 **Berkas:** `features/activity/activity-feed.tsx`, **baru:** `shared/components/pinned-notice.tsx`
 
-- [ ] Ubah baris feed menjadi tata letak thread: kolom avatar + `.thread-line`
+- [x] Ubah baris feed menjadi tata letak thread: kolom avatar + `.thread-line`
       berbentuk L menuju isi.
-- [ ] Baris atas: nama berat + `MetaBadge` jenis + waktu relatif redam.
-- [ ] Isi dipotong `.clamp-3` dengan tautan "Baca selengkapnya" berwarna primer
+- [x] Baris atas: nama berat + `MetaBadge` jenis + waktu relatif redam.
+      → Waktunya tetap **absolut** (`formatHistoryTime`). Lihat BAB 4.
+- [x] Isi dipotong `.clamp-3` dengan tautan "Baca selengkapnya" berwarna primer
       yang membuka/menutup potongan. Tautan hanya muncul bila teks memang
-      terpotong.
-- [ ] Pemisah antar item berupa `border` tipis, bukan kartu terpisah.
-- [ ] Buat `PinnedNotice`: kartu di pucuk feed dengan label "Disematkan",
+      terpotong. → Dipakai di `PinnedNotice`; baris feed tidak punya teks
+      panjang untuk dipotong. Lihat BAB 4.
+- [x] Pemisah antar item berupa `border` tipis, bukan kartu terpisah.
+- [x] Buat `PinnedNotice`: kartu di pucuk feed dengan label "Disematkan",
       judul, isi terpotong, dan "Baca selengkapnya".
-- [ ] Hubungkan ke sumber siaran/broadcast yang sudah ada bila tersedia.
+- [x] Hubungkan ke sumber siaran/broadcast yang sudah ada bila tersedia.
       Jika belum ada jalur datanya, render komponen hanya saat ada isi,
       dan catat di BAB 4. **Jangan** menanam teks pengumuman palsu.
-- [ ] Pertahankan semantik daftar (`ul`/`li`) dan `aria-*`.
+      → **Tidak dihubungkan** ke tabel `broadcasts`; alasannya di BAB 4.
+      Tidak ada teks pengumuman yang ditanam.
+- [x] Pertahankan semantik daftar (`ul`/`li`) dan `aria-*`.
+
+**Status:** SELESAI. `DataList` tetap dipakai sebagai pembungkus seksi (ia yang
+memberi `<section aria-label>` + `<ul>`), tetapi `DataListRow` ditinggalkan untuk
+umpan ini: barisnya sekarang `FeedItem` lokal yang menyusun dua tumpuk — baris
+kepala (avatar + nama + chip + waktu) lalu blok isi ber-`.thread-line`.
+`DataListRow` tidak diubah sama sekali; empat halaman lain masih memakainya.
+
+Geometri garis L-nya terikat pada ukuran avatar dan diverifikasi di DOM, bukan
+dikira-kira: avatar `size-10` → sumbu tengah `1.25rem` → blok isi `ml-5`, dan
+`pl-5` = lebar tikungan `0.75rem` + jarak baca `0.5rem`. Blok isi sengaja tanpa
+margin atas supaya tepi atasnya jatuh persis di tepi bawah avatar (`.thread-line
+::before` menggambar dari `top: 0`), dan `pt-2` yang memberi tinggi pada bagian
+vertikalnya.
+
+Nilai transaksinya pindah dari kolom kanan ke dalam blok isi. Pada 384px kolom
+kanan sudah dipakai chip + waktu, dan menaruh nominal di sana memotong nama
+orangnya; ini juga yang dilakukan fomo — harga duduk di badan pesan.
+
+`PinnedNotice` mengukur keterpotongan di DOM (`scrollHeight > clientHeight`)
+karena panjang string tidak menentukan apa pun: lebar layar dan ukuran font
+Telegram yang menentukan. Hasil ukurnya dikunci naik-saja, sebab saat terbuka
+`clamp-3` lepas dan pengukuran ulang akan menyimpulkan "tidak terpotong" lalu
+menghilangkan tombol "Tutup" yang baru dipakai.
+
+Diperiksa di peramban lewat halaman percobaan sementara (sudah dihapus) pada
+384px, tema gelap **dan** terang (`data-theme`, bukan `prefers-color-scheme`):
+`documentElement.scrollWidth === 384` di kedua tema; garis L terukur tepat —
+tepi blok isi `left: 36px` sama dengan sumbu tengah avatar dan `top` sama dengan
+tepi bawah avatar, tikungan `12px`, warna `#2c2c34` gelap / `#e4e4e7` terang
+(keduanya `--border`); nama panjang terpotong tanpa mendorong chip atau waktu;
+tombol buka-tutup terukur **44px** dan labelnya benar berganti
+`Baca selengkapnya` → `Tutup` dengan `aria-expanded` ikut; pengumuman satu baris
+benar-benar **tidak** memunculkan tombol; dan empty state tetap terpusat dengan
+kartu pengumuman di atasnya. `tsc --noEmit` bersih, `pnpm lint` bersih,
+`pnpm build` lolos. `git diff --name-only`:
+`features/activity/activity-feed.tsx`, `shared/components/pinned-notice.tsx`
+(baru) + dokumen ini — zona terlarang tidak tersentuh.
 
 ---
 
@@ -735,6 +776,35 @@ Diisi oleh agent selama pengerjaan. Ini penting untuk serah-terima antar agent.
   (`shared/lib/shape-path.ts` mengimpor tipe dari `features/captcha`). Kalau
   nanti ada fitur ketiga yang butuh avatar, `ProfileAvatar` layak dipindahkan
   ke `shared/components/` — itu pekerjaan terpisah, bukan bagian langkah ini.
+- **Langkah 10 — `PinnedNotice` TIDAK dihubungkan ke tabel `broadcasts`.**
+  Sumber pengumuman satu-satunya di repo ini adalah `broadcasts` (migrasi 0035),
+  dan ia bukan umpan dalam aplikasi: isinya pesan Telegram, penerimanya
+  **bersegmen** (`semua` / premium / aktif), dan daftar penerimanya sengaja tidak
+  disimpan — segmennya dihitung ulang saat kirim. Merendernya di dalam aplikasi
+  berarti menampilkan pesan bersegmen ke semua orang, termasuk yang memang bukan
+  sasarannya, plus menambah kolom "boleh tampil di app" yang belum ada. Jadi
+  `ActivityFeed` menerima prop `notice` opsional dan **belum ada yang
+  mengisinya**; tidak ada teks pengumuman yang ditanam sebagai gantinya.
+  Konsekuensinya `PinnedNotice` untuk sekarang tidak pernah tampil di produksi —
+  Langkah 11 harus memutuskan secara eksplisit: menyimpannya sampai jalur datanya
+  ada, atau menghapusnya bersama prop `notice`.
+- **Langkah 10 — waktu tetap absolut, bukan relatif.** Rencana meminta "waktu
+  relatif redam" (`28s`, `16h` seperti fomo). Yang dirender tetap
+  `formatHistoryTime` (`Hari ini · 16.08` / `31 Agu · 15.09`). Alasannya aturan
+  0.2: format waktu/angka yang sudah ada di `shared/lib/format.ts` dipertahankan,
+  dan `format.ts` tidak ada di daftar berkas 2.1 — menambah formatter relatif di
+  sana berarti memperluas cakupan sekaligus menampilkan dua konvensi waktu
+  berbeda di aplikasi yang sama (Riwayat memakai absolut). Ia juga akan butuh
+  pembaruan per detik supaya "28s" tidak jadi bohong.
+- **Langkah 10 — `.clamp-3` + "Baca selengkapnya" hanya ada di `PinnedNotice`.**
+  `ActivityEntry` tidak punya kolom teks bebas — isinya nama, jenis, nominal,
+  dan waktu. Tidak ada apa pun untuk dipotong di baris feed, jadi memasang
+  potongan tiga baris di sana akan jadi kontrol yang tidak pernah aktif.
+  Potongan + tautannya dipasang di tempat yang memang punya badan teks panjang.
+- **Langkah 10 — avatar baris feed naik dari `size-9` ke `size-10`.** Bukan
+  sekadar selera: 1.6 menyebut avatar baris daftar 2.5rem, dan angka bulat itu
+  yang membuat sumbu tengahnya `1.25rem` = kelas skala `ml-5` persis, tanpa nilai
+  arbitrer. Pada `size-9` garis L-nya harus digeser `1.125rem`.
 - **Langkah 9 — varian `plain` dipakai untuk tab Papan/Aktivitas, bukan rentang
   waktu.** Rencana menugaskan `plain` ke pemilih rentang waktu. Papan ini
   kumulatif: `getLeaderboard` tidak menerima parameter waktu dan tidak ada kolom

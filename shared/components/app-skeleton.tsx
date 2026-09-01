@@ -166,20 +166,17 @@ export function MissionListSkeleton({ surface = true }: { surface?: boolean }) {
         <div className="flex h-6 items-center">
           <Bar className="h-3 w-24" tone={tone} />
         </div>
-        <Bar className="h-6 w-24 rounded-md" tone={tone} />
+        <Bar className="h-3 w-7 shrink-0" tone={tone} />
       </div>
 
-      <div className={`label-gap-t flex flex-col ${surface ? 'gap-3' : 'gap-4'}`}>
+      <div className={`label-gap-t flex flex-col ${surface ? 'gap-2.5' : 'gap-3'}`}>
         {MISSION_TITLE_W.map((titleWidth) => (
-          <div key={titleWidth}>
-            <div className="flex h-5 items-center justify-between gap-3">
-              <Bar className={`h-3.5 ${titleWidth}`} tone={tone} />
-              <Bar className="h-3.5 w-10 shrink-0" tone={tone} />
+          <div key={titleWidth} className="flex h-7 items-center gap-2.5">
+            <div className="min-w-0 flex-1">
+              <Bar className={`h-3.5 max-w-full ${titleWidth}`} tone={tone} />
             </div>
-            <div className="mt-1.5 flex h-4 items-center gap-2">
-              <span className="h-1 min-w-0 flex-1 rounded-full bg-muted-foreground/20" />
-              <Bar className="h-2.5 w-8 shrink-0" tone={tone} />
-            </div>
+            <span className="meter-h w-14 shrink-0 rounded-full bg-muted-foreground/20" />
+            <Bar className="h-3.5 w-[3.25rem] shrink-0" tone={tone} />
           </div>
         ))}
       </div>

@@ -108,13 +108,14 @@ export async function readAdsState(userId: number): Promise<AdsSessionState> {
   return {
     enabled: true,
     /**
-     * Interstitial otomatis dimatikan di preview (`isPreviewDb()`). Iframe preview tidak
+     * Interstitial otomatis dimatikan di preview (`isPreviewShell()`, jadi suite tes
+     * tetap memakai perilaku produksi). Iframe preview tidak
      * bisa dipakai Monetag — kreatifnya butuh jendela pihak ketiga — jadi yang tersisa
      * hanya overlay hitam yang menutupi UI dan `show_<zone>()` yang reject terus.
      * Tiket berhadiah (`enabled`) sengaja tetap hidup: itu opt-in dan jalur "Iklan"-nya
      * masih perlu bisa diuji. Produksi tidak berubah.
      */
-    inAppEnabled: !premium && !isPreviewDb(),
+    inAppEnabled: !premium && !isPreviewShell(),
     provider: resolved.provider,
     unitId: resolved.unitId,
     viewsLeft: adViewsLeft(state.viewsToday),

@@ -52,7 +52,7 @@ export function ChannelSelect({
           alignItemWithTrigger={false}
           className="z-50 w-[var(--anchor-width)] outline-none"
         >
-          <Select.Popup className="channel-popup max-h-64 w-full overflow-y-auto overscroll-contain rounded-lg border border-border bg-card p-1 shadow-lg outline-none">
+          <Select.Popup className="channel-popup max-h-64 w-full overflow-y-auto overscroll-contain rounded-lg border border-border bg-card p-1 outline-none">
             {PAYOUT_CHANNELS.map((option) => (
               <Select.Item
                 key={option.id}

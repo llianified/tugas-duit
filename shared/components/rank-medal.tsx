@@ -45,13 +45,27 @@ const PLAIN_TEXT: Record<RankMedalSize, string> = {
   md: 'text-[11px]',
 }
 
+/** Kontur pemisah dipakai saat pitanya ditumpuk di atas gambar (mis. sudut
+ * avatar di papan peringkat), tempat warna di bawahnya tidak bisa ditebak.
+ * `shadow`/`ring` tidak bisa dipakai di sini karena keduanya mengikuti kotak,
+ * bukan siluet ber-notch, jadi konturnya digambar sebagai pita kedua yang
+ * sedikit lebih besar dengan clip-path yang sama. */
+const HALO_TONE = {
+  background: 'bg-background',
+  card: 'bg-card',
+} as const
+
+export type RankMedalHalo = keyof typeof HALO_TONE
+
 export function RankMedal({
   position,
   size = 'md',
+  halo,
   className,
 }: {
   position: number
   size?: RankMedalSize
+  halo?: RankMedalHalo
   className?: string
 }) {
   // Posisi bisa datang dari data (`0`, `NaN`, negatif kalau papannya belum

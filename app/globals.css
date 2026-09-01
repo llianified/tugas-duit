@@ -136,6 +136,13 @@
   --btn-shadow: color-mix(in oklab, black 16%, transparent);
   --rail-card-w: 9.5rem;
   --rail-gap: 0.75rem;
+  /* Ruang vertikal di dalam kotak gulir rail. `overflow-x: auto` memaksa
+     `overflow-y` ikut jadi `auto`, jadi rail MEMOTONG apa pun yang tergambar di
+     luar kotak paddingnya — dan tinggi rail persis setinggi kartu, sehingga
+     bayangan `.task-card` (offset 10px ke bawah + blur 24px) terpangkas rata di
+     tepi atas & bawah kartu. Padding ini yang memberi bayangannya ruang;
+     lihat `.rail` untuk cara mengembalikan jaraknya agar tata letak tak bergeser. */
+  --rail-py: 0.75rem;
   --chip-radius: 0.5rem;
   /* Chip padat: latar tinted transparan (alpha, bukan campur ke --card) supaya
      chip aman dipakai di atas background maupun card. Warna teksnya TIDAK
@@ -425,6 +432,14 @@
     scroll-snap-type: x mandatory;
     scroll-padding-inline-start: var(--content-px);
     -webkit-overflow-scrolling: touch;
+    /* Lihat `--rail-py`: padding ini menjauhkan tepi pemotongan dari kartu supaya
+       bayangannya utuh. Jaraknya lalu dibayar balik agar tata letak tidak bergeser:
+       sisi bawah lewat margin negatif di sini, sisi atas lewat `--label-trim` /
+       `--region-trim` pada pemakainya — margin-top rail selalu datang dari kelas
+       jarak (`.label-gap-t` dan kawan-kawan) yang menang di cascade, jadi margin
+       negatif di sisi itu tidak akan pernah terpakai. */
+    padding-block: var(--rail-py);
+    margin-block-end: calc(var(--rail-py) * -1);
   }
   .rail-item {
     flex: 0 0 var(--rail-card-w);

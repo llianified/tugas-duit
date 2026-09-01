@@ -188,7 +188,13 @@ function PodiumRail({ entries }: { entries: LeaderboardEntry[] }) {
         />
       </div>
 
-      <CardRail ariaLabel="Tiga peserta teratas" className="label-gap-t">
+      {/* `--label-trim` membayar balik `--rail-py` (padding vertikal yang menjauhkan
+      tepi pemotongan rail dari bayangan kartu — lihat `.rail`), jadi jarak ke baris
+      label di atas tetap sama seperti sebelum padding itu ada. */}
+      <CardRail
+        ariaLabel="Tiga peserta teratas"
+        className="label-gap-t [--label-trim:var(--rail-py)]"
+      >
         {podium.map((entry) => (
           <CardRailItem key={entry.id}>
             <PodiumCard entry={entry} />

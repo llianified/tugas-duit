@@ -28,6 +28,10 @@ export function formatCreditsPrecise(value: number): string {
  * - `lead`  : apa pun sebelum digit pertama (tanda minus, "Rp", "+").
  * - `main`  : bagian bilangan bulat beserta pemisah ribuannya.
  * - `trail` : koma desimal beserta digit setelahnya, kosong bila bilangannya bulat.
+ *
+ * Sufiks pemadatan dari `formatCompact` ("rb"/"jt") ikut masuk `trail`: ia satuan,
+ * bukan bagian bilangan, jadi diredam bersama desimal — kalau tidak, "rb" akan
+ * tampil seterang angka pokoknya dan ikut mengklaim perhatian.
  */
 export function splitAmountParts(formatted: string): {
   lead: string
@@ -41,8 +45,16 @@ export function splitAmountParts(formatted: string): {
   const rest = formatted.slice(firstDigit)
   const decimalIndex = rest.lastIndexOf(',')
 
-  if (decimalIndex === -1) return { lead, main: rest, trail: '' }
-  return { lead, main: rest.slice(0, decimalIndex), trail: rest.slice(decimalIndex) }
+  let main = decimalIndex === -1 ? rest : rest.slice(0, decimalIndex)
+  let trail = decimalIndex === -1 ? '' : rest.slice(decimalIndex)
+
+  const suffix = main.match(/\p{L}+$/u)?.[0]
+  if (suffix) {
+    main = main.slice(0, -suffix.length)
+    trail = `${suffix}${trail}`
+  }
+
+  return { lead, main, trail }
 }
 
 export function formatDuration(ms: number): string {
@@ -144,12 +156,62 @@ export function formatShortDate(timestamp: number): string {
   })
 }
 
-export function formatCompact(value: number): string {
+/**
+ * Angka panjang dipadatkan jadi "100rb" / "1,5jt".
+ *
+ * `from` menentukan mulai angka berapa pemadatan berlaku; di bawahnya angka
+ * tampil utuh. Defaultnya 10.000 karena itu ambang yang sudah dipakai dasbor
+ * admin sejak awal — tabel rapat di sana untung dari angka pendek. Hero beranda
+ * menaikkannya ke 100.000 lewat `HERO_COMPACT_FROM`: saldo kecil lebih berguna
+ * dibaca presisi, dan di sana yang dikejar cuma mencegah angka meluber melewati
+ * tombol di sebelahnya.
+ */
+const COMPACT_TIERS = [
+  { divisor: 1_000_000_000_000, suffix: 'T' },
+  { divisor: 1_000_000_000, suffix: 'M' },
+  { divisor: 1_000_000, suffix: 'jt' },
+  { divisor: 1_000, suffix: 'rb' },
+] as const
+
+function compactDigits(value: number): string {
+  const rounded = Math.round(value * 10) / 10
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace('.', ',')
+}
+
+export function formatCompact(value: number, { from = 10_000 }: { from?: number } = {}): string {
   const abs = Math.abs(value)
-  if (abs < 10_000) return formatCredits(value)
-  const [divisor, suffix] = abs < 1_000_000 ? [1_000, 'rb'] : [1_000_000, 'jt']
-  const scaled = value / divisor
-  const rounded = Math.round(scaled * 10) / 10
-  const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace('.', ',')
-  return `${text}${suffix}`
+  if (abs < from) return formatCredits(value)
+
+  for (let index = 0; index < COMPACT_TIERS.length; index += 1) {
+    const tier = COMPACT_TIERS[index]
+    if (abs < tier.divisor) continue
+
+    /**
+     * Pembulatan bisa mendorong angka melewati tingkatnya sendiri: 999.999 dibagi
+     * seribu jadi 999,999 lalu membulat ke 1000, dan tercetak "1000rb" — empat digit,
+     * justru sepanjang angka yang mau dipendekkan. Kalau itu terjadi, naikkan
+     * satuannya supaya jadi "1jt".
+     */
+    if (Math.abs(Math.round((value / tier.divisor) * 10) / 10) >= 1_000 && index > 0) {
+      const wider = COMPACT_TIERS[index - 1]
+      return `${compactDigits(value / wider.divisor)}${wider.suffix}`
+    }
+
+    return `${compactDigits(value / tier.divisor)}${tier.suffix}`
+  }
+
+  return formatCredits(value)
+}
+
+/**
+ * Ambang pemadatan untuk angka di hero beranda — saldo besar dan sub-line-nya.
+ */
+export const HERO_COMPACT_FROM = 100_000
+
+export function formatRupiahCompact(
+  value: number,
+  options?: { from?: number },
+): string {
+  const rounded = Math.round(value)
+  return `${rounded < 0 ? '−' : ''}Rp${formatCompact(Math.abs(rounded), options)}`
 }

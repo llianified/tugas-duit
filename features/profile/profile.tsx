@@ -9,17 +9,9 @@ import { TierGlyph } from '@/features/home/tier-glyph'
 import type { UserStats } from '@/features/stats/domain'
 import { VIEW_TITLE } from '@/navigation/app-view'
 import { DataList, DataListRow } from '@/shared/components/data-list'
-import {
-  GlyphBolt,
-  GlyphCheck,
-  GlyphCrown,
-  GlyphHistory,
-  GlyphUsers,
-  GlyphWallet,
-} from '@/shared/components/glyph'
-import { IconCircle } from '@/shared/components/icon-circle'
+import { GlyphCrown } from '@/shared/components/glyph'
 import { PageHeader } from '@/shared/components/page-header'
-import { SectionLabel } from '@/shared/components/section-label'
+import { EYEBROW_CLASS, SectionLabel } from '@/shared/components/section-label'
 import { formatCredits, formatRupiah, formatShortDate } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import type { PremiumState, SessionResponse } from '@/shell/session-api'
@@ -40,6 +32,34 @@ const RANGES = [
 ] as const
 
 type RangeKey = (typeof RANGES)[number]['key']
+
+/**
+ * Semua angka datar halaman ini hidup di satu petak, bukan tersebar antara baris fakta
+ * inline, petak, dan daftar bertajuk seperti sebelumnya — tiga cara menampilkan
+ * pasangan label/nilai yang sama, ditumpuk berurutan. Hanya "Sebaran kesulitan" yang
+ * tetap jadi daftar karena tiap barisnya membawa dua nilai (jumlah dan credit), jadi
+ * memang tabular.
+ */
+function factTiles(stats: UserStats) {
+  const tiles: { label: string; value: string }[] = [
+    { label: 'Task selesai', value: formatCredits(stats.completedCount) },
+    { label: 'Rata-rata bintang', value: stats.averageStars.toFixed(1) },
+    { label: 'Streak', value: `${formatCredits(stats.streak)} hari` },
+    { label: 'Hari aktif', value: `${formatCredits(stats.activeDays)} hari` },
+    { label: 'Bintang tiga', value: `${Math.round(stats.perfectShare * 100)}%` },
+    { label: 'Reward terbaik', value: `+${formatCredits(stats.bestReward)}` },
+    {
+      label: 'Teman aktif',
+      value: `${formatCredits(stats.activeReferralCount)}/${formatCredits(stats.referralCount)}`,
+    },
+  ]
+
+  if (stats.joinedAt) {
+    tiles.push({ label: 'Gabung', value: formatShortDate(stats.joinedAt) })
+  }
+
+  return tiles
+}
 
 export function ProfileView({
   user,
@@ -73,12 +93,13 @@ export function ProfileView({
   }, [stats.earningsSeries, range])
 
   const rangeCredits = series.reduce((sum, point) => sum + point.credits, 0)
+  const tiles = factTiles(stats)
 
   return (
     <div className="flex flex-col">
       <PageHeader title={VIEW_TITLE.profile} />
 
-      <section aria-label="Identitas" className="region-under-brand flex items-start gap-3">
+      <section aria-label="Identitas" className="region-under-brand flex items-center gap-3">
         <button
           type="button"
           onClick={onOpenPhotoNote}
@@ -95,6 +116,9 @@ export function ProfileView({
             )}
             glyphClassName="size-8"
           />
+          {/* Lencana tier di avatar adalah satu-satunya penyebutan tier di badan halaman:
+              pil tier di header aplikasi sudah menampilkan namanya terus-menerus, jadi
+              mengulangnya lagi sebagai fakta inline cuma bikin tiga salinan hal yang sama. */}
           <span
             aria-hidden="true"
             className="btn-soft absolute -bottom-0.5 -right-0.5 flex size-6 items-center justify-center rounded-full text-foreground"
@@ -116,7 +140,10 @@ export function ProfileView({
                 <span
                   key={badge.key}
                   title={badge.detail}
-                  className={cn('rounded-md px-1.5 py-0.5 text-[11px] font-bold', CHIP_TONE[badge.key])}
+                  className={cn(
+                    'rounded-md px-1.5 py-0.5 text-[11px] font-bold',
+                    CHIP_TONE[badge.key],
+                  )}
                 >
                   {badge.label}
                 </span>
@@ -126,35 +153,9 @@ export function ProfileView({
         </div>
       </section>
 
-      <dl className="stack-gap-t flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-muted-foreground">
-        <MetaFact icon={<TierGlyph tier={rank.tier} className="size-3.5" />} value={rank.name} />
-        <MetaFact
-          icon={<GlyphCheck className="size-3.5" />}
-          value={`${formatCredits(stats.completedCount)} task`}
-        />
-        <MetaFact
-          icon={<GlyphBolt className="size-3.5" />}
-          value={`${stats.averageStars.toFixed(1)} bintang`}
-        />
-        {stats.joinedAt ? (
-          <MetaFact
-            icon={<GlyphHistory className="size-3.5" />}
-            value={`Gabung ${formatShortDate(stats.joinedAt)}`}
-          />
-        ) : null}
-      </dl>
-
-      <section aria-label="Perolehan" className="region-t region-t-flush">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-4xl font-bold leading-none tracking-[-0.035em] tabular-nums text-foreground">
-              {formatCredits(stats.balance)}
-              <span className="ml-1.5 text-base font-semibold text-muted-foreground">credit</span>
-            </p>
-            <p className="mt-1.5 text-[15px] font-semibold tabular-nums text-success">
-              +{formatCredits(rangeCredits)} periode ini
-            </p>
-          </div>
+      <section aria-label="Perolehan" className="region-t">
+        <div className="flex items-center justify-between gap-3">
+          <SectionLabel as="h2">Perolehan</SectionLabel>
 
           <div className="flex shrink-0 gap-1 rounded-full bg-muted p-1">
             {RANGES.map((item) => (
@@ -176,31 +177,48 @@ export function ProfileView({
           </div>
         </div>
 
-        <div className="stack-gap-t">
-          <EarningsChart series={series} />
-        </div>
-      </section>
-
-      <section aria-label="Saldo" className="region-t flex items-center gap-3">
-        <IconCircle size="lg" tone="card">
-          <GlyphWallet className="size-5" />
-        </IconCircle>
-        <div className="min-w-0 flex-1">
-          <SectionLabel>Nilai rupiah</SectionLabel>
-          <p className="text-lg font-bold tracking-tight tabular-nums text-foreground">
+        {/* Nilai rupiah jadi baris kedua saldo, bukan sesi sendiri dengan ikon besar:
+            angkanya turunan langsung dari credit di atasnya, jadi memisahkannya membuat
+            satu nilai yang sama dibaca dua kali di dua blok berbeda. */}
+        <div className="label-gap-t flex items-end justify-between gap-3">
+          <p className="text-4xl font-bold leading-none tracking-[-0.035em] tabular-nums text-foreground">
+            {formatCredits(stats.balance)}
+            <span className="ml-1.5 text-base font-semibold text-muted-foreground">credit</span>
+          </p>
+          <p className="shrink-0 text-[15px] font-semibold leading-none tabular-nums text-muted-foreground">
             {formatRupiah(creditsToRupiah(stats.balance))}
           </p>
+        </div>
+
+        <p className="stack-gap-t text-[13px] font-semibold tabular-nums text-success">
+          +{formatCredits(rangeCredits)} periode ini
+        </p>
+
+        <div className="label-gap-t">
+          <EarningsChart series={series} />
         </div>
       </section>
 
       <section aria-label="Rekam jejak" className="region-t">
         <SectionLabel as="h2">Rekam jejak</SectionLabel>
-        <div className="stack-gap-t grid grid-cols-2 gap-2">
-          <StatTile label="Streak" value={`${formatCredits(stats.streak)} hari`} />
-          <StatTile label="Hari aktif" value={`${formatCredits(stats.activeDays)} hari`} />
-          <StatTile label="Bintang tiga" value={`${Math.round(stats.perfectShare * 100)}%`} />
-          <StatTile label="Reward terbaik" value={`+${formatCredits(stats.bestReward)}`} />
-        </div>
+        <dl className="label-gap-t grid grid-cols-2 gap-2">
+          {tiles.map((tile, index) => (
+            <div
+              key={tile.label}
+              /* Jumlah petak bisa ganjil kalau tanggal gabung tidak diketahui; petak
+                 terakhir melebar penuh supaya barisnya tidak menyisakan lubang. */
+              className={cn(
+                'stat-tile',
+                index === tiles.length - 1 && tiles.length % 2 === 1 && 'col-span-2',
+              )}
+            >
+              <dt className={EYEBROW_CLASS}>{tile.label}</dt>
+              <dd className="mt-0.5 text-lg font-bold tracking-tight tabular-nums text-foreground">
+                {tile.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       <div className="region-t">
@@ -220,45 +238,6 @@ export function ProfileView({
           ))}
         </DataList>
       </div>
-
-      <div className="region-t">
-        <DataList label="Ringkasan lain">
-          <DataListRow
-            showDivider
-            marker={<GlyphUsers className="size-5 text-muted-foreground" />}
-            title="Teman yang kamu ajak"
-            meta={`${formatCredits(stats.activeReferralCount)} dari ${formatCredits(stats.referralCount)} aktif`}
-          />
-          <DataListRow
-            showDivider={false}
-            marker={<GlyphHistory className="size-5 text-muted-foreground" />}
-            title="Riwayat task"
-            meta={`${formatCredits(stats.completedCount)} task selesai`}
-          />
-        </DataList>
-      </div>
-    </div>
-  )
-}
-
-function MetaFact({ icon, value }: { icon: React.ReactNode; value: string }) {
-  return (
-    <span className="flex items-center gap-1.5">
-      <span aria-hidden="true" className="text-muted-foreground/70">
-        {icon}
-      </span>
-      <span className="font-semibold text-foreground/80">{value}</span>
-    </span>
-  )
-}
-
-function StatTile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="stat-tile">
-      <SectionLabel>{label}</SectionLabel>
-      <p className="mt-0.5 text-lg font-bold tracking-tight tabular-nums text-foreground">
-        {value}
-      </p>
     </div>
   )
 }

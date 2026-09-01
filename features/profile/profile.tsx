@@ -199,9 +199,11 @@ export function ProfileView({
         </div>
       </section>
 
+      {/* Tanpa judul: keempat petak sudah punya label sendiri (`dt`), jadi
+          "Rekam jejak" cuma satu lapis kata di atas kata. `aria-label` tetap ada
+          supaya blok ini masih punya nama untuk pembaca layar. */}
       <section aria-label="Rekam jejak" className="region-t">
-        <SectionLabel as="h2">Rekam jejak</SectionLabel>
-        <dl className="label-gap-t grid grid-cols-2 gap-2">
+        <dl className="grid grid-cols-2 gap-2">
           {tiles.map((tile, index) => (
             <div
               key={tile.label}

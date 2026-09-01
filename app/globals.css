@@ -1656,124 +1656,84 @@
 }
 
 /* ============================================================================
-   Kartu bonus channel: "kupon sobek"
+   Kartu bonus channel: "channel Telegram"
    ============================================================================
-   Kartu ini sebelumnya pelat `--muted` rata — bentuk yang sama dengan kerangka
-   memuat dan dengan daftar misi, jadi satu-satunya hal di beranda yang bisa
-   HILANG kalau tidak diklaim justru yang paling tidak menuntut dilihat.
+   Dua bentuk sebelumnya salah sasaran. Pelat `--muted` rata membuat satu-satunya
+   kartu di beranda yang bisa HILANG kalau diabaikan terbaca sederajat dengan
+   daftar transaksi. Lalu kupon sobek: bentuknya benar secara logika (sekali
+   pakai, ada yang disobek) tapi ia benda yang salah — yang diminta user bukan
+   menukar kupon, tapi MASUK ke sebuah channel Telegram.
 
-   Bentuknya diambil dari benda yang persis begitu cara kerjanya: kupon dengan
-   stub yang disobek. Sobekannya nyata — garis putus-putus vertikal dengan dua
-   lubang yang menembus tepi kartu — dan stub-nya berisi satu kata dicetak
-   tegak. Itu satu-satunya elemen yang berani di sini; isi kanannya dibiarkan
-   tenang supaya angka dan dua tombolnya tetap yang pertama terbaca.
+   Jadi kartunya sekarang meniru benda tujuannya: satu entri channel Telegram.
+   Avatar bulat berisi pesawat kertas, nama channel, lalu satu gelembung pesan
+   masuk — ekornya di kiri bawah, seperti bubble yang benar — yang isinya
+   penawarannya sendiri. Nominalnya duduk DI DALAM gelembung, karena begitulah
+   cara channel mengirim angka: sebagai pesan, bukan sebagai label kartu.
 
-   Tidak di-scope ke `.home-skin`: yang dibentuk adalah kartunya sendiri, bukan
-   kulit halaman yang menumpanginya.
+   Satu elemen yang berani di sini adalah gelembungnya; kepala dan dua tombolnya
+   dibiarkan tenang. Tidak di-scope ke `.home-skin` — yang dibentuk kartunya
+   sendiri, bukan kulit halaman yang menumpanginya.
    ========================================================================== */
-.bonus-coupon {
-  --coupon-stub-w: 2.375rem;
-  --coupon-edge: color-mix(in oklab, var(--primary) 40%, var(--border));
-  --coupon-perf: color-mix(in oklab, var(--primary) 55%, var(--foreground) 18%);
-  --coupon-hole: 0.625rem;
+.tg-channel {
   position: relative;
   isolation: isolate;
-  display: flex;
-  align-items: stretch;
-  overflow: hidden;
   border-radius: var(--radius);
-  /* Tepi 1px dibuat dengan cara yang sama seperti karcis: elemen luar berisi
-     warna garis, lapisan `::before` sejauh 1px di dalamnya berisi bidangnya.
-     Konsisten dengan `.task-card` di atasnya, dan tahan terhadap `overflow`. */
-  background-color: var(--coupon-edge);
+  /* Tepi 1px dengan cara yang sama seperti karcis: elemen luar berisi warna
+     garis, lapisan di dalamnya berisi bidangnya. */
+  background-color: color-mix(in oklab, var(--primary) 34%, var(--border));
+  padding: 1px;
 }
-.bonus-coupon::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 1px;
+.tg-channel-body {
   border-radius: calc(var(--radius) - 1px);
-  /* Cahaya datang dari sudut kanan atas, tempat pesawat kertasnya lewat. */
+  padding: var(--surface-p);
+  /* Cahaya datang dari kiri atas, tempat avatarnya duduk. */
   background-image:
     radial-gradient(
-      120% 130% at 100% 0%,
-      color-mix(in oklab, var(--primary) 15%, transparent),
-      transparent 62%
+      110% 120% at 0% 0%,
+      color-mix(in oklab, var(--primary) 14%, transparent),
+      transparent 60%
     ),
     linear-gradient(180deg, var(--card), var(--card));
 }
 
-/* Stub kiri: bidang bertint, teks tegak, dan tepi kanan yang memang sobekan. */
-.bonus-coupon-stub {
-  position: relative;
+/* Avatar channel: bidang penuh `--primary`, bukan tint. Ini satu-satunya titik
+   di kartu yang memakai warna aksen sepenuh tenaga, dan ia menandai pengirim —
+   sama seperti avatar channel di aplikasinya. */
+.tg-channel-avatar {
   flex: none;
-  width: var(--coupon-stub-w);
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: color-mix(in oklab, var(--primary) 13%, transparent);
-  border-right: 1px dashed var(--coupon-perf);
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  background-image: linear-gradient(
+    155deg,
+    color-mix(in oklab, var(--primary) 82%, white 18%),
+    var(--primary)
+  );
+  color: var(--primary-foreground);
+  box-shadow: 0 2px 10px color-mix(in oklab, var(--primary) 28%, transparent);
 }
-/* Dua lubang sobek. Letaknya MENEMBUS tepi kartu — separuhnya terpotong oleh
-   `overflow: hidden` di induknya, jadi yang terlihat setengah lingkaran seperti
-   lubang yang benar-benar dilubangi di kertasnya, bukan titik yang ditempel. */
-.bonus-coupon-stub::before,
-.bonus-coupon-stub::after {
+
+/* Gelembung pesan masuk. Sudut kiri-bawahnya tumpul kecil dan ekornya menempel
+   di sana — itu yang membuat bentuk ini dikenali sebagai pesan, bukan panel. */
+.tg-channel-bubble {
+  position: relative;
+  border-radius: 0.875rem;
+  border-bottom-left-radius: 0.25rem;
+  padding: 0.75rem 0.875rem;
+  background-color: color-mix(in oklab, var(--primary) 10%, var(--muted));
+}
+.tg-channel-bubble::after {
   content: '';
   position: absolute;
-  right: calc(var(--coupon-hole) / -2);
-  width: var(--coupon-hole);
-  height: var(--coupon-hole);
-  border-radius: 9999px;
-  background-color: var(--background);
-}
-.bonus-coupon-stub::before {
-  top: calc(var(--coupon-hole) / -2);
-}
-.bonus-coupon-stub::after {
-  bottom: calc(var(--coupon-hole) / -2);
-}
-.bonus-coupon-stub-label {
-  writing-mode: vertical-rl;
-  rotate: 180deg;
-  font-family: var(--font-display);
-  font-size: 0.625rem;
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: 0.32em;
-  text-transform: uppercase;
-  /* `--primary` sebagai teks 10px di atas bidang gelap tidak lolos kontras;
-     nada terangnya sudah ada tokennya sejak chip. */
-  color: var(--chip-fg-primary);
-}
-
-/* Pesawat kertas Telegram di sudut kanan atas. Motif, bukan bentuk hias: ia
-   benda yang sama dengan yang ada di tombol "Buka" di bawahnya.
-
-   Dua percobaan sebelumnya salah dengan cara yang sama — keduanya mengatur
-   seberapa besar pesawat boleh MENGGANGGU, bukan apakah ia masih terbaca.
-   Mula-mula 6.5rem duduk di jalur teks: nominal dan kalimatnya lewat di atas
-   badan pesawat. Lalu ia digeser −1.75rem ke dua sisi supaya teks bebas penuh
-   kiri-kanan, dan `overflow: hidden` memakan dua pertiga bentuknya: yang
-   tersisa cuma potongan ekor yang tidak dikenali siapa pun sebagai pesawat.
-   Motif yang tidak terbaca bukan cap sudut, cuma noda.
-
-   Jadi sekarang ia utuh DI DALAM kartu, dan tempatnya didapat bukan dengan
-   menyempitkan teks: baris nominal hanya seselebar angka, jadi sudut kanan
-   atas memang kosong. Ukurannya dipatok setinggi baris nominal itu supaya
-   pucuk bawahnya berhenti sebelum baris pertama kalimat — kalimat dan
-   tombolnya tetap penuh kiri-kanan, tanpa wilayah yang perlu dihindari. */
-.bonus-coupon-plane {
-  position: absolute;
-  top: 0.875rem;
-  right: 0.875rem;
-  width: 2.5rem;
-  height: 2.5rem;
-  rotate: -6deg;
-  /* Utuh dan lebih kecil, jadi tintnya boleh sedikit naik tanpa bersaing
-     dengan angkanya. */
-  color: color-mix(in oklab, var(--primary) 22%, transparent);
-  pointer-events: none;
+  left: -0.3rem;
+  bottom: 0;
+  width: 0.375rem;
+  height: 0.6875rem;
+  background-color: inherit;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
 }
 
 /* --- Transaksi: baris buku kas -------------------------------------------- */

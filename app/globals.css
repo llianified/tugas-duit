@@ -257,10 +257,6 @@
   --brand-band-top: max(var(--header-gap), env(safe-area-inset-top), var(--telegram-safe-top));
   --brand-band-h: 2rem;
   --brand-pill-h: min(1.875rem, var(--brand-band-h));
-  /* Panjang ekor pudar di bawah brand band. Ekornya hidup di luar
-  --brand-band-h, jadi menambahnya hanya memperpanjang gradien ke bawah dan
-  tidak menggeser --content-inset-top atau posisi island. */
-  --brand-fade-tail: 1.5rem;
   --brand-control-inset: calc((var(--brand-band-h) - var(--brand-pill-h)) / 2);
   --telegram-safe-top: var(--tg-safe-area-inset-top, 0px);
   --telegram-safe-bottom: var(--tg-safe-area-inset-bottom, 0px);
@@ -632,7 +628,7 @@
     top: 0;
     left: 0;
     right: 0;
-    height: calc(var(--brand-band-top) + var(--brand-band-h) + var(--brand-fade-tail));
+    height: calc(var(--brand-band-top) + var(--brand-band-h) + 0.75rem);
     /* Views that open with the hero band raise --brand-band-tint to the hero
     colour, so the fade dissolves into the surface right below it instead of
     leaving a lighter strip. */
@@ -645,7 +641,7 @@
     mask-image: linear-gradient(
       to bottom,
       #000 0,
-      #000 calc(100% - var(--brand-fade-tail)),
+      #000 calc(100% - 0.75rem),
       transparent 100%
     );
   }

@@ -314,24 +314,17 @@ pada 384 px di tema terang & gelap (`scrollWidth === clientWidth === 384`),
 
 **Berkas:** `shared/components/action-button.tsx`
 
-- [x] Ganti `.tap-plate` dengan `.plate-3d` pada varian primer.
-- [x] Varian sekunder/netral pakai `.plate-3d-soft` (menggantikan `.btn-soft`
+- [ ] Ganti `.tap-plate` dengan `.plate-3d` pada varian primer.
+- [ ] Varian sekunder/netral pakai `.plate-3d-soft` (menggantikan `.btn-soft`
       **hanya** di komponen ini; jangan hapus `.btn-soft` dari CSS karena
       mungkin dipakai di tempat lain — cek dulu dengan pencarian).
-- [x] Naikkan berat teks ke 700–800, tambah `tracking-tight`, ukuran ~1.0625rem.
-- [x] Pastikan varian destruktif & premium ikut mendapat depth yang sama.
-- [x] Pertahankan seluruh prop, `focus-ring`, status `disabled`, dan status
+- [ ] Naikkan berat teks ke 700–800, tambah `tracking-tight`, ukuran ~1.0625rem.
+- [ ] Pastikan varian destruktif & premium ikut mendapat depth yang sama.
+- [ ] Pertahankan seluruh prop, `focus-ring`, status `disabled`, dan status
       memuat yang sudah ada. **Jangan ubah antarmuka prop.**
-- [x] Periksa semua pemakaian `ActionButton` masih tampil benar — khususnya
+- [ ] Periksa semua pemakaian `ActionButton` masih tampil benar — khususnya
       `features/withdraw/**`, `features/premium/**`, `features/ads/**`.
-- [x] Cek target sentuh tetap ≥ 44 px.
-
-**Status:** SELESAI. `pnpm build` lolos, tanpa error TypeScript baru,
-`git diff --name-only` hanya `shared/components/action-button.tsx` (+ dokumen ini).
-Diukur langsung di peramban pada 384 px, terang & gelap
-(`scrollWidth === clientWidth === 384`): tombol primer `17px`/`800` dengan
-bayangan padat `0 3px 0`, tombol sekunder `17px`/`700` dengan ring `--border`
-+ `0 2px 0`, keduanya tinggi `52px` (≥ 44 px).
+- [ ] Cek target sentuh tetap ≥ 44 px.
 
 ---
 
@@ -507,26 +500,6 @@ Diisi oleh agent selama pengerjaan. Ini penting untuk serah-terima antar agent.
   merender `<h1 className="sr-only">`, jadi `font-display` di sana murni
   persiapan bila judul kelak ditampilkan. Efek nyata Langkah 2 datang dari
   `section-label.tsx` (`EYEBROW_CLASS`).
-- **Langkah 3 — varian destruktif & premium tidak ada.** `ActionButton` hanya
-  punya `primary | quiet | ghost`; tidak ada varian destruktif atau premium
-  untuk diberi depth. Ceklis itu dianggap selesai secara hampa. Bila varian
-  tersebut kelak dibuat, cukup tambahkan `.plate-3d` ke kelasnya.
-- **Langkah 3 — `.btn-soft` tidak ada di komponen ini.** Rencana mengira
-  `ActionButton` memakai `.btn-soft`. Kenyataannya varian `ghost` sebelumnya
-  adalah tombol teks polos tanpa latar. `.plate-3d-soft` dipasang di sana
-  (jadi `ghost` kini benar-benar pelat sekunder, `text-foreground` + `font-bold`,
-  sesuai tombol "Google" ala fomo). `.btn-soft` sendiri tetap utuh di CSS dan
-  masih dipakai `features/home/balance-summary.tsx`,
-  `features/channel/channel-card.tsx`, `features/profile/profile.tsx`.
-- **Langkah 3 — `press-scale-soft` dicabut dari varian berpelat.** `.plate-3d`
-  dan `.press-scale-soft` sama-sama menulis `transform` pada `:active`, dan
-  `.press-scale-soft` dideklarasikan lebih akhir di `@layer utilities` sehingga
-  `scale()` menang dan efek tekan-turun hilang. Kelas itu kini hanya menempel
-  pada varian `quiet` (yang tidak berpelat); `primary` & `ghost` mengandalkan
-  tekan-turun dari `.plate-3d*`.
-- **Langkah 3 — `disabled:shadow-none`.** Ditambahkan pada `primary` & `ghost`
-  supaya tombol nonaktif tidak tetap terlihat "bisa ditekan". Ini kelas Tailwind
-  bawaan, bukan warna mentah.
 - **Langkah 1 — `--thread-line`.** Dijadikan alias `var(--border)` di kedua tema
   (bukan warna baru), karena `--border` sudah punya nilai terang & gelap yang
   tepat untuk garis penghubung setipis ini. Token tetap ada agar Langkah 10

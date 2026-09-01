@@ -21,6 +21,12 @@
   --color-primary-active: var(--primary-active);
   --color-star: var(--star);
   --color-premium: var(--premium);
+  --color-medal-gold: var(--medal-gold);
+  --color-medal-gold-fg: var(--medal-gold-fg);
+  --color-medal-silver: var(--medal-silver);
+  --color-medal-silver-fg: var(--medal-silver-fg);
+  --color-medal-bronze: var(--medal-bronze);
+  --color-medal-bronze-fg: var(--medal-bronze-fg);
   --color-scrim: var(--scrim);
   --color-card: var(--card);
   --color-foreground: var(--foreground);
@@ -146,6 +152,18 @@
   --chip-fg-destructive: #b91c1c;
   --chip-fg-premium: #92400e;
   --thread-line: var(--border);
+  /* Medali podium. Sengaja TIDAK memakai --premium untuk emas: premium sudah
+     memakai emas di cincin avatar dan mahkota, dan dua hal berbeda dengan warna
+     yang sama membuat baris papan tidak bisa dibaca. Ketiganya adalah bidang
+     padat berisi teks 11px, jadi pasangan latar/teks dipilih agar kontrasnya
+     lolos AA teks kecil (perunggu dipekatkan supaya teks putih di atasnya
+     tembus 4.5:1 — versi terang bronze biasa hanya ~4.2:1). */
+  --medal-gold: #d4a017;
+  --medal-gold-fg: #1c1917;
+  --medal-silver: #b8bcc4;
+  --medal-silver-fg: #1c1917;
+  --medal-bronze: #8a4b21;
+  --medal-bronze-fg: #ffffff;
   --duration-ui: 150ms;
   --control-h: 3.25rem;
   --cta-h: var(--control-h);
@@ -223,6 +241,15 @@
   --chip-fg-destructive: var(--destructive);
   --chip-fg-premium: var(--premium);
   --thread-line: var(--border);
+  /* Di gelap ketiganya dinaikkan terangnya supaya tetap terbaca di atas
+     #101014, dan teksnya jadi gelap untuk semuanya — termasuk perunggu, yang
+     pada nilai terang ini lebih kontras dengan teks gelap. */
+  --medal-gold: #f0c040;
+  --medal-gold-fg: #101014;
+  --medal-silver: #c6cad2;
+  --medal-silver-fg: #101014;
+  --medal-bronze: #c47b46;
+  --medal-bronze-fg: #101014;
 }
 
 [data-telegram-controls='true'] {

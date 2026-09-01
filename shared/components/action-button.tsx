@@ -7,7 +7,7 @@ type ActionButtonVariant = 'primary' | 'quiet' | 'ghost'
 
 const VARIANT_CLASS: Record<ActionButtonVariant, string> = {
   primary: [
-    'plate-3d w-full bg-primary text-primary-foreground font-extrabold',
+    'btn-glass w-full bg-primary text-primary-foreground font-extrabold',
     'hover:bg-primary-hover',
     'active:bg-primary-active',
     'disabled:bg-muted disabled:text-muted-foreground',
@@ -20,7 +20,7 @@ const VARIANT_CLASS: Record<ActionButtonVariant, string> = {
     'disabled:text-muted-foreground disabled:opacity-70',
   ].join(' '),
   ghost: [
-    'plate-3d-soft w-full text-foreground font-bold',
+    'btn-glass-quiet w-full text-foreground font-bold',
     'disabled:text-muted-foreground disabled:opacity-50 disabled:shadow-none',
   ].join(' '),
 }

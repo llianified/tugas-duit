@@ -34,7 +34,8 @@ fomo adalah aplikasi trading kripto dark-only. Aplikasi ini adalah Telegram Mini
 tugas berhadiah dalam Rupiah, dua tema. Jadi:
 
 **Diadopsi (murni presentasi):**
-1. Tombol chunky berlapis (depth 3D, radius besar, teks berat).
+1. Tombol solid dengan hairline "gelas" (radius besar, teks berat) — bukan
+   depth 3D / neobrutalism.
 2. Angka besar dengan desimal diredam (`$0` terang + `.00` abu-abu).
 3. Kartu "diri sendiri" tersorot di daftar peringkat.
 4. Segmented waktu polos + chip dropdown filter.
@@ -87,7 +88,8 @@ Bentuk & ukuran: `--radius (0.875rem) --radius-md --radius-lg --radius-bubble
 Jarak: `--block-gap --content-gap --region-gap --stack-gap --label-gap --cta-gap
 --header-gap --panel-gap --surface-p --list-row-py`
 
-Utility relevan: `.tap-plate .btn-soft .rounded-cta .control-h .cta-h .cta-sheen
+Utility relevan: `.btn-glass .btn-glass-quiet .tap-plate .btn-soft
+.rounded-cta .control-h .cta-h .cta-sheen
 .press-scale .press-scale-soft .focus-ring .focus-ring-strong .transition-ui
 .ring-border .stat-tile .task-card .px-content .bleed-x .glyph-md`
 
@@ -124,17 +126,21 @@ hasil ukur piksel mati — utamakan konsistensi internal.
 Ciri tombol fomo:
 - Radius besar dan lembut, mendekati "squircle" (~`1.25rem` pada tinggi ~3.5rem).
 - Teks sangat berat (700–800), ukuran ~1.0625rem, tracking sedikit negatif.
-- **Depth padat, bukan blur lembut:** garis highlight tipis di dalam sisi atas,
-  lalu bayangan **padat** di bawah (offset ~3px, blur 0) — memberi kesan
-  "pelat yang bisa ditekan".
-- Saat ditekan: tombol turun ~2px dan bayangan bawah mengecil, bukan sekadar
-  meredup atau menyusut proporsional.
+- **Hairline "gelas", BUKAN neobrutalism.** Ini koreksi penting: tombol fomo
+  adalah tombol biasa dengan bidang warna solid. Yang membuatnya khas adalah
+  garis hairline 1px di dalam **seluruh** sisi ditambah kilau sedikit lebih
+  terang di sisi atas — terbaca seperti permukaan kaca. **Tidak ada** bayangan
+  offset padat, **tidak ada** border tebal, **tidak ada** kesan "pelat".
+- Bayangan luarnya sangat kecil dan lembut (offset ~1px, blur ~2px), hanya untuk
+  mengangkat tombol tipis dari latar.
+- Saat ditekan: tombol menyusut halus dan kilau atasnya meredup; tombol tidak
+  turun seperti pelat.
 - Varian putih pekat (Apple) dan gelap-berbingkai (Google) untuk tombol sekunder.
 
-Terjemahan ke sistem ini: `.tap-plate` sudah setengah jalan (highlight inset
-sudah ada) tetapi bayangannya masih blur lembut. Perlu utility baru
-`.plate-3d` dengan bayangan padat + perilaku tekan-turun, dipakai oleh
-`ActionButton` varian primer.
+Terjemahan ke sistem ini: `.tap-plate` sudah setengah jalan (kilau inset atas
+sudah ada) tetapi hairline-nya belum melingkupi seluruh sisi. Perlu utility baru
+`.btn-glass` dengan ring hairline inset + kilau atas + bayangan sangat lembut,
+dipakai oleh `ActionButton` varian primer.
 
 ### 1.2 Angka besar
 
@@ -203,7 +209,7 @@ cepat dan familiar di dalam Telegram.
 | --- | --- | --- |
 | `app/globals.css` | Tambah token + utility baru | 1, 2 |
 | `app/layout.tsx` | Muat font display | 2 |
-| `shared/components/action-button.tsx` | Varian depth 3D | 3 |
+| `shared/components/action-button.tsx` | Hairline gelas | 3 |
 | `shared/components/credit-amount.tsx` | Mode display + desimal redam | 4 |
 | `features/home/balance-summary.tsx` | Pakai mode display | 4 |
 | `shared/components/meta-badge.tsx` | Chip padat + nada | 5 |
@@ -221,9 +227,9 @@ cepat dan familiar di dalam Telegram.
 Semua wajib punya pasangan terang & gelap.
 
 ```
---plate-lift          /* jarak turun saat ditekan, mis. 2px */
---plate-shadow        /* warna bayangan padat tombol */
---plate-highlight     /* warna highlight inset atas */
+--hairline-edge       /* warna hairline 1px di seluruh sisi tombol */
+--hairline-sheen      /* warna kilau inset di sisi atas */
+--btn-shadow          /* warna bayangan luar tombol yang sangat lembut */
 --rail-card-w         /* lebar kartu rail, mis. 9.5rem */
 --rail-gap            /* jarak antar kartu rail */
 --chip-radius         /* radius chip, mis. 0.5rem */
@@ -234,8 +240,8 @@ Semua wajib punya pasangan terang & gelap.
 ### 2.3 Utility baru yang akan ditambahkan
 
 ```
-.plate-3d          /* bayangan padat + tekan-turun (tombol primer) */
-.plate-3d-soft     /* versi sekunder di atas bg-card */
+.btn-glass         /* hairline seluruh sisi + kilau atas (tombol primer) */
+.btn-glass-quiet   /* versi sekunder di atas bg-card, hairline pakai --border */
 .num-display       /* angka besar: font-display, weight 800, tabular, tracking-tight */
 .chip              /* dasar chip padat */
 .rail              /* wadah scroll-snap horizontal */
@@ -261,15 +267,15 @@ Format commit yang disarankan: `style(fomo): <langkah N> <ringkasan>`
 **Berkas:** `app/globals.css`
 
 - [x] Tambah token dari 2.2 ke `:root`, dengan pasangan di `.dark`.
-      Di tema gelap bayangan lebih pekat, highlight lebih redup.
-- [x] Tambah `.plate-3d`: highlight inset atas, bayangan **padat** (blur 0)
-      di bawah, transisi `transform` + `box-shadow`. Pada `:active`, geser
-      turun `--plate-lift` dan kecilkan bayangan.
-- [x] Tambah `.plate-3d-soft` untuk tombol sekunder di atas `bg-card`
-      (bayangan lebih halus, tetap punya ring `--border`).
+      Di tema gelap hairline lebih redup, bayangan lebih pekat.
+- [x] Tambah `.btn-glass`: ring hairline 1px inset di seluruh sisi, kilau inset
+      di sisi atas, bayangan luar sangat lembut, transisi `transform` +
+      `box-shadow`. Pada `:active`, menyusut halus dan kilau atas meredup.
+- [x] Tambah `.btn-glass-quiet` untuk tombol sekunder di atas `bg-card`
+      (hairline memakai `--border`, kilau atas jauh lebih tipis).
 - [x] Tambah `.chip`, `.rail`, `.rail-item`, `.no-scrollbar`, `.clamp-3`,
       `.thread-line`, `.num-display`.
-- [x] Bungkus efek tekan-turun dalam penjagaan `prefers-reduced-motion`
+- [x] Bungkus efek tekan (menyusut) dalam penjagaan `prefers-reduced-motion`
       (ikuti pola yang sudah ada di berkas ini).
 - [x] Naikkan `--cta-radius` dari `1.125rem` → `1.25rem` agar lebih dekat ke fomo.
 - [x] **Verifikasi:** tidak ada perubahan pada `.nav-pill*`, `.island*`,
@@ -310,21 +316,30 @@ pada 384 px di tema terang & gelap (`scrollWidth === clientWidth === 384`),
 
 ---
 
-### Langkah 3 — ActionButton chunky
+### Langkah 3 — ActionButton hairline gelas
 
 **Berkas:** `shared/components/action-button.tsx`
 
-- [ ] Ganti `.tap-plate` dengan `.plate-3d` pada varian primer.
-- [ ] Varian sekunder/netral pakai `.plate-3d-soft` (menggantikan `.btn-soft`
-      **hanya** di komponen ini; jangan hapus `.btn-soft` dari CSS karena
-      mungkin dipakai di tempat lain — cek dulu dengan pencarian).
-- [ ] Naikkan berat teks ke 700–800, tambah `tracking-tight`, ukuran ~1.0625rem.
-- [ ] Pastikan varian destruktif & premium ikut mendapat depth yang sama.
-- [ ] Pertahankan seluruh prop, `focus-ring`, status `disabled`, dan status
+- [x] Ganti `.tap-plate` dengan `.btn-glass` pada varian primer.
+- [x] Varian sekunder/netral pakai `.btn-glass-quiet` (menggantikan `.btn-soft`
+      **hanya** di komponen ini; `.btn-soft` tetap ada di CSS karena masih
+      dipakai `features/home/balance-summary.tsx`, `features/channel/channel-card.tsx`,
+      dan `features/profile/profile.tsx`).
+- [x] Naikkan berat teks ke 700–800, tambah `tracking-tight`, ukuran ~1.0625rem.
+- [x] Varian destruktif & premium: tidak ada — `ActionButton` hanya punya
+      `primary` / `quiet` / `ghost`. Nada destruktif & premium di aplikasi ini
+      dipakai pada chip/teks, bukan tombol, jadi tidak ada yang perlu disamakan.
+- [x] Pertahankan seluruh prop, `focus-ring`, status `disabled`, dan status
       memuat yang sudah ada. **Jangan ubah antarmuka prop.**
-- [ ] Periksa semua pemakaian `ActionButton` masih tampil benar — khususnya
+- [x] Periksa semua pemakaian `ActionButton` masih tampil benar — khususnya
       `features/withdraw/**`, `features/premium/**`, `features/ads/**`.
-- [ ] Cek target sentuh tetap ≥ 44 px.
+- [x] Cek target sentuh tetap ≥ 44 px (`.control-h` = `3.25rem` = 52 px).
+
+**Status:** SELESAI. Gaya tombol dikoreksi dari "pelat neobrutal" menjadi
+hairline gelas: `--plate-*` diganti `--hairline-edge` / `--hairline-sheen` /
+`--btn-shadow`, dan `.plate-3d` / `.plate-3d-soft` diganti `.btn-glass` /
+`.btn-glass-quiet`. `pnpm build` lolos, tanpa error TypeScript baru, diperiksa
+pada 384 px di tema terang & gelap tanpa overflow horizontal.
 
 ---
 

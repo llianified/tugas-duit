@@ -26,7 +26,6 @@ export function ProgressionBadges({
   rewardPoolMax,
   rewardPoolRegenCredits,
   rewardPoolSecondsToNext,
-  onPanelOpenChange,
   onOpenStats,
 }: {
   progression: Progression
@@ -52,10 +51,6 @@ export function ProgressionBadges({
   const profileOpen = openPanel === 'profile'
   const rankOpen = openPanel === 'rank'
   const difficultyOpen = openPanel === 'difficulty'
-
-  useEffect(() => {
-    onPanelOpenChange?.(openPanel !== null)
-  }, [openPanel, onPanelOpenChange])
 
   useEffect(() => {
     if (!profileVisible) setOpenPanel((current) => (current === 'profile' ? null : current))

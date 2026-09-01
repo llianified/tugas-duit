@@ -1,14 +1,16 @@
 'use client'
 
+import { CardRail, CardRailItem } from '@/shared/components/card-rail'
 import { SURFACE_CARD_CLASS } from '@/shared/components/surface-card'
+import { cn } from '@/shared/lib/utils'
 
 /**
  * `tone="on-muted"` untuk bar yang berdiri di atas permukaan `--muted`.
  *
  * Bar default berwarna `--muted` supaya terlihat di atas latar view. Di dalam kartu
- * yang latarnya sendiri `--muted` (kartu misi, tab aktif strip tab) bar itu lenyap —
- * bukan "kalem", tapi benar-benar tidak terlihat, sehingga kerangkanya menggambar
- * kotak kosong alih-alih baris yang sedang dimuat.
+ * yang latarnya sendiri `--muted` (kartu misi, `stat-tile`, tab aktif strip tab) bar
+ * itu lenyap — bukan "kalem", tapi benar-benar tidak terlihat, sehingga kerangkanya
+ * menggambar kotak kosong alih-alih baris yang sedang dimuat.
  */
 function Bar({
   className,
@@ -18,42 +20,89 @@ function Bar({
   tone?: 'default' | 'on-muted'
 }) {
   const fill = tone === 'on-muted' ? 'bg-muted-foreground/15' : 'bg-muted'
-  return <div className={`animate-pulse rounded-md ${fill} ${className}`} />
+  return <div className={cn('animate-pulse rounded-md', fill, className)} />
+}
+
+/**
+ * Satu baris teks palsu yang tingginya lahir dari line box aslinya.
+ *
+ * Ini satu-satunya cara kerangka ini berhenti bergeser saat data masuk. Menebak
+ * tinggi baris lewat `h-5` / `mt-0.5` sudah gagal sekali: `text-[11px]` dan
+ * `text-[22px]` tidak menyetel line-height, jadi angkanya bergantung pada font
+ * yang dimuat dan tidak bisa dihitung di kepala. Dengan menaruh contoh teks
+ * `invisible` di kelas teks YANG SAMA, tingginya dihitung peramban — dan ikut
+ * berubah sendiri kalau kelas teks komponen aslinya kelak diubah.
+ *
+ * `sample` tidak pernah terlihat dan tidak pernah dibacakan (`aria-hidden` ada di
+ * akar tiap kerangka), jadi isinya hanya perlu sepanjang teks yang diwakilinya.
+ */
+function Line({
+  sample,
+  className,
+  bar,
+  tone,
+}: {
+  sample: string
+  className?: string
+  bar: string
+  tone?: 'default' | 'on-muted'
+}) {
+  return (
+    <span className={cn('relative flex', className)}>
+      <span className="invisible">{sample}</span>
+      <Bar className={cn('absolute top-1/2 -translate-y-1/2', bar)} tone={tone} />
+    </span>
+  )
 }
 
 const ROW_TITLE_W = ['w-32', 'w-40', 'w-28', 'w-36', 'w-24'] as const
 
+/**
+ * Baris `DataListRow`: penanda opsional, judul `text-[15px]` + meta `text-[13px]`,
+ * lalu kolom nilai yang RATA KANAN dan bertumpuk (`flex-col items-end gap-1`) —
+ * nominal di atas, bintang di bawahnya. Kolom itu dulu digambar sebagai satu bar
+ * tunggal, jadi tiap baris riwayat menyusut ~19px begitu bintangnya datang.
+ */
 function DataRowSkeleton({
   showDivider,
   titleWidth,
   marker,
   markerClass,
+  stars,
 }: {
   showDivider: boolean
   titleWidth: string
   marker?: boolean
   markerClass: string
+  stars?: boolean
 }) {
   return (
     <div
-      className={[
+      className={cn(
         'bleed-x flex items-center gap-3 py-[var(--list-row-py)]',
-        showDivider ? 'border-b border-border/60' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
+        showDivider && 'border-b border-border/60',
+      )}
     >
-      {marker ? <Bar className={`${markerClass} shrink-0 rounded-full`} /> : null}
+      {marker ? <Bar className={cn(markerClass, 'shrink-0 rounded-full')} /> : null}
 
       <div className="min-w-0 flex-1">
-        <div className="flex h-5 items-center">
-          <Bar className={`h-3.5 ${titleWidth}`} />
-        </div>
-        <div className="mt-0.5 flex h-4 items-center">
-          <Bar className="h-3 w-24" />
-        </div>
+        <Line
+          sample="Judul task riwayat"
+          className="text-[15px] font-semibold tracking-tight"
+          bar={cn('h-3.5', titleWidth)}
+        />
+        <Line
+          sample="Sedang · 12 Mei 09.41"
+          className="mt-0.5 text-[13px]"
+          bar="h-3 w-24"
+        />
       </div>
-      <Bar className="h-3.5 w-16" />
+
+      {/* `StarRating` size sm: tiga ikon `size-3.5` dengan `gap-0.5` = 46px × 14px. */}
+      <span className="flex shrink-0 flex-col items-end gap-1">
+        <Line sample="+120 credit" className="text-[15px] font-bold" bar="h-3.5 w-16" />
+        {stars ? <Bar className="h-3.5 w-[2.875rem]" /> : null}
+      </span>
     </div>
   )
 }
@@ -69,6 +118,8 @@ export function DataListSkeleton({
   marker = false,
   markerClass = 'size-9',
   badge = false,
+  action = false,
+  stars = false,
 }: {
   rows?: number
   marker?: boolean
@@ -78,16 +129,28 @@ export function DataListSkeleton({
   /** `MetaBadge` di sisi kanan label. Sejak chip padat gaya fomo: teks
    *  0.6875rem/1.25 + padding 0.1875rem ≈ 20px, radius `--chip-radius`. */
   badge?: boolean
+  /** Tautan aksi di kepala daftar (mis. "Riwayat" di `RecentTransactions`).
+   *  Ia berdiri SETELAH badge, sesuai urutan di `DataList`. */
+  action?: boolean
+  /** Kolom nilai bertumpuk dengan bintang di bawah nominal. */
+  stars?: boolean
 }) {
   return (
-    <div
-      className="animate-fade-in view-trim-b [--view-trim-b:var(--list-row-py)]"
-      aria-hidden
-    >
+    <div className="animate-fade-in view-trim-b [--view-trim-b:var(--list-row-py)]" aria-hidden>
       <div className="flex items-center justify-between gap-3">
-        <Bar className="h-3 w-36" />
-        {badge ? <Bar className="h-5 w-32 rounded-[var(--chip-radius)]" /> : null}
+        <Line
+          sample="Transaksi terakhir"
+          className="font-display text-[13px] font-bold tracking-tight"
+          bar="h-3 w-36"
+        />
+        <span className="flex shrink-0 items-center gap-2">
+          {badge ? <Bar className="h-5 w-20 rounded-[var(--chip-radius)]" /> : null}
+          {action ? (
+            <Line sample="Riwayat" className="text-[13px] font-semibold" bar="h-3 w-12" />
+          ) : null}
+        </span>
       </div>
+
       <div className="label-gap-t [--label-trim:var(--list-row-py)] flex flex-col">
         {Array.from({ length: rows }, (_, index) => (
           <DataRowSkeleton
@@ -96,6 +159,7 @@ export function DataListSkeleton({
             titleWidth={ROW_TITLE_W[index % ROW_TITLE_W.length]}
             marker={marker}
             markerClass={markerClass}
+            stars={stars}
           />
         ))}
       </div>
@@ -104,13 +168,10 @@ export function DataListSkeleton({
 }
 
 /**
- * Strip tab digambar dengan label aslinya, dibuat tak terlihat.
- *
- * Tinggi satu tab lahir dari line box teksnya, bukan dari angka yang bisa ditebak,
- * jadi `<span className="invisible">` adalah satu-satunya cara strip ini berakhir
- * setinggi `SegmentedTabs` yang akan menggantikannya. Tab pertama diberi permukaan
- * terangkat karena `SegmentedTabs` selalu punya satu tab aktif — strip yang rata
- * seluruhnya akan tersentak begitu data masuk.
+ * Strip tab `SegmentedTabs` varian `solid`: wadah `bg-track-surface p-1`, tiap tab
+ * `flex-1 rounded-md px-3 py-2 text-[13px]`. Tab pertama diberi permukaan terangkat
+ * karena `SegmentedTabs` selalu punya satu tab aktif — strip yang rata seluruhnya
+ * akan tersentak begitu data masuk.
  */
 function PanelTabsSkeleton({
   labels,
@@ -120,23 +181,17 @@ function PanelTabsSkeleton({
   className?: string
 }) {
   return (
-    <div
-      className={['flex gap-1 rounded-lg bg-track-surface p-1', className]
-        .filter(Boolean)
-        .join(' ')}
-    >
+    <div className={cn('flex gap-1 rounded-lg bg-track-surface p-1', className)}>
       {labels.map((label, index) => (
         <div
           key={label}
-          className={[
+          className={cn(
             'relative flex flex-1 items-center justify-center rounded-md px-3 py-2 text-[13px] font-bold tracking-tight',
             /* Bidang tab aktif mengikuti `SegmentedTabs`: senada `--muted`. Dulu
                `bg-card`, yang justru LEBIH GELAP dari wadahnya — arah elevasinya
                terbalik dari komponen yang akan menggantikan kerangka ini. */
-            index === 0 ? 'bg-muted' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
+            index === 0 && 'bg-muted',
+          )}
         >
           <span className="invisible">{label}</span>
           {/* Nada bar ikut terbalik setelah warna di atas ditukar: bar tab aktif
@@ -146,6 +201,36 @@ function PanelTabsSkeleton({
             className="absolute h-3 w-10"
             tone={index === 0 ? 'on-muted' : 'default'}
           />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Strip tab `SegmentedTabs` varian `plain` — dipakai Peringkat. Bukan wadah berlatar
+ * seperti `solid`: tab tak aktif hanya teks, tab aktif pill `btn-glass-quiet`, dan
+ * stripnya TIDAK mengambil lebar penuh (`gap-0.5`, tanpa `flex-1`).
+ */
+function PlainTabsSkeleton({
+  labels,
+  className,
+}: {
+  labels: readonly string[]
+  className?: string
+}) {
+  return (
+    <div className={cn('flex gap-0.5', className)}>
+      {labels.map((label, index) => (
+        <div
+          key={label}
+          className={cn(
+            'relative flex items-center justify-center rounded-full px-2.5 py-1.5 text-[13px] font-bold tracking-tight',
+            index === 0 && 'btn-glass-quiet',
+          )}
+        >
+          <span className="invisible">{label}</span>
+          <Bar className="absolute inset-x-2.5 h-3" />
         </div>
       ))}
     </div>
@@ -167,24 +252,27 @@ export function MissionListSkeleton({ surface = true }: { surface?: boolean }) {
   const tone = surface ? 'on-muted' : 'default'
 
   return (
-    <div
-      aria-hidden
-      className={['animate-fade-in', surface ? SURFACE_CARD_CLASS : '']
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex h-6 items-center">
-          <Bar className="h-3 w-24" tone={tone} />
-        </div>
-        <Bar className="h-3 w-7 shrink-0" tone={tone} />
+    <div aria-hidden className={cn('animate-fade-in', surface && SURFACE_CARD_CLASS)}>
+      <div className="flex items-baseline justify-between gap-3">
+        <Line
+          sample="Misi hari ini"
+          className="font-display text-[13px] font-bold tracking-tight"
+          bar="h-3 w-24"
+          tone={tone}
+        />
+        <Line
+          sample="0/3"
+          className="shrink-0 text-[11px] font-semibold"
+          bar="h-3 w-7"
+          tone={tone}
+        />
       </div>
 
-      <div className={`label-gap-t flex flex-col ${surface ? 'gap-2.5' : 'gap-3'}`}>
+      <div className={cn('label-gap-t flex flex-col', surface ? 'gap-2.5' : 'gap-3')}>
         {MISSION_TITLE_W.map((titleWidth) => (
           <div key={titleWidth} className="flex h-7 items-center gap-2.5">
             <div className="min-w-0 flex-1">
-              <Bar className={`h-3.5 max-w-full ${titleWidth}`} tone={tone} />
+              <Bar className={cn('h-3.5 max-w-full', titleWidth)} tone={tone} />
             </div>
             <span className="meter-h w-14 shrink-0 rounded-full bg-muted-foreground/20" />
             <Bar className="h-3.5 w-[3.25rem] shrink-0" tone={tone} />
@@ -197,44 +285,65 @@ export function MissionListSkeleton({ surface = true }: { surface?: boolean }) {
 
 export function AppViewSkeleton() {
   return (
-    <div className="animate-fade-in view-min-h flex flex-col" aria-hidden>
-      <div className="hero-band region-under-brand">
-        {/* Mengikuti `BalanceSummary`: saldo + sub-line di kiri, tombol ikon
-            Riwayat dan CTA "Tarik dana" sebaris di kanan. Bentuknya harus sama
-            dengan yang asli, kalau tidak barisnya bergeser saat data masuk. */}
+    <div className="home-skin animate-fade-in view-min-h flex flex-col" aria-hidden>
+      <div className="hero-band region-under-brand relative z-10">
+        {/*
+          Mengikuti `BalanceSummary`: nominal + ekor Rupiah di kiri, SATU tombol
+          "Tarik dana" di kanan. Tombol ikon Riwayat yang dulu digambar di sini sudah
+          pindah ke kepala daftar transaksi, dan judul "Saldo kamu" sudah dilepas —
+          kerangka yang masih membawa keduanya menggeser seluruh hero saat data masuk.
+        */}
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
+            {/* `CreditAmount` size `display`: `heroFontSize()` memuncak di 3rem
+                dengan line-height 1, jadi 48px pada lebar penuh. */}
             <Bar className="h-12 w-28" />
-            <Bar className="stack-gap-t h-3.5 w-24" />
+            <Line
+              sample="Rp 1.234.567"
+              className="stack-gap-t text-sm leading-none"
+              bar="h-3.5 w-24"
+            />
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Bar className="control-h aspect-square rounded-cta" />
-            <Bar className="control-h w-28 rounded-cta" />
-          </div>
+          <Bar className="control-h w-28 shrink-0 rounded-cta" />
         </div>
 
         <div className="region-gap-t">
           <div className="task-card">
-            <div className="flex h-7 items-center justify-between gap-3">
-              <Bar className="h-5 w-40" />
-              <Bar className="h-6 w-20 rounded-md" />
+            {/* `TaskHeading`: baris cetakan (nomor seri + lencana kesulitan) DI ATAS
+                judul 22px. Judulnya dulu tidak digambar sama sekali, jadi kartunya
+                tumbuh ~28px begitu task-nya datang dan mendorong tombol CTA. */}
+            <div>
+              <div className="flex items-center justify-between gap-3">
+                <Line sample="KARCIS #A1B2C" className="home-tag" bar="h-2.5 w-24" />
+                <Bar className="h-5 w-16 shrink-0 rounded-[var(--chip-radius)]" />
+              </div>
+              <Line
+                sample="Judul task beranda"
+                className="stack-gap-t text-[22px] font-bold leading-tight tracking-[-0.02em]"
+                bar="h-4 w-44"
+              />
             </div>
-            <div className="block-gap-t grid grid-cols-3 gap-1.5">
+
+            {/* Perforasi karcis: garis nyata, bukan bar berdenyut — ia sudah tergambar
+                penuh dan tidak sedang menunggu data apa pun. */}
+            <div className="block-gap-t ticket-perf" />
+
+            <div className="mt-3 grid grid-cols-3 gap-x-3">
               {[0, 1, 2].map((column) => (
-                // Tinggi tiap baris disetel ke line box aslinya di `TaskStats`:
-                // eyebrow 19,5px, angka text-lg 28px, catatan text-[11px] 16,5px.
-                // Kalau ditebak, tombol CTA di bawahnya bergeser saat data masuk —
-                // pergeseran yang paling terasa justru karena itu tombolnya.
                 <div className="stat-tile" key={column}>
-                  <div className="flex h-5 items-center">
-                    <Bar className="h-2.5 w-10" tone="on-muted" />
-                  </div>
-                  <div className="mt-0.5 flex h-7 items-center">
-                    <Bar className="h-4 w-12" tone="on-muted" />
-                  </div>
-                  <div className="flex h-4 items-center">
-                    <Bar className="h-2.5 w-10" tone="on-muted" />
-                  </div>
+                  <Line sample="MAKS" className="home-tag" bar="h-2.5 w-8" tone="on-muted" />
+                  <Line
+                    sample="+120"
+                    className="mt-1 text-lg font-bold tracking-tight"
+                    bar="h-4 w-12"
+                    tone="on-muted"
+                  />
+                  <Line
+                    sample="Rp 1.200"
+                    className="text-[11px]"
+                    bar="h-2.5 w-10"
+                    tone="on-muted"
+                  />
                 </div>
               ))}
             </div>
@@ -247,28 +356,29 @@ export function AppViewSkeleton() {
               ini tergambar, dan membaca localStorage saat render akan membuat HTML
               server dan klien berbeda.
             */}
-            <div className="cta-gap flex gap-2">
-              <Bar className="cta-h min-w-0 flex-1 rounded-cta" />
-              <Bar className="skeleton-ad-slot cta-h min-w-0 flex-1 rounded-cta" />
+            <div className="cta-gap flex items-stretch gap-2 [&>*]:min-w-0 [&>*]:flex-1">
+              <Bar className="cta-h rounded-cta" />
+              <Bar className="skeleton-ad-slot cta-h rounded-cta" />
             </div>
           </div>
         </div>
       </div>
 
       {/*
-        Strip tab dan kartu misi dilepas bersama tab Beranda: sejak Misi pindah ke nav,
-        yang tersisa di bawah hero adalah "Transaksi terakhir" — tiga baris, sebanyak
-        yang dipotong `RecentTransactions`. Kartu premium dan bonus channel sengaja
-        tidak digambar; keduanya bersyarat, dan kerangka yang menjanjikan kartu yang
-        tidak datang menyentak lebih keras daripada kerangka yang kekurangan satu.
+        Yang tersisa di bawah hero adalah "Transaksi terakhir" — tiga baris, sebanyak
+        yang dipotong `RecentTransactions`, dengan badge jumlah task dan tautan
+        "Riwayat" di kepalanya serta bintang di kolom nilai. Kartu premium dan bonus
+        channel sengaja tidak digambar; keduanya bersyarat, dan kerangka yang
+        menjanjikan kartu yang tidak datang menyentak lebih keras daripada kerangka
+        yang kekurangan satu.
       */}
-      <div className="region-t flex flex-1 flex-col">
-        <DataListSkeleton rows={3} badge />
+      <div className="region-t home-ledger flex flex-1 flex-col">
+        <DataListSkeleton rows={3} badge action stars />
       </div>
 
-      {/* Sama seperti `RecentTransactions`: region ditutup baris list, jadi sisa jarak
-          ke nav dipangkas sebesar padding baris terakhir. */}
-      <div className="view-trim-b flex-1 [--view-trim-b:var(--list-row-py)]" />
+      {/* Sama seperti `Home`: pengganjal biasa. Pemangkasan jarak ke nav sudah dibawa
+          `DataListSkeleton` sendiri lewat `view-trim-b`. */}
+      <div className="flex-1" />
     </div>
   )
 }
@@ -284,40 +394,13 @@ export function AppViewSkeleton() {
  */
 
 const BOARD_SURFACE_LABEL = ['Papan', 'Aktivitas'] as const
-const BOARD_FILTER_LABEL = ['Semua', 'VIP'] as const
 
 /**
- * Strip tab bergaris bawah milik Peringkat — bukan `SegmentedTabs`, jadi bentuknya
- * beda dari `PanelTabsSkeleton`: teks 15px dengan `border-b-2` dan `pb-2.5`. Sama
- * seperti strip yang lain, tingginya lahir dari line box label aslinya.
+ * Blok angka besar milik `TotalSummary` di Statistik: eyebrow 13px, angka
+ * `CreditAmount` size `2xl` — `text-5xl leading-none`, jadi tepat 48px — lalu satu
+ * baris ekor `text-sm leading-none`.
  */
-function BoardSurfaceTabsSkeleton() {
-  return (
-    <div className="region-under-brand flex gap-5">
-      {BOARD_SURFACE_LABEL.map((label, index) => (
-        <div
-          key={label}
-          className={[
-            'border-b-2 px-1 pb-2.5',
-            index === 0 ? 'border-primary' : 'border-transparent',
-          ].join(' ')}
-        >
-          <span className="relative flex text-[15px] font-bold tracking-tight">
-            <span className="invisible">{label}</span>
-            <Bar className="absolute inset-x-0 top-1/2 h-3.5 -translate-y-1/2" />
-          </span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-/**
- * Blok angka besar yang dipakai Peringkat ("Posisi kamu") dan Statistik ("Total
- * penghasilan"): eyebrow 13px, angka `CreditAmount` size 2xl — `text-5xl leading-none`,
- * jadi tepat 48px — lalu satu baris ekor `text-sm leading-none`.
- */
-function HeroFigureSkeleton({
+function TotalSummarySkeleton({
   labelWidth,
   figureWidth,
   tailWidth,
@@ -328,21 +411,115 @@ function HeroFigureSkeleton({
 }) {
   return (
     <div className="region-under-brand">
-      <Bar className={`h-3 ${labelWidth}`} />
-      <Bar className={`label-gap-t h-12 ${figureWidth}`} />
-      <Bar className={`stack-gap-t h-3.5 ${tailWidth}`} />
+      <Line
+        sample="Total penghasilan"
+        className="font-display text-[13px] font-bold tracking-tight"
+        bar={cn('h-3', labelWidth)}
+      />
+      <Bar className={cn('label-gap-t h-12', figureWidth)} />
+      <Line sample="Rp 1.234.567" className="stack-gap-t text-sm leading-none" bar={cn('h-3.5', tailWidth)} />
     </div>
   )
 }
 
+/**
+ * Kerangka Peringkat, mengikuti `LeaderboardView` apa adanya:
+ * strip tab `plain` → rail podium → kartu "Posisi kamu" → saringan + papan.
+ *
+ * Bentuk sebelumnya sudah tidak ada lagi di layar itu: ia menggambar tablist
+ * bergaris-bawah (sekarang pill `plain`), hero angka besar (sekarang kartu baris),
+ * strip `solid` untuk saringan (sekarang satu chip dropdown), dan tidak menggambar
+ * rail podium sama sekali — jadi hampir setiap blok bergeser saat papannya masuk.
+ */
 export function LeaderboardSkeleton() {
   return (
     <div className="animate-fade-in view-min-h flex flex-col" aria-hidden>
-      <BoardSurfaceTabsSkeleton />
+      <PlainTabsSkeleton labels={BOARD_SURFACE_LABEL} className="region-under-brand" />
 
-      <HeroFigureSkeleton labelWidth="w-20" figureWidth="w-40" tailWidth="w-36" />
+      {/* Podium: baris label + tumpukan avatar, lalu tiga kartu `--rail-card-w`.
+          `--label-trim` membayar balik `--rail-py`, persis seperti `PodiumRail`. */}
+      <section className="region-under-brand">
+        <div className="flex items-center justify-between gap-3">
+          <Line
+            sample="Podium"
+            className="font-display text-[13px] font-bold tracking-tight"
+            bar="h-3 w-16"
+          />
+          <span className="flex shrink-0 items-center">
+            {[0, 1, 2].map((index) => (
+              <Bar
+                key={index}
+                className={cn('size-6 rounded-full ring-2 ring-background', index > 0 && '-ml-2')}
+              />
+            ))}
+          </span>
+        </div>
 
-      <PanelTabsSkeleton labels={BOARD_FILTER_LABEL} className="region-gap-t" />
+        {/* Rail-nya dirangkai `CardRail` sendiri, bukan salinan `rail no-scrollbar
+            bleed-x` — urutan ketiga kelas itu punya konsekuensi (lihat komentarnya di
+            `card-rail.tsx`), dan kerangka yang menyalinnya akan diam-diam melenceng
+            begitu rail aslinya disetel ulang. */}
+        <CardRail
+          ariaLabel="Memuat podium"
+          className="label-gap-t [--label-trim:var(--rail-py)]"
+        >
+          {[0, 1, 2].map((index) => (
+            <CardRailItem key={index}>
+              <div className="task-card [--surface-p:0.75rem] flex h-full flex-col items-center gap-1.5 text-center">
+                <Bar className="size-12 rounded-full" />
+                <Line sample="Nama peserta" className="text-[13px] font-semibold" bar="h-3 w-20" />
+                <Line sample="1.284" className="num-display text-[15px]" bar="h-4 w-16" />
+                <Line sample="credit · 326 task" className="text-[11px]" bar="h-2.5 w-24" />
+              </div>
+            </CardRailItem>
+          ))}
+        </CardRail>
+      </section>
+
+      {/* "Posisi kamu": kartu berisi satu baris papan — bingkai avatar 40px, nama,
+          meta, nominal di kanan. Dulu digambar sebagai hero angka raksasa. */}
+      <section className="region-under-brand task-card">
+        <Line
+          sample="Posisi kamu"
+          className="font-display text-[13px] font-bold tracking-tight"
+          bar="h-3 w-24"
+          tone="default"
+        />
+        <div className="label-gap-t flex items-center gap-3">
+          <Bar className="size-10 shrink-0 rounded-full" />
+          <div className="min-w-0 flex-1">
+            {/* Chip "Kamu" milik `MetaBadge` berdiri SEBARIS dengan nama, dan tingginya
+                (≈20px) melebihi line box `text-[15px]` — baris yang digambar tanpa chip
+                itu lahir beberapa piksel lebih pendek, lalu kartunya tersentak tumbuh
+                begitu posisinya masuk. */}
+            <span className="flex min-w-0 items-center gap-1.5 text-[15px] font-semibold tracking-tight">
+              <Line sample="Nama kamu" bar="h-3.5 w-28" />
+              <Bar className="h-5 w-12 shrink-0 rounded-[var(--chip-radius)]" />
+            </span>
+            <Line
+              sample="#3 dari 1.284 peserta"
+              className="mt-0.5 text-[13px]"
+              bar="h-3 w-36"
+            />
+          </div>
+          <Line sample="1.284 credit" className="shrink-0 text-[15px] font-bold" bar="h-3.5 w-16" />
+        </div>
+      </section>
+
+      {/* Saringan papan kini satu `FilterChip` — pill `h-8` berkontur di kiri baris,
+          bukan strip tab selebar layar.
+
+          Chevron-nya ikut digambar sebagai ruang kosong, bukan diabaikan: pemicu
+          `FilterChip` adalah `gap-1` + ikon `size-3.5`, jadi chip yang cuma selebar
+          labelnya lahir ~18px lebih pendek dan pill-nya melar menyamping begitu
+          papannya masuk. Bar-nya sendiri tetap hanya sepanjang label — yang sedang
+          dimuat memang labelnya, bukan ikonnya. */}
+      <div className="region-gap-t flex items-center justify-between gap-3">
+        <div className="inline-flex h-8 items-center gap-1 rounded-full bg-card px-3 text-[13px] font-bold tracking-tight ring-1 ring-border ring-inset">
+          <Line sample="Semua 1.284" bar="inset-x-0 h-3" />
+          <span className="size-3.5 shrink-0" />
+        </div>
+      </div>
 
       {/* `BoardFrame` memakai avatar 40px, bukan lingkaran 36px milik `DataList`
           biasa, dan label daftarnya membawa `MetaBadge` jumlah peserta. */}
@@ -361,7 +538,7 @@ const STATS_TAB_LABEL = ['Progres', 'Task', 'Saldo', 'Tarik'] as const
 const STAT_ROW_LABEL_W = ['w-28', 'w-36', 'w-24', 'w-32', 'w-28'] as const
 
 /**
- * Baris `StatRow`: label dan nilai sejajar baseline dalam line box `text-sm` (20px),
+ * Baris `StatRow`: label dan nilai sejajar baseline dalam line box `text-sm`,
  * dipisah divider dengan padding `--list-row-py` seperti `DataList`.
  */
 function StatRowsSkeleton({ rows }: { rows: number }) {
@@ -370,21 +547,21 @@ function StatRowsSkeleton({ rows }: { rows: number }) {
       {Array.from({ length: rows }, (_, index) => (
         <div
           key={index}
-          className={[
-            'flex items-center justify-between gap-3 pt-[var(--list-row-py)]',
-            index !== rows - 1
-              ? 'border-b border-border/60 pb-[var(--list-row-py)]'
-              : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
+          className={cn(
+            'bleed-x flex items-baseline justify-between gap-x-3 pt-[var(--list-row-py)]',
+            index !== rows - 1 ? 'border-b border-border/60 pb-[var(--list-row-py)]' : 'pb-0',
+          )}
         >
-          <div className="flex h-5 items-center">
-            <Bar className={`h-3 ${STAT_ROW_LABEL_W[index % STAT_ROW_LABEL_W.length]}`} />
-          </div>
-          <div className="flex h-5 items-center">
-            <Bar className="h-3 w-16 shrink-0" />
-          </div>
+          <Line
+            sample="Streak beraktivitas"
+            className="min-w-0 text-sm"
+            bar={cn('h-3', STAT_ROW_LABEL_W[index % STAT_ROW_LABEL_W.length])}
+          />
+          <Line
+            sample="12 hari"
+            className="shrink-0 text-sm font-semibold"
+            bar="h-3 w-16"
+          />
         </div>
       ))}
     </div>
@@ -394,12 +571,16 @@ function StatRowsSkeleton({ rows }: { rows: number }) {
 export function StatsSkeleton() {
   return (
     <div className="animate-fade-in view-min-h flex flex-col" aria-hidden>
-      <HeroFigureSkeleton labelWidth="w-32" figureWidth="w-44" tailWidth="w-24" />
+      <TotalSummarySkeleton labelWidth="w-32" figureWidth="w-44" tailWidth="w-24" />
 
       <PanelTabsSkeleton labels={STATS_TAB_LABEL} className="region-gap-t" />
 
       <div className="region-t flex flex-1 flex-col">
-        <Bar className="h-3 w-24" />
+        <Line
+          sample="Progres"
+          className="font-display text-[13px] font-bold tracking-tight"
+          bar="h-3 w-24"
+        />
         <StatRowsSkeleton rows={5} />
         <div className="view-trim-b flex-1 [--view-trim-b:var(--list-row-py)]" />
       </div>

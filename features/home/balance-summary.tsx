@@ -45,11 +45,13 @@ export function BalanceSummary({
           membuka daftar bacaan membuatnya terbaca sederajat dengan satu-satunya
           aksi yang memindahkan uang. Pintunya sekarang ada di kepala daftar
           "Transaksi terakhir", tepat di atas data yang memang dilanjutkannya. */}
-      {/* Baris cetakan di atas angka: menamai apa yang sedang dibaca tanpa
-          memakai ukuran huruf yang bersaing dengan nominalnya. */}
-      <p className="home-tag">Saldo kamu</p>
-
-      <div className="stack-gap-t flex items-center gap-3">
+      {/* Label "Saldo kamu" pernah berdiri di atas angka ini. Ia dilepas karena
+          tidak ada yang perlu dinamai: nominal terbesar di halaman, dengan satuan
+          "credit" menempel di sampingnya, kurs rupiah di bawahnya, dan "Tarik
+          dana" di sebelahnya sudah mengatakan bahwa ini saldo — dan `aria-label`
+          section ini tetap membawa namanya untuk pembaca layar. Yang tersisa dari
+          label itu cuma satu baris yang mendorong angkanya turun. */}
+      <div className="flex items-center gap-3">
         {/* `@container` di sini bukan hiasan: ia yang menjadi acuan `cqi` bagi
             ukuran angka hero, sehingga nominalnya menyusut mengikuti sisa ruang
             di samping CTA — bukan mengikuti lebar jendela. */}

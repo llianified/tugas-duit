@@ -132,7 +132,7 @@ function TaskHeading({
     <div>
       <div className="flex items-center justify-between gap-3">
         <p className="home-tag truncate">
-          Karcis <span className="tabular-nums">{serialCode(serial)}</span>
+          Tiket <span className="tabular-nums">{serialCode(serial)}</span>
         </p>
         <DifficultyBadge difficulty={difficulty} />
       </div>

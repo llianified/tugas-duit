@@ -1,5 +1,5 @@
 import { channelBonusEnabled, channelGateRequired, channelJoinBonusCredits } from '@/domain/economy'
-import { query, transaction } from './db'
+import { isPreviewShell, query, transaction } from './db'
 import { env } from './env'
 import { appendLedger } from './ledger'
 import { readChannelMembership } from './telegram'
@@ -46,6 +46,16 @@ export async function readChannelGateState(
 ): Promise<ChannelGateState> {
   const url = env.telegramChannelUrl
   if (!channelGateRequired()) return { required: false, member: true, url }
+
+  /**
+   * Di preview gerbangnya selalu dilewatkan. Bukan kelonggaran keamanan: gerbang ini
+   * hanya bisa dijawab benar oleh bot Telegram yang jadi admin channel, dan di preview
+   * `TELEGRAM_BOT_TOKEN` tidak ada — jadi `readChannelMembership` selalu `null` dan
+   * satu-satunya hasil yang mungkin adalah user terjebak di layar "join channel dulu"
+   * tanpa cara keluar. Produksi tidak tersentuh, dan `isPreviewShell()` sengaja
+   * mengecualikan `pnpm test` supaya perilaku gerbang yang asli tetap teruji di bawah.
+   */
+  if (isPreviewShell()) return { required: false, member: true, url }
 
   const now = Date.now()
   if (!options.force) {

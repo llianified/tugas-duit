@@ -6,6 +6,20 @@ export function isPreviewDb(): boolean {
   return process.env.NODE_ENV !== 'production' && !process.env.DATABASE_URL
 }
 
+/**
+ * "Sedang dijalankan sebagai preview yang dilihat manusia", BUKAN sekadar "memakai
+ * PGlite". Bedanya penting: `isPreviewDb()` juga true selama `pnpm test`, jadi kalau
+ * kelonggaran khusus preview (gerbang channel dilewati, interstitial dimatikan)
+ * digantungkan padanya, seluruh suite ikut kehilangan perilaku yang justru sedang
+ * diuji — dan tesnya gagal dengan benar.
+ *
+ * `VITEST` diset runner-nya sendiri, jadi pemisahan ini tidak perlu disetel siapa pun.
+ * Sama seperti alasan `preview-db.ts` memisahkan direktori datanya.
+ */
+export function isPreviewShell(): boolean {
+  return isPreviewDb() && !process.env.VITEST
+}
+
 function sslConfig() {
   if (process.env.DATABASE_SSL_NO_VERIFY === 'true') {
     if (process.env.NODE_ENV === 'production') {

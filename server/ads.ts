@@ -10,7 +10,7 @@ import {
 } from '@/domain/ads'
 import { economyConfig } from '@/domain/economy-config'
 import { resolveAdProvider } from './ad-provider'
-import { query, transaction } from './db'
+import { isPreviewShell, query, transaction } from './db'
 import { recordAdClaimSignal } from './fraud'
 import { isPremium } from './premium'
 
@@ -107,7 +107,14 @@ export async function readAdsState(userId: number): Promise<AdsSessionState> {
   const state = await readState(userId)
   return {
     enabled: true,
-    inAppEnabled: !premium,
+    /**
+     * Interstitial otomatis dimatikan di preview (`isPreviewDb()`). Iframe preview tidak
+     * bisa dipakai Monetag — kreatifnya butuh jendela pihak ketiga — jadi yang tersisa
+     * hanya overlay hitam yang menutupi UI dan `show_<zone>()` yang reject terus.
+     * Tiket berhadiah (`enabled`) sengaja tetap hidup: itu opt-in dan jalur "Iklan"-nya
+     * masih perlu bisa diuji. Produksi tidak berubah.
+     */
+    inAppEnabled: !premium && !isPreviewDb(),
     provider: resolved.provider,
     unitId: resolved.unitId,
     viewsLeft: adViewsLeft(state.viewsToday),

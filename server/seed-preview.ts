@@ -511,16 +511,26 @@ async function seedPayouts(tx: PoolClient, userId: number): Promise<void> {
       note: 'Penahanan penarikan preview',
     })
     const inserted = await tx.query<{ id: string }>(
+      /**
+       * `$6` dicast `::text` di **setiap** kemunculannya, termasuk yang mengisi kolom
+       * `state` — di sana lewat `::text::withdrawal_state`, bukan langsung ke enumnya.
+       *
+       * Bentuk itu bukan gaya: satu parameter hanya boleh punya satu tipe tersimpul, dan
+       * membiarkan `$6` telanjang membuat posisi kolom menyimpulkannya `withdrawal_state`
+       * sementara `$6 = 'paid'` menyimpulkannya `text` — Postgres menolak seluruh query
+       * dengan `42P08 text versus withdrawal_state`, jadi kegagalannya bukan pada satu
+       * baris penarikan melainkan pada seluruh transaksi seed.
+       */
       `insert into withdrawals(user_id,channel_id,account_number,account_name,credits,amount_idr,
                                state,hold_ledger_id,requested_at,paid_at,rejected_at,reject_reason,
                                proof_file_id,proof_sent_at)
-       values($1,$2,$3,'Preview Pengguna',$4,$5,$6,$7,
+       values($1,$2,$3,'Preview Pengguna',$4,$5,$6::text::withdrawal_state,$7,
               now() - ($8::int * interval '1 day'),
-              case when $6 = 'paid' then now() - ($8::int * interval '1 day') + interval '4 hours' end,
-              case when $6 = 'rejected' then now() - ($8::int * interval '1 day') + interval '6 hours' end,
-              case when $6 = 'rejected' then 'Nama akun tidak cocok dengan nomor tujuan.' end,
-              case when $6 = 'paid' then $9 end,
-              case when $6 = 'paid' then now() - ($8::int * interval '1 day') + interval '4 hours' end)
+              case when $6::text = 'paid' then now() - ($8::int * interval '1 day') + interval '4 hours' end,
+              case when $6::text = 'rejected' then now() - ($8::int * interval '1 day') + interval '6 hours' end,
+              case when $6::text = 'rejected' then 'Nama akun tidak cocok dengan nomor tujuan.' end,
+              case when $6::text = 'paid' then $9::text end,
+              case when $6::text = 'paid' then now() - ($8::int * interval '1 day') + interval '4 hours' end)
        returning id`,
       [
         userId,

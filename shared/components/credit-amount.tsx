@@ -8,17 +8,54 @@ const CREDIT_SIZE_CLASS = {
   sm: 'flex-row items-baseline gap-1 text-sm font-semibold',
   xl: 'flex-col items-stretch gap-1.5 text-4xl font-bold leading-none tracking-[-0.03em]',
   '2xl': 'flex-row flex-wrap items-baseline gap-x-2 text-5xl font-bold leading-none tracking-[-0.035em]',
-  /* Angka hero: ukurannya CAIR, bukan tetap 3rem. Nilai tetap itu dipatok ke
-     layar lebar, jadi begitu saldo sampai 4 digit ("3.646") lebarnya ~156px —
-     bersama unit "credit" ia tidak lagi muat di sebelah CTA, "credit" jatuh ke
-     baris kedua, dan tinggi bloknya melonjak dari ~48px ke ~77px sampai baris
-     Rp di bawahnya ikut terlipat. `clamp()` mengikat batas atasnya ke lebar
-     viewport, jadi di layar sempit angkanya menyusut lebih dulu daripada
-     memaksa tata letaknya pecah. */
-  display: 'num-display flex-row flex-wrap items-baseline gap-x-1.5 text-[clamp(2rem,11vw,3rem)]',
+  /* Angka hero tidak boleh terlipat: nominal dan unitnya satu tarikan
+     ("3.646 credit"), bukan "3.646" lalu "credit" di bawahnya. Karena itu
+     `whitespace-nowrap` dan tanpa `flex-wrap` — kalau ruangnya sempit yang
+     mengalah adalah UKURAN hurufnya, bukan barisnya. Ukuran itu dihitung di
+     `heroFontSize()`; di sini sengaja tidak ada `text-*` supaya tidak ada dua
+     sumber kebenaran soal ukuran. */
+  display: 'num-display flex-row items-baseline gap-x-1.5 whitespace-nowrap',
 } as const
 
 const CREDIT_STACKED = { sm: false, xl: true, '2xl': false, display: false } as const
+
+/*
+ * Lebar bagian-bagian angka hero, hasil UKUR di browser (bukan terkaan) pada
+ * font display yang dipakai sekarang. Semuanya relatif ukuran huruf (em),
+ * kecuali `HERO_FIXED_PX` yang memang tidak ikut mengecil.
+ */
+const HERO_DIGIT_EM = 0.571 // satu angka
+const HERO_SEPARATOR_EM = 0.375 // titik ribuan / koma — lebih sempit dari angka
+const HERO_UNIT_EM = 1.78 // tulisan " credit"
+const HERO_FIXED_PX = 34 // ikon hint (ukurannya tetap) + gap + sisa aman
+
+/**
+ * Ukuran angka hero, dihitung dari ruang yang benar-benar tersedia.
+ *
+ * Dua hal menentukan apakah "3.646 credit" masih muat satu baris: lebar
+ * kolomnya dan panjang nominalnya.
+ *
+ * Untuk yang pertama, satuan viewport tidak bisa dipakai — shell aplikasi ini
+ * dikunci `max-w-md`, jadi di layar lebar `vw` terus tumbuh sementara kolomnya
+ * diam di tempat, dan angkanya malah kebesaran saat layarnya lega. Patokannya
+ * `cqi`: 100cqi = lebar kolom hero itu sendiri, berapa pun jendelanya.
+ *
+ * Untuk yang kedua, nominal dipecah jadi angka dan pemisah karena keduanya
+ * tidak sama lebar. Dari situ ketemu lebar yang dibutuhkan per satu satuan
+ * ukuran huruf, dan ukuran huruf terbesar yang masih muat adalah
+ * (lebar kolom − bagian yang tak mengecil) ÷ lebar-per-em itu.
+ *
+ * Hasilnya: saldo pendek tetap tampil besar, saldo panjang mengecil sendiri —
+ * dan tidak ada nominal yang memaksa "credit" turun ke baris berikutnya.
+ */
+function heroFontSize(text: string) {
+  const digits = text.replace(/\D/g, '').length
+  const separators = text.length - digits
+  const widthPerEm =
+    HERO_DIGIT_EM * digits + HERO_SEPARATOR_EM * separators + HERO_UNIT_EM
+
+  return `clamp(1.25rem, calc((100cqi - ${HERO_FIXED_PX}px) / ${widthPerEm.toFixed(3)}), 3rem)`
+}
 
 const CREDIT_UNIT_CLASS = {
   sm: 'text-xs font-medium',
@@ -52,6 +89,7 @@ export function CreditAmount({
         CREDIT_SIZE_CLASS[size],
         className,
       )}
+      style={size === 'display' ? { fontSize: heroFontSize(`${prefix ?? ''}${value}`) } : undefined}
     >
       {size === 'display' ? (
         <DisplayValue prefix={prefix} value={value} />

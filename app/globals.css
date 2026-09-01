@@ -119,7 +119,18 @@
   --hero-band: #f1f1f4;
   --hero-curve: 1.5rem;
   --radius: 0.875rem;
-  --cta-radius: 1.125rem;
+  --cta-radius: 1.25rem;
+  /* Gaya "pelat" fomo: highlight tipis di dalam sisi atas + bayangan padat
+     (blur 0) di bawah, lalu tombol turun --plate-lift saat ditekan. */
+  --plate-lift: 2px;
+  --plate-shadow: color-mix(in oklab, black 22%, transparent);
+  --plate-highlight: color-mix(in oklab, white 22%, transparent);
+  --rail-card-w: 9.5rem;
+  --rail-gap: 0.75rem;
+  --chip-radius: 0.5rem;
+  --thread-line: var(--border);
+  /* Diarahkan ke font display pada Langkah 2; sampai itu jatuh ke tumpukan sistem. */
+  --font-display: var(--font-sans);
   --duration-ui: 150ms;
   --control-h: 3.25rem;
   --cta-h: var(--control-h);
@@ -183,6 +194,10 @@
   --scrim: oklch(0 0 0 / 0.62);
   --shadow-bubble-near: oklch(0 0 0 / 0.55);
   --shadow-bubble-far: oklch(0 0 0 / 0.4);
+  /* Di gelap bayangan lebih pekat, highlight lebih redup. */
+  --plate-shadow: color-mix(in oklab, black 55%, transparent);
+  --plate-highlight: color-mix(in oklab, white 12%, transparent);
+  --thread-line: var(--border);
 }
 
 [data-telegram-controls='true'] {
@@ -280,6 +295,102 @@
   }
   .rounded-cta {
     border-radius: var(--cta-radius);
+  }
+  /* --- Fondasi gaya fomo (Langkah 1) ------------------------------------- */
+  /* Pelat padat: bukan bayangan blur lembut seperti .tap-plate, tapi bayangan
+     solid di bawah supaya tombol terasa seperti pelat yang bisa ditekan. */
+  .plate-3d {
+    box-shadow:
+      inset 0 1px 0 var(--plate-highlight),
+      0 3px 0 0 var(--plate-shadow);
+    transition:
+      transform var(--duration-ui) ease-out,
+      box-shadow var(--duration-ui) ease-out;
+  }
+  .plate-3d:active:not(:disabled) {
+    transform: translateY(var(--plate-lift));
+    box-shadow:
+      inset 0 1px 0 var(--plate-highlight),
+      0 1px 0 0 var(--plate-shadow);
+  }
+  /* Versi sekunder di atas bg-card: tetap punya ring --border. */
+  .plate-3d-soft {
+    background-color: var(--card);
+    box-shadow:
+      0 0 0 1px var(--border),
+      inset 0 1px 0 var(--plate-highlight),
+      0 2px 0 0 color-mix(in oklab, var(--border) 85%, var(--plate-shadow));
+    transition:
+      transform var(--duration-ui) ease-out,
+      box-shadow var(--duration-ui) ease-out;
+  }
+  .plate-3d-soft:active:not(:disabled) {
+    transform: translateY(var(--plate-lift));
+    box-shadow:
+      0 0 0 1px var(--border),
+      inset 0 1px 0 var(--plate-highlight);
+  }
+  .num-display {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: var(--chip-radius);
+    padding: 0.1875rem 0.375rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+  .rail {
+    display: flex;
+    gap: var(--rail-gap);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline-start: var(--content-px);
+    -webkit-overflow-scrolling: touch;
+  }
+  .rail-item {
+    flex: 0 0 var(--rail-card-w);
+    width: var(--rail-card-w);
+    scroll-snap-align: start;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .clamp-3 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+  /* Garis penghubung berbentuk L dari kolom avatar ke isi item feed. */
+  .thread-line {
+    position: relative;
+  }
+  .thread-line::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0.5rem;
+    left: 0;
+    width: 0.75rem;
+    border-left: 1px solid var(--thread-line);
+    border-bottom: 1px solid var(--thread-line);
+    border-bottom-left-radius: 0.625rem;
+    pointer-events: none;
   }
   .view-slide-clip {
     margin-inline: calc(var(--content-px) * -1);
@@ -1274,8 +1385,14 @@
     }
     .press-scale,
     .press-scale-soft,
-    .channel-popup {
+    .channel-popup,
+    .plate-3d,
+    .plate-3d-soft {
       transition: none;
+    }
+    .plate-3d:active:not(:disabled),
+    .plate-3d-soft:active:not(:disabled) {
+      transform: none;
     }
     .channel-popup[data-starting-style],
     .channel-popup[data-ending-style] {

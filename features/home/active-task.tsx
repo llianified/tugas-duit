@@ -15,7 +15,6 @@ import {
   formatLongCountdown,
   formatRupiah,
 } from '@/shared/lib/format'
-import { EYEBROW_CLASS } from '@/shared/components/section-label'
 import { cn } from '@/shared/lib/utils'
 
 export function ActiveTask({
@@ -59,7 +58,10 @@ export function ActiveTask({
   return (
     <section aria-label="Task yang tersedia">
       <div className="task-card">
-        <TaskHeading title={task.title} difficulty={task.difficulty} />
+        <TaskHeading title={task.title} serial={task.id} difficulty={task.difficulty} />
+        {/* Perforasi memisahkan "apa tasknya" dari "berapa harganya" — sama
+            seperti karcis: bagian atas keterangan, bawah yang disobek. */}
+        <div className="block-gap-t ticket-perf" aria-hidden />
         <TaskStats
           maxReward={task.maxReward}
           energy={energy}
@@ -107,21 +109,42 @@ export function ActiveTask({
   )
 }
 
+/**
+ * Kepala karcis: baris cetakan di atas, judul di bawahnya.
+ *
+ * Tingkat kesulitan pindah ke baris kecil bersama nomor seri, bukan lagi
+ * berimbang di samping judul. Alasannya bukan estetika semata — judul dan
+ * lencana yang sebaris membuat keduanya sama-sama menuntut dibaca lebih dulu,
+ * padahal yang perlu dikenali sekejap cuma tasknya apa. Nomor serinya diambil
+ * dari `task.id` yang datang dari server, jadi ia sama di HTML server dan
+ * klien; tidak ada nilai acak yang dibuat saat render.
+ */
 function TaskHeading({
   title,
+  serial,
   difficulty,
 }: {
   title: Challenge['title']
+  serial: Challenge['id']
   difficulty: Challenge['difficulty']
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-3">
-      <h2 className="min-w-0 text-lg font-semibold tracking-tight text-balance text-foreground">
+    <div>
+      <div className="flex items-center justify-between gap-3">
+        <p className="home-tag truncate">
+          Karcis <span className="tabular-nums">{serialCode(serial)}</span>
+        </p>
+        <DifficultyBadge difficulty={difficulty} />
+      </div>
+      <h2 className="stack-gap-t min-w-0 text-[22px] font-bold leading-tight tracking-[-0.02em] text-balance text-foreground">
         {title}
       </h2>
-      <DifficultyBadge difficulty={difficulty} />
     </div>
   )
+}
+
+function serialCode(id: string) {
+  return `#${id.replace(/[^a-z0-9]/gi, '').slice(-5).toUpperCase()}`
 }
 
 function TaskStats({
@@ -138,7 +161,7 @@ function TaskStats({
   energyFill: EnergyFill
 }) {
   return (
-    <dl className="block-gap-t grid grid-cols-3 gap-1.5">
+    <dl className="mt-3 grid grid-cols-3 gap-x-3">
       <Stat
         label="Maks"
         value={`+${formatCredits(maxReward)}`}
@@ -183,8 +206,8 @@ function Stat({
 }) {
   return (
     <div className="stat-tile" title={hint}>
-      <dt className={EYEBROW_CLASS}>{label}</dt>
-      <dd className="mt-0.5 text-lg font-bold tracking-tight tabular-nums text-foreground">
+      <dt className="home-tag">{label}</dt>
+      <dd className="mt-1 text-lg font-bold tracking-tight tabular-nums text-foreground">
         {value}
       </dd>
       <dd className="text-[11px] font-normal tabular-nums text-muted-foreground/70">{note}</dd>

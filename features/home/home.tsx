@@ -11,6 +11,7 @@ import { PremiumDialog } from '@/features/premium/components/premium-dialog'
 import type { Challenge, HistoryEntry } from '@/features/captcha/domain'
 import type { EnergyFill } from '@/domain/energy'
 import type { ChannelBonusState, PremiumState } from '@/shell/session-api'
+import { cn } from '@/shared/lib/utils'
 import { WithdrawDialog } from '@/features/withdraw/components/withdraw-dialog'
 import type { WithdrawalSubmitInput } from '@/features/withdraw/components/withdraw-form'
 import type { Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
@@ -93,7 +94,7 @@ export function HomeView({
   const bonusReachable = channelBonusReachable(channelBonus)
 
   return (
-    <div className="view-min-h flex flex-col">
+    <div className="home-skin view-min-h flex flex-col">
       <h1 className="sr-only">Beranda Tugas Duit</h1>
 
       <div className="hero-band region-under-brand relative z-10">
@@ -137,9 +138,10 @@ export function HomeView({
         ) : null}
 
         <div
-          className={
-            (premium && premiumReachable) || bonusReachable ? 'region-gap-t' : undefined
-          }
+          className={cn(
+            'home-ledger',
+            ((premium && premiumReachable) || bonusReachable) && 'region-gap-t',
+          )}
         >
           <RecentTransactions history={history} completedCount={completedCount} />
         </div>

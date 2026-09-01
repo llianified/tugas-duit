@@ -50,7 +50,11 @@ export function BalanceSummary({
           dana yang memindahkan uang. Sekarang penarikan jadi satu CTA tunggal di
           kanan saldo, dan Riwayat turun jadi tombol ikon: ia tetap satu tap,
           tapi tidak lagi bersaing dengan CTA-nya. */}
-      <div className="flex items-center gap-3">
+      {/* Baris cetakan di atas angka: menamai apa yang sedang dibaca tanpa
+          memakai ukuran huruf yang bersaing dengan nominalnya. */}
+      <p className="home-tag">Saldo kamu</p>
+
+      <div className="stack-gap-t flex items-center gap-3">
         {/* `@container` di sini bukan hiasan: ia yang menjadi acuan `cqi` bagi
             ukuran angka hero, sehingga nominalnya menyusut mengikuti sisa ruang
             di samping CTA — bukan mengikuti lebar jendela. */}

@@ -1420,3 +1420,180 @@
     }
   }
 }
+
+/* ============================================================================
+   Kulit beranda: "tiket setoran"
+   ============================================================================
+   Semuanya di-scope ke `.home-skin`, dan itu bukan kehati-hatian berlebihan:
+   `.task-card`, `.stat-tile`, dan `.hero-band` dipakai juga di luar beranda,
+   jadi kulit ini menumpang di atasnya tanpa memindahkan definisi aslinya. Blok
+   ini SENGAJA tak berlayer — di Tailwind v4 aturan tanpa layer selalu menang
+   atas `@layer utilities`, jadi tak ada satu pun `!important` di bawah sini.
+
+   Bentuknya diambil dari benda yang memang jadi rujukan app ini: struk dan
+   tiket. Satu elemen saja yang berani — kartu task, digunting sudutnya seperti
+   karcis dan dipisah garis perforasi — dan sisanya diturunkan jadi tenang:
+   tile statistik kehilangan kotaknya, baris transaksi memakai garis putus-putus
+   alih-alih pelat. Pita brand di paling atas tidak disentuh sama sekali.
+   ========================================================================== */
+.home-skin {
+  /* Lengkung bawah pita hero dibuang; gantinya perforasi di tepi bawahnya. */
+  --hero-curve: 0rem;
+  --hero-band: #08080c;
+  --ticket-notch: 0.8rem;
+  --ticket-edge: color-mix(in oklab, var(--primary) 42%, var(--border));
+  --perf: color-mix(in oklab, var(--foreground) 26%, transparent);
+  /* Sudut kontrol ikut turun supaya kapsul 1.25rem tidak lagi berdiri di dalam
+     kartu yang sudutnya justru dipangkas lurus. Satu token, dan seluruh turunan
+     beranda yang memakai `rounded-cta` ikut — dialog di-portal ke luar pohon
+     ini, jadi bentuk aslinya di sana tidak berubah. */
+  --cta-radius: 0.625rem;
+  /* Kartu bonus & premium di bawah karcis ikut mengeras sudutnya. Dibiarkan
+     0.875rem, keduanya terbaca dari keluarga bentuk yang lain sama sekali. */
+  --radius: 0.5rem;
+}
+
+/* Label kecil huruf besar berjarak — nada "cetakan mesin", dipakai untuk
+   eyebrow saldo dan nomor seri tiket. */
+.home-tag {
+  font-family: var(--font-display);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--muted-foreground) 82%, transparent);
+}
+
+/* Tepi bawah pita hero: perforasi, bukan busur. Warna bidangnya tetap dari
+   `--hero-band` yang sudah ada di aturan asli, jadi yang ditimpa di sini hanya
+   radius dan lapisan garisnya. */
+.home-skin .hero-band::before {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--perf) 0 0.3125rem,
+    transparent 0.3125rem 0.625rem
+  );
+  background-repeat: no-repeat;
+  background-position: bottom left;
+  background-size: 100% 1px;
+}
+
+/* --- Kartu task jadi karcis ------------------------------------------------
+   Sudutnya benar-benar digunting (`clip-path`), jadi border biasa ikut terpotong
+   dan tak bisa dipakai. Tepinya dibuat dengan cara lama: elemen luar berisi
+   warna garis, lapisan `::before` sejauh 1px di dalamnya berisi warna kartu.
+   `isolation` di induknya yang membuat `z-index: -1` berhenti di situ dan tidak
+   tenggelam ke belakang halaman. */
+.home-skin .task-card {
+  position: relative;
+  isolation: isolate;
+  border-radius: 0;
+  padding: 0.875rem 1rem 1rem;
+  background-color: var(--ticket-edge);
+  box-shadow: none;
+  clip-path: polygon(
+    var(--ticket-notch) 0,
+    calc(100% - var(--ticket-notch)) 0,
+    100% var(--ticket-notch),
+    100% calc(100% - var(--ticket-notch)),
+    calc(100% - var(--ticket-notch)) 100%,
+    var(--ticket-notch) 100%,
+    0 calc(100% - var(--ticket-notch)),
+    0 var(--ticket-notch)
+  );
+}
+.home-skin .task-card::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 1px;
+  /* Dua lapis: serat diagonal tipis gaya kertas berpengaman di bagian atas
+     karcis, lalu bidang kartunya. Seratnya berhenti sebelum separuh tinggi
+     supaya angka dan tombol di bawah tetap duduk di bidang rata. */
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      color-mix(in oklab, var(--foreground) 4%, transparent) 0 1px,
+      transparent 1px 7px
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--card) 82%, var(--primary) 6%),
+      var(--card) 42%,
+      var(--card)
+    );
+  background-repeat: no-repeat, no-repeat;
+  background-size:
+    100% 5.25rem,
+    100% 100%;
+  clip-path: polygon(
+    calc(var(--ticket-notch) - 1px) 0,
+    calc(100% - var(--ticket-notch) + 1px) 0,
+    100% calc(var(--ticket-notch) - 1px),
+    100% calc(100% - var(--ticket-notch) + 1px),
+    calc(100% - var(--ticket-notch) + 1px) 100%,
+    calc(var(--ticket-notch) - 1px) 100%,
+    0 calc(100% - var(--ticket-notch) + 1px),
+    0 calc(var(--ticket-notch) - 1px)
+  );
+}
+
+/* Garis perforasi di dalam tiket. Titik cekung di kedua ujungnya bukan hiasan
+   tempel: itu lubang sobek karcis, dan letaknya menembus tepi kartu. */
+.home-skin .ticket-perf {
+  position: relative;
+  height: 1px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--perf) 0 0.25rem,
+    transparent 0.25rem 0.5rem
+  );
+}
+.home-skin .ticket-perf::before,
+.home-skin .ticket-perf::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background-color: var(--background);
+  box-shadow: 0 0 0 1px var(--ticket-edge);
+  translate: 0 -50%;
+}
+.home-skin .ticket-perf::before {
+  left: calc(var(--surface-p) * -1 - 0.25rem);
+}
+.home-skin .ticket-perf::after {
+  right: calc(var(--surface-p) * -1 - 0.25rem);
+}
+
+/* --- Statistik: kolom struk, bukan tiga kotak -----------------------------
+   Tiga pelat sederajat membuat angkanya terbaca sebagai tiga tombol. Bidangnya
+   dilepas dan yang memisahkan tinggal garis rambut — sekaligus memangkas tinggi
+   beranda, yang memang dijaga muat satu layar. */
+.home-skin .stat-tile {
+  border-radius: 0;
+  background-color: transparent;
+  padding: 0 0 0 0.75rem;
+  /* Garis pemisahnya putus-putus, senada dengan perforasi di atasnya — bukan
+     garis penuh, supaya kolomnya terbaca sebagai kolom struk dan bukan sebagai
+     sisa dari kotak yang bidangnya baru saja dilepas. */
+  border-left: 1px dashed color-mix(in oklab, var(--foreground) 18%, transparent);
+}
+.home-skin .stat-tile:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+/* --- Transaksi: baris buku kas -------------------------------------------- */
+.home-ledger li {
+  border-bottom-style: dashed;
+  border-bottom-color: color-mix(in oklab, var(--border) 85%, transparent);
+}
+.home-ledger li:hover {
+  background-color: transparent;
+}

@@ -127,10 +127,11 @@
   /* Gaya tombol fomo: tombol solid biasa, bukan pelat neobrutal. Yang membuatnya
      terasa "kaca" adalah hairline 1px di seluruh sisi + kilau tipis di sisi atas.
      Keduanya `inset`; aplikasi ini tidak memakai bayangan yang jatuh ke luar. */
-  /* Di terang cincinnya gelap: tombol putih butuh tepi yang LEBIH gelap dari
-     isiannya supaya kelihatan, bukan lebih terang. */
-  --hairline-edge: color-mix(in oklab, black 14%, transparent);
-  --hairline-sheen: color-mix(in oklab, white 55%, transparent);
+  /* Diukur langsung dari tombol putih di foto referensi: di permukaan terang
+     kilaunya justru GELAP (putih tak bisa lebih putih) — 4,5% hitam di sisi
+     atas, ~2,4% di sisi, hilang di bawah. */
+  --bevel-sheen: color-mix(in oklab, black 5%, transparent);
+  --bevel-ring: color-mix(in oklab, black 8%, transparent);
   --rail-card-w: 9.5rem;
   --rail-gap: 0.75rem;
   /* Ruang vertikal di dalam kotak gulir rail. `overflow-x: auto` memaksa
@@ -234,10 +235,11 @@
   --premium: #fbbf24;
   --hero-band: #08080b;
   --scrim: oklch(0 0 0 / 0.62);
-  /* Di gelap cincinnya terang: satu-satunya yang memisahkan tombol gelap dari
-     latar gelap, jadi harus tegas — bukan hairline samar. */
-  --hairline-edge: color-mix(in oklab, white 30%, transparent);
-  --hairline-sheen: color-mix(in oklab, white 34%, transparent);
+  /* Diukur dari tombol gelap di foto referensi (isian rgb(22,22,34)): kilau
+     11% putih di sisi atas, dan cincin luar 45% hitam — cincin gelap itulah
+     yang memisahkan tombol dari latar, bukan garis terang. */
+  --bevel-sheen: color-mix(in oklab, white 11%, transparent);
+  --bevel-ring: color-mix(in oklab, black 45%, transparent);
   /* Di gelap token nada sudah terang, jadi dipakai langsung; tint-nya perlu
      sedikit lebih kuat supaya latar chip tetap terbaca di atas #101014. */
   --chip-tint: 18%;
@@ -296,6 +298,18 @@
   }
 }
 
+/* Sengaja di `components`, BUKAN `utilities`: ::after milik bevel butuh induk
+   yang ter-posisi, tapi lencana avatar di profil memakai utility `absolute` di
+   elemen yang sama. Karena `components` diurai sebelum `utilities`, `absolute`
+   tetap menang di sana — dan `absolute` juga ikut jadi induk posisi, jadi
+   bevelnya tetap benar di kedua kasus. */
+@layer components {
+  .btn-glass,
+  .btn-glass-quiet {
+    position: relative;
+  }
+}
+
 @layer utilities {
   .view-min-h {
     min-height: 80dvh;
@@ -343,31 +357,57 @@
   /* Sengaja TIDAK menyetel background maupun transform: `.btn-glass` hanya
      perlakuan permukaan, jadi bisa ditumpuk di atas bg apa pun (bg-primary,
      bg-muted, dst.) dan gerak tekannya tetap milik `.press-scale*`. */
-  /* Cincin tepinya DI LUAR isian (bukan `inset`) supaya tak tertimpa warna
-     tombol: itu bedanya antara garis tegas seperti referensi dan hairline yang
-     nyaris hilang. Blur 0 + offset 0 = cincin, bukan bayangan. */
-  .btn-glass {
-    box-shadow:
-      0 0 0 1.5px var(--hairline-edge),
-      inset 0 1px 0 var(--hairline-sheen);
+  /* Dua lapis, hasil ukur piksel foto referensi:
+
+     1. Cincin luar 1px gelap (`--bevel-ring`) — inilah yang memisahkan tombol
+        dari latar, dan ia rata di KEEMPAT sisi.
+     2. Kilau 1px di dalam tepi (`--bevel-sheen`) yang TIDAK rata: paling
+        terang di sisi atas, meluruh linear ke bawah, dan habis sama sekali di
+        sisi bawah. Di referensi sisi kiri/kanan pas di tengah tombol tinggal
+        ~50% dari sisi atas, dan sisi bawahnya nol.
+
+     Karena tidak rata, kilaunya tak bisa dibuat dari `inset box-shadow` (selalu
+     satu warna solid). Jadi dipakai ::after ber-`padding: 1px` + `mask` yang
+     menyisakan cincin 1px saja, diisi gradien vertikal. */
+  .btn-glass,
+  .btn-glass-quiet {
+    box-shadow: 0 0 0 1px var(--bevel-ring);
     transition: box-shadow var(--duration-ui) ease-out;
   }
-  .btn-glass:active:not(:disabled) {
-    box-shadow:
-      0 0 0 1.5px var(--hairline-edge),
-      inset 0 1px 0 color-mix(in oklab, var(--hairline-sheen) 45%, transparent);
-  }
-  /* Versi sekunder di atas bg-card: hairline-nya pakai --border supaya sewarna
-     dengan kartu, kilau atasnya jauh lebih tipis. */
   .btn-glass-quiet {
     background-color: var(--card);
-    box-shadow:
-      0 0 0 1.5px var(--border),
-      inset 0 1px 0 color-mix(in oklab, var(--hairline-sheen) 40%, transparent);
-    transition: box-shadow var(--duration-ui) ease-out;
   }
-  .btn-glass-quiet:active:not(:disabled) {
-    box-shadow: 0 0 0 1.5px var(--border);
+  .btn-glass::after,
+  .btn-glass-quiet::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(to bottom, var(--bevel-sheen), transparent);
+    /* Menyisakan HANYA area padding 1px: lapis penuh dikurangi kotak isi. */
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  /* Ditekan: kilau meredup, cincin gelapnya tetap. */
+  .btn-glass:active:not(:disabled)::after,
+  .btn-glass-quiet:active:not(:disabled)::after {
+    background: linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--bevel-sheen) 45%, transparent),
+      transparent
+    );
+  }
+  .btn-glass:disabled::after,
+  .btn-glass-quiet:disabled::after {
+    display: none;
   }
   .num-display {
     font-family: var(--font-display);

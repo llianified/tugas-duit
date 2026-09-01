@@ -1494,20 +1494,27 @@
   color: color-mix(in oklab, var(--muted-foreground) 82%, transparent);
 }
 
-/* Tepi bawah pita hero: perforasi, bukan busur. Warna bidangnya tetap dari
-   `--hero-band` yang sudah ada di aturan asli, jadi yang ditimpa di sini hanya
-   radius dan lapisan garisnya. */
+/* Tepi bawah pita hero: lurus, bukan busur — dan tanpa garis sendiri.
+   Perforasi di sini dulu berhenti setengah `--region-gap` di atas garis pembatas
+   `.region-t`, jadi batas antara karcis dan kartu di bawahnya ditandai DUA kali
+   oleh dua garis sejajar yang berbeda gaya. Yang bertahan garis `.region-t` di
+   bawah ini, karena dialah yang benar-benar memisahkan kedua region; pita hero
+   cukup diselesaikan oleh perubahan warna bidangnya. */
 .home-skin .hero-band::before {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  background-image: repeating-linear-gradient(
-    90deg,
-    var(--perf) 0 0.3125rem,
-    transparent 0.3125rem 0.625rem
-  );
-  background-repeat: no-repeat;
-  background-position: bottom left;
-  background-size: 100% 1px;
+}
+
+/* Pembatas full-bleed antara karcis task dan kartu di bawahnya. Garis penuh di
+   sini adalah satu-satunya garis lurus yang tersisa di beranda, dan ia berdiri
+   persis di atas kartu kupon yang sobekannya putus-putus — dua bahasa garis
+   bertabrakan di jarak paling dekat. Yang dipakai bahasa yang sudah dipilih
+   halaman ini: putus-putus, senada dengan pemisah kolom struk dan sobekan kupon.
+   Warnanya tetap `--border` dan bukan `--perf` yang lebih terang, karena garis
+   ini membentang selebar layar — pada lebar itu `--perf` berhenti jadi pembatas
+   dan mulai jadi elemen yang menarik perhatian sendiri. */
+.home-skin .region-t {
+  border-top-style: dashed;
 }
 
 /* --- Kartu task jadi karcis ------------------------------------------------

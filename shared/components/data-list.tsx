@@ -9,11 +9,19 @@ import { cn } from '@/shared/lib/utils'
 export function DataList({
   label,
   badge,
+  action,
   children,
   ariaLabel,
 }: {
   label: string
   badge?: ReactNode
+  /**
+   * Aksi opsional di kanan kepala daftar — tempat yang benar untuk "lihat
+   * selengkapnya", karena ia menempel pada data yang dilanjutkannya alih-alih
+   * berdiri sebagai tombol tersendiri di tempat lain. `badge` tetap didahulukan
+   * agar ringkasan angka tidak terdorong keluar ketika keduanya dipakai.
+   */
+  action?: ReactNode
   children: ReactNode
   ariaLabel?: string
 }) {
@@ -21,7 +29,10 @@ export function DataList({
     <section aria-label={ariaLabel ?? label}>
       <div className="flex items-center justify-between gap-3">
         <SectionLabel as="h2">{label}</SectionLabel>
-        {badge ? <MetaBadge>{badge}</MetaBadge> : null}
+        <span className="flex shrink-0 items-center gap-2">
+          {badge ? <MetaBadge>{badge}</MetaBadge> : null}
+          {action}
+        </span>
       </div>
 
       <ul className="label-gap-t [--label-trim:var(--list-row-py)] flex flex-col">

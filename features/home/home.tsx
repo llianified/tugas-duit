@@ -102,7 +102,6 @@ export function HomeView({
           balance={balance}
           history={history}
           onWithdraw={() => setWithdrawOpen(true)}
-          onHistory={onOpenHistory}
         />
 
         <div className={`animate-view-in region-gap-t ${ENTER_STEP_CLASS[1]}`}>
@@ -143,7 +142,11 @@ export function HomeView({
             ((premium && premiumReachable) || bonusReachable) && 'region-gap-t',
           )}
         >
-          <RecentTransactions history={history} completedCount={completedCount} />
+          <RecentTransactions
+            history={history}
+            completedCount={completedCount}
+            onSeeAll={onOpenHistory}
+          />
         </div>
       </div>
 

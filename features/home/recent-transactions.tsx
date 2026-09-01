@@ -8,15 +8,17 @@ import { formatCredits, formatHistoryTime } from '@/shared/lib/format'
 export function RecentTransactions({
   history,
   completedCount,
+  onSeeAll,
 }: {
   history: HistoryEntry[]
   completedCount: number
+  onSeeAll: () => void
 }) {
   const isEmpty = history.length === 0
   /**
    * Tiga, bukan lima. Beranda dirancang muat dalam satu layar tanpa gulir, dan dua baris
    * terakhir adalah satu-satunya yang mendorongnya lewat — sementara riwayat lengkapnya
-   * ada satu ketukan jauhnya lewat tombol Riwayat di atas maupun nav bawah.
+   * ada satu ketukan jauhnya lewat tautan Riwayat di kepala daftar ini.
    */
   const rows = history.slice(0, 3)
 
@@ -24,6 +26,17 @@ export function RecentTransactions({
     <DataList
       label="Transaksi terakhir"
       badge={isEmpty ? undefined : `${formatCredits(completedCount)} task`}
+      action={
+        isEmpty ? undefined : (
+          <button
+            type="button"
+            onClick={onSeeAll}
+            className="focus-ring transition-ui rounded-sm text-[13px] font-semibold text-primary hover:underline"
+          >
+            Riwayat
+          </button>
+        )
+      }
       ariaLabel="Transaksi terakhir"
     >
       {isEmpty ? (

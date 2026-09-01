@@ -209,14 +209,17 @@
     overscroll-behavior: none;
     font-feature-settings: 'cv11', 'ss01';
     -webkit-tap-highlight-color: transparent;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-  input,
-  textarea,
-  [contenteditable='true'] {
     -webkit-user-select: text;
     user-select: text;
+  }
+  /* Teks bisa diseleksi & dicopy, tapi kontrol tap tetap terasa native:
+     long-press pada tombol tidak memunculkan seleksi. */
+  button,
+  [role='button'],
+  [role='tab'],
+  label {
+    -webkit-user-select: none;
+    user-select: none;
   }
 }
 

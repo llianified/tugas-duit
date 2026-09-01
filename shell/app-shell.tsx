@@ -29,7 +29,6 @@ function AppShellInner() {
   useTelegramViewport()
   const showError = useToast()
   const session = useRewardSession({ onError: showError })
-  const [progressionPanelOpen, setProgressionPanelOpen] = useState(false)
   const [liveTaskReward, setLiveTaskReward] = useState<number | null>(null)
 
   /**
@@ -157,7 +156,6 @@ function AppShellInner() {
             rewardPoolMax={session.rewardPoolMax}
             rewardPoolRegenCredits={session.rewardPoolRegenCredits}
             rewardPoolSecondsToNext={session.rewardPoolSecondsToNext}
-            onPanelOpenChange={setProgressionPanelOpen}
             onOpenStats={session.openStats}
           />
         ) : null

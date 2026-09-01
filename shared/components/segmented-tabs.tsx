@@ -11,7 +11,9 @@ export type SegmentedTab<T extends string> = {
 }
 
 /**
- * `solid` — varian asli: wadah `bg-muted`, tab aktif berupa permukaan terangkat.
+ * `solid` — varian asli: wadah `bg-track-surface`, tab aktif berupa permukaan
+ * terangkat. Wadahnya sengaja lebih gelap dari bidang tab aktif — lihat
+ * `--track-surface`; dulu keduanya sama-sama #232329 dan tab aktifnya hilang.
  * Dipakai `features/stats`, `features/history`, dan `features/leaderboard`.
  *
  * `plain` — varian gaya fomo (Langkah 6): tanpa wadah berlatar, tab tak aktif
@@ -42,7 +44,7 @@ export function SegmentedTabs<T extends string>({
       aria-label={ariaLabel}
       className={cn(
         'flex',
-        plain ? 'gap-0.5' : 'gap-1 rounded-lg bg-muted p-1',
+        plain ? 'gap-0.5' : 'gap-1 rounded-lg bg-track-surface p-1',
         className,
       )}
     >

@@ -12,6 +12,7 @@ export function DataList({
   action,
   children,
   ariaLabel,
+  hideLabel,
 }: {
   label: string
   badge?: ReactNode
@@ -24,18 +25,33 @@ export function DataList({
   action?: ReactNode
   children: ReactNode
   ariaLabel?: string
+  /**
+   * Menyembunyikan kepala daftar ketika judulnya cuma mengulang nama layar yang
+   * sudah tertulis di tab aktif — dan menyembunyikannya berarti barisnya HILANG,
+   * bukan dikosongkan: `label-gap-t` ikut dilepas, jadi daftar naik menempel ke
+   * tab tanpa meninggalkan celah setinggi kepala yang dihapus. `label` tetap
+   * wajib karena ia yang menamai section ini bagi pembaca layar.
+   */
+  hideLabel?: boolean
 }) {
   return (
     <section aria-label={ariaLabel ?? label}>
-      <div className="flex items-center justify-between gap-3">
-        <SectionLabel as="h2">{label}</SectionLabel>
-        <span className="flex shrink-0 items-center gap-2">
-          {badge ? <MetaBadge>{badge}</MetaBadge> : null}
-          {action}
-        </span>
-      </div>
+      {hideLabel ? null : (
+        <div className="flex items-center justify-between gap-3">
+          <SectionLabel as="h2">{label}</SectionLabel>
+          <span className="flex shrink-0 items-center gap-2">
+            {badge ? <MetaBadge>{badge}</MetaBadge> : null}
+            {action}
+          </span>
+        </div>
+      )}
 
-      <ul className="label-gap-t [--label-trim:var(--list-row-py)] flex flex-col">
+      <ul
+        className={cn(
+          'flex flex-col',
+          hideLabel || 'label-gap-t [--label-trim:var(--list-row-py)]',
+        )}
+      >
         {children}
       </ul>
     </section>

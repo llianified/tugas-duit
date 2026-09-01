@@ -1,7 +1,7 @@
 'use client'
 
 import { DIFFICULTY_LABEL, type Difficulty } from '@/features/captcha/domain'
-import { BADGE_SHAPE } from '@/shared/components/meta-badge'
+import { CHIP_SHAPE } from '@/shared/components/meta-badge'
 
 const DIFFICULTY_STRENGTH: Record<Difficulty, number> = {
   Easy: 1,
@@ -14,7 +14,7 @@ const SEGMENT_COUNT = 3
 export function DifficultyBadge({ difficulty }: { difficulty: Difficulty }) {
   return (
     <span
-      className={`${BADGE_SHAPE} inline-flex shrink-0 items-center gap-1.5 bg-muted font-semibold text-muted-foreground`}
+      className={`${CHIP_SHAPE} chip-muted shrink-0 gap-1.5`}
     >
       <DifficultyMeter difficulty={difficulty} />
       {DIFFICULTY_LABEL[difficulty]}

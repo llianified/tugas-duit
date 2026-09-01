@@ -16,7 +16,7 @@ import { ActivityFeed } from '@/features/activity/activity-feed'
 import type { ActivityEntry } from '@/features/activity/domain'
 import { TierGlyph } from '@/features/home/tier-glyph'
 import { cn } from '@/shared/lib/utils'
-import { BADGE_SHAPE, MetaBadge } from '@/shared/components/meta-badge'
+import { MetaBadge, type ChipTone } from '@/shared/components/meta-badge'
 import { PageHeader } from '@/shared/components/page-header'
 import { PageRegion } from '@/shared/components/page-region'
 import { InfoHint } from '@/shared/components/info-hint'
@@ -382,11 +382,11 @@ const MEDAL_CLASS: Record<number, string> = {
   3: 'bg-[#b06a3b] text-white',
 }
 
-const CHIP_TONE: Record<PrestigeKey, string> = {
-  founder: 'bg-foreground/10 text-foreground',
-  milestone: 'bg-primary/10 text-primary',
-  precision: 'bg-success/10 text-success',
-  premium: '',
+const CHIP_TONE: Record<PrestigeKey, ChipTone> = {
+  founder: 'neutral',
+  milestone: 'primary',
+  precision: 'success',
+  premium: 'premium',
 }
 
 function PrestigeChips({ entry }: { entry: LeaderboardEntry }) {
@@ -401,13 +401,9 @@ function PrestigeChips({ entry }: { entry: LeaderboardEntry }) {
   return (
     <>
       {badges.map((badge) => (
-        <span
-          key={badge.key}
-          title={badge.detail}
-          className={cn(BADGE_SHAPE, 'shrink-0 font-bold', CHIP_TONE[badge.key])}
-        >
+        <MetaBadge key={badge.key} tone={CHIP_TONE[badge.key]} title={badge.detail}>
           {badge.label}
-        </span>
+        </MetaBadge>
       ))}
     </>
   )
@@ -439,7 +435,7 @@ function BoardListItem({
           {entry.premium ? (
             <GlyphCrown className="size-3.5 shrink-0 text-premium" aria-label="Anggota premium" />
           ) : null}
-          {entry.you ? <MetaBadge tone="accent">Kamu</MetaBadge> : null}
+          {entry.you ? <MetaBadge tone="primary">Kamu</MetaBadge> : null}
           <PrestigeChips entry={entry} />
         </span>
       }

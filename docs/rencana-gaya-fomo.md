@@ -387,14 +387,53 @@ langsung di browser pada 384 px tema gelap — bagian utama `#f4f4f5`, satuan
 
 **Berkas:** `shared/components/meta-badge.tsx`
 
-- [ ] Terapkan `.chip` sebagai dasar: radius `--chip-radius`, padding ketat,
+- [x] Terapkan `.chip` sebagai dasar: radius `--chip-radius`, padding ketat,
       teks 0.6875rem weight 700.
-- [ ] Nada latar tinted dari warna nada memakai `color-mix` (ikuti pola
+- [x] Nada latar tinted dari warna nada memakai `color-mix` (ikuti pola
       `color-mix` yang sudah dipakai di `globals.css`).
-- [ ] Pastikan kontras teks memadai di **kedua** tema (ini titik paling rawan
+- [x] Pastikan kontras teks memadai di **kedua** tema (ini titik paling rawan
       gagal — nada premium & sukses di tema terang perlu diperiksa cermat).
-- [ ] Periksa seluruh pemakaian `MetaBadge`, termasuk
+- [x] Periksa seluruh pemakaian `MetaBadge`, termasuk
       `features/captcha/components/difficulty-badge.tsx` bila ia memakainya.
+
+**Status:** SELESAI. `BADGE_SHAPE` (`px-1.5 py-1 text-[11px] rounded-md`) diganti
+`CHIP_SHAPE` = utility `.chip`, dan `tone` `MetaBadge` diperluas dari
+`muted | accent` menjadi `muted | neutral | primary | success | destructive |
+premium` dengan kelas nada `.chip-*` di `globals.css`.
+
+Kontras adalah titik yang paling banyak menyita pekerjaan di langkah ini, dan
+ternyata memang gagal kalau token nada dipakai apa adanya: `--success`,
+`--destructive`, dan `--premium` versi terang dibuat untuk ikon/teks besar,
+terlalu muda untuk teks 11px. Karena itu ditambahkan token `--chip-fg-*`
+terpisah — di tema terang memakai varian yang lebih pekat
+(`#166534` / `#b91c1c` / `#92400e` / `--primary-active`), di tema gelap memakai
+token nada langsung karena di sana sudah cukup terang. Tint-nya juga tidak sama
+antar tema (`--chip-tint` 12% terang / 18% gelap) supaya latar chip tetap
+terbaca di atas `#101014`.
+
+Satu temuan tak terduga: kombinasi lama `--muted-foreground` di atas `--muted`
+cuma **4.40:1** — di bawah 4.5:1 untuk teks kecil. Diperbaiki lewat
+`--chip-fg-muted` (`#52525b`) yang khusus chip, jadi `--muted-foreground` yang
+dipakai seluruh aplikasi tidak ikut bergeser.
+
+Rasio kontras terukur langsung di browser (chip di atas `--background` **dan**
+`--card`, alpha dikomposit dulu): terang 4.54–14.13, gelap 6.10–17.48 — semua
+lolos AA teks kecil. `pnpm lint` bersih, `tsc --noEmit` bersih, `pnpm build`
+lolos, `scrollWidth === clientWidth === 384`.
+
+Pemakaian yang ikut disesuaikan: `tone="accent"` → `tone="primary"` di
+`leaderboard.tsx` (chip "Kamu") dan `activity-feed.tsx` (chip "Cair"); `CHIP_TONE`
+lokal di `leaderboard.tsx` yang tadinya string kelas mentah (`bg-primary/10`,
+`bg-success/10`) sekarang memetakan `PrestigeKey` → `ChipTone` dan merender lewat
+`MetaBadge`, sehingga tidak ada lagi utility warna mentah di JSX itu — nada
+`premium` yang tadinya string kosong kini terisi. `difficulty-badge.tsx` memakai
+`CHIP_SHAPE` + `.chip-muted` (gap 1.5 dipertahankan untuk meter-nya). Tinggi chip
+berubah 24px → 20px, jadi bar kerangka `DataListSkeleton` disesuaikan ke `h-5`
++ radius `--chip-radius` agar tidak melompat saat data masuk.
+
+Catatan: chip "Cair" sengaja **tidak** dijadikan hijau meski nada `success`
+tersedia — aturan 0.2 melarang hijau sebagai dekorasi, dan penarikan yang cair
+bukan penambahan credit.
 
 ---
 
@@ -402,12 +441,36 @@ langsung di browser pada 384 px tema gelap — bagian utama `#f4f4f5`, satuan
 
 **Berkas:** `shared/components/segmented-tabs.tsx`
 
-- [ ] Tambah varian `plain`: tanpa wadah berlatar, item tak aktif hanya teks
+- [x] Tambah varian `plain`: tanpa wadah berlatar, item tak aktif hanya teks
       redam, item aktif berupa pill `bg-muted` dengan teks `foreground`.
-- [ ] Varian yang sudah ada tetap utuh (dipakai di tempat lain).
-- [ ] Sediakan komponen/gaya chip dropdown "Semua ⌄" — pill `bg-card`
+- [x] Varian yang sudah ada tetap utuh (dipakai di tempat lain).
+- [x] Sediakan komponen/gaya chip dropdown "Semua ⌄" — pill `bg-card`
       berukuran kecil dengan glyph chevron dari `glyph.tsx`.
-- [ ] Pertahankan navigasi papan tombol dan `aria-*` yang sudah ada.
+- [x] Pertahankan navigasi papan tombol dan `aria-*` yang sudah ada.
+
+**Status:** SELESAI. `SegmentedTabs` dapat prop `variant?: 'solid' | 'plain'`
+(default `solid`, jadi `features/stats`, `features/history`, dan
+`features/leaderboard` tidak berubah satu piksel pun). Varian `plain` melepas
+wadah `bg-muted` + `p-1`, melepas `flex-1` (supaya lebarnya mengikuti isi dan
+bisa berdampingan dengan chip filter di satu baris), dan menandai tab aktif
+sebagai pill `bg-muted` `rounded-full`. `role="tablist"` / `aria-selected` /
+`aria-controls` dan `hapticSelect()` tetap sama untuk kedua varian.
+
+`FilterChip` ditambahkan di berkas yang sama. Pemilihnya `<select>` asli yang
+ditumpuk transparan di atas chip, bukan popover buatan sendiri — papan tombol,
+pembaca layar, dan pemilih bawaan OS/Telegram langsung bekerja tanpa manajemen
+fokus manual. Karena `<select>`-nya transparan, cincin fokus dipindahkan ke chip
+lewat `has-[select:focus-visible]`.
+
+Belum dipasang ke halaman mana pun; pemasangan adalah Langkah 9.
+
+Diverifikasi lewat halaman percobaan sementara (sudah dihapus) pada 384 px:
+`scrollWidth === clientWidth === 384` di tema terang **dan** gelap, chip tinggi
+32 px tetapi area sentuh `<select>` terukur **44 px** (overlay `-inset-y-1.5`),
+dan mengganti pilihan benar-benar memperbarui label chip. `pnpm lint` bersih,
+`tsc --noEmit` bersih, `pnpm build` lolos. `git diff --name-only`:
+`shared/components/segmented-tabs.tsx` + dokumen ini — zona terlarang tidak
+tersentuh.
 
 ---
 
@@ -533,6 +596,16 @@ Diisi oleh agent selama pengerjaan. Ini penting untuk serah-terima antar agent.
   merender `<h1 className="sr-only">`, jadi `font-display` di sana murni
   persiapan bila judul kelak ditampilkan. Efek nyata Langkah 2 datang dari
   `section-label.tsx` (`EYEBROW_CLASS`).
+- **Langkah 6 — tempat `FilterChip`.** Rencana hanya menyebut satu berkas untuk
+  langkah ini dan tidak menandai berkas baru, jadi chip dropdown ditaruh di
+  `shared/components/segmented-tabs.tsx` (bukan berkas baru) — keduanya adalah
+  kontrol pemilih pada baris yang sama dan selalu dipakai bersama.
+- **Langkah 6 — dropdown pakai `<select>` asli.** Bukan popover/listbox buatan
+  sendiri. Alasan: a11y & papan tombol gratis, pemilih bawaan OS lebih pas di
+  dalam Telegram, dan tidak ada manajemen fokus yang bisa bentrok dengan
+  `shell/telegram-viewport.ts`. Konsekuensinya `--chip-radius` tidak dipakai di
+  sini: chip filter fomo berbentuk pill penuh (`rounded-full`), sedangkan
+  `--chip-radius` milik badge persegi Langkah 5.
 - **Langkah 1 — `--thread-line`.** Dijadikan alias `var(--border)` di kedua tema
   (bukan warna baru), karena `--border` sudah punya nilai terang & gelap yang
   tepat untuk garis penghubung setipis ini. Token tetap ada agar Langkah 10

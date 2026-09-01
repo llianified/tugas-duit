@@ -75,7 +75,8 @@ export function DataListSkeleton({
   /** Diameter penanda baris. `DataList` biasa memakai lingkaran 36px, papan
    *  peringkat memakai avatar 40px (`BoardFrame`). */
   markerClass?: string
-  /** `MetaBadge` di sisi kanan label: `px-1.5 py-1 text-[11px]` ≈ 24px. */
+  /** `MetaBadge` di sisi kanan label. Sejak chip padat gaya fomo: teks
+   *  0.6875rem/1.25 + padding 0.1875rem ≈ 20px, radius `--chip-radius`. */
   badge?: boolean
 }) {
   return (
@@ -85,7 +86,7 @@ export function DataListSkeleton({
     >
       <div className="flex items-center justify-between gap-3">
         <Bar className="h-3 w-36" />
-        {badge ? <Bar className="h-6 w-32 rounded-md" /> : null}
+        {badge ? <Bar className="h-5 w-32 rounded-[var(--chip-radius)]" /> : null}
       </div>
       <div className="label-gap-t [--label-trim:var(--list-row-py)] flex flex-col">
         {Array.from({ length: rows }, (_, index) => (

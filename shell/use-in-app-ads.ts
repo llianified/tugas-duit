@@ -7,6 +7,7 @@ import {
   msUntilInAppWindowReset,
   newInAppSession,
   nextInAppDelayMs,
+  oneShotInAppParams,
   parseInAppSession,
   recordInAppShown,
   rollInAppSession,
@@ -137,7 +138,10 @@ export function useInAppAds({
       showing = true
       beginInApp()
       try {
-        await show()
+        // `type: 'inApp'` wajib dikirim agar impresinya terhitung sebagai InApp
+        // Interstitial; `show()` polos membuatnya masuk bucket berhadiah yang CPM-nya
+        // jauh lebih rendah. Bentuk one-shot-nya dijelaskan di `oneShotInAppParams()`.
+        await show(oneShotInAppParams())
       } catch (error) {
         // Reject di sini tidak merugikan siapa pun — tidak ada tiket dan tidak ada credit
         // yang bergantung padanya, beda dengan sisi berhadiah. Cukup dicatat.

@@ -87,6 +87,46 @@ export function inAppAdsSettings(config: {
   }
 }
 
+/**
+ * Parameter yang dikirim ke `show_<zone>()` supaya impresinya terhitung sebagai **InApp
+ * Interstitial**, bukan Rewarded Interstitial.
+ *
+ * Formatnya ditentukan oleh ada-tidaknya `type: 'inApp'` pada pemanggilan, bukan oleh zone.
+ * Selama jalur otomatis memakai `show()` polos, seluruh impresinya masuk ke bucket
+ * berhadiah yang CPM-nya jauh lebih rendah (0.83 vs 2.83 di dashboard) — itu sebabnya
+ * trafik naik tapi pemasukan jalan di tempat.
+ *
+ * `inAppSettings` di sini SENGAJA bukan jadwal yang sebenarnya. Jadwal aslinya tetap
+ * dipegang `nextInAppDelayMs()` di modul ini, karena penjadwal milik SDK tidak bisa dijeda
+ * saat iklan berhadiah sedang jalan (lihat komentar kepala modul). Yang dikirim adalah
+ * bentuk "one-shot": satu iklan, tanpa tunda, lalu plafonnya habis.
+ *
+ * - `frequency: 1` + `capping: 24` → penjadwal yang tertinggal di dalam SDK sudah kehabisan
+ *   kuota begitu iklannya tayang, jadi tidak ada iklan susulan yang nongol di luar kendali.
+ *   Jendela panjang dipilih justru supaya kuota itu TIDAK pernah pulih; `capping` kecil
+ *   akan menggulung jendelanya dan membangunkan penjadwal itu lagi.
+ * - `timeout: 0` → tayang sekarang. Tundanya sudah dihitung di sisi kita.
+ * - `interval: 0` → tidak berpengaruh karena kuotanya cuma satu.
+ * - `everyPage: true` → sesi milik SDK tidak disimpan lintas halaman, sehingga plafon
+ *   one-shot di atas tidak ikut membungkam panggilan kita berikutnya. Plafon lintas
+ *   halaman yang sebenarnya dijaga `sessionStorage` di `shell/use-in-app-ads.ts`.
+ */
+export function oneShotInAppParams(): {
+  type: 'inApp'
+  inAppSettings: {
+    frequency: number
+    capping: number
+    interval: number
+    timeout: number
+    everyPage: boolean
+  }
+} {
+  return {
+    type: 'inApp',
+    inAppSettings: { frequency: 1, capping: 24, interval: 0, timeout: 0, everyPage: true },
+  }
+}
+
 export interface InAppAdsSession {
   /** Awal jendela capping yang sedang berjalan. */
   startedAt: number

@@ -76,7 +76,11 @@ export function LeaderboardView({
       </div>
 
       {surface === 'aktivitas' ? (
-        <div className="region-t">
+        /* `region-under-brand`, bukan `region-t`: umpan ini blok pertama di bawah baris
+        tab, jadi tidak ada apa pun di atasnya untuk dipisahkan. Garis `region-t` di
+        posisi ini memisahkan konten dari ruang kosong — sama seperti `YourPosition`
+        di tab sebelahnya, yang memakai kelas ini persis karena alasan yang sama. */
+        <div className="region-under-brand">
           <ActivityFeed entries={activity} />
         </div>
       ) : entries.length === 0 ? (

@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react'
 import { creditsToRupiah } from '@/domain/economy'
 import { ActionButton } from '@/shared/components/action-button'
 import { GlyphTelegram } from '@/shared/components/glyph'
+import { IconCircle } from '@/shared/components/icon-circle'
 import { userFacingMessage } from '@/shell/api-client'
 import { claimChannelBonus, type ChannelBonusState } from '@/shell/session-api'
 import { useToast } from '@/shell/toast'
@@ -38,19 +39,20 @@ export function ChannelBonusCard({
       aria-label="Bonus join channel"
       className="rounded-lg bg-muted/60 p-[var(--surface-p)] ring-border"
     >
-      <div className="flex items-start gap-2">
-        <GlyphTelegram className="mt-0.5 size-5 shrink-0 text-primary" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold leading-snug text-foreground">
-            Join channel, dapat {formatCredits(bonus.credits)} credit
-          </p>
-          <p className="mt-1 text-xs leading-snug text-muted-foreground">
-            Sekali seumur akun, langsung masuk saldo (
-            {formatRupiah(creditsToRupiah(bonus.credits))}). Kami cek keanggotaan kamu ke Telegram,
-            jadi join dulu ya sebelum klaim.
-          </p>
-        </div>
+      <div className="flex items-center gap-2">
+        <IconCircle size="sm" tone="primary">
+          <GlyphTelegram className="size-4" />
+        </IconCircle>
+        <p className="text-sm font-semibold leading-none text-foreground">Bonus join channel</p>
+        <span className="ml-auto text-[11px] font-semibold tabular-nums text-primary">
+          +{formatCredits(bonus.credits)} credit
+        </span>
       </div>
+
+      <p className="stack-gap-t text-xs leading-snug text-muted-foreground">
+        Sekali seumur akun, langsung masuk saldo{' '}
+        {formatRupiah(creditsToRupiah(bonus.credits))}.
+      </p>
 
       <div className="stack-gap-t flex gap-2">
         <a

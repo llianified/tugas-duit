@@ -43,7 +43,7 @@ export function ChannelBonusCard({
 
       <div className="stack-gap-t flex gap-2">
         {/* Label tombol di app ini seragam 15px/bold/tracking-tight — "Mulai" di
-            kartu task atasnya, "Tarik dana" & "Riwayat" di tile hero, dan
+            kartu task atasnya, "Tarik dana" di hero, dan
             "Buka channel" versi `ChannelGate`. 17px bawaan `ActionButton`
             dipakai untuk CTA yang berdiri sendiri selebar kartu; di sini dua
             tombol berbagi satu baris di dalam kartu, jadi keduanya ikut ukuran

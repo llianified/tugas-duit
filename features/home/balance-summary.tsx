@@ -1,9 +1,8 @@
 'use client'
 
-import { useMemo, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { useMemo } from 'react'
 import { ActionButton } from '@/shared/components/action-button'
 import { CreditAmount } from '@/shared/components/credit-amount'
-import { GlyphHistory } from '@/shared/components/glyph'
 import { InfoHint } from '@/shared/components/info-hint'
 import type { HistoryEntry } from '@/features/captcha/domain'
 import { creditsToRupiah } from '@/domain/economy'
@@ -14,18 +13,15 @@ import {
   isSameWibDay,
 } from '@/shared/lib/format'
 import { useCountUp } from '@/shared/lib/use-count-up'
-import { cn } from '@/shared/lib/utils'
 
 export function BalanceSummary({
   balance,
   history,
   onWithdraw,
-  onHistory,
 }: {
   balance: number
   history: HistoryEntry[]
   onWithdraw: () => void
-  onHistory: () => void
 }) {
   const displayedBalance = useCountUp(balance)
 
@@ -43,13 +39,12 @@ export function BalanceSummary({
 
   return (
     <section aria-label="Saldo reward">
-      {/* Saldo dan aksinya berdiri sebaris, bukan bertumpuk.
-          Sebelumnya angka memakan satu baris penuh lalu dua tile sederajat
-          ("Tarik dana" + "Riwayat") memakan baris lagi di bawahnya — dua tombol
-          selebar itu membuat keduanya terbaca sama penting, padahal cuma menarik
-          dana yang memindahkan uang. Sekarang penarikan jadi satu CTA tunggal di
-          kanan saldo, dan Riwayat turun jadi tombol ikon: ia tetap satu tap,
-          tapi tidak lagi bersaing dengan CTA-nya. */}
+      {/* Saldo dan aksinya berdiri sebaris, bukan bertumpuk, dan aksinya kini
+          tinggal satu: "Tarik dana". Riwayat pernah berdiri di sini sebagai
+          tombol ikon persegi seukuran CTA — bidang sebesar itu untuk sekadar
+          membuka daftar bacaan membuatnya terbaca sederajat dengan satu-satunya
+          aksi yang memindahkan uang. Pintunya sekarang ada di kepala daftar
+          "Transaksi terakhir", tepat di atas data yang memang dilanjutkannya. */}
       {/* Baris cetakan di atas angka: menamai apa yang sedang dibaca tanpa
           memakai ukuran huruf yang bersaing dengan nominalnya. */}
       <p className="home-tag">Saldo kamu</p>
@@ -86,47 +81,11 @@ export function BalanceSummary({
           </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <HeroIconButton
-            label="Riwayat"
-            onClick={onHistory}
-            icon={<GlyphHistory className="size-5" />}
-          />
-          <ActionButton className="w-auto px-5" onClick={onWithdraw}>
-            Tarik dana
-          </ActionButton>
-        </div>
+        <ActionButton className="w-auto shrink-0 px-5" onClick={onWithdraw}>
+          Tarik dana
+        </ActionButton>
       </div>
     </section>
   )
 }
 
-/**
- * Tombol ikon tanpa teks: bentuknya persegi setinggi kontrol lain, memakai
- * permukaan gelas tenang yang sama supaya terbaca satu keluarga dengan CTA di
- * sebelahnya — hanya berbeda derajat, bukan berbeda jenis. Namanya tetap ada
- * sebagai `aria-label` dan `title`, jadi maknanya tidak bergantung pada ikon saja.
- */
-function HeroIconButton({
-  icon,
-  label,
-  ...props
-}: {
-  icon: ReactNode
-  label: string
-} & ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      {...props}
-      className={cn(
-        'focus-ring transition-ui press-scale-soft control-h flex aspect-square shrink-0 items-center justify-center rounded-cta',
-        'btn-glass-quiet text-muted-foreground hover:text-foreground active:text-foreground',
-      )}
-    >
-      {icon}
-    </button>
-  )
-}

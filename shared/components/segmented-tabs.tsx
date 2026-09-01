@@ -69,7 +69,7 @@ export function SegmentedTabs<T extends string>({
               active
                 ? plain
                   ? 'bg-muted text-foreground'
-                  : 'bg-card text-foreground shadow-sm'
+                  : 'bg-card text-foreground'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >
@@ -142,7 +142,7 @@ export function FilterChip<T extends string>({
           alignItemWithTrigger={false}
           className="z-50 outline-none"
         >
-          <Select.Popup className="min-w-[var(--anchor-width)] rounded-lg border border-border bg-card p-1 shadow-lg outline-none">
+          <Select.Popup className="min-w-[var(--anchor-width)] rounded-lg border border-border bg-card p-1 outline-none">
             {options.map((option) => (
               <Select.Item
                 key={option.value}

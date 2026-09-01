@@ -126,7 +126,7 @@ function PanelTabsSkeleton({
           key={label}
           className={[
             'relative flex flex-1 items-center justify-center rounded-md px-3 py-2 text-[13px] font-bold tracking-tight',
-            index === 0 ? 'bg-card shadow-sm' : '',
+            index === 0 ? 'bg-card' : '',
           ]
             .filter(Boolean)
             .join(' ')}

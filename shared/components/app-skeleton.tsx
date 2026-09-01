@@ -207,36 +207,6 @@ function PanelTabsSkeleton({
   )
 }
 
-/**
- * Strip tab `SegmentedTabs` varian `plain` — dipakai Peringkat. Bukan wadah berlatar
- * seperti `solid`: tab tak aktif hanya teks, tab aktif pill `btn-glass-quiet`, dan
- * stripnya TIDAK mengambil lebar penuh (`gap-0.5`, tanpa `flex-1`).
- */
-function PlainTabsSkeleton({
-  labels,
-  className,
-}: {
-  labels: readonly string[]
-  className?: string
-}) {
-  return (
-    <div className={cn('flex gap-0.5', className)}>
-      {labels.map((label, index) => (
-        <div
-          key={label}
-          className={cn(
-            'relative flex items-center justify-center rounded-full px-2.5 py-1.5 text-[13px] font-bold tracking-tight',
-            index === 0 && 'btn-glass-quiet',
-          )}
-        >
-          <span className="invisible">{label}</span>
-          <Bar className="absolute inset-x-2.5 h-3" />
-        </div>
-      ))}
-    </div>
-  )
-}
-
 const MISSION_TITLE_W = ['w-36', 'w-44', 'w-28'] as const
 
 /**
@@ -424,17 +394,22 @@ function TotalSummarySkeleton({
 
 /**
  * Kerangka Peringkat, mengikuti `LeaderboardView` apa adanya:
- * strip tab `plain` → rail podium → kartu "Posisi kamu" → saringan + papan.
+ * strip tab → rail podium → kartu "Posisi kamu" → saringan + papan.
  *
- * Bentuk sebelumnya sudah tidak ada lagi di layar itu: ia menggambar tablist
- * bergaris-bawah (sekarang pill `plain`), hero angka besar (sekarang kartu baris),
- * strip `solid` untuk saringan (sekarang satu chip dropdown), dan tidak menggambar
- * rail podium sama sekali — jadi hampir setiap blok bergeser saat papannya masuk.
+ * Strip tabnya `PanelTabsSkeleton`, sama seperti Statistik dan Riwayat, karena baris
+ * Papan/Aktivitas di `LeaderboardView` kini `SegmentedTabs` berwadah `bg-track-surface`
+ * selebar layar. Dulu di sini `PlainTabsSkeleton` (pill setinggi teks, tanpa wadah):
+ * bentuk yang lebih pendek DAN lebih sempit dari yang datang, jadi seluruh isi
+ * halaman tersentak turun begitu papannya masuk.
+ *
+ * Bentuk yang lebih lama lagi juga sudah tidak ada di layar itu: tablist bergaris-bawah,
+ * hero angka besar (sekarang kartu baris), strip `solid` untuk saringan (sekarang satu
+ * chip dropdown), dan tanpa rail podium sama sekali.
  */
 export function LeaderboardSkeleton() {
   return (
     <div className="animate-fade-in view-min-h flex flex-col" aria-hidden>
-      <PlainTabsSkeleton labels={BOARD_SURFACE_LABEL} className="region-under-brand" />
+      <PanelTabsSkeleton labels={BOARD_SURFACE_LABEL} className="region-under-brand" />
 
       {/* Podium: baris label + tumpukan avatar, lalu tiga kartu `--rail-card-w`.
           `--label-trim` membayar balik `--rail-py`, persis seperti `PodiumRail`. */}

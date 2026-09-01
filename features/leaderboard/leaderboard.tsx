@@ -37,12 +37,12 @@ import type { LeaderboardBoard, LeaderboardEntry } from '@/features/leaderboard/
 type BoardSurface = 'papan' | 'aktivitas'
 
 /**
- * Varian `solid`, sama seperti "Task / Penarikan" di halaman Riwayat: keduanya
- * pemilih tingkat atas yang menukar seluruh isi halaman, jadi keduanya pantas
- * memakai wadah `bg-track-surface` selebar layar — bukan pill `plain` yang di
- * app ini menandai saringan di dalam satu tampilan (lihat `FilterChip` di
- * `BoardPanel`, yang tetap `plain` dan kini tidak lagi bertabrakan arti dengan
- * baris ini). `SegmentedTabs` juga membawa haptic, `aria-controls`, serta
+ * Sama bentuknya dengan "Task / Penarikan" di halaman Riwayat: keduanya pemilih
+ * tingkat atas yang menukar seluruh isi halaman, jadi keduanya pantas memakai
+ * wadah `bg-track-surface` selebar layar — bukan pill tanpa wadah, yang di app ini
+ * menandai saringan di dalam satu tampilan (lihat `FilterChip` di `BoardPanel`,
+ * satu-satunya pemakai bahasa itu sekarang, jadi tidak ada lagi tabrakan arti
+ * dengan baris ini). `SegmentedTabs` juga membawa haptic, `aria-controls`, serta
  * pengabaian klik pada tab aktif yang dulu ditulis ulang di sini; `aria-controls`
  * itu nyata — kedua cabang di bawah merender `id` panel yang ditunjuk.
  */

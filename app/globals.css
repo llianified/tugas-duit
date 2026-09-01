@@ -5,6 +5,8 @@
 @theme inline {
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', var(--font-geist-sans),
     ui-sans-serif, system-ui, sans-serif;
+  /* Hanya untuk heading & angka; body tetap `--font-sans`. */
+  --font-display: var(--font-plus-jakarta), var(--font-sans);
   --font-mono: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --color-ring: var(--ring);
@@ -129,8 +131,6 @@
   --rail-gap: 0.75rem;
   --chip-radius: 0.5rem;
   --thread-line: var(--border);
-  /* Diarahkan ke font display pada Langkah 2; sampai itu jatuh ke tumpukan sistem. */
-  --font-display: var(--font-sans);
   --duration-ui: 150ms;
   --control-h: 3.25rem;
   --cta-h: var(--control-h);

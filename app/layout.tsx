@@ -2,7 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata, Viewport } from 'next'
 import { headers } from 'next/headers'
-import { Geist } from 'next/font/google'
+import { Geist, Plus_Jakarta_Sans } from 'next/font/google'
 import Script from 'next/script'
 import { MONETAG_DEFAULT_ZONE_ID, monetagSdkName } from '@/domain/ads'
 import { ADS_HINT_INIT_SCRIPT } from '@/shell/ads-hint'
@@ -12,6 +12,14 @@ import './globals.css'
 const geistSans = Geist({
   subsets: ['latin'],
   variable: '--font-geist-sans',
+})
+
+// Font display (heading + angka). Body tetap tumpukan sistem lewat `--font-sans`.
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['700', '800'],
+  display: 'swap',
+  variable: '--font-plus-jakarta',
 })
 
 export const metadata: Metadata = {
@@ -46,7 +54,11 @@ export default async function RootLayout({
   const monetagZoneId = process.env.NEXT_PUBLIC_MONETAG_ZONE_ID?.trim() || MONETAG_DEFAULT_ZONE_ID
 
   return (
-    <html lang="id" className={`${geistSans.variable} bg-background`} suppressHydrationWarning>
+    <html
+      lang="id"
+      className={`${geistSans.variable} ${plusJakartaSans.variable} bg-background`}
+      suppressHydrationWarning
+    >
       <head>
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: ADS_HINT_INIT_SCRIPT }} />

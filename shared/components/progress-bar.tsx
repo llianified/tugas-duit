@@ -34,7 +34,7 @@ export function ProgressBar({
       <div
         ref={fillRef}
         className={cn(
-          'animate-progress-fill h-full w-[var(--progress-bar-fill,0%)] origin-left rounded-full transition-[width] duration-700 ease-out motion-reduce:transition-none',
+          'h-full w-[var(--progress-bar-fill,0%)] rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none',
           tone === 'success' ? 'bg-success' : 'bg-primary',
         )}
       />

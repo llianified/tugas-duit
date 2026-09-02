@@ -28,7 +28,10 @@ export function SegmentedTabs<T extends string>({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className={cn('flex gap-1 rounded-lg bg-track-surface p-1', className)}
+      className={cn(
+        'flex h-[var(--brand-pill-h)] gap-1 rounded-lg bg-track-surface p-0.5',
+        className,
+      )}
     >
       {tabs.map((tab) => {
         const active = tab.value === value
@@ -46,7 +49,7 @@ export function SegmentedTabs<T extends string>({
               onChange(tab.value)
             }}
             className={cn(
-              'focus-ring transition-ui flex-1 rounded-md px-3 py-2 text-[13px] font-bold tracking-tight',
+              'focus-ring transition-ui flex-1 rounded-md px-3 text-[13px] font-bold tracking-tight',
               active
                 ? 'btn-glass-quiet text-foreground'
                 : 'text-muted-foreground hover:text-foreground',

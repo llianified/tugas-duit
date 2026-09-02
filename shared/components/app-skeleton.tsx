@@ -135,7 +135,7 @@ export function DataListSkeleton({
   )
 }
 
-/** Strip tab `SegmentedTabs` varian `solid`: wadah `bg-track-surface p-1`, tiap tab `flex-1 rounded-md px-3 py-2 text-[13px]`. Tab pertama diberi permukaan terangkat karena `SegmentedTabs` selalu punya satu tab aktif — strip yang rata seluruhnya akan tersentak begitu data masuk. */
+/** Strip tab `SegmentedTabs`: tingginya mengikuti `--brand-pill-h`, sama seperti island di brand band. Tab pertama diberi permukaan terangkat karena `SegmentedTabs` selalu punya satu tab aktif — strip yang rata seluruhnya akan tersentak begitu data masuk. */
 function PanelTabsSkeleton({
   labels,
   className,
@@ -144,12 +144,17 @@ function PanelTabsSkeleton({
   className?: string
 }) {
   return (
-    <div className={cn('flex gap-1 rounded-lg bg-track-surface p-1', className)}>
+    <div
+      className={cn(
+        'flex h-[var(--brand-pill-h)] gap-1 rounded-lg bg-track-surface p-0.5',
+        className,
+      )}
+    >
       {labels.map((label, index) => (
         <div
           key={label}
           className={cn(
-            'relative flex flex-1 items-center justify-center rounded-md px-3 py-2 text-[13px] font-bold tracking-tight',
+            'relative flex flex-1 items-center justify-center rounded-md px-3 text-[13px] font-bold tracking-tight',
             /* Bidang tab aktif mengikuti `SegmentedTabs`: senada `--muted`. Dulu `bg-card`, yang justru LEBIH GELAP dari wadahnya — arah elevasinya terbalik dari komponen yang akan menggantikan kerangka ini. */
             index === 0 && 'bg-muted',
           )}

@@ -16,7 +16,6 @@ export function ProfileIsland({
   premium = null,
   isOpen,
   slideOutTo,
-  promoted = false,
   onToggle,
   onClose,
   onOpenStats,
@@ -26,7 +25,6 @@ export function ProfileIsland({
   premium?: PremiumState | null
   isOpen: boolean
   slideOutTo?: 'left' | 'right'
-  promoted?: boolean
   onToggle: () => void
   onClose: () => void
   onOpenStats?: () => void
@@ -37,13 +35,7 @@ export function ProfileIsland({
   return (
     <IslandPill
       panelId="profile-island"
-      pillLabel={
-        <ProfileAvatar
-          photoUrl={user.photoUrl}
-          className={promoted ? 'size-5' : 'size-full'}
-          glyphClassName={promoted ? 'size-3' : undefined}
-        />
-      }
+      pillLabel={<ProfileAvatar photoUrl={user.photoUrl} className="size-full" />}
       pillTitle={user.firstName}
       openLabel="Buka ringkasan profil"
       closeLabel="Tutup ringkasan profil"
@@ -52,10 +44,9 @@ export function ProfileIsland({
       slideOutTo={slideOutTo}
       onToggle={onToggle}
       onClose={onClose}
-      className={cn('mr-1.5', promoted && 'island-profile-promoted')}
+      className="mr-1.5"
       pillClassName={cn(
-        'overflow-hidden p-0',
-        promoted ? 'w-[var(--rank-island-pill-w)]' : 'w-[var(--brand-pill-h)]',
+        'w-[var(--brand-pill-h)] overflow-hidden p-0',
         isPremium && 'shadow-[0_0_0_1.5px_var(--premium)]',
       )}
     >

@@ -647,28 +647,8 @@
   }
   .island[data-island='open'] .island-pill {
     opacity: 0;
-    pointer-events: none;
     transition-delay: 0s;
     transition-duration: 0s, 80ms, 140ms;
-  }
-  .island-profile-promoted .island-pill {
-    width: var(--rank-island-pill-w);
-    translate: calc(
-      50vw - var(--island-pill-left, 50vw) - var(--island-pill-w, var(--rank-island-pill-w)) /
-        2
-    );
-  }
-  .island-profile-promoted[data-island='open'] .island-pill {
-    scale: 1;
-    opacity: 1;
-    pointer-events: auto;
-    transition-delay: 0s;
-    transition-duration:
-      var(--island-duration),
-      220ms,
-      140ms,
-      var(--island-duration),
-      var(--island-duration);
   }
   .island[data-island-aside] .island-pill {
     pointer-events: none;

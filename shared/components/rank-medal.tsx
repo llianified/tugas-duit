@@ -1,28 +1,10 @@
 import { formatCredits } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 
-/**
- * Penanda peringkat ala fomo: tiga teratas memakai **pita** (bidang padat
- * dengan ujung bawah bercelah), sisanya angka biasa berimbuh titik.
- *
- * Kenapa bentuknya pita dan bukan lingkaran bernomor seperti sebelumnya: pada
- * lebar 384px podium harus terbaca dalam satu lirikan, dan siluet yang berbeda
- * mengerjakan itu lebih cepat daripada tiga lingkaran identik yang hanya beda
- * warna. Warnanya tetap membedakan 1/2/3 karena jarak antar podium justru yang
- * paling diperebutkan.
- *
- * Emas di sini TIDAK memakai `--premium`. Premium sudah memakai emas di cincin
- * avatar dan mahkota; memakai token yang sama untuk dua hal berbeda membuat
- * baris papan tidak bisa dibaca. Karena itu `--medal-*` berdiri sendiri di
- * `globals.css`.
- *
- * Angkanya adalah teks nyata, jadi pembaca layar tetap mendengar peringkatnya;
- * hanya bidang pitanya yang `aria-hidden`.
- */
+/** Penanda peringkat ala fomo: tiga teratas memakai **pita** (bidang padat dengan ujung bawah bercelah), sisanya angka biasa berimbuh titik. Kenapa bentuknya pita dan bukan lingkaran bernomor seperti sebelumnya: pada lebar 384px podium harus terbaca dalam satu lirikan, dan siluet yang berbeda mengerjakan itu lebih cepat daripada tiga lingkaran identik yang hanya beda warna. Warnanya tetap membedakan 1/2/3 karena jarak antar podium justru yang paling diperebutkan. Emas di sini TIDAK memakai `--premium`. Premium sudah memakai emas di cincin avatar dan mahkota; memakai token yang sama untuk dua hal berbeda membuat baris papan tidak bisa dibaca. Karena itu `--medal-*` berdiri sendiri di `globals.css`. Angkanya adalah teks nyata, jadi pembaca layar tetap mendengar peringkatnya; hanya bidang pitanya yang `aria-hidden`. */
 export type RankMedalSize = 'sm' | 'md'
 
-/** Latar pita dipisah dari warna teksnya karena keduanya dipasang di elemen
- * berbeda: bidang pita yang terpotong `clip-path`, dan angkanya di atasnya. */
+/** Latar pita dipisah dari warna teksnya karena keduanya dipasang di elemen berbeda: bidang pita yang terpotong `clip-path`, dan angkanya di atasnya. */
 const MEDAL_BG: Record<number, string> = {
   1: 'bg-medal-gold',
   2: 'bg-medal-silver',
@@ -45,11 +27,7 @@ const PLAIN_TEXT: Record<RankMedalSize, string> = {
   md: 'text-[11px]',
 }
 
-/** Kontur pemisah dipakai saat pitanya ditumpuk di atas gambar (mis. sudut
- * avatar di papan peringkat), tempat warna di bawahnya tidak bisa ditebak.
- * `shadow`/`ring` tidak bisa dipakai di sini karena keduanya mengikuti kotak,
- * bukan siluet ber-notch, jadi konturnya digambar sebagai pita kedua yang
- * sedikit lebih besar dengan clip-path yang sama. */
+/** Kontur pemisah dipakai saat pitanya ditumpuk di atas gambar (mis. sudut avatar di papan peringkat), tempat warna di bawahnya tidak bisa ditebak. `shadow`/`ring` tidak bisa dipakai di sini karena keduanya mengikuti kotak, bukan siluet ber-notch, jadi konturnya digambar sebagai pita kedua yang sedikit lebih besar dengan clip-path yang sama. */
 const HALO_TONE = {
   background: 'bg-background',
   card: 'bg-card',
@@ -68,9 +46,7 @@ export function RankMedal({
   halo?: RankMedalHalo
   className?: string
 }) {
-  // Posisi bisa datang dari data (`0`, `NaN`, negatif kalau papannya belum
-  // terisi), jadi apa pun di luar 1–3 jatuh ke angka biasa daripada merender
-  // pita tanpa warna.
+  // Posisi bisa datang dari data (`0`, `NaN`, negatif kalau papannya belum | terisi), jadi apa pun di luar 1–3 jatuh ke angka biasa daripada merender | pita tanpa warna.
   const background = Number.isFinite(position) ? MEDAL_BG[position] : undefined
 
   if (background === undefined) {

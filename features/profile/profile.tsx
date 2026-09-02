@@ -33,13 +33,7 @@ const RANGES = [
 
 type RangeKey = (typeof RANGES)[number]['key']
 
-/**
- * Semua angka datar halaman ini hidup di satu petak, bukan tersebar antara baris fakta
- * inline, petak, dan daftar bertajuk seperti sebelumnya — tiga cara menampilkan
- * pasangan label/nilai yang sama, ditumpuk berurutan. Hanya "Sebaran kesulitan" yang
- * tetap jadi daftar karena tiap barisnya membawa dua nilai (jumlah dan credit), jadi
- * memang tabular.
- */
+/** Semua angka datar halaman ini hidup di satu petak, bukan tersebar antara baris fakta inline, petak, dan daftar bertajuk seperti sebelumnya — tiga cara menampilkan pasangan label/nilai yang sama, ditumpuk berurutan. Hanya "Sebaran kesulitan" yang tetap jadi daftar karena tiap barisnya membawa dua nilai (jumlah dan credit), jadi memang tabular. */
 function factTiles(stats: UserStats) {
   const tiles: { label: string; value: string }[] = [
     { label: 'Task selesai', value: formatCredits(stats.completedCount) },
@@ -207,8 +201,7 @@ export function ProfileView({
           {tiles.map((tile, index) => (
             <div
               key={tile.label}
-              /* Jumlah petak bisa ganjil kalau tanggal gabung tidak diketahui; petak
-                 terakhir melebar penuh supaya barisnya tidak menyisakan lubang. */
+              /* Jumlah petak bisa ganjil kalau tanggal gabung tidak diketahui; petak terakhir melebar penuh supaya barisnya tidak menyisakan lubang. */
               className={cn(
                 'stat-tile',
                 index === tiles.length - 1 && tiles.length % 2 === 1 && 'col-span-2',

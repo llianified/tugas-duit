@@ -32,10 +32,7 @@ async function completeTaskDaysAgo(userId: number, daysAgo: number) {
   )
 }
 
-/**
- * Streak sekarang masuk lewat kapasitas kolam reward, jadi jalur SQL-nya dibaca dari sana:
- * bonus streak = kapasitas terbaca − kapasitas dasar, karena user uji belum menembus rank apa pun.
- */
+/** Streak sekarang masuk lewat kapasitas kolam reward, jadi jalur SQL-nya dibaca dari sana: bonus streak = kapasitas terbaca − kapasitas dasar, karena user uji belum menembus rank apa pun. */
 async function streakBonusFromPool(userId: number): Promise<number> {
   const { readRewardPoolCapacity } = await import('./reward-pool')
   const { baseRewardPoolCredits } = await import('@/domain/reward-pool')

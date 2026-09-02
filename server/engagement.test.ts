@@ -121,8 +121,7 @@ describe('ENG-4 — saldo siap ditarik memakai gating yang sama dengan createPay
     expect(pickMessage(ready({ active_referrals: 4 }), 0)?.kind).not.toBe('withdraw_ready')
   })
 
-  // Kalau gating di sini tertinggal dari `createPayout`, bot mengajak user menarik lalu
-  // server menolaknya — kegagalan yang paling merusak kepercayaan di jalur uang.
+  // Kalau gating di sini tertinggal dari `createPayout`, bot mengajak user menarik lalu | server menolaknya — kegagalan yang paling merusak kepercayaan di jalur uang.
   it('diam saat hari aktifnya masih kurang', () => {
     expect(pickMessage(ready({ active_days: 6 }), 0)?.kind).not.toBe('withdraw_ready')
   })

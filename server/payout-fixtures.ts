@@ -6,12 +6,7 @@ import {
 } from './payout-rules'
 import { generateReferralCode } from './referral'
 
-/**
- * Perkakas khusus uji, bukan jalur produksi: `createPayout` menuntut hari aktif, referral
- * aktif, dan cooldown, jadi berkas uji mana pun yang menyentuh penarikan harus menyiapkan
- * ketiganya dulu. Dikumpulkan di sini supaya syaratnya cukup diperbarui sekali kalau
- * gatingnya berubah — bukan disalin ke tiap `*.test.ts`.
- */
+/** Perkakas khusus uji, bukan jalur produksi: `createPayout` menuntut hari aktif, referral aktif, dan cooldown, jadi berkas uji mana pun yang menyentuh penarikan harus menyiapkan ketiganya dulu. Dikumpulkan di sini supaya syaratnya cukup diperbarui sekali kalau gatingnya berubah — bukan disalin ke tiap `*.test.ts`. */
 export async function seedActiveReferrals(
   uplineId: number,
   count = requiredActiveReferrals(),
@@ -50,11 +45,7 @@ export async function clearWithdrawalCooldown(userId: number): Promise<void> {
   )
 }
 
-/**
- * Menyiapkan hari aktif: satu task selesai per hari WIB berbeda, mundur dari kemarin.
- * Batas harinya harus sama persis dengan `ELIGIBILITY_SQL` di `payout.ts` — keduanya
- * memakai `(completed_at at time zone 'Asia/Jakarta')::date`.
- */
+/** Menyiapkan hari aktif: satu task selesai per hari WIB berbeda, mundur dari kemarin. Batas harinya harus sama persis dengan `ELIGIBILITY_SQL` di `payout.ts` — keduanya memakai `(completed_at at time zone 'Asia/Jakarta')::date`. */
 export async function seedActiveDays(
   userId: number,
   days = requiredActiveDays(),
@@ -75,11 +66,7 @@ export async function seedActiveDays(
   )
 }
 
-/**
- * Semua syarat kelayakan penarikan sekaligus. Ini yang dipakai berkas uji yang cuma perlu
- * lolos gerbang tanpa peduli syarat mana yang sedang diuji — jadi saat gerbangnya bertambah,
- * yang berubah cukup fungsi ini, bukan setiap `*.test.ts` yang menyentuh penarikan.
- */
+/** Semua syarat kelayakan penarikan sekaligus. Ini yang dipakai berkas uji yang cuma perlu lolos gerbang tanpa peduli syarat mana yang sedang diuji — jadi saat gerbangnya bertambah, yang berubah cukup fungsi ini, bukan setiap `*.test.ts` yang menyentuh penarikan. */
 export async function seedWithdrawalEligibility(userId: number): Promise<void> {
   await seedActiveReferrals(userId)
   await seedActiveDays(userId)

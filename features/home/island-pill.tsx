@@ -20,11 +20,7 @@ const ISLAND_VALUE_TONE = {
   muted: 'text-muted-foreground',
 } as const
 
-/**
- * Satu ritme baris untuk seluruh panel island: label 11px di kiri, nilai 12px
- * semibold di kanan, meter opsional di bawahnya. Semua region memakai ini agar
- * tinggi, padding, dan tipografinya presisi sama.
- */
+/** Satu ritme baris untuk seluruh panel island: label 11px di kiri, nilai 12px semibold di kanan, meter opsional di bawahnya. Semua region memakai ini agar tinggi, padding, dan tipografinya presisi sama. */
 export function IslandStat({
   label,
   value,

@@ -7,29 +7,11 @@ import { transaction } from './db'
 import { generateReferralCode } from './referral'
 import { appendLedger } from './ledger'
 
-/**
- * Isi data untuk preview yang dilihat manusia — bukan fixture uji.
- *
- * Bedanya dengan `payout-fixtures.ts`: di sana yang dikejar adalah lolos gerbang dengan
- * data seminimal mungkin, di sini yang dikejar adalah setiap layar punya isi yang masuk
- * akal dibaca — riwayat yang tersebar di beberapa hari, papan peringkat yang punya
- * pesaing, referral yang komisinya benar-benar terhitung, penarikan yang pernah dibayar
- * dan pernah ditolak.
- *
- * Dijalankan dari `app/api/dev/seed/route.ts`, di dalam proses server dev — bukan skrip
- * CLI. PGlite memegang `dataDir` per proses, jadi proses kedua yang membuka direktori
- * yang sama saat `pnpm dev` hidup akan bertabrakan di lock filenya.
- */
+/** Isi data untuk preview yang dilihat manusia — bukan fixture uji. Bedanya dengan `payout-fixtures.ts`: di sana yang dikejar adalah lolos gerbang dengan data seminimal mungkin, di sini yang dikejar adalah setiap layar punya isi yang masuk akal dibaca — riwayat yang tersebar di beberapa hari, papan peringkat yang punya pesaing, referral yang komisinya benar-benar terhitung, penarikan yang pernah dibayar dan pernah ditolak. Dijalankan dari `app/api/dev/seed/route.ts`, di dalam proses server dev — bukan skrip CLI. PGlite memegang `dataDir` per proses, jadi proses kedua yang membuka direktori yang sama saat `pnpm dev` hidup akan bertabrakan di lock filenya. */
 
 const PREVIEW_TELEGRAM_ID = 900_000_000_000_001
 
-/**
- * Semua user buatan seed lahir di atas ambang ini, dan itulah yang membuat reset bisa
- * ditulis sebagai satu `delete` alih-alih mencatat id yang pernah dibuat: apa pun di atas
- * ambang ini adalah data preview, kecuali user preview itu sendiri. Ambangnya juga sudah
- * dipakai `payout-fixtures.ts` (700_100_…), jadi sisa fixture dari `pnpm test` yang
- * pernah menumpang direktori data yang sama ikut tersapu.
- */
+/** Semua user buatan seed lahir di atas ambang ini, dan itulah yang membuat reset bisa ditulis sebagai satu `delete` alih-alih mencatat id yang pernah dibuat: apa pun di atas ambang ini adalah data preview, kecuali user preview itu sendiri. Ambangnya juga sudah dipakai `payout-fixtures.ts` (700_100_…), jadi sisa fixture dari `pnpm test` yang pernah menumpang direktori data yang sama ikut tersapu. */
 const SEED_USER_FLOOR = 700_000_000_000_000
 const RIVAL_BASE = 710_000_000_000_000
 const DOWNLINE_BASE = 720_000_000_000_000
@@ -52,11 +34,7 @@ const REWARD_TABLE: Record<Difficulty, [number, number, number]> = {
 const DIFFICULTIES: Difficulty[] = ['Easy', 'Medium', 'Hard']
 const TYPES: CaptchaType[] = ['text', 'math', 'select']
 
-/**
- * PRNG bibit tetap, bukan `Math.random`: angka yang sama pada setiap seed berarti
- * tangkapan layar dan laporan bug dari preview bisa dibandingkan antar-jalan. Reset lalu
- * seed ulang harus menghasilkan layar yang sama, bukan sekadar layar yang terisi.
- */
+/** PRNG bibit tetap, bukan `Math.random`: angka yang sama pada setiap seed berarti tangkapan layar dan laporan bug dari preview bisa dibandingkan antar-jalan. Reset lalu seed ulang harus menghasilkan layar yang sama, bukan sekadar layar yang terisi. */
 function makeRandom(seed: number): () => number {
   let state = seed >>> 0
   return () => {
@@ -79,16 +57,7 @@ const WIB_DATE_FORMAT = new Intl.DateTimeFormat('en-CA', {
   day: '2-digit',
 })
 
-/**
- * Tanggal WIB, `daysAgo` hari ke belakang, sebagai `YYYY-MM-DD`.
- *
- * Batas harinya harus sama persis dengan yang dipakai server —
- * `(completed_at at time zone 'Asia/Jakarta')::date` di `payout.ts`, `missions.ts`, dan
- * `stats.ts`. Menghitungnya dari waktu UTC lokal proses akan menggeser satu hari setiap
- * kali seed dijalankan antara 17:00 dan 24:00 UTC, dan pergeseran itu tepat mengenai dua
- * hal yang paling dipakai: jumlah hari aktif untuk gerbang penarikan, dan kemajuan misi
- * hari ini.
- */
+/** Tanggal WIB, `daysAgo` hari ke belakang, sebagai `YYYY-MM-DD`. Batas harinya harus sama persis dengan yang dipakai server — `(completed_at at time zone 'Asia/Jakarta')::date` di `payout.ts`, `missions.ts`, dan `stats.ts`. Menghitungnya dari waktu UTC lokal proses akan menggeser satu hari setiap kali seed dijalankan antara 17:00 dan 24:00 UTC, dan pergeseran itu tepat mengenai dua hal yang paling dipakai: jumlah hari aktif untuk gerbang penarikan, dan kemajuan misi hari ini. */
 function wibDate(daysAgo: number): string {
   const today = WIB_DATE_FORMAT.format(new Date())
   const [year, month, day] = today.split('-').map(Number)
@@ -105,15 +74,7 @@ function pastTimestamp(daysAgo: number, random: () => number): string {
   return `${wibDate(daysAgo)}T${pad(hour)}:${pad(minute)}:${pad(second)}${WIB_SUFFIX}`
 }
 
-/**
- * Timestamp yang dijamin jatuh **hari ini menurut WIB** dan tetap di masa lalu.
- *
- * Keduanya sekaligus, karena keduanya bisa saling menabrak: jam kerja acak (mis. 19:00)
- * akan berada di masa depan kalau seed dijalankan pagi WIB — dan task selesai di masa
- * depan membuat kemajuan misi terlihat benar sementara riwayatnya berisi hari esok.
- * Sebaliknya, sekadar mengurangi menit dari sekarang akan melewati tengah malam WIB saat
- * seed dijalankan lewat dini hari, dan task itu berhenti dihitung misi hari ini.
- */
+/** Timestamp yang dijamin jatuh **hari ini menurut WIB** dan tetap di masa lalu. Keduanya sekaligus, karena keduanya bisa saling menabrak: jam kerja acak (mis. 19:00) akan berada di masa depan kalau seed dijalankan pagi WIB — dan task selesai di masa depan membuat kemajuan misi terlihat benar sementara riwayatnya berisi hari esok. Sebaliknya, sekadar mengurangi menit dari sekarang akan melewati tengah malam WIB saat seed dijalankan lewat dini hari, dan task itu berhenti dihitung misi hari ini. */
 function todayTimestamp(index: number, spacingMinutes = 6): string {
   const now = Date.now()
   const midnight = new Date(`${wibDate(0)}T00:00:00${WIB_SUFFIX}`).getTime()
@@ -153,12 +114,7 @@ interface CompletionInput {
   completedAt: string
 }
 
-/**
- * Satu task selesai selalu berarti dua baris: `challenges` yang sudah disubmit dan
- * `task_completions` yang menunjuknya. Menulis salah satunya saja membuat halaman riwayat
- * dan statistik bercerita beda, dan `task_completions.challenge_id` memang `not null
- * unique` supaya bentuk itu mustahil.
- */
+/** Satu task selesai selalu berarti dua baris: `challenges` yang sudah disubmit dan `task_completions` yang menunjuknya. Menulis salah satunya saja membuat halaman riwayat dan statistik bercerita beda, dan `task_completions.challenge_id` memang `not null unique` supaya bentuk itu mustahil. */
 async function insertCompletion(tx: PoolClient, input: CompletionInput): Promise<string> {
   const challenge = await tx.query<{ id: string }>(
     `insert into challenges(user_id,type,difficulty,payload,answer_hash,max_reward,
@@ -194,13 +150,7 @@ async function insertCompletion(tx: PoolClient, input: CompletionInput): Promise
 }
 
 async function resetPreviewData(tx: PoolClient, userId: number): Promise<void> {
-  /**
-   * User buatan seed dihapus lebih dulu, dan penghapusannya menyeret komisi, task, dan
-   * challenge mereka lewat `on delete cascade`. Yang punya baris `credit_ledger` atau
-   * `withdrawals` dikecualikan: keduanya `on delete restrict`, jadi menyertakannya bukan
-   * "reset yang lebih bersih" melainkan `delete` yang gagal dan menggagalkan seluruh
-   * transaksi seed.
-   */
+  /** User buatan seed dihapus lebih dulu, dan penghapusannya menyeret komisi, task, dan challenge mereka lewat `on delete cascade`. Yang punya baris `credit_ledger` atau `withdrawals` dikecualikan: keduanya `on delete restrict`, jadi menyertakannya bukan "reset yang lebih bersih" melainkan `delete` yang gagal dan menggagalkan seluruh transaksi seed. */
   await tx.query(
     `delete from users u
       where u.telegram_id >= $1 and u.telegram_id <> $2
@@ -209,15 +159,7 @@ async function resetPreviewData(tx: PoolClient, userId: number): Promise<void> {
     [SEED_USER_FLOOR, PREVIEW_TELEGRAM_ID],
   )
 
-  /**
-   * Urutannya bukan selera: `task_completions.challenge_id` adalah `on delete restrict`,
-   * jadi task harus pergi sebelum challenge-nya; `challenges.ad_view_id` menunjuk
-   * `ad_views`, jadi challenge harus pergi sebelum tayangan iklannya.
-   *
-   * `credit_ledger` tidak ikut dan tidak bisa ikut — trigger `credit_ledger_append_only`
-   * menolak `delete` dan `truncate`. Saldonya karena itu tidak direset dengan menghapus
-   * riwayatnya, melainkan didorong ke angka target lewat satu `adjustment` di akhir.
-   */
+  /** Urutannya bukan selera: `task_completions.challenge_id` adalah `on delete restrict`, jadi task harus pergi sebelum challenge-nya; `challenges.ad_view_id` menunjuk `ad_views`, jadi challenge harus pergi sebelum tayangan iklannya. `credit_ledger` tidak ikut dan tidak bisa ikut — trigger `credit_ledger_append_only` menolak `delete` dan `truncate`. Saldonya karena itu tidak direset dengan menghapus riwayatnya, melainkan didorong ke angka target lewat satu `adjustment` di akhir. */
   await tx.query('delete from referral_commissions where upline_id = $1', [userId])
   await tx.query('delete from withdrawals where user_id = $1', [userId])
   await tx.query('delete from task_completions where user_id = $1', [userId])
@@ -229,14 +171,7 @@ async function resetPreviewData(tx: PoolClient, userId: number): Promise<void> {
   await tx.query('delete from referral_wallets where user_id = $1', [userId])
 }
 
-/**
- * Baca dulu, sisipkan kalau belum ada — bukan `insert … on conflict do update returning`.
- *
- * Bentuk upsert itu yang dipakai `/api/dev/login`, dan di PGlite ia mengembalikan nol baris
- * ketika yang terjadi adalah cabang `do update`-nya: `returning` pada konflik tidak
- * menghasilkan apa pun, jadi `rows[0]` undefined tepat pada seed kedua dan seterusnya —
- * yaitu justru jalur yang paling sering dilewati.
- */
+/** Baca dulu, sisipkan kalau belum ada — bukan `insert … on conflict do update returning`. Bentuk upsert itu yang dipakai `/api/dev/login`, dan di PGlite ia mengembalikan nol baris ketika yang terjadi adalah cabang `do update`-nya: `returning` pada konflik tidak menghasilkan apa pun, jadi `rows[0]` undefined tepat pada seed kedua dan seterusnya — yaitu justru jalur yang paling sering dilewati. */
 async function ensurePreviewUser(tx: PoolClient): Promise<number> {
   const found = await tx.query<{ id: string }>('select id from users where telegram_id = $1', [
     PREVIEW_TELEGRAM_ID,
@@ -262,12 +197,7 @@ async function seedOwnTasks(tx: PoolClient, userId: number): Promise<number> {
   let count = 0
 
   for (let daysAgo = 13; daysAgo >= 0; daysAgo -= 1) {
-    /**
-     * Hari ini sengaja dibuat sudah melewati target misi task dan misi bintang tiga:
-     * kartu misi yang selalu kosong di preview tidak bisa dipakai memeriksa apa pun,
-     * termasuk tombol klaimnya. Targetnya dibaca dari `domain/missions`, bukan diketik
-     * ulang, supaya seed tidak basi saat targetnya disetel di panel admin.
-     */
+    /** Hari ini sengaja dibuat sudah melewati target misi task dan misi bintang tiga: kartu misi yang selalu kosong di preview tidak bisa dipakai memeriksa apa pun, termasuk tombol klaimnya. Targetnya dibaca dari `domain/missions`, bukan diketik ulang, supaya seed tidak basi saat targetnya disetel di panel admin. */
     const today = daysAgo === 0
     const perDay = today ? missionTasks + 2 : 1 + Math.floor(random() * 5)
     const threeStars = today ? missionStars + 1 : Math.floor(random() * 2)
@@ -285,12 +215,7 @@ async function seedOwnTasks(tx: PoolClient, userId: number): Promise<number> {
         elapsedMs: 3_000 + Math.floor(random() * 20_000),
         completedAt: today ? todayTimestamp(n) : pastTimestamp(daysAgo, random),
       })
-      /**
-       * Kunci idempotensinya turunan id barisnya, bukan penghitung urutan: `credit_ledger`
-       * tidak bisa dihapus saat reset, jadi kunci macam `seed:task:7` akan cocok dengan
-       * baris seed sebelumnya dan `appendLedger` mengembalikannya tanpa menambah saldo —
-       * statistik "credit dari task" lalu berhenti tumbuh sementara riwayat task-nya baru.
-       */
+      /** Kunci idempotensinya turunan id barisnya, bukan penghitung urutan: `credit_ledger` tidak bisa dihapus saat reset, jadi kunci macam `seed:task:7` akan cocok dengan baris seed sebelumnya dan `appendLedger` mengembalikannya tanpa menambah saldo — statistik "credit dari task" lalu berhenti tumbuh sementara riwayat task-nya baru. */
       await appendLedger(tx, {
         userId,
         kind: 'task',
@@ -323,11 +248,7 @@ async function seedOwnTasks(tx: PoolClient, userId: number): Promise<number> {
 /** Tayangan iklan hari ini supaya misi "tonton iklan" punya kemajuan yang nyata. */
 async function seedAdViews(tx: PoolClient, userId: number): Promise<void> {
   const target = missionDefinition('ads').target
-  /**
-   * State `consumed`, bukan `ready`: `ad_views_one_ready` unik per user, jadi lebih dari
-   * satu baris `ready` akan gagal — dan tiket yang menganggur di state `ready` juga akan
-   * dianggap pass iklan yang belum dipakai oleh `server/ads.ts`.
-   */
+  /** State `consumed`, bukan `ready`: `ad_views_one_ready` unik per user, jadi lebih dari satu baris `ready` akan gagal — dan tiket yang menganggur di state `ready` juga akan dianggap pass iklan yang belum dipakai oleh `server/ads.ts`. */
   for (let n = 0; n < target; n += 1) {
     const at = todayTimestamp(n, 11)
     await tx.query(
@@ -341,10 +262,7 @@ async function seedAdViews(tx: PoolClient, userId: number): Promise<void> {
   }
 }
 
-/**
- * Satu misi sengaja ditinggalkan sudah diklaim dan sisanya siap diklaim: preview perlu
- * menunjukkan kedua bentuk kartunya, bukan hanya satu.
- */
+/** Satu misi sengaja ditinggalkan sudah diklaim dan sisanya siap diklaim: preview perlu menunjukkan kedua bentuk kartunya, bukan hanya satu. */
 async function seedMissionClaims(tx: PoolClient, userId: number): Promise<void> {
   await tx.query(
     `insert into mission_claims(user_id,quota_date,mission_key,energy_granted)
@@ -402,12 +320,7 @@ async function seedReferrals(tx: PoolClient, uplineId: number): Promise<number> 
     }
   }
 
-  /**
-   * Unit dipecah sekali di akhir, sama seperti `accrueCommission`: yang di bawah 100 unit
-   * menginap di `referral_wallets.pending_units` (kolomnya memang dibatasi 0–99), sisanya
-   * jadi credit di ledger. Membayar setiap komisi sebagai credit utuh akan membuat halaman
-   * referral menampilkan pembulatan yang tidak pernah terjadi di produksi.
-   */
+  /** Unit dipecah sekali di akhir, sama seperti `accrueCommission`: yang di bawah 100 unit menginap di `referral_wallets.pending_units` (kolomnya memang dibatasi 0–99), sisanya jadi credit di ledger. Membayar setiap komisi sebagai credit utuh akan membuat halaman referral menampilkan pembulatan yang tidak pernah terjadi di produksi. */
   const { credits, remainderUnits } = splitUnitsIntoCredits(units)
   await tx.query(
     `insert into referral_wallets(user_id,pending_units) values($1,$2)
@@ -433,12 +346,7 @@ async function seedRivals(tx: PoolClient): Promise<void> {
 
   for (const [index, name] of RIVAL_NAMES.entries()) {
     const premium = index % 5 === 0
-    /**
-     * `balance_credits` dibiarkan nol, bukan diisi angka enak dilihat: saldo di `users`
-     * harus selalu sama dengan jumlah `credit_ledger` user itu, dan pesaing papan
-     * peringkat tidak punya baris ledger. Angka yang dipakai papan peringkat adalah
-     * `sum(task_completions.reward)`, bukan saldo, jadi tidak ada yang hilang.
-     */
+    /** `balance_credits` dibiarkan nol, bukan diisi angka enak dilihat: saldo di `users` harus selalu sama dengan jumlah `credit_ledger` user itu, dan pesaing papan peringkat tidak punya baris ledger. Angka yang dipakai papan peringkat adalah `sum(task_completions.reward)`, bukan saldo, jadi tidak ada yang hilang. */
     const rival = await tx.query<{ id: string }>(
       `insert into users(telegram_id,first_name,username,referral_code,created_at,premium_until)
        values($1,$2,$3,$4, now() - ($5::int * interval '1 day'), $6)
@@ -453,11 +361,7 @@ async function seedRivals(tx: PoolClient): Promise<void> {
       ],
     )
     const rivalId = Number(rival.rows[0].id)
-    /**
-     * Papan peringkat mengurutkan `sum(task_completions.reward)`, jadi jumlah task turun
-     * seiring indeks — user preview harus punya tetangga di atas dan di bawahnya, bukan
-     * mendarat di dasar atau di puncak papan.
-     */
+    /** Papan peringkat mengurutkan `sum(task_completions.reward)`, jadi jumlah task turun seiring indeks — user preview harus punya tetangga di atas dan di bawahnya, bukan mendarat di dasar atau di puncak papan. */
     const taskCount = 34 - index * 2
 
     for (let n = 0; n < taskCount; n += 1) {
@@ -486,15 +390,7 @@ interface PayoutSeed {
   state: 'paid' | 'rejected'
 }
 
-/**
- * Riwayat penarikan yang seluruhnya sudah final — tidak ada satu pun `processing`.
- *
- * Itu bukan kelalaian: `withdrawals_one_active_per_user` melarang pengajuan kedua selama
- * masih ada yang `processing`, jadi menyisakan satu baris pending berarti form penarikan
- * di preview selalu menolak sebelum sampai ke validasinya. Riwayatnya tetap punya dua
- * bentuk yang berbeda (dibayar dengan bukti, dan ditolak dengan alasan), dan semuanya
- * lebih tua dari cooldown supaya gerbang waktunya juga lolos.
- */
+/** Riwayat penarikan yang seluruhnya sudah final — tidak ada satu pun `processing`. Itu bukan kelalaian: `withdrawals_one_active_per_user` melarang pengajuan kedua selama masih ada yang `processing`, jadi menyisakan satu baris pending berarti form penarikan di preview selalu menolak sebelum sampai ke validasinya. Riwayatnya tetap punya dua bentuk yang berbeda (dibayar dengan bukti, dan ditolak dengan alasan), dan semuanya lebih tua dari cooldown supaya gerbang waktunya juga lolos. */
 const PAYOUTS: PayoutSeed[] = [
   { credits: 150, channel: 'dana', account: '081234567890', daysAgo: 41, state: 'paid' },
   { credits: 120, channel: 'gopay', account: '081234567890', daysAgo: 27, state: 'rejected' },
@@ -511,16 +407,7 @@ async function seedPayouts(tx: PoolClient, userId: number): Promise<void> {
       note: 'Penahanan penarikan preview',
     })
     const inserted = await tx.query<{ id: string }>(
-      /**
-       * `$6` dicast `::text` di **setiap** kemunculannya, termasuk yang mengisi kolom
-       * `state` — di sana lewat `::text::withdrawal_state`, bukan langsung ke enumnya.
-       *
-       * Bentuk itu bukan gaya: satu parameter hanya boleh punya satu tipe tersimpul, dan
-       * membiarkan `$6` telanjang membuat posisi kolom menyimpulkannya `withdrawal_state`
-       * sementara `$6 = 'paid'` menyimpulkannya `text` — Postgres menolak seluruh query
-       * dengan `42P08 text versus withdrawal_state`, jadi kegagalannya bukan pada satu
-       * baris penarikan melainkan pada seluruh transaksi seed.
-       */
+      /** `$6` dicast `::text` di **setiap** kemunculannya, termasuk yang mengisi kolom `state` — di sana lewat `::text::withdrawal_state`, bukan langsung ke enumnya. Bentuk itu bukan gaya: satu parameter hanya boleh punya satu tipe tersimpul, dan membiarkan `$6` telanjang membuat posisi kolom menyimpulkannya `withdrawal_state` sementara `$6 = 'paid'` menyimpulkannya `text` — Postgres menolak seluruh query dengan `42P08 text versus withdrawal_state`, jadi kegagalannya bukan pada satu baris penarikan melainkan pada seluruh transaksi seed. */
       `insert into withdrawals(user_id,channel_id,account_number,account_name,credits,amount_idr,
                                state,hold_ledger_id,requested_at,paid_at,rejected_at,reject_reason,
                                proof_file_id,proof_sent_at)
@@ -545,12 +432,7 @@ async function seedPayouts(tx: PoolClient, userId: number): Promise<void> {
       ],
     )
     if (payout.state === 'rejected') {
-      /**
-       * Penolakan harus mengembalikan yang ditahan. Tanpa baris refund-nya, saldo di
-       * `users` dan jumlah ledger berselisih tepat sebesar nominalnya — dan itu bentuk
-       * kerusakan yang paling sulit dikenali dari layar, karena angka saldonya tetap
-       * terlihat wajar.
-       */
+      /** Penolakan harus mengembalikan yang ditahan. Tanpa baris refund-nya, saldo di `users` dan jumlah ledger berselisih tepat sebesar nominalnya — dan itu bentuk kerusakan yang paling sulit dikenali dari layar, karena angka saldonya tetap terlihat wajar. */
       await appendLedger(tx, {
         userId,
         kind: 'withdrawal_refund',
@@ -564,16 +446,7 @@ async function seedPayouts(tx: PoolClient, userId: number): Promise<void> {
   console.log(`[seed] ${PAYOUTS.length} riwayat penarikan`)
 }
 
-/**
- * Saldo tidak dijumlahkan dari langkah-langkah di atas, melainkan didorong ke angka target
- * lewat satu `adjustment`.
- *
- * Alasannya `credit_ledger` append-only: reset tidak bisa menghapus baris ledger lama,
- * jadi seed yang kedua berangkat dari saldo yang sudah bukan nol. Menghitung selisihnya
- * membuat hasilnya sama pada seed pertama dan seed kesepuluh, dan menjaga saldo di `users`
- * tetap sama dengan jumlah ledgernya — invarian yang seluruh pemeriksaan uang di repo ini
- * bersandar padanya.
- */
+/** Saldo tidak dijumlahkan dari langkah-langkah di atas, melainkan didorong ke angka target lewat satu `adjustment`. Alasannya `credit_ledger` append-only: reset tidak bisa menghapus baris ledger lama, jadi seed yang kedua berangkat dari saldo yang sudah bukan nol. Menghitung selisihnya membuat hasilnya sama pada seed pertama dan seed kesepuluh, dan menjaga saldo di `users` tetap sama dengan jumlah ledgernya — invarian yang seluruh pemeriksaan uang di repo ini bersandar padanya. */
 async function settleBalance(tx: PoolClient, userId: number, target: number): Promise<number> {
   const current = await tx.query<{ balance_credits: string }>(
     'select balance_credits from users where id = $1',
@@ -613,11 +486,7 @@ export async function seedPreview(): Promise<SeedPreviewResult> {
     const commissionCredits = await seedReferrals(tx, userId)
     await seedRivals(tx)
 
-    /**
-     * Saldo dinaikkan dulu ke target ditambah yang akan ditahan penarikan terbayar:
-     * `users_balance_non_negative` membuat penahanan yang melebihi saldo saat itu bukan
-     * angka minus melainkan `update` yang gagal dan menggagalkan seluruh seed.
-     */
+    /** Saldo dinaikkan dulu ke target ditambah yang akan ditahan penarikan terbayar: `users_balance_non_negative` membuat penahanan yang melebihi saldo saat itu bukan angka minus melainkan `update` yang gagal dan menggagalkan seluruh seed. */
     const paidCredits = PAYOUTS.filter((payout) => payout.state === 'paid').reduce(
       (sum, payout) => sum + payout.credits,
       0,

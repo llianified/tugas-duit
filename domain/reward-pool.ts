@@ -1,13 +1,6 @@
 import { economyConfig } from './economy-config.ts'
 
-/**
- * Kolam reward: plafon penghasilan yang mengisi ulang bertahap, bukan reset tengah malam.
- *
- * Bentuknya sengaja dibuat sama dengan `domain/energy.ts` — stok tersimpan plus jam acuan
- * regen — karena keduanya menjawab pertanyaan yang sama: berapa yang tersedia sekarang, dan
- * kapan tambahan berikutnya datang. Bedanya cuma satuannya (credit, bukan energi) dan
- * kapasitasnya yang ikut rank serta streak, jadi kapasitas selalu dikirim dari luar.
- */
+/** Kolam reward: plafon penghasilan yang mengisi ulang bertahap, bukan reset tengah malam. Bentuknya sengaja dibuat sama dengan `domain/energy.ts` — stok tersimpan plus jam acuan regen — karena keduanya menjawab pertanyaan yang sama: berapa yang tersedia sekarang, dan kapan tambahan berikutnya datang. Bedanya cuma satuannya (credit, bukan energi) dan kapasitasnya yang ikut rank serta streak, jadi kapasitas selalu dikirim dari luar. */
 
 export function baseRewardPoolCredits(): number {
   const config = economyConfig()
@@ -33,11 +26,7 @@ interface CapacityInput {
   premium?: boolean
 }
 
-/**
- * Rank, streak, dan premium menambah daya tampung kolam, bukan kecepatan isi ulangnya —
- * jadi penghasilan maksimum per hari tidak ikut naik, hanya berapa yang bisa ditumpuk
- * sebelum kolam berhenti mengisi.
- */
+/** Rank, streak, dan premium menambah daya tampung kolam, bukan kecepatan isi ulangnya — jadi penghasilan maksimum per hari tidak ikut naik, hanya berapa yang bisa ditumpuk sebelum kolam berhenti mengisi. */
 export function rewardPoolCapacity({ rankTier, streak, premium = false }: CapacityInput): number {
   const config = economyConfig()
   const normalizedTier = Math.min(5, Math.max(1, Math.floor(rankTier)))
@@ -70,10 +59,7 @@ function regenSteps(snapshot: RewardPoolSnapshot, now: number): number {
   return Math.floor(Math.max(0, now - snapshot.updatedAt) / rewardPoolRegenMs())
 }
 
-/**
- * Jam acuan hanya dimajukan sebanyak interval yang benar-benar dibayar, sehingga menit sisa
- * tidak hangus untuk user yang membuka app tepat sebelum interval berikutnya genap.
- */
+/** Jam acuan hanya dimajukan sebanyak interval yang benar-benar dibayar, sehingga menit sisa tidak hangus untuk user yang membuka app tepat sebelum interval berikutnya genap. */
 function regenAnchor(snapshot: RewardPoolSnapshot, now: number): number {
   return snapshot.updatedAt + regenSteps(snapshot, now) * rewardPoolRegenMs()
 }

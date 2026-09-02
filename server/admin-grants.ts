@@ -5,19 +5,7 @@ import { grantEnergy } from './energy'
 import { refillRewardPool } from './reward-pool'
 import { requireAdmin } from './session'
 
-/**
- * Aksi admin yang mengubah keadaan akun tanpa menyentuh saldo.
- *
- * `admin-users.ts` mengurus identitas dan akses — nama, penangguhan, hak admin. Yang di sini
- * mengurus hal yang punya nilai ekonomi: premium, energi, dan stok reward. Dipisah karena
- * ketiganya menuntut hal yang sama dan berbeda dari yang di sana: alasan wajib, jejak audit
- * di `admin_actions`, dan kehati-hatian terhadap invarian yang sama dengan jalur user biasa
- * (`users_energy_range`, kapasitas kolam, penumpukan tanggal premium).
- *
- * Yang TIDAK ada di sini: koreksi saldo. Itu tetap di `ledger.ts`, karena satu-satunya jalan
- * mengubah `balance_credits` adalah `appendLedger` — dan jejaknya sudah dijamin ledger yang
- * append-only, bukan oleh tabel audit ini.
- */
+/** Aksi admin yang mengubah keadaan akun tanpa menyentuh saldo. `admin-users.ts` mengurus identitas dan akses — nama, penangguhan, hak admin. Yang di sini mengurus hal yang punya nilai ekonomi: premium, energi, dan stok reward. Dipisah karena ketiganya menuntut hal yang sama dan berbeda dari yang di sana: alasan wajib, jejak audit di `admin_actions`, dan kehati-hatian terhadap invarian yang sama dengan jalur user biasa (`users_energy_range`, kapasitas kolam, penumpukan tanggal premium). Yang TIDAK ada di sini: koreksi saldo. Itu tetap di `ledger.ts`, karena satu-satunya jalan mengubah `balance_credits` adalah `appendLedger` — dan jejaknya sudah dijamin ledger yang append-only, bukan oleh tabel audit ini. */
 
 export class AdminGrantError extends Error {
   code: string
@@ -94,14 +82,7 @@ interface LockedTarget {
   notificationsMutedAt: Date | null
 }
 
-/**
- * Mengunci baris target sekaligus membaca keadaan SEBELUM perubahan.
- *
- * Nilai "sebelum" diambil di sini, bukan lewat subquery di klausa `returning` update-nya:
- * subquery di `returning` membaca lewat snapshot perintah yang sama, jadi apakah ia melihat
- * baris lama atau baru bukan hal yang layak dipertaruhkan pada jejak audit. Dengan `for
- * update` sudah dipegang, membacanya lebih dulu tidak bisa balapan dengan siapa pun.
- */
+/** Mengunci baris target sekaligus membaca keadaan SEBELUM perubahan. Nilai "sebelum" diambil di sini, bukan lewat subquery di klausa `returning` update-nya: subquery di `returning` membaca lewat snapshot perintah yang sama, jadi apakah ia melihat baris lama atau baru bukan hal yang layak dipertaruhkan pada jejak audit. Dengan `for update` sudah dipegang, membacanya lebih dulu tidak bisa balapan dengan siapa pun. */
 async function lockTarget(tx: PoolClient, publicId: string): Promise<LockedTarget | null> {
   const rows = await tx.query<{
     id: string
@@ -136,15 +117,7 @@ export interface PremiumGrantResult {
   active: boolean
 }
 
-/**
- * Premium yang diberikan admin MENUMPUK dari tanggal berakhir yang masih berlaku, bentuk yang
- * sama persis dengan `grantPremium` pada pembelian: user yang sudah membayar tidak boleh
- * kehilangan sisa harinya karena admin memberi bonus tujuh hari di tengah langganannya.
- *
- * Satuannya hari, bukan bulan seperti jalur pembelian. Paket berbayar memang cuma 1/2/3 bulan,
- * tapi pemberian admin menjawab hal lain — hadiah giveaway, kompensasi gangguan, akun uji —
- * dan hampir tidak pernah jatuh tepat di kelipatan bulan.
- */
+/** Premium yang diberikan admin MENUMPUK dari tanggal berakhir yang masih berlaku, bentuk yang sama persis dengan `grantPremium` pada pembelian: user yang sudah membayar tidak boleh kehilangan sisa harinya karena admin memberi bonus tujuh hari di tengah langganannya. Satuannya hari, bukan bulan seperti jalur pembelian. Paket berbayar memang cuma 1/2/3 bulan, tapi pemberian admin menjawab hal lain — hadiah giveaway, kompensasi gangguan, akun uji — dan hampir tidak pernah jatuh tepat di kelipatan bulan. */
 export async function grantUserPremium(
   input: GrantInput & { days: number },
 ): Promise<PremiumGrantResult | null> {
@@ -188,10 +161,7 @@ export async function grantUserPremium(
   })
 }
 
-/**
- * Mencabut premium sepenuhnya, bukan memotongnya sebagian. Nilai sebelumnya disimpan di
- * detail audit supaya pencabutan yang keliru bisa dipulihkan tepat ke tanggal semula.
- */
+/** Mencabut premium sepenuhnya, bukan memotongnya sebagian. Nilai sebelumnya disimpan di detail audit supaya pencabutan yang keliru bisa dipulihkan tepat ke tanggal semula. */
 export async function revokeUserPremium(input: GrantInput): Promise<PremiumGrantResult | null> {
   const admin = await requireAdmin()
   if (!UUID_SHAPE.test(input.publicId.trim())) return null
@@ -289,13 +259,7 @@ export async function refillUserRewardPool(
   })
 }
 
-/**
- * Membuka atau memasang bisu notifikasi dari panel.
- *
- * Dipakai untuk user yang menekan `/stop` lalu meminta dinyalakan lagi lewat dukungan, tanpa
- * harus menyuruhnya mengirim `/start`. Yang dimatikan tetap hanya pesan ajakan — kabar
- * penarikan tidak pernah lewat penanda ini (migrasi 0026).
- */
+/** Membuka atau memasang bisu notifikasi dari panel. Dipakai untuk user yang menekan `/stop` lalu meminta dinyalakan lagi lewat dukungan, tanpa harus menyuruhnya mengirim `/start`. Yang dimatikan tetap hanya pesan ajakan — kabar penarikan tidak pernah lewat penanda ini (migrasi 0026). */
 export async function setUserNotificationsMuted(
   input: GrantInput & { muted: boolean },
 ): Promise<{ muted: boolean } | null> {
@@ -324,15 +288,7 @@ export async function setUserNotificationsMuted(
   })
 }
 
-/**
- * Menghapus hasil pemeriksaan keanggotaan channel yang tersimpan, sehingga pemeriksaan
- * berikutnya menanyakan ulang ke Telegram.
- *
- * Cache-nya berumur berjam-jam untuk hasil "anggota" (`MEMBER_TTL_MS` di `channel.ts`), jadi
- * user yang keluar lalu masuk lagi — atau yang tercatat salah saat Telegram sedang bermasalah
- * — bisa tertahan di gerbang tanpa cara keluar selain menunggu. Tombolnya sendiri memaksa
- * pemeriksaan ulang, tapi hanya untuk hasil negatif; yang positif dan basi butuh ini.
- */
+/** Menghapus hasil pemeriksaan keanggotaan channel yang tersimpan, sehingga pemeriksaan berikutnya menanyakan ulang ke Telegram. Cache-nya berumur berjam-jam untuk hasil "anggota" (`MEMBER_TTL_MS` di `channel.ts`), jadi user yang keluar lalu masuk lagi — atau yang tercatat salah saat Telegram sedang bermasalah — bisa tertahan di gerbang tanpa cara keluar selain menunggu. Tombolnya sendiri memaksa pemeriksaan ulang, tapi hanya untuk hasil negatif; yang positif dan basi butuh ini. */
 export async function resetUserChannelGate(input: GrantInput): Promise<{ reset: true } | null> {
   const admin = await requireAdmin()
   if (!UUID_SHAPE.test(input.publicId.trim())) return null

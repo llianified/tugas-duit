@@ -234,12 +234,7 @@ export async function getAdminUserDetail(publicId: string): Promise<AdminUserDet
        from credit_ledger where user_id=$1 order by id desc limit 20`,
       [profile.id],
     ),
-    /**
-     * Sinyal fraud ditampilkan di detail akunnya, bukan cuma dihitung di dashboard.
-     * Angka "N akun bersinyal" tanpa daftar sinyalnya memberi tahu admin bahwa ada yang
-     * mencurigakan tanpa memberi tahu apa — dan keputusan yang paling butuh ini, menyetujui
-     * atau menolak payout, diambil di halaman ini.
-     */
+    /** Sinyal fraud ditampilkan di detail akunnya, bukan cuma dihitung di dashboard. Angka "N akun bersinyal" tanpa daftar sinyalnya memberi tahu admin bahwa ada yang mencurigakan tanpa memberi tahu apa — dan keputusan yang paling butuh ini, menyetujui atau menolak payout, diambil di halaman ini. */
     query<{ signal: string; severity: number; detail: Record<string, unknown> | null; created_at: Date }>(
       `select signal, severity, detail, created_at
        from fraud_signals where user_id=$1 order by created_at desc limit 20`,

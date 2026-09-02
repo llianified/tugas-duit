@@ -1,23 +1,4 @@
--- Perbaikan `withdrawals_known_channel` dari migrasi 0014.
---
--- Constraint itu hanya mendaftar tiga e-wallet (`dana`, `gopay`, `ovo`),
--- sementara `PAYOUT_CHANNELS` di `features/withdraw/domain.ts` menawarkan
--- **enam** tujuan — tiga e-wallet ditambah tiga bank (BCA, BRI, Mandiri).
--- Akibatnya setiap penarikan ke bank lolos validasi TypeScript lalu ditolak
--- database dengan `23514`, dan user menerima 500 pada jalur uang.
---
--- Kesalahannya tidak tertangkap karena datanya belum pernah memuat penarikan ke
--- bank: pemeriksaan pra-migrasi `select distinct channel_id ... not in (...)`
--- mengembalikan nol baris, jadi migrasinya terpasang bersih dan kerusakannya baru
--- akan muncul pada penarikan bank pertama. Uji yang menyertainya pun hanya
--- membuktikan channel **karangan** ditolak — dan itu sudah ditolak TypeScript
--- lebih dulu, sehingga constraintnya tidak pernah benar-benar diuji.
---
--- Daftar di bawah harus sama persis dengan `PAYOUT_CHANNELS`. Menambah tujuan
--- baru berarti satu migrasi lagi; itu memang konsekuensi yang diterima saat
--- memilih `check` alih-alih tabel referensi, dan `server/payout.test.ts`
--- sekarang menjalankan setiap channel dari daftar itu supaya selisih di antara
--- keduanya gagal di uji, bukan di produksi.
+-- Perbaikan `withdrawals_known_channel` dari migrasi 0014. | Constraint itu hanya mendaftar tiga e-wallet (`dana`, `gopay`, `ovo`), | sementara `PAYOUT_CHANNELS` di `features/withdraw/domain.ts` menawarkan | **enam** tujuan — tiga e-wallet ditambah tiga bank (BCA, BRI, Mandiri). | Akibatnya setiap penarikan ke bank lolos validasi TypeScript lalu ditolak | database dengan `23514`, dan user menerima 500 pada jalur uang. | Kesalahannya tidak tertangkap karena datanya belum pernah memuat penarikan ke | bank: pemeriksaan pra-migrasi `select distinct channel_id ... not in (...)` | mengembalikan nol baris, jadi migrasinya terpasang bersih dan kerusakannya baru | akan muncul pada penarikan bank pertama. Uji yang menyertainya pun hanya | membuktikan channel **karangan** ditolak — dan itu sudah ditolak TypeScript | lebih dulu, sehingga constraintnya tidak pernah benar-benar diuji. | Daftar di bawah harus sama persis dengan `PAYOUT_CHANNELS`. Menambah tujuan | baru berarti satu migrasi lagi; itu memang konsekuensi yang diterima saat | memilih `check` alih-alih tabel referensi, dan `server/payout.test.ts` | sekarang menjalankan setiap channel dari daftar itu supaya selisih di antara | keduanya gagal di uji, bukan di produksi.
 alter table withdrawals drop constraint withdrawals_known_channel;
 alter table withdrawals add constraint withdrawals_known_channel check (
   channel_id in ('dana', 'gopay', 'ovo', 'bca', 'bri', 'mandiri')

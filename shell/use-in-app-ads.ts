@@ -12,11 +12,7 @@ import { readShow, showFailureReason, waitForShow } from '@/shell/monetag-sdk'
 /** Jeda sebelum mencoba lagi kalau fungsi global SDK belum tersedia. */
 const SDK_RETRY_MS = 30_000
 
-/**
- * Zone yang sudah menerima konfigurasi native pada dokumen ini. React dapat menjalankan
- * effect lagi saat state sesi berubah; memanggil payload `inApp` untuk kedua kalinya akan
- * membuat penjadwal otomatis tambahan di SDK.
- */
+/** Zone yang sudah menerima konfigurasi native pada dokumen ini. React dapat menjalankan effect lagi saat state sesi berubah; memanggil payload `inApp` untuk kedua kalinya akan membuat penjadwal otomatis tambahan di SDK. */
 const initializedZones = new Set<string>()
 
 export function useInAppAds({
@@ -47,12 +43,10 @@ export function useInAppAds({
         return
       }
 
-      // Tandai sebelum memanggil SDK agar dua effect yang selesai menunggu bersamaan
-      // tidak dapat mendaftarkan dua penjadwal untuk zone yang sama.
+      // Tandai sebelum memanggil SDK agar dua effect yang selesai menunggu bersamaan | tidak dapat mendaftarkan dua penjadwal untuk zone yang sama.
       initializedZones.add(sdkName)
       try {
-        // Satu-satunya pemanggilan otomatis: SDK Monetag mengurus timeout, interval,
-        // frequency, dan capping setelah menerima payload native ini.
+        // Satu-satunya pemanggilan otomatis: SDK Monetag mengurus timeout, interval, | frequency, dan capping setelah menerima payload native ini.
         await show(inAppShowParams(settings))
       } catch (error) {
         console.warn('[ads] in-app show_<zone>() reject', showFailureReason(error))

@@ -15,11 +15,7 @@ export function RecentTransactions({
   onSeeAll: () => void
 }) {
   const isEmpty = history.length === 0
-  /**
-   * Tiga, bukan lima. Beranda dirancang muat dalam satu layar tanpa gulir, dan dua baris
-   * terakhir adalah satu-satunya yang mendorongnya lewat — sementara riwayat lengkapnya
-   * ada satu ketukan jauhnya lewat tautan Riwayat di kepala daftar ini.
-   */
+  /** Tiga, bukan lima. Beranda dirancang muat dalam satu layar tanpa gulir, dan dua baris terakhir adalah satu-satunya yang mendorongnya lewat — sementara riwayat lengkapnya ada satu ketukan jauhnya lewat tautan Riwayat di kepala daftar ini. */
   const rows = history.slice(0, 3)
 
   return (

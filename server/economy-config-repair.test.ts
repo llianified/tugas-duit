@@ -3,12 +3,7 @@ import path from 'node:path'
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { DEFAULT_ECONOMY_CONFIG, type EconomyConfig } from '@/domain/economy-config'
 
-/**
- * Produksi pernah mati total karena migrasi 0027 menyemai nilai premium sebagai angka
- * mati, sementara baris aslinya sudah lama disetel admin ke angka lain. Test ini
- * menjalankan SQL migrasi 0028 yang sesungguhnya — dibaca dari disk, bukan disalin —
- * lawan baris yang bentuknya sama dengan produksi saat itu.
- */
+/** Produksi pernah mati total karena migrasi 0027 menyemai nilai premium sebagai angka mati, sementara baris aslinya sudah lama disetel admin ke angka lain. Test ini menjalankan SQL migrasi 0028 yang sesungguhnya — dibaca dari disk, bukan disalin — lawan baris yang bentuknya sama dengan produksi saat itu. */
 const REPAIR_SQL_PATH = path.join(
   process.cwd(),
   'db/migrations/0028_premium_seed_relative_to_base.sql',

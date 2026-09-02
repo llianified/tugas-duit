@@ -4,14 +4,7 @@ import { CardRail, CardRailItem } from '@/shared/components/card-rail'
 import { SURFACE_CARD_CLASS } from '@/shared/components/surface-card'
 import { cn } from '@/shared/lib/utils'
 
-/**
- * `tone="on-muted"` untuk bar yang berdiri di atas permukaan `--muted`.
- *
- * Bar default berwarna `--muted` supaya terlihat di atas latar view. Di dalam kartu
- * yang latarnya sendiri `--muted` (kartu misi, `stat-tile`, tab aktif strip tab) bar
- * itu lenyap — bukan "kalem", tapi benar-benar tidak terlihat, sehingga kerangkanya
- * menggambar kotak kosong alih-alih baris yang sedang dimuat.
- */
+/** `tone="on-muted"` untuk bar yang berdiri di atas permukaan `--muted`. Bar default berwarna `--muted` supaya terlihat di atas latar view. Di dalam kartu yang latarnya sendiri `--muted` (kartu misi, `stat-tile`, tab aktif strip tab) bar itu lenyap — bukan "kalem", tapi benar-benar tidak terlihat, sehingga kerangkanya menggambar kotak kosong alih-alih baris yang sedang dimuat. */
 function Bar({
   className,
   tone = 'default',
@@ -23,19 +16,7 @@ function Bar({
   return <div className={cn('animate-pulse rounded-md', fill, className)} />
 }
 
-/**
- * Satu baris teks palsu yang tingginya lahir dari line box aslinya.
- *
- * Ini satu-satunya cara kerangka ini berhenti bergeser saat data masuk. Menebak
- * tinggi baris lewat `h-5` / `mt-0.5` sudah gagal sekali: `text-[11px]` dan
- * `text-[22px]` tidak menyetel line-height, jadi angkanya bergantung pada font
- * yang dimuat dan tidak bisa dihitung di kepala. Dengan menaruh contoh teks
- * `invisible` di kelas teks YANG SAMA, tingginya dihitung peramban — dan ikut
- * berubah sendiri kalau kelas teks komponen aslinya kelak diubah.
- *
- * `sample` tidak pernah terlihat dan tidak pernah dibacakan (`aria-hidden` ada di
- * akar tiap kerangka), jadi isinya hanya perlu sepanjang teks yang diwakilinya.
- */
+/** Satu baris teks palsu yang tingginya lahir dari line box aslinya. Ini satu-satunya cara kerangka ini berhenti bergeser saat data masuk. Menebak tinggi baris lewat `h-5` / `mt-0.5` sudah gagal sekali: `text-[11px]` dan `text-[22px]` tidak menyetel line-height, jadi angkanya bergantung pada font yang dimuat dan tidak bisa dihitung di kepala. Dengan menaruh contoh teks `invisible` di kelas teks YANG SAMA, tingginya dihitung peramban — dan ikut berubah sendiri kalau kelas teks komponen aslinya kelak diubah. `sample` tidak pernah terlihat dan tidak pernah dibacakan (`aria-hidden` ada di akar tiap kerangka), jadi isinya hanya perlu sepanjang teks yang diwakilinya. */
 function Line({
   sample,
   className,
@@ -57,12 +38,7 @@ function Line({
 
 const ROW_TITLE_W = ['w-32', 'w-40', 'w-28', 'w-36', 'w-24'] as const
 
-/**
- * Baris `DataListRow`: penanda opsional, judul `text-[15px]` + meta `text-[13px]`,
- * lalu kolom nilai yang RATA KANAN dan bertumpuk (`flex-col items-end gap-1`) —
- * nominal di atas, bintang di bawahnya. Kolom itu dulu digambar sebagai satu bar
- * tunggal, jadi tiap baris riwayat menyusut ~19px begitu bintangnya datang.
- */
+/** Baris `DataListRow`: penanda opsional, judul `text-[15px]` + meta `text-[13px]`, lalu kolom nilai yang RATA KANAN dan bertumpuk (`flex-col items-end gap-1`) — nominal di atas, bintang di bawahnya. Kolom itu dulu digambar sebagai satu bar tunggal, jadi tiap baris riwayat menyusut ~19px begitu bintangnya datang. */
 function DataRowSkeleton({
   showDivider,
   titleWidth,
@@ -107,12 +83,7 @@ function DataRowSkeleton({
   )
 }
 
-/**
- * Kerangka setinggi satu daftar, untuk panel yang memuat di dalam view yang sudah
- * tergambar. `AppViewSkeleton` tidak bisa dipakai di sana: ia membawa hero band,
- * tombol aksi, dan kartu task — seluruh anatomi Beranda — jadi saat dipasang di dalam
- * tab ia menggambar layar yang berbeda dari yang sedang dibuka.
- */
+/** Kerangka setinggi satu daftar, untuk panel yang memuat di dalam view yang sudah tergambar. `AppViewSkeleton` tidak bisa dipakai di sana: ia membawa hero band, tombol aksi, dan kartu task — seluruh anatomi Beranda — jadi saat dipasang di dalam tab ia menggambar layar yang berbeda dari yang sedang dibuka. */
 export function DataListSkeleton({
   rows = 6,
   marker = false,
@@ -123,14 +94,11 @@ export function DataListSkeleton({
 }: {
   rows?: number
   marker?: boolean
-  /** Diameter penanda baris. `DataList` biasa memakai lingkaran 36px, papan
-   *  peringkat memakai avatar 40px (`BoardFrame`). */
+  /** Diameter penanda baris. `DataList` biasa memakai lingkaran 36px, papan peringkat memakai avatar 40px (`BoardFrame`). */
   markerClass?: string
-  /** `MetaBadge` di sisi kanan label. Sejak chip padat gaya fomo: teks
-   *  0.6875rem/1.25 + padding 0.1875rem ≈ 20px, radius `--chip-radius`. */
+  /** `MetaBadge` di sisi kanan label. Sejak chip padat gaya fomo: teks 0.6875rem/1.25 + padding 0.1875rem ≈ 20px, radius `--chip-radius`. */
   badge?: boolean
-  /** Tautan aksi di kepala daftar (mis. "Riwayat" di `RecentTransactions`).
-   *  Ia berdiri SETELAH badge, sesuai urutan di `DataList`. */
+  /** Tautan aksi di kepala daftar (mis. "Riwayat" di `RecentTransactions`). Ia berdiri SETELAH badge, sesuai urutan di `DataList`. */
   action?: boolean
   /** Kolom nilai bertumpuk dengan bintang di bawah nominal. */
   stars?: boolean
@@ -167,12 +135,7 @@ export function DataListSkeleton({
   )
 }
 
-/**
- * Strip tab `SegmentedTabs` varian `solid`: wadah `bg-track-surface p-1`, tiap tab
- * `flex-1 rounded-md px-3 py-2 text-[13px]`. Tab pertama diberi permukaan terangkat
- * karena `SegmentedTabs` selalu punya satu tab aktif — strip yang rata seluruhnya
- * akan tersentak begitu data masuk.
- */
+/** Strip tab `SegmentedTabs` varian `solid`: wadah `bg-track-surface p-1`, tiap tab `flex-1 rounded-md px-3 py-2 text-[13px]`. Tab pertama diberi permukaan terangkat karena `SegmentedTabs` selalu punya satu tab aktif — strip yang rata seluruhnya akan tersentak begitu data masuk. */
 function PanelTabsSkeleton({
   labels,
   className,
@@ -187,16 +150,12 @@ function PanelTabsSkeleton({
           key={label}
           className={cn(
             'relative flex flex-1 items-center justify-center rounded-md px-3 py-2 text-[13px] font-bold tracking-tight',
-            /* Bidang tab aktif mengikuti `SegmentedTabs`: senada `--muted`. Dulu
-               `bg-card`, yang justru LEBIH GELAP dari wadahnya — arah elevasinya
-               terbalik dari komponen yang akan menggantikan kerangka ini. */
+            /* Bidang tab aktif mengikuti `SegmentedTabs`: senada `--muted`. Dulu `bg-card`, yang justru LEBIH GELAP dari wadahnya — arah elevasinya terbalik dari komponen yang akan menggantikan kerangka ini. */
             index === 0 && 'bg-muted',
           )}
         >
           <span className="invisible">{label}</span>
-          {/* Nada bar ikut terbalik setelah warna di atas ditukar: bar tab aktif
-              kini berdiri di atas `--muted`, bar tab lain di atas track yang
-              lebih gelap. */}
+          {/* Nada bar ikut terbalik setelah warna di atas ditukar: bar tab aktif kini berdiri di atas `--muted`, bar tab lain di atas track yang lebih gelap. */}
           <Bar
             className="absolute h-3 w-10"
             tone={index === 0 ? 'on-muted' : 'default'}
@@ -209,15 +168,7 @@ function PanelTabsSkeleton({
 
 const MISSION_TITLE_W = ['w-36', 'w-44', 'w-28'] as const
 
-/**
- * Tiga baris, sebanyak `MISSIONS` di `domain/missions.ts`.
- *
- * Dipakai oleh `MissionCard` sendiri selagi `/api/missions` jalan, karena daftar itu
- * memuat datanya di luar `/api/session` — jadi ia tetap kosong beberapa saat setelah
- * kerangka app menghilang. Di view Misi permukaan `--muted`-nya dilepas, sama seperti
- * `variant="page"` pada kartunya: kerangka harus menggambar bentuk yang benar-benar
- * akan datang, bukan kotak yang tidak pernah muncul.
- */
+/** Tiga baris, sebanyak `MISSIONS` di `domain/missions.ts`. Dipakai oleh `MissionCard` sendiri selagi `/api/missions` jalan, karena daftar itu memuat datanya di luar `/api/session` — jadi ia tetap kosong beberapa saat setelah kerangka app menghilang. Di view Misi permukaan `--muted`-nya dilepas, sama seperti `variant="page"` pada kartunya: kerangka harus menggambar bentuk yang benar-benar akan datang, bukan kotak yang tidak pernah muncul. */
 export function MissionListSkeleton({ surface = true }: { surface?: boolean }) {
   const tone = surface ? 'on-muted' : 'default'
 
@@ -230,10 +181,7 @@ export function MissionListSkeleton({ surface = true }: { surface?: boolean }) {
           bar="h-3 w-24"
           tone={tone}
         />
-        {/* Rasio "0/3" sekarang `MetaBadge` di `MissionCard`, jadi kerangkanya ikut
-            menggambar bidang chip — teks redam setinggi 3px yang dulu di sini
-            menyusut ~7px begitu chip 20px datang. Ukurannya sama dengan badge di
-            `DataListSkeleton`, hanya lebih sempit karena isinya cuma rasio. */}
+        {/* Rasio "0/3" sekarang `MetaBadge` di `MissionCard`, jadi kerangkanya ikut menggambar bidang chip — teks redam setinggi 3px yang dulu di sini menyusut ~7px begitu chip 20px datang. Ukurannya sama dengan badge di `DataListSkeleton`, hanya lebih sempit karena isinya cuma rasio. */}
         <Bar className="h-5 w-9 shrink-0 rounded-[var(--chip-radius)]" tone={tone} />
       </div>
 
@@ -256,16 +204,10 @@ export function AppViewSkeleton() {
   return (
     <div className="home-skin animate-fade-in view-min-h flex flex-col" aria-hidden>
       <div className="hero-band region-under-brand relative z-10">
-        {/*
-          Mengikuti `BalanceSummary`: nominal + ekor Rupiah di kiri, SATU tombol
-          "Tarik dana" di kanan. Tombol ikon Riwayat yang dulu digambar di sini sudah
-          pindah ke kepala daftar transaksi, dan judul "Saldo kamu" sudah dilepas —
-          kerangka yang masih membawa keduanya menggeser seluruh hero saat data masuk.
-        */}
+        {/* Mengikuti `BalanceSummary`: nominal + ekor Rupiah di kiri, SATU tombol "Tarik dana" di kanan. Tombol ikon Riwayat yang dulu digambar di sini sudah pindah ke kepala daftar transaksi, dan judul "Saldo kamu" sudah dilepas — kerangka yang masih membawa keduanya menggeser seluruh hero saat data masuk. */}
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
-            {/* `CreditAmount` size `display`: `heroFontSize()` memuncak di 3rem
-                dengan line-height 1, jadi 48px pada lebar penuh. */}
+            {/* `CreditAmount` size `display`: `heroFontSize()` memuncak di 3rem dengan line-height 1, jadi 48px pada lebar penuh. */}
             <Bar className="h-12 w-28" />
             <Line
               sample="Rp 1.234.567"
@@ -277,14 +219,10 @@ export function AppViewSkeleton() {
         </div>
 
         <div className="region-gap-t">
-          {/* Dua bagian karcis, sama seperti `ActiveTask`: paddingnya sekarang ada
-              di `.ticket-part`, bukan di `.task-card`. Kerangka yang masih memakai
-              satu kotak akan tergambar tanpa bidang kartu sama sekali. */}
+          {/* Dua bagian karcis, sama seperti `ActiveTask`: paddingnya sekarang ada di `.ticket-part`, bukan di `.task-card`. Kerangka yang masih memakai satu kotak akan tergambar tanpa bidang kartu sama sekali. */}
           <div className="task-card">
             <div className="ticket-part ticket-part-top">
-              {/* `TaskHeading`: baris cetakan (nomor seri + lencana kesulitan) DI ATAS
-                  judul 22px. Judulnya dulu tidak digambar sama sekali, jadi kartunya
-                  tumbuh ~28px begitu task-nya datang dan mendorong tombol CTA. */}
+              {/* `TaskHeading`: baris cetakan (nomor seri + lencana kesulitan) DI ATAS judul 22px. Judulnya dulu tidak digambar sama sekali, jadi kartunya tumbuh ~28px begitu task-nya datang dan mendorong tombol CTA. */}
               <div>
                 <div className="flex items-center justify-between gap-3">
                   <Line sample="KARCIS #A1B2C" className="home-tag" bar="h-2.5 w-24" />
@@ -297,8 +235,7 @@ export function AppViewSkeleton() {
                 />
               </div>
 
-              {/* Perforasi karcis: garis nyata, bukan bar berdenyut — ia sudah tergambar
-                  penuh dan tidak sedang menunggu data apa pun. */}
+              {/* Perforasi karcis: garis nyata, bukan bar berdenyut — ia sudah tergambar penuh dan tidak sedang menunggu data apa pun. */}
               <div className="block-gap-t ticket-perf" />
             </div>
 
@@ -323,14 +260,7 @@ export function AppViewSkeleton() {
                 ))}
               </div>
 
-              {/*
-                Dua tombol berdampingan, sesuai `ActiveTask`: "Mulai" selalu ada, tombol
-                iklan hanya muncul kalau iklan menyala. Slot iklan disembunyikan lewat
-                `data-ads-hint` yang dipasang script di `app/layout.tsx` dari tontonan
-                terakhir user, bukan lewat state React — sesi belum termuat saat kerangka
-                ini tergambar, dan membaca localStorage saat render akan membuat HTML
-                server dan klien berbeda.
-              */}
+              {/* Dua tombol berdampingan, sesuai `ActiveTask`: "Mulai" selalu ada, tombol iklan hanya muncul kalau iklan menyala. Slot iklan disembunyikan lewat `data-ads-hint` yang dipasang script di `app/layout.tsx` dari tontonan terakhir user, bukan lewat state React — sesi belum termuat saat kerangka ini tergambar, dan membaca localStorage saat render akan membuat HTML server dan klien berbeda. */}
               <div className="cta-gap flex items-stretch gap-2 [&>*]:min-w-0 [&>*]:flex-1">
                 <Bar className="cta-h rounded-cta" />
                 <Bar className="skeleton-ad-slot cta-h rounded-cta" />
@@ -340,42 +270,22 @@ export function AppViewSkeleton() {
         </div>
       </div>
 
-      {/*
-        Yang tersisa di bawah hero adalah "Transaksi terakhir" — tiga baris, sebanyak
-        yang dipotong `RecentTransactions`, dengan badge jumlah task dan tautan
-        "Riwayat" di kepalanya serta bintang di kolom nilai. Kartu premium dan bonus
-        channel sengaja tidak digambar; keduanya bersyarat, dan kerangka yang
-        menjanjikan kartu yang tidak datang menyentak lebih keras daripada kerangka
-        yang kekurangan satu.
-      */}
+      {/* Yang tersisa di bawah hero adalah "Transaksi terakhir" — tiga baris, sebanyak yang dipotong `RecentTransactions`, dengan badge jumlah task dan tautan "Riwayat" di kepalanya serta bintang di kolom nilai. Kartu premium dan bonus channel sengaja tidak digambar; keduanya bersyarat, dan kerangka yang menjanjikan kartu yang tidak datang menyentak lebih keras daripada kerangka yang kekurangan satu. */}
       <div className="region-t home-ledger flex flex-1 flex-col">
         <DataListSkeleton rows={3} badge action stars />
       </div>
 
-      {/* Sama seperti `Home`: pengganjal biasa. Pemangkasan jarak ke nav sudah dibawa
-          `DataListSkeleton` sendiri lewat `view-trim-b`. */}
+      {/* Sama seperti `Home`: pengganjal biasa. Pemangkasan jarak ke nav sudah dibawa `DataListSkeleton` sendiri lewat `view-trim-b`. */}
       <div className="flex-1" />
     </div>
   )
 }
 
-/**
- * `AppViewSkeleton` menggambar anatomi Beranda dan hanya boleh dipakai untuk Beranda.
- *
- * Peringkat, Statistik, dan Profil punya bentuk yang sama sekali lain — tidak ada hero
- * saldo, tidak ada kartu task, tidak ada kartu misi. Memakai kerangka Beranda di sana
- * lebih buruk daripada tidak memakai kerangka: ia menjanjikan tata letak yang tidak
- * akan datang, lalu seluruh layar tersentak berganti begitu data masuk. Tiap view di
- * bawah ini menggambar anatominya sendiri.
- */
+/** `AppViewSkeleton` menggambar anatomi Beranda dan hanya boleh dipakai untuk Beranda. Peringkat, Statistik, dan Profil punya bentuk yang sama sekali lain — tidak ada hero saldo, tidak ada kartu task, tidak ada kartu misi. Memakai kerangka Beranda di sana lebih buruk daripada tidak memakai kerangka: ia menjanjikan tata letak yang tidak akan datang, lalu seluruh layar tersentak berganti begitu data masuk. Tiap view di bawah ini menggambar anatominya sendiri. */
 
 const BOARD_SURFACE_LABEL = ['Papan', 'Aktivitas'] as const
 
-/**
- * Blok angka besar milik `TotalSummary` di Statistik: eyebrow 13px, angka
- * `CreditAmount` size `2xl` — `text-5xl leading-none`, jadi tepat 48px — lalu satu
- * baris ekor `text-sm leading-none`.
- */
+/** Blok angka besar milik `TotalSummary` di Statistik: eyebrow 13px, angka `CreditAmount` size `2xl` — `text-5xl leading-none`, jadi tepat 48px — lalu satu baris ekor `text-sm leading-none`. */
 function TotalSummarySkeleton({
   labelWidth,
   figureWidth,
@@ -398,27 +308,13 @@ function TotalSummarySkeleton({
   )
 }
 
-/**
- * Kerangka Peringkat, mengikuti `LeaderboardView` apa adanya:
- * strip tab → rail podium → kartu "Posisi kamu" → saringan + papan.
- *
- * Strip tabnya `PanelTabsSkeleton`, sama seperti Statistik dan Riwayat, karena baris
- * Papan/Aktivitas di `LeaderboardView` kini `SegmentedTabs` berwadah `bg-track-surface`
- * selebar layar. Dulu di sini `PlainTabsSkeleton` (pill setinggi teks, tanpa wadah):
- * bentuk yang lebih pendek DAN lebih sempit dari yang datang, jadi seluruh isi
- * halaman tersentak turun begitu papannya masuk.
- *
- * Bentuk yang lebih lama lagi juga sudah tidak ada di layar itu: tablist bergaris-bawah,
- * hero angka besar (sekarang kartu baris), strip `solid` untuk saringan (sekarang satu
- * chip dropdown), dan tanpa rail podium sama sekali.
- */
+/** Kerangka Peringkat, mengikuti `LeaderboardView` apa adanya: strip tab → rail podium → kartu "Posisi kamu" → saringan + papan. Strip tabnya `PanelTabsSkeleton`, sama seperti Statistik dan Riwayat, karena baris Papan/Aktivitas di `LeaderboardView` kini `SegmentedTabs` berwadah `bg-track-surface` selebar layar. Dulu di sini `PlainTabsSkeleton` (pill setinggi teks, tanpa wadah): bentuk yang lebih pendek DAN lebih sempit dari yang datang, jadi seluruh isi halaman tersentak turun begitu papannya masuk. Bentuk yang lebih lama lagi juga sudah tidak ada di layar itu: tablist bergaris-bawah, hero angka besar (sekarang kartu baris), strip `solid` untuk saringan (sekarang satu chip dropdown), dan tanpa rail podium sama sekali. */
 export function LeaderboardSkeleton() {
   return (
     <div className="animate-fade-in view-min-h flex flex-col" aria-hidden>
       <PanelTabsSkeleton labels={BOARD_SURFACE_LABEL} className="region-under-brand" />
 
-      {/* Podium: baris label + tumpukan avatar, lalu tiga kartu `--rail-card-w`.
-          `--label-trim` membayar balik `--rail-py`, persis seperti `PodiumRail`. */}
+      {/* Podium: baris label + tumpukan avatar, lalu tiga kartu `--rail-card-w`. `--label-trim` membayar balik `--rail-py`, persis seperti `PodiumRail`. */}
       <section className="region-under-brand">
         <div className="flex items-center justify-between gap-3">
           <Line
@@ -436,10 +332,7 @@ export function LeaderboardSkeleton() {
           </span>
         </div>
 
-        {/* Rail-nya dirangkai `CardRail` sendiri, bukan salinan `rail no-scrollbar
-            bleed-x` — urutan ketiga kelas itu punya konsekuensi (lihat komentarnya di
-            `card-rail.tsx`), dan kerangka yang menyalinnya akan diam-diam melenceng
-            begitu rail aslinya disetel ulang. */}
+        {/* Rail-nya dirangkai `CardRail` sendiri, bukan salinan `rail no-scrollbar bleed-x` — urutan ketiga kelas itu punya konsekuensi (lihat komentarnya di `card-rail.tsx`), dan kerangka yang menyalinnya akan diam-diam melenceng begitu rail aslinya disetel ulang. */}
         <CardRail
           ariaLabel="Memuat podium"
           className="label-gap-t [--label-trim:var(--rail-py)]"
@@ -457,8 +350,7 @@ export function LeaderboardSkeleton() {
         </CardRail>
       </section>
 
-      {/* "Posisi kamu": kartu berisi satu baris papan — bingkai avatar 40px, nama,
-          meta, nominal di kanan. Dulu digambar sebagai hero angka raksasa. */}
+      {/* "Posisi kamu": kartu berisi satu baris papan — bingkai avatar 40px, nama, meta, nominal di kanan. Dulu digambar sebagai hero angka raksasa. */}
       <section className="region-under-brand task-card">
         <Line
           sample="Posisi kamu"
@@ -469,10 +361,7 @@ export function LeaderboardSkeleton() {
         <div className="label-gap-t flex items-center gap-3">
           <Bar className="size-10 shrink-0 rounded-full" />
           <div className="min-w-0 flex-1">
-            {/* Chip "Kamu" milik `MetaBadge` berdiri SEBARIS dengan nama, dan tingginya
-                (≈20px) melebihi line box `text-[15px]` — baris yang digambar tanpa chip
-                itu lahir beberapa piksel lebih pendek, lalu kartunya tersentak tumbuh
-                begitu posisinya masuk. */}
+            {/* Chip "Kamu" milik `MetaBadge` berdiri SEBARIS dengan nama, dan tingginya (≈20px) melebihi line box `text-[15px]` — baris yang digambar tanpa chip itu lahir beberapa piksel lebih pendek, lalu kartunya tersentak tumbuh begitu posisinya masuk. */}
             <span className="flex min-w-0 items-center gap-1.5 text-[15px] font-semibold tracking-tight">
               <Line sample="Nama kamu" bar="h-3.5 w-28" />
               <Bar className="h-5 w-12 shrink-0 rounded-[var(--chip-radius)]" />
@@ -487,14 +376,7 @@ export function LeaderboardSkeleton() {
         </div>
       </section>
 
-      {/* Saringan papan kini satu `FilterChip` — pill `h-8` berkontur di kiri baris,
-          bukan strip tab selebar layar.
-
-          Chevron-nya ikut digambar sebagai ruang kosong, bukan diabaikan: pemicu
-          `FilterChip` adalah `gap-1` + ikon `size-3.5`, jadi chip yang cuma selebar
-          labelnya lahir ~18px lebih pendek dan pill-nya melar menyamping begitu
-          papannya masuk. Bar-nya sendiri tetap hanya sepanjang label — yang sedang
-          dimuat memang labelnya, bukan ikonnya. */}
+      {/* Saringan papan kini satu `FilterChip` — pill `h-8` berkontur di kiri baris, bukan strip tab selebar layar. Chevron-nya ikut digambar sebagai ruang kosong, bukan diabaikan: pemicu `FilterChip` adalah `gap-1` + ikon `size-3.5`, jadi chip yang cuma selebar labelnya lahir ~18px lebih pendek dan pill-nya melar menyamping begitu papannya masuk. Bar-nya sendiri tetap hanya sepanjang label — yang sedang dimuat memang labelnya, bukan ikonnya. */}
       <div className="region-gap-t flex items-center justify-between gap-3">
         <div className="inline-flex h-8 items-center gap-1 rounded-full bg-card px-3 text-[13px] font-bold tracking-tight ring-1 ring-border ring-inset">
           <Line sample="Semua 1.284" bar="inset-x-0 h-3" />
@@ -502,14 +384,12 @@ export function LeaderboardSkeleton() {
         </div>
       </div>
 
-      {/* `BoardFrame` memakai avatar 40px, bukan lingkaran 36px milik `DataList`
-          biasa, dan label daftarnya membawa `MetaBadge` jumlah peserta. */}
+      {/* `BoardFrame` memakai avatar 40px, bukan lingkaran 36px milik `DataList` biasa, dan label daftarnya membawa `MetaBadge` jumlah peserta. */}
       <div className="region-t flex flex-1 flex-col">
         <DataListSkeleton rows={6} marker markerClass="size-10" badge />
       </div>
 
-      {/* Sama seperti `BoardPanel`: daftar berakhir dengan baris, jadi sisa jarak ke nav
-          dipangkas sebesar padding baris terakhir. */}
+      {/* Sama seperti `BoardPanel`: daftar berakhir dengan baris, jadi sisa jarak ke nav dipangkas sebesar padding baris terakhir. */}
       <div className="view-trim-b flex-1 [--view-trim-b:var(--list-row-py)]" />
     </div>
   )
@@ -518,10 +398,7 @@ export function LeaderboardSkeleton() {
 const STATS_TAB_LABEL = ['Progres', 'Task', 'Saldo', 'Tarik'] as const
 const STAT_ROW_LABEL_W = ['w-28', 'w-36', 'w-24', 'w-32', 'w-28'] as const
 
-/**
- * Baris `StatRow`: label dan nilai sejajar baseline dalam line box `text-sm`,
- * dipisah divider dengan padding `--list-row-py` seperti `DataList`.
- */
+/** Baris `StatRow`: label dan nilai sejajar baseline dalam line box `text-sm`, dipisah divider dengan padding `--list-row-py` seperti `DataList`. */
 function StatRowsSkeleton({ rows }: { rows: number }) {
   return (
     <div className="label-gap-t [--label-trim:var(--list-row-py)] flex flex-col">

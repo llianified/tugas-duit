@@ -98,11 +98,7 @@ describe('GRANT-1 — premium dari panel menumpuk, tidak menimpa', () => {
     expect(selisihHari).toBeLessThan(31)
   })
 
-  /**
-   * Inti keputusannya: pemberian admin tidak boleh memotong hari yang sudah DIBAYAR user.
-   * Bentuk "menimpa tanggal berakhir" akan memangkas langganan 90 hari jadi 7 hanya karena
-   * admin memberi bonus seminggu.
-   */
+  /** Inti keputusannya: pemberian admin tidak boleh memotong hari yang sudah DIBAYAR user. Bentuk "menimpa tanggal berakhir" akan memangkas langganan 90 hari jadi 7 hanya karena admin memberi bonus seminggu. */
   it('menumpuk di atas langganan berbayar yang masih berjalan', async () => {
     const { query } = await import('./db')
     const adminId = await signInAsAdmin()
@@ -184,11 +180,7 @@ describe('GRANT-2 — alasan wajib, jumlah dijepit', () => {
     }
   })
 
-  /**
-   * Energi dijepit di kapasitas, sama seperti jalur user biasa — `users_energy_range`
-   * mematok 0..10 di database, dan `applyEnergyGrant` memotong di `maxEnergy()`. Yang diuji
-   * di sini adalah bahwa panel tidak punya jalan memutar untuk melewatinya.
-   */
+  /** Energi dijepit di kapasitas, sama seperti jalur user biasa — `users_energy_range` mematok 0..10 di database, dan `applyEnergyGrant` memotong di `maxEnergy()`. Yang diuji di sini adalah bahwa panel tidak punya jalan memutar untuk melewatinya. */
   it('menjepit energi di kapasitas, bukan menembusnya', async () => {
     const adminId = await signInAsAdmin()
     const { grantUserEnergy } = await import('./admin-grants')

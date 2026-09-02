@@ -10,19 +10,7 @@ export type SegmentedTab<T extends string> = {
   label: string
 }
 
-/**
- * Satu bentuk saja: wadah `bg-track-surface`, tab aktif berupa permukaan
- * terangkat, tiap tab `flex-1` sehingga barisnya selebar induknya. Wadahnya
- * sengaja lebih gelap dari bidang tab aktif — lihat `--track-surface`; dulu
- * keduanya sama-sama #232329 dan tab aktifnya hilang. Dipakai `features/stats`,
- * `features/history`, dan `features/leaderboard`.
- *
- * Dulu ada varian `plain` (pill tanpa wadah, lebar seisi teks) khusus untuk baris
- * Papan/Aktivitas di papan peringkat. Baris itu kini `solid` seperti Riwayat, dan
- * pill tanpa wadah tinggal jadi bahasa untuk saringan di dalam satu tampilan —
- * peran yang sudah dipegang `FilterChip` di bawah. Menyisakan varian tanpa
- * pemakai hanya mengundang pemakaian yang menghidupkan lagi tabrakan arti itu.
- */
+/** Satu bentuk saja: wadah `bg-track-surface`, tab aktif berupa permukaan terangkat, tiap tab `flex-1` sehingga barisnya selebar induknya. Wadahnya sengaja lebih gelap dari bidang tab aktif — lihat `--track-surface`; dulu keduanya sama-sama #232329 dan tab aktifnya hilang. Dipakai `features/stats`, `features/history`, dan `features/leaderboard`. Dulu ada varian `plain` (pill tanpa wadah, lebar seisi teks) khusus untuk baris Papan/Aktivitas di papan peringkat. Baris itu kini `solid` seperti Riwayat, dan pill tanpa wadah tinggal jadi bahasa untuk saringan di dalam satu tampilan — peran yang sudah dipegang `FilterChip` di bawah. Menyisakan varian tanpa pemakai hanya mengundang pemakaian yang menghidupkan lagi tabrakan arti itu. */
 export function SegmentedTabs<T extends string>({
   tabs,
   value,
@@ -77,15 +65,7 @@ export type FilterChipOption<T extends string> = {
   label: string
 }
 
-/**
- * Chip dropdown "Semua ⌄" ala fomo. Sebelumnya ini `<select>` asli yang ditumpuk
- * transparan di atas chip — gratis secara aksesibilitas, tapi tampilannya diserahkan
- * ke OS: di mobile pemilih bawaan muncul sebagai lembar dialog berisi daftar radio
- * setinggi layar untuk dua pilihan saja. Sekarang memakai `Select` dari Base UI,
- * pola yang sudah dipakai `ChannelSelect`, supaya yang terbuka benar-benar menu
- * kecil menempel di chip-nya. Papan tombol dan pembaca layar tetap terlayani
- * karena Base UI yang mengurus peran serta manajemen fokusnya.
- */
+/** Chip dropdown "Semua ⌄" ala fomo. Sebelumnya ini `<select>` asli yang ditumpuk transparan di atas chip — gratis secara aksesibilitas, tapi tampilannya diserahkan ke OS: di mobile pemilih bawaan muncul sebagai lembar dialog berisi daftar radio setinggi layar untuk dua pilihan saja. Sekarang memakai `Select` dari Base UI, pola yang sudah dipakai `ChannelSelect`, supaya yang terbuka benar-benar menu kecil menempel di chip-nya. Papan tombol dan pembaca layar tetap terlayani karena Base UI yang mengurus peran serta manajemen fokusnya. */
 export function FilterChip<T extends string>({
   options,
   value,

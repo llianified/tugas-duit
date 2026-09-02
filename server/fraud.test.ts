@@ -28,10 +28,7 @@ async function makeUser(options: { referredBy?: number; banned?: boolean } = {})
   return Number(rows[0].id)
 }
 
-/**
- * Membuat sejumlah downline pada rentang waktu yang ditentukan, relatif terhadap sekarang.
- * `spanSeconds` yang kecil membuat mereka rapat (burst), yang besar membuatnya menyebar.
- */
+/** Membuat sejumlah downline pada rentang waktu yang ditentukan, relatif terhadap sekarang. `spanSeconds` yang kecil membuat mereka rapat (burst), yang besar membuatnya menyebar. */
 async function makeDownlines(
   uplineId: number,
   count: number,
@@ -51,11 +48,7 @@ async function makeDownlines(
   )
 }
 
-/**
- * Membuat `count` challenge terpecahkan beserta task_completions-nya. `wrong` menentukan
- * berapa di antaranya pernah dijawab salah, `spreadMs` selisih dua nilai `elapsed_ms` yang
- * dipakai bergantian — simpangan bakunya kira-kira setengah dari selisih itu.
- */
+/** Membuat `count` challenge terpecahkan beserta task_completions-nya. `wrong` menentukan berapa di antaranya pernah dijawab salah, `spreadMs` selisih dua nilai `elapsed_ms` yang dipakai bergantian — simpangan bakunya kira-kira setengah dari selisih itu. */
 async function makeSolvedTasks(
   userId: number,
   count: number,
@@ -156,11 +149,7 @@ describe('FRAUD-2 — identical_timing memakai skala waktu manusia', () => {
     expect(await signalsFor(userId, 'identical_timing')).toBe(1)
   })
 
-  /**
-   * Kasus yang paling menentukan: simpangan baku ~400ms lolos dari ambang lama 150ms,
-   * padahal masih jauh di bawah lantai manusia paling konsisten di produksi (1.877ms).
-   * Justru rentang inilah yang dulu jadi lubang.
-   */
+  /** Kasus yang paling menentukan: simpangan baku ~400ms lolos dari ambang lama 150ms, padahal masih jauh di bawah lantai manusia paling konsisten di produksi (1.877ms). Justru rentang inilah yang dulu jadi lubang. */
   it('menandai keseragaman yang dulu lolos dari ambang 150ms', async () => {
     const userId = await makeUser()
     await makeSolvedTasks(userId, SWEEP_THRESHOLDS.identicalTimingMinSample, {
@@ -245,17 +234,8 @@ describe('FRAUD-3 — no_wrong_attempts tidak bisa dimatikan satu jawaban salah'
 })
 
 describe('FRAUD-4 — rentang sapuan tidak boleh lebih pendek dari kadensi cron', () => {
-  /**
-   * Penjaga terhadap kelas bug yang membuat `referral_burst` tidak pernah menyala:
-   * jendela 10 menit yang diperiksa sekali sejam hanya melihat 10 dari 60 menit. Kalau
-   * jadwal cron diubah jadi lebih jarang, test ini yang harus gagal lebih dulu — bukan
-   * detektornya yang diam-diam jadi buta.
-   */
-  /**
-   * Periode dihitung dari jadwalnya, bukan ditulis ulang sebagai angka kedua: kalau
-   * jadwalnya diubah, yang harus bergerak adalah rentang sapuan — bukan test ini yang
-   * disesuaikan supaya hijau lagi.
-   */
+  /** Penjaga terhadap kelas bug yang membuat `referral_burst` tidak pernah menyala: jendela 10 menit yang diperiksa sekali sejam hanya melihat 10 dari 60 menit. Kalau jadwal cron diubah jadi lebih jarang, test ini yang harus gagal lebih dulu — bukan detektornya yang diam-diam jadi buta. */
+  /** Periode dihitung dari jadwalnya, bukan ditulis ulang sebagai angka kedua: kalau jadwalnya diubah, yang harus bergerak adalah rentang sapuan — bukan test ini yang disesuaikan supaya hijau lagi. */
   const periodeMenit = (schedule: string): number => {
     const [menit, jam] = schedule.trim().split(/\s+/)
     if (menit !== '*' && jam === '*') return 60

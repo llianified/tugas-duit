@@ -16,23 +16,7 @@ export function formatCreditsPrecise(value: number): string {
   return value.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
 }
 
-/**
- * Membelah angka yang SUDAH diformat menjadi tiga bagian, supaya penyaji bisa
- * meredam bagian yang bukan inti (gaya angka besar fomo: bagian utama terang,
- * desimal & satuan abu-abu).
- *
- * Sengaja bekerja pada string hasil `toLocaleString('id-ID')`, bukan pada angka:
- * pemisah ribuan di sini titik dan desimalnya koma, jadi pembelahan gaya Inggris
- * (`split('.')`) akan salah memotong "Rp1.234" menjadi "Rp1" + "234".
- *
- * - `lead`  : apa pun sebelum digit pertama (tanda minus, "Rp", "+").
- * - `main`  : bagian bilangan bulat beserta pemisah ribuannya.
- * - `trail` : koma desimal beserta digit setelahnya, kosong bila bilangannya bulat.
- *
- * Sufiks pemadatan dari `formatCompact` ("rb"/"jt") ikut masuk `trail`: ia satuan,
- * bukan bagian bilangan, jadi diredam bersama desimal — kalau tidak, "rb" akan
- * tampil seterang angka pokoknya dan ikut mengklaim perhatian.
- */
+/** Membelah angka yang SUDAH diformat menjadi tiga bagian, supaya penyaji bisa meredam bagian yang bukan inti (gaya angka besar fomo: bagian utama terang, desimal & satuan abu-abu). Sengaja bekerja pada string hasil `toLocaleString('id-ID')`, bukan pada angka: pemisah ribuan di sini titik dan desimalnya koma, jadi pembelahan gaya Inggris (`split('.')`) akan salah memotong "Rp1.234" menjadi "Rp1" + "234". - `lead`  : apa pun sebelum digit pertama (tanda minus, "Rp", "+"). - `main`  : bagian bilangan bulat beserta pemisah ribuannya. - `trail` : koma desimal beserta digit setelahnya, kosong bila bilangannya bulat. Sufiks pemadatan dari `formatCompact` ("rb"/"jt") ikut masuk `trail`: ia satuan, bukan bagian bilangan, jadi diredam bersama desimal — kalau tidak, "rb" akan tampil seterang angka pokoknya dan ikut mengklaim perhatian. */
 export function splitAmountParts(formatted: string): {
   lead: string
   main: string
@@ -98,13 +82,7 @@ function wibDayKey(date: Date): string {
   return date.toLocaleDateString('en-CA', { timeZone: TIME_ZONE })
 }
 
-/**
- * Apakah dua cap waktu jatuh pada hari WIB yang sama.
- *
- * Diekspor supaya penyaji tidak menyusun definisi "hari ini" sendiri lewat
- * `new Date().getDate()` — itu memakai zona perangkat, sementara seluruh konsep
- * "hari" di repo ini WIB (lihat `formatHistoryTime`).
- */
+/** Apakah dua cap waktu jatuh pada hari WIB yang sama. Diekspor supaya penyaji tidak menyusun definisi "hari ini" sendiri lewat `new Date().getDate()` — itu memakai zona perangkat, sementara seluruh konsep "hari" di repo ini WIB (lihat `formatHistoryTime`). */
 export function isSameWibDay(timestamp: number, now: number = Date.now()): boolean {
   return wibDayKey(new Date(timestamp)) === wibDayKey(new Date(now))
 }
@@ -127,14 +105,7 @@ export function formatHistoryTime(timestamp: number, now: number = Date.now()): 
   return `${day} · ${time}`
 }
 
-/**
- * Tanggal + jam lengkap, dikunci WIB dan diberi labelnya.
- *
- * Dipakai untuk jejak yang harus bisa dirujuk ulang oleh orang lain — audit perubahan
- * ekonomi, misalnya — jadi zonanya disebut di teksnya. Sama seperti `formatHistoryTime`,
- * ia sengaja tidak memakai zona perangkat: admin bisa membacanya dari mana saja, sementara
- * seluruh konsep "hari" di repo ini WIB.
- */
+/** Tanggal + jam lengkap, dikunci WIB dan diberi labelnya. Dipakai untuk jejak yang harus bisa dirujuk ulang oleh orang lain — audit perubahan ekonomi, misalnya — jadi zonanya disebut di teksnya. Sama seperti `formatHistoryTime`, ia sengaja tidak memakai zona perangkat: admin bisa membacanya dari mana saja, sementara seluruh konsep "hari" di repo ini WIB. */
 export function formatDateTime(timestamp: number): string {
   const value = new Date(timestamp).toLocaleString('id-ID', {
     day: 'numeric',
@@ -156,16 +127,7 @@ export function formatShortDate(timestamp: number): string {
   })
 }
 
-/**
- * Angka panjang dipadatkan jadi "100rb" / "1,5jt".
- *
- * `from` menentukan mulai angka berapa pemadatan berlaku; di bawahnya angka
- * tampil utuh. Defaultnya 10.000 karena itu ambang yang sudah dipakai dasbor
- * admin sejak awal — tabel rapat di sana untung dari angka pendek. Hero beranda
- * menaikkannya ke 100.000 lewat `HERO_COMPACT_FROM`: saldo kecil lebih berguna
- * dibaca presisi, dan di sana yang dikejar cuma mencegah angka meluber melewati
- * tombol di sebelahnya.
- */
+/** Angka panjang dipadatkan jadi "100rb" / "1,5jt". `from` menentukan mulai angka berapa pemadatan berlaku; di bawahnya angka tampil utuh. Defaultnya 10.000 karena itu ambang yang sudah dipakai dasbor admin sejak awal — tabel rapat di sana untung dari angka pendek. Hero beranda menaikkannya ke 100.000 lewat `HERO_COMPACT_FROM`: saldo kecil lebih berguna dibaca presisi, dan di sana yang dikejar cuma mencegah angka meluber melewati tombol di sebelahnya. */
 const COMPACT_TIERS = [
   { divisor: 1_000_000_000_000, suffix: 'T' },
   { divisor: 1_000_000_000, suffix: 'M' },
@@ -186,12 +148,7 @@ export function formatCompact(value: number, { from = 10_000 }: { from?: number 
     const tier = COMPACT_TIERS[index]
     if (abs < tier.divisor) continue
 
-    /**
-     * Pembulatan bisa mendorong angka melewati tingkatnya sendiri: 999.999 dibagi
-     * seribu jadi 999,999 lalu membulat ke 1000, dan tercetak "1000rb" — empat digit,
-     * justru sepanjang angka yang mau dipendekkan. Kalau itu terjadi, naikkan
-     * satuannya supaya jadi "1jt".
-     */
+    /** Pembulatan bisa mendorong angka melewati tingkatnya sendiri: 999.999 dibagi seribu jadi 999,999 lalu membulat ke 1000, dan tercetak "1000rb" — empat digit, justru sepanjang angka yang mau dipendekkan. Kalau itu terjadi, naikkan satuannya supaya jadi "1jt". */
     if (Math.abs(Math.round((value / tier.divisor) * 10) / 10) >= 1_000 && index > 0) {
       const wider = COMPACT_TIERS[index - 1]
       return `${compactDigits(value / wider.divisor)}${wider.suffix}`
@@ -203,9 +160,7 @@ export function formatCompact(value: number, { from = 10_000 }: { from?: number 
   return formatCredits(value)
 }
 
-/**
- * Ambang pemadatan untuk angka di hero beranda — saldo besar dan sub-line-nya.
- */
+/** Ambang pemadatan untuk angka di hero beranda — saldo besar dan sub-line-nya. */
 export const HERO_COMPACT_FROM = 100_000
 
 export function formatRupiahCompact(

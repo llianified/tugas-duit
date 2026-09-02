@@ -160,11 +160,7 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     [mutatePayouts, mutateSession, mutateStats, notifyError],
   )
 
-  /**
-   * Dicatat supaya kerangka pemuatan pada pembukaan BERIKUTNYA menggambar jumlah tombol
-   * yang benar di kartu task. Hanya petunjuk bentuk; keputusan sebenarnya tetap dari
-   * `session.ads.enabled` di render ini.
-   */
+  /** Dicatat supaya kerangka pemuatan pada pembukaan BERIKUTNYA menggambar jumlah tombol yang benar di kartu task. Hanya petunjuk bentuk; keputusan sebenarnya tetap dari `session.ads.enabled` di render ini. */
   const adsEnabled = session?.ads?.enabled ?? false
   useEffect(() => {
     if (session === undefined) return

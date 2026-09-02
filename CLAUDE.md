@@ -74,14 +74,17 @@ Lihat `.env.example` untuk daftar lengkap env var.
 4. **Format angka/uang/waktu hanya lewat `shared/lib/format.ts`.** Jangan bikin formatter baru.
 5. **Jangan sentuh** business logic, kontrak API, skema DB, auth, atau alur monetisasi kecuali
    memang itu yang diminta.
-6. Batas hari memakai zona WIB dan harus sama persis dengan
+6. **Jangan ubah, pindahkan, atau refactor nav island di bagian paling atas aplikasi.** Posisi
+   dan perilakunya sengaja diatur agar menyatu dengan komponen fullscreen Telegram; perubahan
+   hanya boleh dilakukan jika diminta eksplisit oleh pemilik repo.
+7. Batas hari memakai zona WIB dan harus sama persis dengan
    `(now() at time zone 'Asia/Jakarta')::date` di SQL.
-7. Bahasa UI dan pesan commit: Indonesia. Kode tanpa titik koma, kutip tunggal.
-8. **Komentar menjelaskan _kenapa_, bukan _apa_.** Repo ini memakai komentar justru untuk
-   hal yang tidak terbaca dari kodenya: trade-off, jebakan, dan keputusan yang pernah salah
-   — lihat `server/quota.ts` atau `db/migrations/`. Yang tidak boleh ditambah adalah
-   komentar yang cuma mengulang baris di bawahnya.
-9. Jangan audit/refactor skala-repo kecuali diminta eksplisit.
+8. Bahasa UI dan pesan commit: Indonesia. Kode tanpa titik koma, kutip tunggal.
+9. **Komentar harus ringkas dan menjelaskan _kenapa_, bukan _apa_.** Pertahankan hanya
+   trade-off, jebakan, keputusan penting, dan commented-out code yang masih disengaja.
+   Padatkan komentar menjadi satu baris bila memungkinkan; jangan menambah prosa panjang
+   yang mengulang kode di bawahnya.
+10. Jangan audit/refactor skala-repo kecuali diminta eksplisit.
 
 ## Catatan yang menghemat waktu
 

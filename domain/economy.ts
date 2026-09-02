@@ -42,10 +42,7 @@ export function dailyCommissionCreditCap(): number {
   return config.dailyCommissionCapIdr / config.creditValueIdr
 }
 
-/**
- * Estimasi, bukan janji: dihitung dari laju isi ulang kolam reward selama 24 jam, dengan asumsi
- * user menghabiskan setiap credit yang masuk.
- */
+/** Estimasi, bukan janji: dihitung dari laju isi ulang kolam reward selama 24 jam, dengan asumsi user menghabiskan setiap credit yang masuk. */
 export function firstWithdrawalEstimateDays(): number {
   return Math.max(1, Math.ceil(withdrawalMinimumCredits() / rewardPoolCreditsPerDay()))
 }

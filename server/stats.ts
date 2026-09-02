@@ -97,21 +97,7 @@ export async function getStats(userId: number, balance: number): Promise<UserSta
               (select count(*) from referral_commissions where upline_id = $1)::int      as downline_tasks`,
       [userId],
     ),
-    /**
-     * Deret harian untuk grafik profil. Dibatasi 30 hari WIB terakhir dan dihitung
-     * dari `task_completions`, bukan dari `credit_ledger`: yang digambar grafik ini
-     * adalah hasil KERJA per hari, dan ledger juga memuat komisi, penyesuaian admin,
-     * serta tahanan penarikan yang akan membuat garisnya melompat tanpa user
-     * mengerjakan apa pun.
-     *
-     * `generate_series` memasok kerangka harinya, jadi hari tanpa task tetap terkirim
-     * sebagai nol. Bentuk lamanya cuma mengembalikan hari yang ADA isinya, dan itu
-     * membohongi dua pemakainya sekaligus: `EarningsChart` menjarakkan titik secara merata
-     * sehingga aktif di hari 1 dan hari 30 tergambar seperti dua hari berurutan, sementara
-     * pemilih rentang di `profile.tsx` memotong dengan `slice(-7)` — tujuh BARIS terakhir,
-     * yang pada user jarang-jarang bisa membentang berbulan-bulan dan membuat angka
-     * "periode ini" ikut salah.
-     */
+    /** Deret harian untuk grafik profil. Dibatasi 30 hari WIB terakhir dan dihitung dari `task_completions`, bukan dari `credit_ledger`: yang digambar grafik ini adalah hasil KERJA per hari, dan ledger juga memuat komisi, penyesuaian admin, serta tahanan penarikan yang akan membuat garisnya melompat tanpa user mengerjakan apa pun. `generate_series` memasok kerangka harinya, jadi hari tanpa task tetap terkirim sebagai nol. Bentuk lamanya cuma mengembalikan hari yang ADA isinya, dan itu membohongi dua pemakainya sekaligus: `EarningsChart` menjarakkan titik secara merata sehingga aktif di hari 1 dan hari 30 tergambar seperti dua hari berurutan, sementara pemilih rentang di `profile.tsx` memotong dengan `slice(-7)` — tujuh BARIS terakhir, yang pada user jarang-jarang bisa membentang berbulan-bulan dan membuat angka "periode ini" ikut salah. */
     query<{ day: string; credits: number }>(
       `select to_char(series.day, 'YYYY-MM-DD')          as day,
               coalesce(sum(tc.reward), 0)::int           as credits

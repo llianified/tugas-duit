@@ -9,14 +9,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-/**
- * Tiga aksi di satu route karena ketiganya satu alur yang harus dijalani berurutan:
- * hitung penerimanya, buat siarannya, lalu kirim per putaran sampai habis.
- *
- * `preview` sengaja tidak menulis apa pun. Ia memakai query yang persis sama dengan yang
- * mengirim, jadi angka yang dilihat admin sebelum menekan kirim adalah angka yang benar —
- * bukan perkiraan dari query lain yang bisa menyimpang diam-diam.
- */
+/** Tiga aksi di satu route karena ketiganya satu alur yang harus dijalani berurutan: hitung penerimanya, buat siarannya, lalu kirim per putaran sampai habis. `preview` sengaja tidak menulis apa pun. Ia memakai query yang persis sama dengan yang mengirim, jadi angka yang dilihat admin sebelum menekan kirim adalah angka yang benar — bukan perkiraan dari query lain yang bisa menyimpang diam-diam. */
 export async function POST(request: Request) {
   const origin = assertSameOrigin(request)
   if (origin) return origin

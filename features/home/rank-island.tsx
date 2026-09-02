@@ -91,13 +91,7 @@ function RankPillLabel({ rank }: { rank: Progression['rank'] }) {
   )
 }
 
-/**
- * Setiap region hanya menampilkan judul dan meter.
- *
- * Angka mentahnya tetap hidup di `valueText` meter, jadi pembaca layar masih
- * mendapat progres yang persis sama sementara panelnya tampil sebagai bentuk,
- * bukan sebagai papan angka yang menuntut dibaca.
- */
+/** Setiap region hanya menampilkan judul dan meter. Angka mentahnya tetap hidup di `valueText` meter, jadi pembaca layar masih mendapat progres yang persis sama sementara panelnya tampil sebagai bentuk, bukan sebagai papan angka yang menuntut dibaca. */
 function RankProgressRegion({
   progression,
   isOpen,

@@ -19,9 +19,7 @@ create table users (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint users_no_self_referral check (referred_by is null or referred_by <> id),
-  -- Diberi nama, bukan check inline anonim: ini jaring terakhir saldo, dan nama
-  -- constraint-nya yang muncul di pesan error Postgres saat ada kode yang mencoba
-  -- mengurangi saldo di bawah nol.
+  -- Diberi nama, bukan check inline anonim: ini jaring terakhir saldo, dan nama | constraint-nya yang muncul di pesan error Postgres saat ada kode yang mencoba | mengurangi saldo di bawah nol.
   constraint users_balance_non_negative check (balance_credits >= 0)
 );
 create index users_referred_by_idx on users(referred_by) where referred_by is not null;

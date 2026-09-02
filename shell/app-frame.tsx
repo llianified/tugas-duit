@@ -13,12 +13,7 @@ function useDocumentScrollLock() {
   }, [])
 }
 
-/**
- * Layer toast dirender `ToastProvider`, di luar pohon frame ini, jadi ia tidak bisa
- * membaca ada-tidaknya nav lewat props. Penandanya dititipkan di `:root` supaya CSS
- * bisa mengangkat toast setinggi nav pill saat navnya ada, dan menempelkannya ke
- * inset bawah saat tidak (captcha, sesi gagal).
- */
+/** Layer toast dirender `ToastProvider`, di luar pohon frame ini, jadi ia tidak bisa membaca ada-tidaknya nav lewat props. Penandanya dititipkan di `:root` supaya CSS bisa mengangkat toast setinggi nav pill saat navnya ada, dan menempelkannya ke inset bawah saat tidak (captcha, sesi gagal). */
 function useDocumentNavFlag(hasNav: boolean) {
   useEffect(() => {
     if (!hasNav) return

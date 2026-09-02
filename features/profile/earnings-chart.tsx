@@ -6,23 +6,11 @@ import type { EarningsPoint } from '@/features/stats/domain'
 const WIDTH = 320
 const HEIGHT = 96
 
-/**
- * Grafik ditulis sebagai SVG langsung, tanpa pustaka bagan. Satu deret, tanpa sumbu,
- * tanpa interaksi — memuat pustaka bagan untuk itu menambah puluhan kilobyte ke
- * Mini App yang dibuka lewat jaringan seluler, dan tidak menggambar satu piksel pun
- * yang tidak bisa digambar `<path>`.
- *
- * `viewBox` tetap 320x96 sementara elemennya melar penuh: kurvanya diskalakan browser,
- * jadi tidak ada perhitungan ulang saat lebar layar berubah.
- */
+/** Grafik ditulis sebagai SVG langsung, tanpa pustaka bagan. Satu deret, tanpa sumbu, tanpa interaksi — memuat pustaka bagan untuk itu menambah puluhan kilobyte ke Mini App yang dibuka lewat jaringan seluler, dan tidak menggambar satu piksel pun yang tidak bisa digambar `<path>`. `viewBox` tetap 320x96 sementara elemennya melar penuh: kurvanya diskalakan browser, jadi tidak ada perhitungan ulang saat lebar layar berubah. */
 export function EarningsChart({ series }: { series: EarningsPoint[] }) {
   const gradientId = useId()
 
-  /**
-   * Deretnya sekarang selalu memuat setiap hari dalam rentangnya, termasuk yang nol
-   * (`server/stats.ts`), jadi "kosong" tidak lagi berarti `length === 0` melainkan tidak ada
-   * satu pun credit di periode itu. Garis datar di nol bukan informasi, cuma bentuk.
-   */
+  /** Deretnya sekarang selalu memuat setiap hari dalam rentangnya, termasuk yang nol (`server/stats.ts`), jadi "kosong" tidak lagi berarti `length === 0` melainkan tidak ada satu pun credit di periode itu. Garis datar di nol bukan informasi, cuma bentuk. */
   const shape = useMemo(() => {
     const values = series.map((point) => point.credits)
     if (values.length === 0 || values.every((value) => value === 0)) return null

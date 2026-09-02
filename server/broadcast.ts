@@ -4,38 +4,13 @@ import { query } from './db'
 import { requireAdmin } from './session'
 import { escapeTelegramHtml, openAppMarkup, sendTelegramMessage } from './telegram'
 
-/**
- * Pesan siaran dari panel.
- *
- * Ini satu-satunya fitur di panel yang tidak bisa dibatalkan setelah dijalankan, dan
- * risikonya bukan cuma malu: Telegram membekukan bot yang dilaporkan spam, dan bot yang beku
- * berarti notifikasi penarikan ikut mati — jalur uang berhenti. Karena itu bentuknya sengaja
- * lebih ketat daripada fitur panel lain:
- *
- * - `/stop` SELALU dihormati. Tidak ada segmen yang bisa menembusnya, dan tidak ada saklar
- *   untuk mematikan penjagaan itu. User yang minta berhenti sudah menjawab.
- * - Jumlah penerima dihitung dan ditampilkan SEBELUM satu pesan pun berangkat, dari query
- *   yang persis sama dengan yang dipakai mengirim.
- * - Penanda per user ditulis ke `bot_notifications` sebelum kirim, dengan `dedupe_key` berisi
- *   id siaran. Menekan "Kirim" dua kali karena ragu tidak mengirim dua kali ke siapa pun.
- * - Satu putaran berhenti di anggaran waktunya sendiri dan melaporkan sisanya. Menekan lagi
- *   MELANJUTKAN, bukan mengulang — bentuk yang sama dengan `runEngagementNotifications`.
- *
- * Yang membedakannya dari `engagement.ts`: di sana pesannya dipilih sistem menurut keadaan
- * user, di sini teksnya ditulis manusia. Jadi tidak ada `pickMessage`, dan tidak ada urutan
- * prioritas — yang ada cuma segmen dan satu badan pesan.
- */
+/** Pesan siaran dari panel. Ini satu-satunya fitur di panel yang tidak bisa dibatalkan setelah dijalankan, dan risikonya bukan cuma malu: Telegram membekukan bot yang dilaporkan spam, dan bot yang beku berarti notifikasi penarikan ikut mati — jalur uang berhenti. Karena itu bentuknya sengaja lebih ketat daripada fitur panel lain: - `/stop` SELALU dihormati. Tidak ada segmen yang bisa menembusnya, dan tidak ada saklar untuk mematikan penjagaan itu. User yang minta berhenti sudah menjawab. - Jumlah penerima dihitung dan ditampilkan SEBELUM satu pesan pun berangkat, dari query yang persis sama dengan yang dipakai mengirim. - Penanda per user ditulis ke `bot_notifications` sebelum kirim, dengan `dedupe_key` berisi id siaran. Menekan "Kirim" dua kali karena ragu tidak mengirim dua kali ke siapa pun. - Satu putaran berhenti di anggaran waktunya sendiri dan melaporkan sisanya. Menekan lagi MELANJUTKAN, bukan mengulang — bentuk yang sama dengan `runEngagementNotifications`. Yang membedakannya dari `engagement.ts`: di sana pesannya dipilih sistem menurut keadaan user, di sini teksnya ditulis manusia. Jadi tidak ada `pickMessage`, dan tidak ada urutan prioritas — yang ada cuma segmen dan satu badan pesan. */
 
 const SEND_GAP_MS = 60
 const MAX_SENDS_PER_RUN = 500
 const DEFAULT_SEND_BUDGET_MS = 20_000
 
-/**
- * Penjagaan yang berlaku untuk SETIAP segmen, tanpa kecuali.
- *
- * Akun yang ditangguhkan tidak diajak kembali, dan `/stop` dihormati. Keduanya di sini,
- * bukan disalin ke tiap segmen, supaya menambah segmen baru tidak bisa melewatkannya.
- */
+/** Penjagaan yang berlaku untuk SETIAP segmen, tanpa kecuali. Akun yang ditangguhkan tidak diajak kembali, dan `/stop` dihormati. Keduanya di sini, bukan disalin ke tiap segmen, supaya menambah segmen baru tidak bisa melewatkannya. */
 const BASE_FILTER = `u.banned_at is null and u.notifications_muted_at is null`
 
 const SEGMENT_FILTER: Record<BroadcastSegment, string> = {
@@ -72,11 +47,7 @@ export interface BroadcastRun {
   done: boolean
 }
 
-/**
- * Membuat baris siaran tanpa mengirim apa pun. Dipisah dari pengirimannya supaya id-nya —
- * dan karena itu `dedupe_key`-nya — sudah ada sebelum pesan pertama berangkat, dan supaya
- * putaran lanjutan menyambung ke baris yang sama alih-alih membuat siaran baru.
- */
+/** Membuat baris siaran tanpa mengirim apa pun. Dipisah dari pengirimannya supaya id-nya — dan karena itu `dedupe_key`-nya — sudah ada sebelum pesan pertama berangkat, dan supaya putaran lanjutan menyambung ke baris yang sama alih-alih membuat siaran baru. */
 export async function createBroadcast(
   segment: BroadcastSegment,
   body: string,
@@ -93,12 +64,7 @@ export async function createBroadcast(
   return { id: rows[0].id }
 }
 
-/**
- * `sendGapMs` bisa disetel dengan alasan yang sama seperti `budgetMs`: uji menjalankan
- * fungsi ini terhadap basis user uji yang menumpuk lintas berkas, dan jeda 60ms per kirim
- * membuatnya menghabiskan puluhan detik untuk memeriksa satu invarian. Produksi memakai
- * bawaannya — jeda itu yang menahan tempo terhadap batas laju Telegram.
- */
+/** `sendGapMs` bisa disetel dengan alasan yang sama seperti `budgetMs`: uji menjalankan fungsi ini terhadap basis user uji yang menumpuk lintas berkas, dan jeda 60ms per kirim membuatnya menghabiskan puluhan detik untuk memeriksa satu invarian. Produksi memakai bawaannya — jeda itu yang menahan tempo terhadap batas laju Telegram. */
 export async function runBroadcast(
   broadcastId: string,
   options: { budgetMs?: number; sendGapMs?: number } = {},
@@ -119,10 +85,7 @@ export async function runBroadcast(
   const broadcast = found[0]
   if (!broadcast) throw new Error('BROADCAST_NOT_FOUND')
 
-  /**
-   * Penerima yang penandanya belum ada. `not exists` terhadap `bot_notifications` itu yang
-   * membuat putaran ini melanjutkan alih-alih mengulang, dan yang membuat klik ganda aman.
-   */
+  /** Penerima yang penandanya belum ada. `not exists` terhadap `bot_notifications` itu yang membuat putaran ini melanjutkan alih-alih mengulang, dan yang membuat klik ganda aman. */
   const params = segmentParams(broadcast.segment)
   const recipientSql = `select u.id, u.telegram_id from users u
      where ${BASE_FILTER} and (${SEGMENT_FILTER[broadcast.segment]})
@@ -158,12 +121,7 @@ export async function runBroadcast(
       await sendTelegramMessage(recipient.telegram_id, text, markup)
       sent += 1
     } catch (error) {
-      /**
-       * Penanda dihapus supaya putaran berikutnya boleh mencoba lagi — bentuk yang sama
-       * dengan `deliver()` di `engagement.ts`. Yang paling sering gagal di sini adalah user
-       * yang memblokir bot; percobaan ulangnya murah dan berhenti sendiri saat siarannya
-       * selesai.
-       */
+      /** Penanda dihapus supaya putaran berikutnya boleh mencoba lagi — bentuk yang sama dengan `deliver()` di `engagement.ts`. Yang paling sering gagal di sini adalah user yang memblokir bot; percobaan ulangnya murah dan berhenti sendiri saat siarannya selesai. */
       await query('delete from bot_notifications where id=$1', [Number(claimed[0].id)])
       failed += 1
       console.warn('[broadcast] gagal kirim ke %s:', recipient.telegram_id, error)

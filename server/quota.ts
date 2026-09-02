@@ -13,12 +13,7 @@ interface QuotaResult {
   pool: RewardPoolView
 }
 
-/**
- * Yang tersisa di `daily_quotas` sekarang cuma dua hal yang memang harian: `tasks_completed`
- * sebagai jaring anti-bot, dan `commission_credits` sebagai plafon komisi referral.
- * `credits_earned` tetap ditulis sebagai catatan yang dibaca panel admin — kolam reward
- * (`users.reward_pool`) yang menahan pembayaran, bukan kolom ini.
- */
+/** Yang tersisa di `daily_quotas` sekarang cuma dua hal yang memang harian: `tasks_completed` sebagai jaring anti-bot, dan `commission_credits` sebagai plafon komisi referral. `credits_earned` tetap ditulis sebagai catatan yang dibaca panel admin — kolam reward (`users.reward_pool`) yang menahan pembayaran, bukan kolom ini. */
 export async function consumeQuota(
   tx: PoolClient,
   userId: number,
@@ -33,13 +28,7 @@ export async function consumeQuota(
      returning tasks_completed`,
     [userId],
   )
-  /**
-   * Penghitung dinaikkan lebih dulu supaya kenaikannya ikut terkunci baris `daily_quotas`
-   * yang sama, lalu dikembalikan kalau task-nya ternyata tidak dibayar. Tanpa pengembalian
-   * ini `tasks_completed` naik untuk setiap penolakan juga, sehingga jaring anti-bot
-   * menghitung percobaan alih-alih task yang benar-benar dibayar — dan user yang menabrak
-   * plafon sekali tidak akan pernah turun lagi dari plafon itu di hari yang sama.
-   */
+  /** Penghitung dinaikkan lebih dulu supaya kenaikannya ikut terkunci baris `daily_quotas` yang sama, lalu dikembalikan kalau task-nya ternyata tidak dibayar. Tanpa pengembalian ini `tasks_completed` naik untuk setiap penolakan juga, sehingga jaring anti-bot menghitung percobaan alih-alih task yang benar-benar dibayar — dan user yang menabrak plafon sekali tidak akan pernah turun lagi dari plafon itu di hari yang sama. */
   const rollback = () =>
     tx.query(
       `update daily_quotas set tasks_completed=greatest(0, tasks_completed-1)

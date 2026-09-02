@@ -18,24 +18,13 @@ export function MissionCard({
 }: {
   refreshKey: number
   onClaimed: () => Promise<unknown>
-  /**
-   * `page` dipakai saat daftar ini menjadi isi utama sebuah view, bukan satu kartu
-   * di antara kartu lain. Permukaan `--muted` dilepas — kartu di dalam halaman yang
-   * seluruhnya tentang misi hanya menambah satu kotak tanpa memisahkan apa pun —
-   * dan daftar kosong berhenti mengembalikan `null`, karena view yang kosong total
-   * adalah jalan buntu sementara kartu yang hilang dari Beranda bukan.
-   */
+  /** `page` dipakai saat daftar ini menjadi isi utama sebuah view, bukan satu kartu di antara kartu lain. Permukaan `--muted` dilepas — kartu di dalam halaman yang seluruhnya tentang misi hanya menambah satu kotak tanpa memisahkan apa pun — dan daftar kosong berhenti mengembalikan `null`, karena view yang kosong total adalah jalan buntu sementara kartu yang hilang dari Beranda bukan. */
   variant?: 'card' | 'page'
 }) {
   const { missions, claiming, claim } = useMissions({ refreshKey, onClaimed })
   const page = variant === 'page'
 
-  /**
-   * Di Beranda daftar ini satu kartu di antara kartu lain, jadi ia boleh tidak ada
-   * sampai datanya masuk. Sebagai isi utama view Misi ia tidak boleh: kerangka app
-   * sudah menghilang, dan `/api/missions` dimuat terpisah dari `/api/session`, jadi
-   * halamannya berhenti di paragraf "Cara kerjanya" tanpa tanda apa pun sedang jalan.
-   */
+  /** Di Beranda daftar ini satu kartu di antara kartu lain, jadi ia boleh tidak ada sampai datanya masuk. Sebagai isi utama view Misi ia tidak boleh: kerangka app sudah menghilang, dan `/api/missions` dimuat terpisah dari `/api/session`, jadi halamannya berhenti di paragraf "Cara kerjanya" tanpa tanda apa pun sedang jalan. */
   if (!missions) return page ? <MissionListSkeleton surface={false} /> : null
 
   if (missions.length === 0) {
@@ -56,16 +45,10 @@ export function MissionCard({
       aria-label="Misi harian"
       className={page ? undefined : SURFACE_CARD_CLASS}
     >
-      {/* `items-center`, bukan `items-baseline`: sisi kanan kini chip berbidang, dan
-          menyejajarkan baseline teks di dalamnya dengan baseline label membuat bidang
-          chip menggantung ~2px di bawah garis label. */}
+      {/* `items-center`, bukan `items-baseline`: sisi kanan kini chip berbidang, dan menyejajarkan baseline teks di dalamnya dengan baseline label membuat bidang chip menggantung ~2px di bawah garis label. */}
       <div className="flex items-center justify-between gap-3">
         <SectionLabel as="h2">Misi hari ini</SectionLabel>
-        {/* Rasio ini ringkasan angka di kanan kepala daftar — peran yang persis sama
-            dengan `badge` di `DataList` (dan sudah dipakai di Riwayat serta papan
-            peringkat), jadi ia memakai chip yang sama alih-alih teks redam sendiri.
-            Kata "selesai" tetap dibuang: label di sebelahnya sudah menyebut misi, dan
-            rasio bertanda tabular terbaca sendiri tanpa perlu dijelaskan. */}
+        {/* Rasio ini ringkasan angka di kanan kepala daftar — peran yang persis sama dengan `badge` di `DataList` (dan sudah dipakai di Riwayat serta papan peringkat), jadi ia memakai chip yang sama alih-alih teks redam sendiri. Kata "selesai" tetap dibuang: label di sebelahnya sudah menyebut misi, dan rasio bertanda tabular terbaca sendiri tanpa perlu dijelaskan. */}
         <MetaBadge>
           {formatCredits(done)}
           <span aria-hidden="true">/</span>
@@ -88,16 +71,7 @@ export function MissionCard({
   )
 }
 
-/**
- * Satu misi = satu baris: judul, meter segmen, lalu satu slot aksi.
- *
- * Bentuk sebelumnya menumpuk empat hal per misi — judul, chip hadiah, bar progres, dan
- * angka "0/5" — sehingga tiga misi saja sudah menjadi dua belas potong teks dan angka.
- * Meter segmen menggantikan pasangan bar + angka: target misi selalu 3–5, jadi jumlah
- * kotaknya bisa dihitung sekali lihat, dan rasio persisnya tetap ada untuk pembaca layar
- * lewat `aria-valuetext`. Lebar meter dan slot aksi dipatok supaya ketiga baris berhenti
- * di kolom yang sama, apa pun panjang judul dan status misinya.
- */
+/** Satu misi = satu baris: judul, meter segmen, lalu satu slot aksi. Bentuk sebelumnya menumpuk empat hal per misi — judul, chip hadiah, bar progres, dan angka "0/5" — sehingga tiga misi saja sudah menjadi dua belas potong teks dan angka. Meter segmen menggantikan pasangan bar + angka: target misi selalu 3–5, jadi jumlah kotaknya bisa dihitung sekali lihat, dan rasio persisnya tetap ada untuk pembaca layar lewat `aria-valuetext`. Lebar meter dan slot aksi dipatok supaya ketiga baris berhenti di kolom yang sama, apa pun panjang judul dan status misinya. */
 function MissionRow({
   mission,
   claiming,
@@ -168,18 +142,7 @@ function MissionMeter({
   )
 }
 
-/**
- * Slot aksi dengan tinggi dan lebar minimum yang sama untuk ketiga statusnya, supaya
- * baris misi yang sudah diambil tidak menggeser kolom baris di atas dan bawahnya.
- *
- * Status "sudah diambil" TETAP sebuah tombol, hanya `disabled`: bentuk sebelumnya
- * menukar tombol berbidang (`h-8`, punya padding) dengan seuntai centang tanpa bidang
- * (`h-7`), jadi tepat pada detik user menekan Ambil barisnya mengempis ~4px dan kolom
- * meter di seluruh daftar ikut bergeser — gerakan yang datangnya justru dari aksi yang
- * mestinya terasa selesai. Karena label tetap `+N` dengan kelas yang sama, satu-satunya
- * yang berubah saat diklaim adalah warna bidang dan bolt yang menjadi centang; lebar
- * tombolnya identik, jadi tidak ada satu piksel pun yang bergerak.
- */
+/** Slot aksi dengan tinggi dan lebar minimum yang sama untuk ketiga statusnya, supaya baris misi yang sudah diambil tidak menggeser kolom baris di atas dan bawahnya. Status "sudah diambil" TETAP sebuah tombol, hanya `disabled`: bentuk sebelumnya menukar tombol berbidang (`h-8`, punya padding) dengan seuntai centang tanpa bidang (`h-7`), jadi tepat pada detik user menekan Ambil barisnya mengempis ~4px dan kolom meter di seluruh daftar ikut bergeser — gerakan yang datangnya justru dari aksi yang mestinya terasa selesai. Karena label tetap `+N` dengan kelas yang sama, satu-satunya yang berubah saat diklaim adalah warna bidang dan bolt yang menjadi centang; lebar tombolnya identik, jadi tidak ada satu piksel pun yang bergerak. */
 function MissionAction({
   mission,
   claiming,

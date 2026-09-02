@@ -2,10 +2,7 @@
 
 import { useEffect } from 'react'
 
-/**
- * Aplikasinya gelap-saja, jadi chrome Telegram cukup satu nilai — sama dengan
- * `--background` di `globals.css`. Kalau nilai itu berubah, ubah di sini juga.
- */
+/** Aplikasinya gelap-saja, jadi chrome Telegram cukup satu nilai — sama dengan `--background` di `globals.css`. Kalau nilai itu berubah, ubah di sini juga. */
 const TELEGRAM_CHROME = '#101014'
 
 type TelegramInset = { top: number; bottom: number; left: number; right: number }

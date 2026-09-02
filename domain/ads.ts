@@ -12,21 +12,10 @@ export function adsConfigured(): boolean {
   return adsMaxViewsPerDay() > 0
 }
 
-/**
- * Jaringan iklan yang dipakai. Sejak migrasi ke Monetag hanya ada satu, dan sengaja
- * tetap ditulis sebagai union bernilai satu: nilainya ikut terkirim di `/api/session`
- * dan `/api/ads/ticket`, jadi kalau nanti ada jaringan kedua yang perlu dicoba,
- * penambahannya cukup di sini dan compiler yang menunjuk semua tempat yang harus
- * ikut berubah (lihat `server/ad-provider.ts`).
- */
+/** Jaringan iklan yang dipakai. Sejak migrasi ke Monetag hanya ada satu, dan sengaja tetap ditulis sebagai union bernilai satu: nilainya ikut terkirim di `/api/session` dan `/api/ads/ticket`, jadi kalau nanti ada jaringan kedua yang perlu dicoba, penambahannya cukup di sini dan compiler yang menunjuk semua tempat yang harus ikut berubah (lihat `server/ad-provider.ts`). */
 export type AdProvider = 'monetag'
 
-/**
- * Nilai aslinya ada di `domain/monetag-zone.ts` — modul daun tanpa import, supaya
- * `server/env.ts` bisa memakainya tanpa menyeret alias `@/...` ke script CLI di
- * `scripts/`. Di-re-export di sini supaya pemakai lama tetap bisa mengimpornya
- * dari `@/domain/ads`.
- */
+/** Nilai aslinya ada di `domain/monetag-zone.ts` — modul daun tanpa import, supaya `server/env.ts` bisa memakainya tanpa menyeret alias `@/...` ke script CLI di `scripts/`. Di-re-export di sini supaya pemakai lama tetap bisa mengimpornya dari `@/domain/ads`. */
 export { MONETAG_DEFAULT_ZONE_ID } from './monetag-zone'
 
 /** Nama fungsi global yang disuntikkan SDK Monetag untuk satu zone. */

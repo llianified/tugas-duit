@@ -256,8 +256,7 @@ function PaymentPanel({
         .
       </p>
 
-      {/* `.qr-plate`, bukan `bg-card`: pelatnya harus tetap terang di tema gelap supaya
-      QR-nya bisa dipindai. Lihat `--qr-plate` di `globals.css`. */}
+      {/* `.qr-plate`, bukan `bg-card`: pelatnya harus tetap terang di tema gelap supaya QR-nya bisa dipindai. Lihat `--qr-plate` di `globals.css`. */}
       {invoice.qrisUrl ? (
         <div className="stack-gap-t qr-plate flex justify-center rounded-lg p-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}

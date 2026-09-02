@@ -9,11 +9,7 @@ import {
 } from '@/domain/reward-pool'
 import type { SessionRewardPool } from '@/shell/session-api'
 
-/**
- * Kembar dari `useEnergyProjection`: server mengirim satu potret, klien memajukannya sendiri
- * supaya hitungan mundurnya berjalan tanpa polling. Begitu proyeksi melewati angka yang
- * dikirim server, session di-refresh sekali supaya keduanya kembali sepakat.
- */
+/** Kembar dari `useEnergyProjection`: server mengirim satu potret, klien memajukannya sendiri supaya hitungan mundurnya berjalan tanpa polling. Begitu proyeksi melewati angka yang dikirim server, session di-refresh sekali supaya keduanya kembali sepakat. */
 export function useRewardPoolProjection({
   payload,
   refreshSession,

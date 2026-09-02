@@ -135,11 +135,7 @@ describe('PREM-DB-3 — status premium menggerakkan batas yang dibaca server', (
     expect((await readEnergy(userId)).max).toBe(DEFAULT_ECONOMY_CONFIG.premiumMaxEnergy)
     expect((await readEnergy(userId)).max).toBeGreaterThan(energiBiasa.max)
 
-    /**
-     * Inti pemisahannya: premium hanya membayar untuk tidak diganggu. Interstitial yang
-     * nongol sendiri mati, tapi tiket berhadiah tetap boleh dibuka — itu jalan keluar
-     * saat energinya habis, dan impresinya tetap masuk sebagai pemasukan.
-     */
+    /** Inti pemisahannya: premium hanya membayar untuk tidak diganggu. Interstitial yang nongol sendiri mati, tapi tiket berhadiah tetap boleh dibuka — itu jalan keluar saat energinya habis, dan impresinya tetap masuk sebagai pemasukan. */
     const premium = await readAdsState(userId)
     expect(premium.inAppEnabled).toBe(false)
     expect(premium.enabled).toBe(true)
@@ -153,14 +149,7 @@ describe('PREM-DB-3 — status premium menggerakkan batas yang dibaca server', (
     const userId = await makeUser()
     const orderId = await makeInvoice(userId, 1, 'sig-kedaluwarsa')
 
-    /**
-     * `expires_at` kita dihitung dari jam proses sendiri dan sengaja jatuh lebih awal
-     * daripada kedaluwarsa milik gateway, jadi ada jendela nyata ketika user membayar
-     * tagihan yang sudah kita tandai `expired`. Bentuk lamanya menuntut `state='pending'`
-     * pada update terakhir, sehingga pembayaran di jendela itu melempar PAYMENT_STATE_RACE,
-     * transaksinya rollback, dan webhook menjawab 500 selamanya: uang masuk, premium tidak
-     * pernah menyala.
-     */
+    /** `expires_at` kita dihitung dari jam proses sendiri dan sengaja jatuh lebih awal daripada kedaluwarsa milik gateway, jadi ada jendela nyata ketika user membayar tagihan yang sudah kita tandai `expired`. Bentuk lamanya menuntut `state='pending'` pada update terakhir, sehingga pembayaran di jendela itu melempar PAYMENT_STATE_RACE, transaksinya rollback, dan webhook menjawab 500 selamanya: uang masuk, premium tidak pernah menyala. */
     await query(
       "update premium_payments set state='expired', updated_at=now() where order_id=$1",
       [orderId],

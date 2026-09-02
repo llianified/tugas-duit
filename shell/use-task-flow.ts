@@ -75,22 +75,11 @@ export function useTaskFlow({
     [mutateSession],
   )
 
-  /**
-   * `hold` datang dari animasi sobekan karcis di beranda (`ActiveTask`).
-   *
-   * Permintaan ke server dan animasinya jalan BERBARENGAN; yang ditunggu di
-   * sini hanya sisa waktu animasi setelah server menjawab, jadi ketukan tidak
-   * pernah jadi lebih lambat dari salah satu di antaranya. Kembaliannya
-   * dipakai pemanggil untuk memulihkan karcis kalau task gagal dimulai.
-   */
+  /** `hold` datang dari animasi sobekan karcis di beranda (`ActiveTask`). Permintaan ke server dan animasinya jalan BERBARENGAN; yang ditunggu di sini hanya sisa waktu animasi setelah server menjawab, jadi ketukan tidak pernah jadi lebih lambat dari salah satu di antaranya. Kembaliannya dipakai pemanggil untuk memulihkan karcis kalau task gagal dimulai. */
   const startTask = useCallback(
     async (payWith: TaskPayment = 'energy', hold?: Promise<unknown>): Promise<boolean> => {
       if (!task || startingTask) return false
-      /**
-       * Ambangnya `energyCostPerTask()`, bukan 1: biaya energi per task bisa disetel dari
-       * panel admin, dan `< 1` membuat klien meloloskan permintaan yang pasti ditolak server
-       * begitu biayanya dinaikkan. Bentuknya sama dengan `energyEmpty` di `active-task.tsx`.
-       */
+      /** Ambangnya `energyCostPerTask()`, bukan 1: biaya energi per task bisa disetel dari panel admin, dan `< 1` membuat klien meloloskan permintaan yang pasti ditolak server begitu biayanya dinaikkan. Bentuknya sama dengan `energyEmpty` di `active-task.tsx`. */
       if (payWith === 'energy' && energy < energyCostPerTask()) {
         notifyError(
           energySecondsToNext === null
@@ -117,10 +106,7 @@ export function useTaskFlow({
           if (!refreshed || refreshed.id === task.id) throw cause
           await beginChallenge(refreshed, payWith)
         }
-        /**
-         * Server sudah oke; sisa waktu animasi sobekan dihabiskan di sini
-         * supaya halaman task tidak muncul di tengah kertas yang belum putus.
-         */
+        /** Server sudah oke; sisa waktu animasi sobekan dihabiskan di sini supaya halaman task tidak muncul di tengah kertas yang belum putus. */
         if (hold) await hold
         selectView('captcha')
         return true

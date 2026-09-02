@@ -138,8 +138,7 @@ function ProofField({
   disabled: boolean
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
-  // Satu antrean bisa membuka lebih dari satu panel, jadi id-nya tidak boleh tetap:
-  // id ganda membuat label menyorot input milik payout lain.
+  // Satu antrean bisa membuka lebih dari satu panel, jadi id-nya tidak boleh tetap: | id ganda membuat label menyorot input milik payout lain.
   const fieldId = useId()
 
   return (

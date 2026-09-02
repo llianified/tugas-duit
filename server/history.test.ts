@@ -20,11 +20,7 @@ async function makeUser(): Promise<number> {
   return Number(rows[0].id)
 }
 
-/**
- * Menyelesaikan task pada waktu yang ditentukan sampai mikrodetik. Waktunya dikirim sebagai
- * teks, bukan `Date`, justru karena `Date` yang tidak bisa membawa mikrodetik — itu inti
- * kasus yang diuji di bawah.
- */
+/** Menyelesaikan task pada waktu yang ditentukan sampai mikrodetik. Waktunya dikirim sebagai teks, bukan `Date`, justru karena `Date` yang tidak bisa membawa mikrodetik — itu inti kasus yang diuji di bawah. */
 async function completeAt(userId: number, completedAt: string) {
   const { query } = await import('./db')
   const challengeId = (await query<{ id: string }>('select gen_random_uuid() id'))[0].id
@@ -45,16 +41,7 @@ describe('HIST-1 — paginasi riwayat tidak menjatuhkan baris', () => {
     const { getHistoryPage, parseHistoryCursor } = await import('./history')
     const userId = await makeUser()
 
-    /**
-     * 29 baris terbaru mengisi halaman pertama hampir penuh, lalu TIGA baris di dalam satu
-     * milidetik yang sama (…:00.500) menjatuhkan batas halaman tepat di tengah kelompok itu.
-     *
-     * Di situlah bug-nya hidup: `pg` mengembalikan `timestamptz` sebagai `Date` bermilidetik,
-     * jadi cursor berbasis `getTime()` membulatkan ketiganya ke batas yang sama. Perbandingan
-     * `(completed_at, id) < (cursor)` lalu menolak dua sisanya — keduanya sub-milidetik lebih
-     * AWAL dari batas, tapi setelah dibulatkan terbaca lebih baru — dan riwayatnya hilang
-     * tanpa ada yang bisa melihatnya.
-     */
+    /** 29 baris terbaru mengisi halaman pertama hampir penuh, lalu TIGA baris di dalam satu milidetik yang sama (…:00.500) menjatuhkan batas halaman tepat di tengah kelompok itu. Di situlah bug-nya hidup: `pg` mengembalikan `timestamptz` sebagai `Date` bermilidetik, jadi cursor berbasis `getTime()` membulatkan ketiganya ke batas yang sama. Perbandingan `(completed_at, id) < (cursor)` lalu menolak dua sisanya — keduanya sub-milidetik lebih AWAL dari batas, tapi setelah dibulatkan terbaca lebih baru — dan riwayatnya hilang tanpa ada yang bisa melihatnya. */
     for (let index = 0; index < 29; index += 1) {
       await completeAt(userId, `2026-03-01T11:00:${String(index).padStart(2, '0')}.000000Z`)
     }

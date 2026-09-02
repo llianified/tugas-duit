@@ -60,17 +60,7 @@ type EligibilityRow = {
   premium_until: Date | null
 }
 
-/**
- * Satu-satunya pembaca kelayakan penarikan, dipakai jalur baca maupun jalur tulis.
- *
- * Dulu keduanya punya SQL kembar. Saat premium menambahkan jeda 3 hari, hanya jalur tulis
- * yang ikut diubah — jalur baca tetap memakai 7 hari, sehingga UI menggerbang user premium
- * sampai hari ketujuh padahal server sudah menerima pengajuannya sejak hari ketiga. Yang
- * memperbaikinya bukan menyamakan konstantanya, melainkan menghapus salinannya.
- *
- * Bentuk `tx?` mengikuti `run()` di `reward-pool.ts` dan `ads.ts`: ikut transaksi saat
- * dipakai `createPayout`, berdiri sendiri saat sekadar dibaca.
- */
+/** Satu-satunya pembaca kelayakan penarikan, dipakai jalur baca maupun jalur tulis. Dulu keduanya punya SQL kembar. Saat premium menambahkan jeda 3 hari, hanya jalur tulis yang ikut diubah — jalur baca tetap memakai 7 hari, sehingga UI menggerbang user premium sampai hari ketujuh padahal server sudah menerima pengajuannya sejak hari ketiga. Yang memperbaikinya bukan menyamakan konstantanya, melainkan menghapus salinannya. Bentuk `tx?` mengikuti `run()` di `reward-pool.ts` dan `ads.ts`: ikut transaksi saat dipakai `createPayout`, berdiri sendiri saat sekadar dibaca. */
 async function readEligibility(userId: number, tx?: PoolClient): Promise<PayoutEligibility> {
   const rows = tx
     ? (await tx.query<EligibilityRow>(ELIGIBILITY_SQL, [userId])).rows
@@ -209,22 +199,7 @@ export async function createPayout(
 
     const destination = sanitizeAccountNumber(body.accountNumber)
 
-    /**
-     * Kunci per-tujuan, diambil sebelum tujuannya dibaca.
-     *
-     * Baris `users` sudah dikunci di atas, tapi kunci itu milik pengaju — dua user berbeda
-     * yang mengirim ke rekening yang sama tidak pernah bertemu di sana, jadi keduanya
-     * membaca "belum dipakai" lalu keduanya menulis. Tidak ada unique index yang bisa
-     * menutupnya: migrasi `0011` sengaja memilih index biasa supaya baris dari sebelum
-     * aturan ini boleh berdampingan, dan aturannya sendiri melintasi channel (semua
-     * e-wallet berbagi satu ruang nomor) sehingga tidak muat dalam satu unique.
-     *
-     * `pg_advisory_xact_lock`, bukan `pg_advisory_lock`: yang pertama dilepas saat commit
-     * atau rollback dan karena itu aman di pooler Neon yang berjalan mode transaksi —
-     * bedanya persis yang membuat `scripts/migrate.ts` wajib lewat endpoint langsung.
-     * Kuncinya memakai kelompok channel yang sama dengan pemeriksaannya, jadi dua pengaju
-     * ke tujuan yang sama pasti berbaris, sementara tujuan berbeda tidak saling menunggu.
-     */
+    /** Kunci per-tujuan, diambil sebelum tujuannya dibaca. Baris `users` sudah dikunci di atas, tapi kunci itu milik pengaju — dua user berbeda yang mengirim ke rekening yang sama tidak pernah bertemu di sana, jadi keduanya membaca "belum dipakai" lalu keduanya menulis. Tidak ada unique index yang bisa menutupnya: migrasi `0011` sengaja memilih index biasa supaya baris dari sebelum aturan ini boleh berdampingan, dan aturannya sendiri melintasi channel (semua e-wallet berbagi satu ruang nomor) sehingga tidak muat dalam satu unique. `pg_advisory_xact_lock`, bukan `pg_advisory_lock`: yang pertama dilepas saat commit atau rollback dan karena itu aman di pooler Neon yang berjalan mode transaksi — bedanya persis yang membuat `scripts/migrate.ts` wajib lewat endpoint langsung. Kuncinya memakai kelompok channel yang sama dengan pemeriksaannya, jadi dua pengaju ke tujuan yang sama pasti berbaris, sementara tujuan berbeda tidak saling menunggu. */
     const shared = sharedDestinationChannels(body.channelId)
     await tx.query('select pg_advisory_xact_lock(hashtext($1))', [
       `${shared.join(',')}:${destination}`,

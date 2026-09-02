@@ -36,28 +36,13 @@ import type { LeaderboardBoard, LeaderboardEntry } from '@/features/leaderboard/
 
 type BoardSurface = 'papan' | 'aktivitas'
 
-/**
- * Sama bentuknya dengan "Task / Penarikan" di halaman Riwayat: keduanya pemilih
- * tingkat atas yang menukar seluruh isi halaman, jadi keduanya pantas memakai
- * wadah `bg-track-surface` selebar layar — bukan pill tanpa wadah, yang di app ini
- * menandai saringan di dalam satu tampilan (lihat `FilterChip` di `BoardPanel`,
- * satu-satunya pemakai bahasa itu sekarang, jadi tidak ada lagi tabrakan arti
- * dengan baris ini). `SegmentedTabs` juga membawa haptic, `aria-controls`, serta
- * pengabaian klik pada tab aktif yang dulu ditulis ulang di sini; `aria-controls`
- * itu nyata — kedua cabang di bawah merender `id` panel yang ditunjuk.
- */
+/** Sama bentuknya dengan "Task / Penarikan" di halaman Riwayat: keduanya pemilih tingkat atas yang menukar seluruh isi halaman, jadi keduanya pantas memakai wadah `bg-track-surface` selebar layar — bukan pill tanpa wadah, yang di app ini menandai saringan di dalam satu tampilan (lihat `FilterChip` di `BoardPanel`, satu-satunya pemakai bahasa itu sekarang, jadi tidak ada lagi tabrakan arti dengan baris ini). `SegmentedTabs` juga membawa haptic, `aria-controls`, serta pengabaian klik pada tab aktif yang dulu ditulis ulang di sini; `aria-controls` itu nyata — kedua cabang di bawah merender `id` panel yang ditunjuk. */
 const SURFACE_TABS: readonly SegmentedTab<BoardSurface>[] = [
   { value: 'papan', label: 'Papan' },
   { value: 'aktivitas', label: 'Aktivitas' },
 ]
 
-/**
- * Dua tab tingkat atas, bukan dua item nav. Papan dan umpan aktivitas menjawab
- * pertanyaan yang sama — "apa yang sedang terjadi di antara pemain lain" — hanya
- * dengan sumbu berbeda: satu peringkat kumulatif, satu urutan waktu. Menaruhnya
- * berdampingan lebih jujur daripada menambah item keenam ke nav pill yang di lebar
- * 384px sudah menyisakan 76px per item.
- */
+/** Dua tab tingkat atas, bukan dua item nav. Papan dan umpan aktivitas menjawab pertanyaan yang sama — "apa yang sedang terjadi di antara pemain lain" — hanya dengan sumbu berbeda: satu peringkat kumulatif, satu urutan waktu. Menaruhnya berdampingan lebih jujur daripada menambah item keenam ke nav pill yang di lebar 384px sudah menyisakan 76px per item. */
 export function LeaderboardView({
   board,
   activity,
@@ -81,17 +66,7 @@ export function LeaderboardView({
       />
 
       {surface === 'aktivitas' ? (
-        /* `flex flex-1 flex-col`, dan jaraknya dibawa masing-masing cabang di dalam
-        `ActivityFeed` — bukan `region-under-brand` di pembungkus ini. Empty state
-        memusatkan diri lewat `flex-1 justify-center`, jadi pembungkus tanpa tinggi
-        membuatnya mengecil ke tinggi isinya dan menempel ke baris tab, sementara empty
-        state tab Papan — anak langsung `view-min-h` — tetap di tengah. Kelas di sini
-        yang memberi tinggi sisa itu; `region-under-brand` dipindah ke daftar dan
-        kerangkanya, satu-satunya cabang yang memang butuh jarak ke baris tab.
-
-        Catatan `region-under-brand`, bukan `region-t`, tetap berlaku untuk daftarnya:
-        umpan ini blok pertama di bawah baris tab, jadi tidak ada apa pun di atasnya
-        untuk dipisahkan garis. */
+        /* `flex flex-1 flex-col`, dan jaraknya dibawa masing-masing cabang di dalam `ActivityFeed` — bukan `region-under-brand` di pembungkus ini. Empty state memusatkan diri lewat `flex-1 justify-center`, jadi pembungkus tanpa tinggi membuatnya mengecil ke tinggi isinya dan menempel ke baris tab, sementara empty state tab Papan — anak langsung `view-min-h` — tetap di tengah. Kelas di sini yang memberi tinggi sisa itu; `region-under-brand` dipindah ke daftar dan kerangkanya, satu-satunya cabang yang memang butuh jarak ke baris tab. Catatan `region-under-brand`, bukan `region-t`, tetap berlaku untuk daftarnya: umpan ini blok pertama di bawah baris tab, jadi tidak ada apa pun di atasnya untuk dipisahkan garis. */
         <div
           role="tabpanel"
           id="panel-aktivitas"
@@ -101,11 +76,7 @@ export function LeaderboardView({
           <ActivityFeed entries={activity} />
         </div>
       ) : (
-        /* Pembungkus `flex flex-1 flex-col` di sini mengambil alih peran yang dulu
-        dipegang `view-min-h`: anak-anaknya tetap kolom flex dengan tinggi sisa yang
-        sama, jadi empty state (`flex-1 justify-center`) dan pengganjal `view-trim-b
-        flex-1` di dalam `BoardPanel` berperilaku persis seperti sebelumnya. Ia ada
-        karena `aria-controls` tab Papan butuh satu elemen untuk ditunjuk. */
+        /* Pembungkus `flex flex-1 flex-col` di sini mengambil alih peran yang dulu dipegang `view-min-h`: anak-anaknya tetap kolom flex dengan tinggi sisa yang sama, jadi empty state (`flex-1 justify-center`) dan pengganjal `view-trim-b flex-1` di dalam `BoardPanel` berperilaku persis seperti sebelumnya. Ia ada karena `aria-controls` tab Papan butuh satu elemen untuk ditunjuk. */
         <div role="tabpanel" id="panel-papan" aria-labelledby="tab-papan" className="flex flex-1 flex-col">
           {entries.length === 0 ? (
             <EmptyState
@@ -150,33 +121,12 @@ export function LeaderboardComingSoon() {
 /** Tiga, karena itu jumlah tempat di podium — bukan angka yang boleh disetel. */
 const PODIUM_SIZE = 3
 
-/**
- * Padanan rail "Clans" fomo yang akhirnya ketemu: bukan grup (app ini tidak punya
- * entitas grup), melainkan **podium** — tiga teratas diangkat keluar dari daftar
- * jadi kartu yang bisa digeser, persis posisi rail di tab Leaderboard fomo.
- *
- * Datanya nol tambahan: `entries[0..2]` yang sudah dibaca papan ini, dan tidak ada
- * kolom, tabel, atau query baru. Itu yang membedakannya dari "Clans" yang dilewati
- * di Langkah 9 — di sana yang harus dikarang adalah entitasnya, di sini yang berubah
- * cuma di mana tiga baris yang sama itu digambar.
- *
- * Duplikasi dengan daftar di bawah disengaja dan juga apa yang fomo lakukan (rail
- * "Weekly Top Trades" berisi orang yang sama dengan papan di bawahnya): podium
- * menjawab "siapa yang menang", daftar menjawab "di mana aku relatif terhadap
- * mereka". Baris papan yang sama harus tetap ada di daftar, kalau tidak nomor 4
- * akan tampak sebagai baris pertama tanpa apa pun di atasnya.
- *
- * Rail-nya baru muncul kalau ada tiga peserta. Podium berisi satu kartu bukan
- * podium — ia cuma baris papan pertama yang dipindahkan, dan daftar di bawah sudah
- * mengerjakannya lebih baik.
- */
+/** Padanan rail "Clans" fomo yang akhirnya ketemu: bukan grup (app ini tidak punya entitas grup), melainkan **podium** — tiga teratas diangkat keluar dari daftar jadi kartu yang bisa digeser, persis posisi rail di tab Leaderboard fomo. Datanya nol tambahan: `entries[0..2]` yang sudah dibaca papan ini, dan tidak ada kolom, tabel, atau query baru. Itu yang membedakannya dari "Clans" yang dilewati di Langkah 9 — di sana yang harus dikarang adalah entitasnya, di sini yang berubah cuma di mana tiga baris yang sama itu digambar. Duplikasi dengan daftar di bawah disengaja dan juga apa yang fomo lakukan (rail "Weekly Top Trades" berisi orang yang sama dengan papan di bawahnya): podium menjawab "siapa yang menang", daftar menjawab "di mana aku relatif terhadap mereka". Baris papan yang sama harus tetap ada di daftar, kalau tidak nomor 4 akan tampak sebagai baris pertama tanpa apa pun di atasnya. Rail-nya baru muncul kalau ada tiga peserta. Podium berisi satu kartu bukan podium — ia cuma baris papan pertama yang dipindahkan, dan daftar di bawah sudah mengerjakannya lebih baik. */
 function PodiumRail({ entries }: { entries: LeaderboardEntry[] }) {
   if (entries.length < PODIUM_SIZE) return null
 
   const podium = entries.slice(0, PODIUM_SIZE)
-  // Peserta di bawah podium, diringkas jadi tumpukan avatar. Ini pemakaian
-  // `AvatarStack` yang datanya benar-benar ada: satu tumpukan = beberapa orang,
-  // bukan beberapa token milik satu orang (yang tidak punya padanan di sini).
+  // Peserta di bawah podium, diringkas jadi tumpukan avatar. Ini pemakaian | `AvatarStack` yang datanya benar-benar ada: satu tumpukan = beberapa orang, | bukan beberapa token milik satu orang (yang tidak punya padanan di sini).
   const chasing = entries.slice(PODIUM_SIZE)
 
   return (
@@ -207,16 +157,7 @@ function PodiumRail({ entries }: { entries: LeaderboardEntry[] }) {
   )
 }
 
-/**
- * Kartu podium. Lebarnya dikunci `--rail-card-w` (9.5rem), jadi setelah padding
- * tersisa ~7rem untuk nama — karena itu `truncate`, dan karena itu pula chip
- * prestise serta jumlah peserta TIDAK ikut: keduanya sudah tampil di baris papan
- * orang yang sama, dan di ruang ini keduanya cuma memotong namanya.
- *
- * `halo="card"` pada medalinya, bukan `background`: pitanya ditumpuk di sudut
- * avatar yang berdiri di atas `.task-card`, jadi kontur pemisahnya harus berwarna
- * kartu — `background` akan menggambar lubang berwarna halaman di dalam kartu.
- */
+/** Kartu podium. Lebarnya dikunci `--rail-card-w` (9.5rem), jadi setelah padding tersisa ~7rem untuk nama — karena itu `truncate`, dan karena itu pula chip prestise serta jumlah peserta TIDAK ikut: keduanya sudah tampil di baris papan orang yang sama, dan di ruang ini keduanya cuma memotong namanya. `halo="card"` pada medalinya, bukan `background`: pitanya ditumpuk di sudut avatar yang berdiri di atas `.task-card`, jadi kontur pemisahnya harus berwarna kartu — `background` akan menggambar lubang berwarna halaman di dalam kartu. */
 function PodiumCard({ entry }: { entry: LeaderboardEntry }) {
   return (
     <div className="task-card [--surface-p:0.75rem] flex h-full flex-col items-center gap-1.5 text-center">
@@ -334,17 +275,7 @@ type BoardTab = 'all' | 'vip'
 
 const PAGE_SIZE = 50
 
-/**
- * Papan peringkat adalah satu-satunya layar di app ini tempat user melihat user lain.
- * Karena itu di sinilah status premium punya arti: badge yang cuma terlihat pemiliknya
- * bukan status, cuma dekorasi.
- *
- * Peringkatnya sendiri TIDAK disentuh premium — mengangkat pembeli ke atas orang yang
- * mengerjakan lebih banyak task akan menghancurkan satu-satunya hal yang membuat papan
- * ini layak dilihat. Yang diberikan premium adalah sumbu terpisah: tab VIP tempat mereka
- * berdiri sendiri dan tidak bisa tertimpa siapa pun, plus bingkai emas yang membuat
- * barisnya tetap terbaca berbeda di papan umum.
- */
+/** Papan peringkat adalah satu-satunya layar di app ini tempat user melihat user lain. Karena itu di sinilah status premium punya arti: badge yang cuma terlihat pemiliknya bukan status, cuma dekorasi. Peringkatnya sendiri TIDAK disentuh premium — mengangkat pembeli ke atas orang yang mengerjakan lebih banyak task akan menghancurkan satu-satunya hal yang membuat papan ini layak dilihat. Yang diberikan premium adalah sumbu terpisah: tab VIP tempat mereka berdiri sendiri dan tidak bisa tertimpa siapa pun, plus bingkai emas yang membuat barisnya tetap terbaca berbeda di papan umum. */
 function BoardPanel({
   entries,
   you,
@@ -451,21 +382,7 @@ function BoardPanel({
   )
 }
 
-/**
- * Bingkai peringkat: penanda posisi plus lencana bentuk tier yang menempel di sudut avatar.
- *
- * Tiga teratas memakai `RankMedal` (pita ber-notch, lihat berkasnya untuk alasan
- * bentuk & warnanya), sisanya lingkaran redam bernomor. Angka biasa milik `RankMedal`
- * TIDAK dipakai di sini: ia teks tanpa bidang, dan di atas foto profil yang warnanya
- * tidak bisa ditebak ia hilang. Kontur `halo` mengurus masalah yang sama untuk pita.
- *
- * Tier dibedakan lewat BENTUK (`TierGlyph`), bukan lewat lima warna baru. Lima warna
- * tambahan akan memperlebar palet yang tidak dipakai di mana pun lagi, dan tetap sulit
- * dibedakan pada lingkaran 28px. Bentuk terbaca tanpa itu, dan tetap terbaca oleh yang
- * tidak bisa membedakan warna.
- *
- * Emas disimpan HANYA untuk premium supaya ia tidak bersaing dengan bahasa tier.
- */
+/** Bingkai peringkat: penanda posisi plus lencana bentuk tier yang menempel di sudut avatar. Tiga teratas memakai `RankMedal` (pita ber-notch, lihat berkasnya untuk alasan bentuk & warnanya), sisanya lingkaran redam bernomor. Angka biasa milik `RankMedal` TIDAK dipakai di sini: ia teks tanpa bidang, dan di atas foto profil yang warnanya tidak bisa ditebak ia hilang. Kontur `halo` mengurus masalah yang sama untuk pita. Tier dibedakan lewat BENTUK (`TierGlyph`), bukan lewat lima warna baru. Lima warna tambahan akan memperlebar palet yang tidak dipakai di mana pun lagi, dan tetap sulit dibedakan pada lingkaran 28px. Bentuk terbaca tanpa itu, dan tetap terbaca oleh yang tidak bisa membedakan warna. Emas disimpan HANYA untuk premium supaya ia tidak bersaing dengan bahasa tier. */
 function BoardFrame({
   position,
   tier,
@@ -526,19 +443,8 @@ function BoardFrame({
   )
 }
 
-/**
- * Lencana prestise: seluruhnya turunan dari kolom yang sudah dibaca papan ini
- * (`task_count`, `task_credits`, `users.id`), jadi tidak ada tabel baru, tidak ada
- * jalur tulis baru, dan tidak ada satu credit pun yang berpindah. Itu syaratnya —
- * rank berhenti membayar di `rankPoolCapBonus`, dan gengsi tidak boleh menambah
- * liabilitas yang harus dibayar kolam reward.
- *
- * `premium` sengaja tidak ikut dirender di sini: mahkotanya sudah berdiri di
- * sebelah nama, dan dua penanda untuk satu hal membuat barisnya berisik.
- */
-/** Nama, penanda "Kamu", dan chip berbagi satu baris selebar layar ponsel. Dua chip adalah
- * batas sebelum nama mulai terpotong, dan `prestigeBadges` sudah mengurutkan dari yang
- * paling langka jadi yang terpotong selalu yang paling murah. */
+/** Lencana prestise: seluruhnya turunan dari kolom yang sudah dibaca papan ini (`task_count`, `task_credits`, `users.id`), jadi tidak ada tabel baru, tidak ada jalur tulis baru, dan tidak ada satu credit pun yang berpindah. Itu syaratnya — rank berhenti membayar di `rankPoolCapBonus`, dan gengsi tidak boleh menambah liabilitas yang harus dibayar kolam reward. `premium` sengaja tidak ikut dirender di sini: mahkotanya sudah berdiri di sebelah nama, dan dua penanda untuk satu hal membuat barisnya berisik. */
+/** Nama, penanda "Kamu", dan chip berbagi satu baris selebar layar ponsel. Dua chip adalah batas sebelum nama mulai terpotong, dan `prestigeBadges` sudah mengurutkan dari yang paling langka jadi yang terpotong selalu yang paling murah. */
 const BOARD_CHIP_LIMIT = 2
 
 const CHIP_TONE: Record<PrestigeKey, ChipTone> = {

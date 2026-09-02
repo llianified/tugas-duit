@@ -131,15 +131,7 @@ export function useViewStack() {
     window.history.back()
   }, [])
 
-  /**
-   * Nav pill adalah perpindahan menyamping, jadi ia MENGGANTI tumpukan — tidak menyusurinya
-   * mundur. Bentuk lamanya memanggil `back()` untuk Beranda, yang cuma melepas satu tingkat:
-   * dari beranda → profil → statistik, menekan "Beranda" mendarat di Profil. Menghitung
-   * berapa langkah yang harus dilepas juga tidak bisa dipakai, karena cabang di bawah sudah
-   * memakai `replaceState` sehingga panjang tumpukan tidak lagi sama dengan kedalaman
-   * riwayat browser. Satu `replaceState` menjawab keduanya, dan memperlakukan Beranda persis
-   * seperti tujuan nav yang lain.
-   */
+  /** Nav pill adalah perpindahan menyamping, jadi ia MENGGANTI tumpukan — tidak menyusurinya mundur. Bentuk lamanya memanggil `back()` untuk Beranda, yang cuma melepas satu tingkat: dari beranda → profil → statistik, menekan "Beranda" mendarat di Profil. Menghitung berapa langkah yang harus dilepas juga tidak bisa dipakai, karena cabang di bawah sudah memakai `replaceState` sehingga panjang tumpukan tidak lagi sama dengan kedalaman riwayat browser. Satu `replaceState` menjawab keduanya, dan memperlakukan Beranda persis seperti tujuan nav yang lain. */
   const select = useCallback(
     (view: AppView) => {
       const current = stackRef.current

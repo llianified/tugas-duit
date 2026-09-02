@@ -9,12 +9,7 @@ export interface PremiumBenefit {
 
 export function premiumBenefitList(perks: PremiumPerks): PremiumBenefit[] {
   return [
-    /**
-     * Mahkota memimpin daftar, bukan menutupnya. Ia satu-satunya keuntungan yang dilihat
-     * orang lain — sisanya cuma terasa oleh pemiliknya — dan kartu upsell di beranda hanya
-     * menampilkan tiga teratas, jadi urutan di sini yang menentukan apakah premium terbaca
-     * sebagai status atau sekadar paket kecepatan.
-     */
+    /** Mahkota memimpin daftar, bukan menutupnya. Ia satu-satunya keuntungan yang dilihat orang lain — sisanya cuma terasa oleh pemiliknya — dan kartu upsell di beranda hanya menampilkan tiga teratas, jadi urutan di sini yang menentukan apakah premium terbaca sebagai status atau sekadar paket kecepatan. */
     {
       key: 'badge',
       title: 'Mahkota emas di papan peringkat',
@@ -32,13 +27,7 @@ export function premiumBenefitList(perks: PremiumPerks): PremiumBenefit[] {
       detail:
         'Daya tampungnya lebih gede, jadi sekali duduk bisa ngumpulin lebih banyak sebelum stoknya habis.',
     },
-    /**
-     * Judulnya sengaja tidak berbunyi "bebas iklan". Premium hanya mematikan interstitial
-     * otomatis; tiket berhadiah tetap hidup karena impresinya yang membayari fitur ini.
-     * Menjanjikan nol iklan lalu tetap merender tombol iklan adalah bentuk kebohongan yang
-     * paling mahal — user membayar, melihat tombolnya, dan menyimpulkan seluruh daftar ini
-     * tidak bisa dipercaya. Kalimat terakhir menutup celah itu di depan, bukan di ulasan.
-     */
+    /** Judulnya sengaja tidak berbunyi "bebas iklan". Premium hanya mematikan interstitial otomatis; tiket berhadiah tetap hidup karena impresinya yang membayari fitur ini. Menjanjikan nol iklan lalu tetap merender tombol iklan adalah bentuk kebohongan yang paling mahal — user membayar, melihat tombolnya, dan menyimpulkan seluruh daftar ini tidak bisa dipercaya. Kalimat terakhir menutup celah itu di depan, bukan di ulasan. */
     {
       key: 'ads',
       title: 'Iklan yang muncul sendiri dimatikan',

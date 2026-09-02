@@ -13,18 +13,7 @@ type Summary = {
   notified: Record<string, number>
 }
 
-/**
- * Menjalankan pemeliharaan sekarang, tanpa menunggu cron harian.
- *
- * Gunanya bukan mempercepat pembersihan — itu bisa menunggu — melainkan rekonsiliasi saldo
- * dan sapuan sinyal fraud, dua hal yang ingin dilihat admin SEKARANG saat ada yang
- * mencurigakan. Hasilnya ditampilkan apa adanya, termasuk selisih saldo, karena angka itu
- * yang paling penting dan selama ini cuma muncul di log server.
- *
- * Ringkasannya dirender dari balasan route, bukan dengan menyegarkan halaman: halaman
- * Operasi menjalankan empat query saat dirender, dan memuat ulang semuanya hanya untuk
- * menampilkan enam angka membuat tab-nya berkedip tanpa alasan.
- */
+/** Menjalankan pemeliharaan sekarang, tanpa menunggu cron harian. Gunanya bukan mempercepat pembersihan — itu bisa menunggu — melainkan rekonsiliasi saldo dan sapuan sinyal fraud, dua hal yang ingin dilihat admin SEKARANG saat ada yang mencurigakan. Hasilnya ditampilkan apa adanya, termasuk selisih saldo, karena angka itu yang paling penting dan selama ini cuma muncul di log server. Ringkasannya dirender dari balasan route, bukan dengan menyegarkan halaman: halaman Operasi menjalankan empat query saat dirender, dan memuat ulang semuanya hanya untuk menampilkan enam angka membuat tab-nya berkedip tanpa alasan. */
 export function MaintenanceButton() {
   const [pending, setPending] = useState(false)
   const [summary, setSummary] = useState<Summary | null>(null)

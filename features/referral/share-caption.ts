@@ -8,15 +8,7 @@ export interface ShareStats {
   friends: number
 }
 
-/**
- * Kalimat yang ikut terkirim bersama tautannya.
- *
- * Isinya angka milik user, bukan slogan. Tautan telanjang hampir tidak pernah diposting
- * siapa pun; yang diposting adalah angka yang bisa dipamerkan, dan tautannya ikut karena
- * kebetulan menempel. Karena itu bentuk kalimatnya berubah mengikuti apa yang sudah
- * dipunyai user: yang belum menghasilkan apa-apa tidak diberi kalimat yang mengklaim
- * penghasilan — kalimat yang tidak dia percayai sendiri tidak akan dia kirim.
- */
+/** Kalimat yang ikut terkirim bersama tautannya. Isinya angka milik user, bukan slogan. Tautan telanjang hampir tidak pernah diposting siapa pun; yang diposting adalah angka yang bisa dipamerkan, dan tautannya ikut karena kebetulan menempel. Karena itu bentuk kalimatnya berubah mengikuti apa yang sudah dipunyai user: yang belum menghasilkan apa-apa tidak diberi kalimat yang mengklaim penghasilan — kalimat yang tidak dia percayai sendiri tidak akan dia kirim. */
 export function buildShareCaption(stats: ShareStats): string {
   const rupiah = formatRupiah(creditsToRupiah(stats.earnedCredits))
 

@@ -48,10 +48,7 @@ export function useIslandGeometry() {
     measurePill()
     const observer = new ResizeObserver(measurePill)
     observer.observe(pillBoxSource)
-    // The pill also moves sideways when a sibling in the brand band row is
-    // added, removed, or slides aside. Those reflows never change the pill's
-    // own box, so observe the row as well to avoid animating from a stale
-    // anchor.
+    // The pill also moves sideways when a sibling in the brand band row is | added, removed, or slides aside. Those reflows never change the pill's | own box, so observe the row as well to avoid animating from a stale | anchor.
     const row = pillBoxSource.parentElement
     if (row) observer.observe(row)
     row?.addEventListener('transitionend', measurePill)

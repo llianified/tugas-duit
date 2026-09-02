@@ -6,10 +6,7 @@
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
-    // Skrip di `scripts/` dijalankan langsung oleh Node (`--experimental-strip-types`),
-    // dan resolusi ESM Node menuntut ekstensi eksplisit — `../server/db` tanpa `.ts`
-    // gagal dengan ERR_MODULE_NOT_FOUND. Aman dinyalakan karena `noEmit` sudah aktif:
-    // TypeScript di sini hanya memeriksa tipe, yang membangun tetap Next.
+    // Skrip di `scripts/` dijalankan langsung oleh Node (`--experimental-strip-types`), | dan resolusi ESM Node menuntut ekstensi eksplisit — `../server/db` tanpa `.ts` | gagal dengan ERR_MODULE_NOT_FOUND. Aman dinyalakan karena `noEmit` sudah aktif: | TypeScript di sini hanya memeriksa tipe, yang membangun tetap Next.
     "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "module": "esnext",

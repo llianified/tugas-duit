@@ -67,11 +67,7 @@ describe('formatHistoryTime', () => {
 })
 
 describe('formatDateTime', () => {
-  /**
-   * Dipakai jejak audit panel ekonomi, yang dibaca admin dari zona mana pun. Sama seperti
-   * `formatHistoryTime`, ia mengunci WIB alih-alih mengikuti perangkat — dan menyebutkannya,
-   * karena satu-satunya gunanya adalah bisa dirujuk ulang oleh orang lain.
-   */
+  /** Dipakai jejak audit panel ekonomi, yang dibaca admin dari zona mana pun. Sama seperti `formatHistoryTime`, ia mengunci WIB alih-alih mengikuti perangkat — dan menyebutkannya, karena satu-satunya gunanya adalah bisa dirujuk ulang oleh orang lain. */
   it('memakai jam WIB dan menyebut zonanya', () => {
     expect(formatDateTime(Date.UTC(2026, 7, 18, 5, 0))).toBe('18 Agu 2026, 12.00 WIB')
   })

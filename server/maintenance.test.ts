@@ -17,13 +17,7 @@ beforeAll(async () => {
 }, 120_000)
 
 describe('MAINT-1 — seluruh pernyataan pemeliharaan jalan di database', () => {
-  /**
-   * Tugas pemeliharaan menyentuh tujuh tabel, dan sebelum ini tidak ada satu pun test
-   * yang menjalankannya — sementara cron-nya sendiri belum pernah sekali pun selesai di
-   * produksi, jadi tidak ada bukti dari sana juga. `rate_limits` dan `used_init_data`
-   * berkunci gabungan tanpa kolom `id`, jenis perbedaan yang hanya ketahuan saat SQL-nya
-   * benar-benar dieksekusi.
-   */
+  /** Tugas pemeliharaan menyentuh tujuh tabel, dan sebelum ini tidak ada satu pun test yang menjalankannya — sementara cron-nya sendiri belum pernah sekali pun selesai di produksi, jadi tidak ada bukti dari sana juga. `rate_limits` dan `used_init_data` berkunci gabungan tanpa kolom `id`, jenis perbedaan yang hanya ketahuan saat SQL-nya benar-benar dieksekusi. */
   it('menyelesaikan satu putaran penuh tanpa error SQL', async () => {
     const { runMaintenance } = await import('./maintenance')
     const summary = await runMaintenance()
@@ -37,13 +31,7 @@ describe('MAINT-1 — seluruh pernyataan pemeliharaan jalan di database', () => 
       botNotifications: expect.any(Number),
       balanceDrift: expect.any(Number),
     })
-  /**
-   * Tenggat panjang karena ini menjalankan SATU putaran pemeliharaan penuh atas database
-   * uji yang tidak pernah dikosongkan antar-run: tujuh tabel disapu, dan biayanya naik
-   * seiring baris yang ditinggalkan run-run sebelumnya. Tenggat bawaan 5 detik membuat
-   * test ini lulus di mesin bersih lalu gagal beberapa run kemudian tanpa ada kode yang
-   * berubah — kegagalan yang tidak menunjukkan apa pun selain umur direktori datanya.
-   */
+  /** Tenggat panjang karena ini menjalankan SATU putaran pemeliharaan penuh atas database uji yang tidak pernah dikosongkan antar-run: tujuh tabel disapu, dan biayanya naik seiring baris yang ditinggalkan run-run sebelumnya. Tenggat bawaan 5 detik membuat test ini lulus di mesin bersih lalu gagal beberapa run kemudian tanpa ada kode yang berubah — kegagalan yang tidak menunjukkan apa pun selain umur direktori datanya. */
   }, 60_000)
 
   it('benar-benar menghapus baris yang sudah lewat masa simpannya', async () => {
@@ -80,12 +68,7 @@ describe('MAINT-1 — seluruh pernyataan pemeliharaan jalan di database', () => 
 })
 
 describe('MAINT-2 — jadwal cron jatuh di dalam jam kirim WIB', () => {
-  /**
-   * `runEngagementNotifications` diam total di luar 08:00–20:00 WIB. Di Railway hal ini
-   * tidak pernah jadi soal karena cron-nya tiap jam, jadi selalu ada jalan yang jatuh di
-   * dalam jendela. Vercel plan Hobby membatasi cron ke sekali sehari, dan sekali sehari
-   * di jam yang salah berarti pesan bot tidak pernah terkirim — tanpa error, tanpa jejak.
-   */
+  /** `runEngagementNotifications` diam total di luar 08:00–20:00 WIB. Di Railway hal ini tidak pernah jadi soal karena cron-nya tiap jam, jadi selalu ada jalan yang jatuh di dalam jendela. Vercel plan Hobby membatasi cron ke sekali sehari, dan sekali sehari di jam yang salah berarti pesan bot tidak pernah terkirim — tanpa error, tanpa jejak. */
   it('memicu pemeliharaan pada jam yang masih mengirim pesan', async () => {
     const raw = await readFile(path.join(process.cwd(), 'vercel.json'), 'utf8')
     const crons = (JSON.parse(raw) as { crons: { path: string; schedule: string }[] }).crons
@@ -114,11 +97,7 @@ describe('MAINT-3 — gerbang rahasia cron', () => {
     expect(matchesSecret('rahasia-sama', 'rahasia-sama')).toBe(true)
   })
 
-  /**
-   * `timingSafeEqual` melempar kalau dua buffer-nya beda panjang. Karena itu keduanya
-   * di-hash dulu; tanpa itu, rahasia sepanjang berapa pun dari penyerang membuat route
-   * cron 500, bukan 401 — dan panjang yang benar jadi bisa ditebak dari bedanya respons.
-   */
+  /** `timingSafeEqual` melempar kalau dua buffer-nya beda panjang. Karena itu keduanya di-hash dulu; tanpa itu, rahasia sepanjang berapa pun dari penyerang membuat route cron 500, bukan 401 — dan panjang yang benar jadi bisa ditebak dari bedanya respons. */
   it('tidak melempar untuk panjang yang berbeda jauh', () => {
     expect(matchesSecret('a', 'rahasia-yang-jauh-lebih-panjang')).toBe(false)
     expect(matchesSecret('rahasia-yang-jauh-lebih-panjang', 'a')).toBe(false)

@@ -1653,246 +1653,6 @@
   border-left: 0;
 }
 
-/* ============================================================================ Kartu bonus channel: "kupon sobek", versi rapat ============================================================================ Kartu ini sebelumnya pelat `--muted` rata — bentuk yang sama dengan kerangka memuat dan dengan daftar misi, jadi satu-satunya hal di beranda yang bisa HILANG kalau tidak diklaim justru yang paling tidak menuntut dilihat. Bentuknya diambil dari benda yang persis begitu cara kerjanya: kupon dengan stub yang disobek. Sobekannya nyata — garis putus-putus vertikal dengan dua lubang yang menembus tepi kartu — dan stub-nya berisi satu kata dicetak tegak. Itu satu-satunya elemen yang berani di sini. Percobaan "entri channel Telegram" dibuang: avatar + gelembung + dua tombol menumpuk empat baris untuk satu penawaran satu angka, dan di layar 384px ia makan tinggi yang seharusnya milik daftar misi. Kupon dipulihkan, tapi kali ini dirapatkan: stub lebih tipis, padding sendiri (`--coupon-p`) yang lebih kecil dari `--surface-p`, dan nominal + kalimat + tombol muat dalam tiga baris tanpa satu pun ruang kosong yang tidak menandai apa pun. Tidak di-scope ke `.home-skin`: yang dibentuk adalah kartunya sendiri, bukan kulit halaman yang menumpanginya. ========================================================================== */
-.bonus-coupon {
-  --coupon-stub-w: 1.875rem;
-  --coupon-p: 0.75rem;
-  /* Tepi dan perforasinya BUKAN nada sendiri lagi: keduanya membaca token yang dipakai karcis task (`--ticket-edge`, `--perf`) dengan nilai karcis sebagai fallback kalau kupon ini dipakai di luar `.home-skin`. Dua kertas yang berdiri berdampingan di beranda dulu memakai dua warna tepi dan dua warna panduan sobek yang berbeda — dan yang lebih terang justru kartu kecil di bawah, jadi ia menuntut dibaca lebih dulu daripada karcisnya. */
-  --coupon-edge: var(--ticket-edge, color-mix(in oklab, var(--primary) 42%, var(--border)));
-  --coupon-perf: var(--perf, color-mix(in oklab, var(--foreground) 26%, transparent));
-  /* Sudut digunting, bukan dibulatkan — ukuran guntingannya sama dengan karcis, karena keduanya keluar dari mesin yang sama. */
-  --coupon-notch: var(--ticket-notch, 0.8rem);
-  /* Sekarang RADIUS lubang, bukan diameternya: lubangnya dilubangi dengan `mask` seperti di karcis, jadi angkanya masuk ke `radial-gradient()`. */
-  --coupon-hole: 0.3125rem;
-  /* Ukuran gerigi robekan — angka yang sama dengan karcis, karena sobekannya memang sobekan yang sama. Hanya terpakai saat kuponnya disobek. */
-  --tear-tooth: 0.6875rem;
-  --tear-depth: 0.28rem;
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  align-items: stretch;
-}
-
-/* Kuponnya DUA lembar yang berhimpit, bukan satu bidang dengan garis di dalamnya — persis alasan yang sama seperti karcis di atasnya: sobekan hanya bisa nyata kalau kertasnya memang dua bagian yang bisa berjalan ke arah berlawanan. Tiap bagian membawa tepinya sendiri (elemen berisi warna garis, `::before` sejauh 1px di dalamnya berisi bidangnya), dan insetnya nol di garis pertemuan supaya seam-nya tidak menyisakan pita 2px di tengah kupon. */
-.bonus-coupon-part {
-  position: relative;
-  isolation: isolate;
-  background-color: var(--coupon-edge);
-}
-.bonus-coupon-part::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  top: 1px;
-  bottom: 1px;
-}
-
-/* Stub kiri: bidang bertint dan teks tegak. */
-.bonus-coupon-stub {
-  flex: none;
-  width: var(--coupon-stub-w);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* Guntingan sudut kiri, cerminan `--ticket-notch` di karcis yang menggunting sudut atas. Karena `clip-path` memotong border, tepinya tetap dibuat dengan cara lama: elemen berisi warna garis, `::before` sejauh 1px di dalamnya berisi bidangnya. */
-  clip-path: polygon(
-    var(--coupon-notch) 0,
-    100% 0,
-    100% 100%,
-    var(--coupon-notch) 100%,
-    0 calc(100% - var(--coupon-notch)),
-    0 var(--coupon-notch)
-  );
-  /* Lubang sobek atas dan bawah, dilubangi tepat di tepi kartu sehingga yang terlihat separuhnya. Separuh sisanya milik badan kupon di sebelahnya, jadi berdua mereka membentuk satu lubang utuh di garis perforasi. */
-  mask-image:
-    radial-gradient(var(--coupon-hole) at 100% 0, #0000 98%, #000),
-    radial-gradient(var(--coupon-hole) at 100% 100%, #0000 98%, #000);
-  mask-composite: intersect;
-}
-.bonus-coupon-stub::before {
-  left: 1px;
-  right: 0;
-  clip-path: polygon(
-    calc(var(--coupon-notch) - 1px) 0,
-    100% 0,
-    100% 100%,
-    calc(var(--coupon-notch) - 1px) 100%,
-    0 calc(100% - var(--coupon-notch) + 1px),
-    0 calc(var(--coupon-notch) - 1px)
-  );
-  background-color: color-mix(in oklab, var(--primary) 12%, var(--card));
-}
-.bonus-coupon-stub-label {
-  writing-mode: vertical-rl;
-  rotate: 180deg;
-  /* Ukuran dan jarak hurufnya disamakan dengan `.home-tag` — nada "cetakan mesin" yang sama dengan nomor seri karcis, cuma dicetak tegak. */
-  font-family: var(--font-display);
-  font-size: 0.625rem;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  /* `--primary` sebagai teks sekecil ini di atas bidang gelap tidak lolos kontras; nada terangnya sudah ada tokennya sejak chip. */
-  color: var(--chip-fg-primary);
-}
-
-/* Isi kanan. Padding sendiri, bukan `--surface-p`: kartu ini satu penawaran satu angka, jadi ia tidak perlu ruang seluas kartu yang memuat daftar. */
-.bonus-coupon-body {
-  min-width: 0;
-  flex: 1;
-  padding: var(--coupon-p);
-  clip-path: polygon(
-    0 0,
-    calc(100% - var(--coupon-notch)) 0,
-    100% var(--coupon-notch),
-    100% calc(100% - var(--coupon-notch)),
-    calc(100% - var(--coupon-notch)) 100%,
-    0 100%
-  );
-  mask-image:
-    radial-gradient(var(--coupon-hole) at 0 0, #0000 98%, #000),
-    radial-gradient(var(--coupon-hole) at 0 100%, #0000 98%, #000);
-  mask-composite: intersect;
-}
-.bonus-coupon-body::before {
-  left: 0;
-  right: 1px;
-  clip-path: polygon(
-    0 0,
-    calc(100% - var(--coupon-notch) + 1px) 0,
-    100% calc(var(--coupon-notch) - 1px),
-    100% calc(100% - var(--coupon-notch) + 1px),
-    calc(100% - var(--coupon-notch) + 1px) 100%,
-    0 100%
-  );
-  /* Kertasnya kertas yang sama dengan pangkal karcis: serat diagonal tipis gaya kertas berpengaman, lalu bidang kartunya. Sapuan radial `--primary` yang dulu ada di sini dibuang — ia satu-satunya cahaya bertint di beranda, jadi kartu kecil ini bercahaya sementara karcis di atasnya rata. Cahaya di sudut kanan atas tempat pesawat kertasnya lewat sekarang cuma dari glyph-nya. */
-  background-image:
-    repeating-linear-gradient(
-      45deg,
-      color-mix(in oklab, var(--foreground) 4%, transparent) 0 1px,
-      transparent 1px 7px
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--card) 82%, var(--primary) 6%),
-      var(--card)
-    );
-}
-
-/* Garis perforasi: elemen sendiri, bukan `border-right` milik stub. Bedanya baru terasa saat disobek — sebagai garis milik stub ia ikut terbang, padahal panduan sobek harus PUTUS lebih dulu, sama seperti `.ticket-perf` di karcis. Ditaruh paling akhir di DOM supaya ia berdiri di atas kedua bagian. */
-.bonus-coupon-perf {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: var(--coupon-stub-w);
-  width: 1px;
-  background-image: repeating-linear-gradient(
-    180deg,
-    var(--coupon-perf) 0 0.25rem,
-    transparent 0.25rem 0.5rem
-  );
-}
-
-/* Pesawat kertas Telegram di sudut kanan atas. Motif, bukan bentuk hias: ia benda yang sama dengan yang ada di tombol "Join" di bawahnya. Ukurannya dipatok setinggi baris nominal supaya pucuk bawahnya berhenti sebelum baris kalimat — kalimat dan tombolnya tetap penuh kiri-kanan, tanpa wilayah yang perlu dihindari. */
-.bonus-coupon-plane {
-  position: absolute;
-  top: calc(var(--coupon-p) - 0.125rem);
-  right: var(--coupon-p);
-  width: 2rem;
-  height: 2rem;
-  rotate: -6deg;
-  color: color-mix(in oklab, var(--primary) 20%, transparent);
-  pointer-events: none;
-}
-
-/* Sobekannya dipasang HANYA di klaim, bukan di "Join". Membuka channel di tab lain tidak menghabiskan apa pun — tabnya bisa ditutup dan kuponnya masih utuh — sedangkan klaim satu-satunya langkah yang tidak bisa diulang. Kupon cuma bisa sobek sekali, jadi sobekan itu milik langkah yang benar-benar memakainya. Mekanikanya sekarang sama dengan karcis di atasnya: yang membuat sobekan terbaca sebagai sobekan bukan gerakannya, tapi TEPINYA — kedua bagian bertemu lurus selama diam, dan begitu `data-tearing` menyala tepi pertemuannya berganti jadi gerigi lalu keduanya berjalan ke arah berlawanan. Versi lama hanya menerbangkan stub dan memudarkan sisanya, jadi dua kartu yang berdiri berdampingan di Beranda memakai dua bahasa sobekan yang berbeda. Durasinya datang dari `--tear-ms` yang dipasang komponen, seperti karcis: penyegaran sesi ditahan selama itu, karena data barulah yang melepas kartu ini dari Beranda. Kalau tidak ditahan, sobekannya terpotong di frame pertama — dan dengan satu variabel, angka di JS dan CSS tak bisa berbeda. */
-.bonus-coupon[data-tearing='true'] {
-  /* Kartu sedang pergi: tombol "Join" dan "Klaim" tidak boleh bisa ditekan lagi di tengah sobekan. */
-  pointer-events: none;
-}
-.bonus-coupon[data-tearing='true'] .bonus-coupon-stub {
-  /* Gerigi ditumpuk di atas badan kertas dan HANYA ada saat menyobek — kalau ia selalu ada, di keadaan diam ia cuma celah bergerigi yang tak masuk akal. Bentuknya sama dengan karcis, cuma diputar: giginya tumbuh ke kanan, jadi tilenya berulang ke bawah (`repeat-y`) alih-alih ke samping. Lubang sobek dilepas di sini justru karena itu titik pangkal robekan — setelah kertasnya terbelah, lubangnya sudah jadi bagian dari geriginya. */
-  mask-image:
-    conic-gradient(from -135deg at right, #0000, #000 1deg 89deg, #0000 90deg),
-    linear-gradient(#000, #000);
-  mask-size:
-    var(--tear-depth) var(--tear-tooth),
-    calc(100% - var(--tear-depth)) 100%;
-  mask-position:
-    right top,
-    left top;
-  mask-repeat: repeat-y, no-repeat;
-  mask-composite: add;
-  animation: coupon-tear-stub var(--tear-ms, 520ms) cubic-bezier(0.22, 0.68, 0.24, 1) forwards;
-  will-change: translate, rotate, opacity;
-}
-.bonus-coupon[data-tearing='true'] .bonus-coupon-body {
-  mask-image:
-    conic-gradient(from 45deg at left, #0000, #000 1deg 89deg, #0000 90deg),
-    linear-gradient(#000, #000);
-  /* Gigi badan sengaja sedikit lebih rapat dan digeser setengah gigi: dua tepi yang berpola identik terbaca sebagai guntingan mesin, bukan robekan. */
-  mask-size:
-    var(--tear-depth) calc(var(--tear-tooth) * 0.82),
-    calc(100% - var(--tear-depth)) 100%;
-  mask-position:
-    left calc(var(--tear-tooth) / 2),
-    right top;
-  mask-repeat: repeat-y, no-repeat;
-  mask-composite: add;
-  animation: coupon-tear-body var(--tear-ms, 520ms) cubic-bezier(0.22, 0.68, 0.24, 1) forwards;
-  will-change: translate, rotate, opacity;
-}
-/* Perforasinya hilang lebih dulu: begitu kertasnya putus, panduan sobeknya sudah tidak menandai apa pun. */
-.bonus-coupon[data-tearing='true'] .bonus-coupon-perf {
-  animation: tear-perf-snap 140ms linear forwards;
-}
-
-@keyframes coupon-tear-stub {
-  0% {
-    translate: 0 0;
-    rotate: 0deg;
-  }
-  /* Kertas ditarik dan menahan sebentar sebelum putus — tanpa jeda ini kedua bagian cuma bergeser, tidak terasa ada yang disobek. */
-  16% {
-    translate: 2px 0;
-    rotate: -0.5deg;
-  }
-  /* Jarak dan putarannya diambil dari `ticket-tear-top`, cuma diputar 90°: sobekan kupon dulu berputar -14deg — tiga kali lipat karcisnya — jadi dua kertas yang sobek di halaman yang sama terasa dari dua tangan berbeda. */
-  100% {
-    translate: -3.5rem -0.75rem;
-    rotate: -4deg;
-    opacity: 0;
-  }
-}
-@keyframes coupon-tear-body {
-  0% {
-    translate: 0 0;
-    rotate: 0deg;
-  }
-  16% {
-    translate: -2px 0;
-    rotate: 0.4deg;
-  }
-  100% {
-    translate: 3rem 0.5rem;
-    rotate: 3deg;
-    opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  /* Tanpa gerak, yang tersisa cuma kepergiannya. `TEAR_MS` juga dipangkas di sisi JS lewat media query yang sama, jadi jedanya tidak ikut tertinggal. */
-  .bonus-coupon[data-tearing='true'] {
-    animation: fade-in 200ms ease-out reverse both;
-  }
-  .bonus-coupon[data-tearing='true'] .bonus-coupon-stub,
-  .bonus-coupon[data-tearing='true'] .bonus-coupon-body,
-  .bonus-coupon[data-tearing='true'] .bonus-coupon-perf {
-    animation: none;
-    mask-image: none;
-  }
-}
-
 /* --- Transaksi: baris buku kas -------------------------------------------- */
 .home-ledger li {
   border-bottom-style: dashed;
@@ -1902,16 +1662,24 @@
   background-color: transparent;
 }
 
-/* ============================================================================ Kartu premium: "perangko emas" ============================================================================ Kartu ini satu-satunya bidang di beranda yang bukan kertas: pelat gradien emas bersudut bulat, berdiri persis di antara karcis yang digunting dan kupon yang disobek. Emas yang dipudarkan bukan penanda apa pun — kartu mana saja bisa memakainya — jadi yang menyatakan "ini premium" tinggal warnanya. Perangko dipilih karena benda kertas inilah yang cara kerjanya persis sama dengan premium: DIBELI pada nominal yang tercetak di sudutnya, lalu DITEMPEL supaya dilihat orang lain. Jadi harganya jatuh ke tempat nominal perangko, mahkotanya menempati posisi potret, dan gigi perforasi di keempat tepi jadi satu-satunya bentuk di halaman ini yang tidak bisa tertukar dengan karcis (sudut digunting) atau kupon (satu sisi disobek). Saat premiumnya aktif, perangkonya DICAP: sisa hari duduk di dalam cap pos bundar yang miring. Dua keadaan, satu bentuk — yang membedakan bukan warna melainkan apakah perangkonya sudah terpakai. Tidak di-scope ke `.home-skin`, sama alasannya dengan `.bonus-coupon`: yang dibentuk kartunya sendiri, bukan kulit halaman yang menumpanginya. ========================================================================== */
-.premium-stamp {
+/* ============================================================================ Kartu perangko: premium & bonus channel ============================================================================ Kartu ini satu-satunya bidang di beranda yang bukan kertas: pelat gradien emas bersudut bulat, berdiri persis di antara karcis yang digunting dan kupon yang disobek. Emas yang dipudarkan bukan penanda apa pun — kartu mana saja bisa memakainya — jadi yang menyatakan "ini premium" tinggal warnanya. Perangko dipilih karena benda kertas inilah yang cara kerjanya persis sama dengan premium: DIBELI pada nominal yang tercetak di sudutnya, lalu DITEMPEL supaya dilihat orang lain. Jadi harganya jatuh ke tempat nominal perangko, mahkotanya menempati posisi potret, dan gigi perforasi di keempat tepi jadi satu-satunya bentuk di halaman ini yang tidak bisa tertukar dengan karcis (sudut digunting) atau kupon (satu sisi disobek). Saat premiumnya aktif, perangkonya DICAP: sisa hari duduk di dalam cap pos bundar yang miring. Dua keadaan, satu bentuk — yang membedakan bukan warna melainkan apakah perangkonya sudah terpakai. Bentuknya sekarang dipakai DUA kartu, bukan satu: premium dengan tinta emas dan bonus channel dengan tinta biru, dibedakan HANYA oleh `--stamp-accent`. Kupon-sobek yang dulu dipakai bonus channel dibuang. Alasannya bukan penyeragaman demi penyeragaman: keduanya kertas berukuran penuh yang menuntut aksi dan berdiri bertumpuk di beranda, jadi dua bahasa bentuk yang berbeda membuat mereka terbaca sebagai dua ajakan sederajat yang saling menekan sebelum daftar transaksi. Sekarang keduanya satu bentuk yang bergantian di satu tempat (`.card-carousel-viewport`), dan yang membedakan tinggal tintanya. Yang hilang bersama kupon adalah arah "sekali sobek" — dibayar oleh cap: perangko bercap tidak bisa dipakai dua kali, dan capnya sudah jadi bahasa halaman ini lewat premium yang aktif. Tidak di-scope ke `.home-skin`: yang dibentuk kartunya sendiri, bukan kulit halaman yang menumpanginya. ========================================================================== */
+.stamp {
+  /* Satu-satunya hal yang membedakan kedua perangko. Bidang, gigi, bingkai cetak, dan cap semuanya membacanya, jadi memberi warna pada perangko baru berarti menyetel SATU nilai — bukan menyalin tujuh `color-mix` yang bisa lupa diganti salah satunya. Emas jadi bawaan karena premium yang lebih dulu memakai bentuk ini. */
+  --stamp-accent: var(--premium);
+  /* Nada TEKS-nya dipisah dari nada bidangnya. Beberapa warna aksen tidak lolos kontras sebagai huruf 10px di atas kertas gelap meski bagus sebagai bidang — jadi varian yang begitu (lihat `.stamp-channel`) mengganti nada teksnya tanpa ikut memucatkan kertasnya. */
+  --stamp-accent-fg: var(--stamp-accent);
   /* Radius lubang gigi, sengaja jauh lebih kecil dari lubang sobek karcis (`--ticket-hole`, 0.3125rem): gigi perangko adalah deret lubang RAPAT, dan pada ukuran lubang karcis ia berhenti terbaca sebagai gigi lalu mulai terbaca sebagai kartu yang tepinya rusak. */
   --stamp-tooth: 0.28rem;
   --stamp-step: 1rem;
   --stamp-p: 0.9375rem;
-  --stamp-ink: color-mix(in oklab, var(--premium) 32%, transparent);
+  --stamp-ink: color-mix(in oklab, var(--stamp-accent) 32%, transparent);
   position: relative;
   isolation: isolate;
-  display: block;
+  /* Kolom, bukan `block`: kedua perangko diakhiri satu baris aksi (tombol, atau chevron "lihat paket"), dan di dalam carousel tinggi kartunya diambil dari kartu tertinggi. Sebagai `block`, kartu yang isinya lebih pendek menyisakan ruang kosong di BAWAH baris aksinya — jadi barisnya menggantung di tengah kertas. Sebagai kolom, `.stamp-foot` bisa menuntut sisa ruangnya dan baris aksi kedua kartu berhenti di garis yang sama. */
+  display: flex;
+  flex-direction: column;
+  /* Mengisi tinggi slide carousel yang sudah diregangkan ke kartu tertinggi. Di luar carousel induknya tinggi-otomatis, jadi nilainya jatuh ke `auto` dan tidak berarti apa-apa. */
+  height: 100%;
   padding: var(--stamp-p);
   /* Dua lapis: serat kertas diagonal — angka yang sama dengan pangkal karcis, karena kertasnya keluar dari mesin yang sama — di atas bidang emas yang DICAMPUR ke `--card`. Emasnya bukan lapisan transparan seperti versi lama: perangko itu kertas yang dicetak, jadi warnanya harus bidang, bukan kabut yang menumpang di atas latar halaman. */
   background-image:
@@ -1922,8 +1690,8 @@
     ),
     linear-gradient(
       155deg,
-      color-mix(in oklab, var(--premium) 24%, var(--card)),
-      color-mix(in oklab, var(--premium) 10%, var(--card)) 60%,
+      color-mix(in oklab, var(--stamp-accent) 24%, var(--card)),
+      color-mix(in oklab, var(--stamp-accent) 10%, var(--card)) 60%,
       var(--card)
     );
   /* Giginya dilubangi, bukan digambar: empat lapis mask, satu per tepi, tiap lapis satu lubang yang diulang sepanjang tepinya. `round` yang membuat jumlah lubangnya bulat — dengan `repeat` biasa, gigi terakhir terpotong separuh di sudut dan tepi kanan tidak lagi seirama tepi kiri. Kalau `mask-composite` tidak didukung, hasilnya hanya persegi tanpa gigi (semua lapis di-`add`), jadi kartunya tetap terbaca — tidak pernah jadi bidang berlubang di mana-mana. */
@@ -1942,7 +1710,7 @@
 }
 
 /* Bingkai cetak. Di perangko sungguhan garis inilah yang membatasi area cetak — bukan tepi kertasnya — jadi ia berdiri DI DALAM gigi, bukan menempel di lubangnya. `z-index: -1` menaruhnya di atas bidang emas tapi di bawah teks; `isolation` di induknya yang menahan nilai negatif itu agar tidak jatuh ke belakang halaman. */
-.premium-stamp::before {
+.stamp::before {
   content: '';
   position: absolute;
   z-index: -1;
@@ -1951,13 +1719,36 @@
   pointer-events: none;
 }
 
-/* Label kecil nada emas. Kelas sendiri, BUKAN utility `text-premium` yang ditempel di elemen yang sama: `.home-tag` hidup di luar layer, jadi ia mengalahkan utility warna apa pun. Kelas ini berdiri setelahnya di berkas yang sama dengan kekhususan yang setara, jadi urutannya yang menentukan — dan itu tertulis di sini supaya tidak terbaca sebagai kebetulan. */
-.premium-stamp-tag {
-  color: color-mix(in oklab, var(--premium) 90%, transparent);
+/* Label kecil nada aksen. Kelas sendiri, BUKAN utility `text-premium` yang ditempel di elemen yang sama: `.home-tag` hidup di luar layer, jadi ia mengalahkan utility warna apa pun. Kelas ini berdiri setelahnya di berkas yang sama dengan kekhususan yang setara, jadi urutannya yang menentukan — dan itu tertulis di sini supaya tidak terbaca sebagai kebetulan. */
+.stamp-tag {
+  color: color-mix(in oklab, var(--stamp-accent-fg) 90%, transparent);
+}
+
+/* Angka dan glyph bernada aksen, kekuatan penuh. Sama seperti `.stamp-tag`, ini kelas dan bukan utility Tailwind — supaya kedua perangko memakai satu nama untuk "tinta kartu ini" alih-alih menuliskan `text-premium` di satu kartu dan nilai arbitrer di kartu lainnya. */
+.stamp-ink-fg {
+  color: var(--stamp-accent-fg);
+}
+
+/* Posisi potret perangko: bidang bundar bertint berisi satu glyph. Di premium isinya mahkota (satu-satunya keuntungan yang dilihat orang lain), di bonus channel pesawat kertas Telegram (benda yang sama dengan yang ada di tombol "Join" di bawahnya). Keduanya duduk di tempat yang sama karena keduanya menjawab pertanyaan yang sama: perangko ini perangko apa. */
+.stamp-portrait {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  background-color: color-mix(in oklab, var(--stamp-accent) 20%, transparent);
+}
+
+/* Baris aksi paling bawah. `margin-top: auto` yang membuat kedua perangko berakhir di garis yang sama di dalam carousel; `padding-top` menjaga jaraknya saat isinya justru sudah setinggi kartunya, karena di keadaan itu `auto` bernilai nol. Kelas sendiri, bukan `stack-gap-t mt-auto`: keduanya menyetel `margin-top`, jadi yang menang bergantung pada urutan berkas dan itu bukan hal yang boleh diserahkan pada kebetulan. */
+.stamp-foot {
+  margin-top: auto;
+  padding-top: var(--stack-gap);
 }
 
 /* Cap pos: dua cincin sepusat berisi sisa hari. Miringnya yang penting — cap tegak terbaca sebagai lencana yang dirancang, sementara cap miring terbaca sebagai sesuatu yang ditekankan ke kertas SETELAH perangkonya ditempel. Angkanya duduk di dalam cap karena sisa hari memang satu-satunya hal yang diminta dibaca dari perangko yang sudah terpakai; cap yang cuma berisi tulisan hiasan tidak akan berhak menempati ruang sebesar ini. */
-.premium-postmark {
+.stamp-postmark {
   position: relative;
   flex: none;
   display: flex;
@@ -1967,17 +1758,151 @@
   width: 4.25rem;
   height: 4.25rem;
   border-radius: 9999px;
-  border: 1px solid color-mix(in oklab, var(--premium) 52%, transparent);
+  border: 1px solid color-mix(in oklab, var(--stamp-accent) 52%, transparent);
   rotate: -7deg;
 }
-.premium-postmark::before {
+.stamp-postmark::before {
   content: '';
   position: absolute;
   inset: 0.1875rem;
   border-radius: inherit;
-  border: 1px dashed color-mix(in oklab, var(--premium) 34%, transparent);
+  border: 1px dashed color-mix(in oklab, var(--stamp-accent) 34%, transparent);
 }
 /* `.home-tag` memberi jarak huruf 0.2em yang menempel di SISI KANAN huruf terakhir, jadi teks yang di-`center` di dalam cap tampak bergeser ke kiri sebanyak itu. `text-indent` membayarnya balik alih-alih mengurangi jarak hurufnya, supaya nada "cetakan mesin"-nya tidak ikut hilang. */
-.premium-postmark .home-tag {
+.stamp-postmark .home-tag {
   text-indent: 0.2em;
+}
+
+/* --- Perangko bonus channel: kertas yang sama, tinta biru ------------------ Warnanya sengaja TIDAK ikut jadi emas. Emas di aplikasi ini sudah punya arti tunggal — premium — dan perangko bonus yang emas akan menjanjikan hal yang bukan miliknya. Jadi yang diseragamkan bentuknya, bukan tintanya: dua perangko dari mesin yang sama, dicetak dengan dua tinta. */
+.stamp-channel {
+  --stamp-accent: var(--primary);
+  /* `--primary` sebagai huruf 10px di atas kertas gelap tidak lolos kontras, dan nada terangnya sudah punya token sejak chip. Hanya nada TEKS yang diganti — bidang, gigi, bingkai cetak, dan cap tetap dari `--primary`, jadi kertasnya tetap biru. */
+  --stamp-accent-fg: var(--chip-fg-primary);
+}
+
+/* --- Cap "dicap": perangko yang habis dipakai ------------------------------ Ini yang menggantikan sobekan kupon. Perangko tidak bisa disobek tanpa berhenti terbaca sebagai perangko, tapi ia punya cara sendiri untuk habis: DICAP. Capnya ditekankan ke kertas, ditahan sebentar supaya terbaca, lalu kertasnya pergi — dan yang tertinggal di beranda adalah kartu berikutnya di carousel. Bahasa ini bukan bahasa baru di halaman ini: premium yang aktif memakai cap pos yang sama, cuma di sana capnya sudah kering sejak kartunya digambar. Dipasang HANYA di klaim, bukan di "Join". Membuka channel di tab lain tidak menghabiskan apa pun — tabnya bisa ditutup dan bonusnya masih ada — sedangkan klaim satu-satunya langkah yang tidak bisa diulang. Durasinya datang dari `--stamp-ms` yang dipasang komponen, seperti `--tear-ms` di karcis: penyegaran sesi ditahan selama itu, karena data barulah yang melepas kartu ini dari beranda. Kalau tidak ditahan, capnya terpotong di frame pertama — dan dengan satu variabel, angka di JS dan CSS tak bisa berbeda. */
+.stamp[data-stamping='true'] {
+  /* Kartu sedang pergi: "Join" dan "Klaim" tidak boleh bisa ditekan lagi di tengah cap. */
+  pointer-events: none;
+  animation: stamp-spent var(--stamp-ms, 640ms) ease-out forwards;
+}
+
+/* Bidang capnya, dipusatkan di atas isi kartu. Hanya ada saat mengecap — di keadaan diam ia cuma cincin yang menghalangi tombol. */
+.stamp-strike {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.stamp-strike .stamp-postmark {
+  /* Bidangnya diberi kertas sendiri supaya angka di bawahnya tidak terbaca menembus cap. */
+  background-color: color-mix(in oklab, var(--card) 82%, transparent);
+  animation: stamp-strike-in calc(var(--stamp-ms, 640ms) * 0.42)
+    cubic-bezier(0.2, 1.35, 0.3, 1) forwards;
+  will-change: scale, rotate, opacity;
+}
+
+/* Capnya turun dari atas kertas — besar, miring, lalu mengunci. Overshoot kecil di 55% itu tekanannya: tanpa itu capnya cuma mengecil, tidak terasa ditekankan. Berakhir di -7deg, sudut yang sama dengan cap premium yang sudah kering. */
+@keyframes stamp-strike-in {
+  0% {
+    opacity: 0;
+    scale: 1.8;
+    rotate: -20deg;
+  }
+  55% {
+    opacity: 1;
+    scale: 0.94;
+    rotate: -4deg;
+  }
+  100% {
+    opacity: 1;
+    scale: 1;
+    rotate: -7deg;
+  }
+}
+/* Kertasnya ditahan dulu selama capnya dibaca, baru pergi. */
+@keyframes stamp-spent {
+  0%,
+  58% {
+    opacity: 1;
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 0.97;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Tanpa gerak, yang tersisa cuma kepergiannya. `CHANNEL_STAMP_MS` juga dipangkas di sisi JS lewat media query yang sama, jadi jedanya tidak ikut tertinggal. */
+  .stamp[data-stamping='true'] {
+    animation: fade-in 200ms ease-out reverse both;
+  }
+  .stamp-strike .stamp-postmark {
+    animation: none;
+  }
+}
+
+/* ============================================================================ Carousel kartu beranda ============================================================================ Premium dan bonus channel dulu berdiri bertumpuk. Keduanya kertas berukuran penuh yang menuntut aksi, jadi beranda punya dua ajakan sederajat yang saling menekan tepat sebelum daftar transaksi — dan yang di bawah hampir selalu terlewat. Sekarang keduanya berbagi SATU tempat dan bergantian tiap lima detik. Tingginya diambil dari kartu TERTINGGI, bukan dari kartu yang sedang tampil (`align-items: stretch` di trek). Ini syarat, bukan hiasan: dengan tinggi yang ikut isinya, tiap perpindahan menggeser daftar transaksi di bawahnya, dan halaman yang bergerak sendiri tiap lima detik lebih buruk daripada dua kartu bertumpuk. Dengan satu kartu, komponennya tidak memakai bentuk ini sama sekali — tidak ada trek, tidak ada titik. Titik yang cuma satu bukan penunjuk apa pun, ia cuma menjanjikan ada kartu lain yang tidak ada. ========================================================================== */
+.card-carousel-viewport {
+  overflow: hidden;
+  /* Geseran mendatar ditangani sendiri; gulir tegak halaman tetap milik halaman. */
+  touch-action: pan-y;
+}
+.card-carousel-track {
+  display: flex;
+  align-items: stretch;
+  translate: calc(var(--slide, 0) * -100%);
+  transition: translate 460ms cubic-bezier(0.22, 0.68, 0.24, 1);
+}
+.card-carousel-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  display: flex;
+}
+/* Kartunya yang meregang, bukan slidenya — supaya tinggi trek benar-benar sampai ke tepi kertas. */
+.card-carousel-slide > * {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Titik penunjuk. Bentuknya lubang perforasi, nadanya nada panduan sobek (`--perf`) — bukan warna aksen: titik ini milik halaman, bukan milik salah satu perangko, dan titik yang ikut berganti warna tiap lima detik menarik mata ke penunjuk alih-alih ke kartunya. Yang aktif memanjang, jadi keadaannya terbaca dari bentuk, bukan cuma dari terang-gelapnya. */
+.card-carousel-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  margin-top: var(--stack-gap);
+}
+.card-carousel-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Bidang sentuhnya jauh lebih besar dari titiknya: titik 6px yang bisa ditekan tepat 6px tidak bisa ditekan dengan jempol. */
+  width: 1.5rem;
+  height: 1.25rem;
+  border-radius: 0.375rem;
+}
+.card-carousel-dot::before {
+  content: '';
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background-color: var(--perf, color-mix(in oklab, var(--foreground) 26%, transparent));
+  transition:
+    width 260ms cubic-bezier(0.22, 0.68, 0.24, 1),
+    background-color 200ms ease-out;
+}
+.card-carousel-dot[aria-current='true']::before {
+  width: 0.9375rem;
+  background-color: color-mix(in oklab, var(--foreground) 58%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-carousel-track,
+  .card-carousel-dot::before {
+    transition: none;
+  }
 }

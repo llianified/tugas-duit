@@ -7,7 +7,7 @@
  * di CLAUDE.md. CI hanya memeriksa commit milik PR, jadi riwayat lama
  * dibiarkan apa adanya.
  */
-export default {
+const configuration = {
   extends: ['@commitlint/config-conventional'],
   rules: {
     // `subject-case` dimatikan: config-conventional menolak kapital di awal,
@@ -34,3 +34,5 @@ export default {
     'body-max-line-length': [1, 'always', 100],
   },
 }
+
+export default configuration

@@ -301,6 +301,51 @@
   .meter-h {
     height: var(--meter-h);
   }
+  .accent-progress-sweep {
+    position: relative;
+    overflow: hidden;
+  }
+  .accent-progress-sweep::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    left: -45%;
+    width: 35%;
+    background: linear-gradient(
+      to right,
+      transparent,
+      color-mix(in oklab, var(--primary-foreground) 34%, transparent),
+      transparent
+    );
+    opacity: 0;
+    animation: accent-progress-sweep 3.2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes accent-progress-sweep {
+    0%,
+    20% {
+      opacity: 0;
+      translate: 0;
+    }
+    21% {
+      opacity: 1;
+    }
+    36% {
+      opacity: 1;
+      translate: 420%;
+    }
+    37%,
+    100% {
+      opacity: 0;
+      translate: 420%;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .accent-progress-sweep::after {
+      animation: none;
+      display: none;
+    }
+  }
   .ring-border {
     box-shadow: 0 0 0 1px var(--border);
   }
@@ -799,9 +844,12 @@
     height: var(--nav-pill-h);
     align-items: center;
     padding-inline: var(--nav-pill-px);
-    border: 1px solid var(--border);
+    border: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent);
     border-radius: 9999px;
-    background-color: var(--muted);
+    background-color: color-mix(in oklab, var(--muted) 72%, transparent);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+    backdrop-filter: saturate(180%) blur(18px);
+    box-shadow: 0 8px 28px color-mix(in oklab, var(--background) 42%, transparent);
   }
   /* Satu bidang aktif dipakai bersama semua item supaya perubahan halaman terlihat bergeser, bukan berganti warna di tempat. */
   .nav-pill-indicator {

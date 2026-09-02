@@ -44,6 +44,7 @@ export function CreditAmount({
   hint,
   size = 'sm',
   tone = 'primary',
+  measure,
   className,
 }: {
   value: string
@@ -52,6 +53,8 @@ export function CreditAmount({
   hint?: ReactNode
   size?: 'sm' | 'xl' | '2xl' | 'display'
   tone?: 'primary' | 'neutral'
+  /** Teks yang dipakai MENGUKUR, kalau berbeda dari yang ditampilkan. Angka hero dianimasikan naik frame demi frame, jadi `value` sesaat lebih pendek dari nilai akhirnya — dan karena ukuran huruf dihitung dari jumlah digit, angkanya akan mengecil satu tingkat tepat saat melewati 999 → 1.000, di tengah animasi. Diukur dari nilai akhir, ukurannya sudah benar sejak frame pertama dan tidak bergerak lagi. */
+  measure?: string
   className?: string
 }) {
   return (
@@ -62,7 +65,11 @@ export function CreditAmount({
         CREDIT_SIZE_CLASS[size],
         className,
       )}
-      style={size === 'display' ? { fontSize: heroFontSize(`${prefix ?? ''}${value}`) } : undefined}
+      style={
+        size === 'display'
+          ? { fontSize: heroFontSize(`${prefix ?? ''}${measure ?? value}`) }
+          : undefined
+      }
     >
       {size === 'display' ? (
         <DisplayValue prefix={prefix} value={value} />

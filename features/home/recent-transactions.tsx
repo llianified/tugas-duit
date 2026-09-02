@@ -7,11 +7,9 @@ import { formatCredits, formatHistoryTime } from '@/shared/lib/format'
 
 export function RecentTransactions({
   history,
-  completedCount,
   onSeeAll,
 }: {
   history: HistoryEntry[]
-  completedCount: number
   onSeeAll: () => void
 }) {
   const isEmpty = history.length === 0
@@ -21,15 +19,16 @@ export function RecentTransactions({
   return (
     <DataList
       label="Transaksi terakhir"
-      badge={isEmpty ? undefined : `${formatCredits(completedCount)} task`}
+      /* Chip "N task" dilepas. Angka yang dibawanya adalah TOTAL task selesai seumur akun, sementara daftar di bawahnya cuma tiga baris terakhir — dua bilangan berbeda yang duduk berdampingan seolah satu, dan chip itu pula yang menekan tautan aksi ke pinggir. Totalnya masih utuh di Profil dan Statistik, tempatnya memang di sana. */
       action={
         isEmpty ? undefined : (
+          /* "Lihat semua", bukan "Riwayat": yang dijanjikan tautan ini adalah sisa dari daftar yang sedang dibaca, dan kalimat itu menyebutnya langsung. "Riwayat" adalah nama halaman tujuan — ia menuntut user sudah tahu halaman itu berisi apa. */
           <button
             type="button"
             onClick={onSeeAll}
             className="focus-ring transition-ui rounded-sm text-[13px] font-semibold text-primary hover:underline"
           >
-            Riwayat
+            Lihat semua
           </button>
         )
       }

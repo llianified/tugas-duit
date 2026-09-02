@@ -66,6 +66,7 @@ export function IslandPill({
   srSummary,
   isOpen,
   slideOutTo,
+  promoted = false,
   onToggle,
   onClose,
   className,
@@ -80,6 +81,8 @@ export function IslandPill({
   srSummary?: ReactNode
   isOpen: boolean
   slideOutTo?: 'left' | 'right'
+  /** Pill tetap tinggal di pita saat island lain terbuka: ia pindah ke tengah dan melebar jadi kapsul, bukan menyingkir ke luar layar. */
+  promoted?: boolean
   onToggle: () => void
   onClose: () => void
   className?: string
@@ -95,6 +98,7 @@ export function IslandPill({
       ref={islandRef}
       data-island={isOpen ? 'open' : 'closed'}
       data-island-aside={slideOutTo}
+      data-island-promoted={promoted && !isOpen ? 'true' : undefined}
       className={cn('island', className)}
     >
       <button

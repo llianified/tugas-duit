@@ -47,7 +47,7 @@ export function TapAction({
       className={cn(
         'focus-ring transition-ui press-scale-soft group flex w-full items-center rounded-cta disabled:pointer-events-none',
         compact ? 'justify-center gap-2 px-3 text-center' : 'gap-3 px-4 text-left',
-        'control-h',
+        'button-h',
         TONE_CLASS[tone],
         className,
       )}
@@ -102,7 +102,7 @@ export function TapActionWaiting({
       className={cn(
         'btn-label flex w-full items-center rounded-cta font-semibold text-muted-foreground',
         compact ? 'justify-center gap-2 px-3 text-center' : 'gap-3 px-4',
-        'control-h',
+        'button-h',
         tone === 'neutral' ? 'ring-border' : 'bg-muted',
         className,
       )}

@@ -466,7 +466,7 @@ function PrestigeChips({ entry }: { entry: LeaderboardEntry }) {
   return (
     <>
       {badges.map((badge) => (
-        <MetaBadge key={badge.key} tone={CHIP_TONE[badge.key]} title={badge.detail}>
+        <MetaBadge key={badge.key} tone={CHIP_TONE[badge.key]} detail={badge.detail}>
           {badge.label}
         </MetaBadge>
       ))}

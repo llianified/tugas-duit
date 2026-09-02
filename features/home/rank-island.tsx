@@ -81,7 +81,7 @@ export function RankIsland({
 
 function RankPillLabel({ rank }: { rank: Progression['rank'] }) {
   return (
-    <span className="flex min-w-0 items-center gap-1.5 text-primary">
+    <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
       <TierGlyph tier={rank.tier} className="size-3.5 shrink-0" />
       <span className="truncate">
         <span className="sr-only">Rank </span>

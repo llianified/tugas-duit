@@ -2,59 +2,62 @@
 
 import type { ReactNode } from 'react'
 import { hapticSelect } from '@/shared/lib/haptic'
-import {
-  GlyphCheck,
-  GlyphHome,
-  GlyphTrophy,
-  GlyphUser,
-  GlyphUsers,
-} from '@/shared/components/glyph'
+import { GlyphCheck, GlyphHome, GlyphTrophy, GlyphUsers } from '@/shared/components/glyph'
+import { ProfileAvatar } from '@/shared/components/profile-avatar'
 import { cn } from '@/shared/lib/utils'
 import { ROOT_VIEW, type AppView } from '@/navigation/app-view'
 
 type NavSlot = {
   view: AppView
   label: string
-  icon: ReactNode
+  /** `null` = slot foto: Profil memakai avatar user, bukan glyph. */
+  icon: ReactNode | null
 }
 
 const NAV_SLOTS: readonly NavSlot[] = [
-  { view: ROOT_VIEW, label: 'Beranda', icon: <GlyphHome className="glyph-md" /> },
-  { view: 'leaderboard', label: 'Peringkat', icon: <GlyphTrophy className="glyph-md" /> },
-  { view: 'missions', label: 'Misi', icon: <GlyphCheck className="glyph-md" /> },
-  { view: 'referral', label: 'Teman', icon: <GlyphUsers className="glyph-md" /> },
-  { view: 'profile', label: 'Profil', icon: <GlyphUser className="glyph-md" /> },
+  { view: ROOT_VIEW, label: 'Beranda', icon: <GlyphHome className="nav-pill-icon" /> },
+  { view: 'leaderboard', label: 'Peringkat', icon: <GlyphTrophy className="nav-pill-icon" /> },
+  { view: 'missions', label: 'Misi', icon: <GlyphCheck className="nav-pill-icon" /> },
+  { view: 'referral', label: 'Teman', icon: <GlyphUsers className="nav-pill-icon" /> },
+  { view: 'profile', label: 'Profil', icon: null },
 ]
 
+/** Nav ikon-only: labelnya pindah ke `sr-only` supaya tombol tetap punya nama yang bisa dibaca pembaca layar. Tanpa itu lima tombol ini cuma terbaca "tombol", dan slot Profil — yang isinya `<img alt="">` — tidak terbaca sama sekali. */
 export function NavPill({
   activeView,
+  photoUrl,
   onSelect,
 }: {
   activeView: AppView
+  photoUrl: string | null
   onSelect: (view: AppView) => void
 }) {
   return (
     <nav aria-label="Navigasi utama" className="nav-pill">
       <div className="nav-pill-row">
         {NAV_SLOTS.map((slot) => (
-          <NavPillItem key={slot.view} slot={slot} activeView={activeView} onSelect={onSelect} />
+          <NavPillItem
+            key={slot.view}
+            slot={slot}
+            activeView={activeView}
+            photoUrl={photoUrl}
+            onSelect={onSelect}
+          />
         ))}
       </div>
     </nav>
   )
 }
 
-/** Sejajar urutan NAV_SLOTS: Beranda, Peringkat, Misi, Teman, Profil. */
-const NAV_LABEL_W = ['w-11', 'w-12', 'w-7', 'w-9', 'w-9'] as const
-
 export function NavPillSkeleton() {
   return (
     <div aria-hidden className="nav-pill">
       <div className="nav-pill-row">
-        {NAV_SLOTS.map((slot, index) => (
+        {NAV_SLOTS.map((slot) => (
           <div className="nav-pill-item" key={slot.view}>
-            <div className="glyph-md animate-pulse rounded-md bg-muted" />
-            <div className={cn('h-2.5 animate-pulse rounded-sm bg-muted', NAV_LABEL_W[index])} />
+            <div className="nav-pill-slot">
+              <div className="nav-pill-icon animate-pulse rounded-full bg-muted" />
+            </div>
           </div>
         ))}
       </div>
@@ -65,10 +68,12 @@ export function NavPillSkeleton() {
 function NavPillItem({
   slot,
   activeView,
+  photoUrl,
   onSelect,
 }: {
   slot: NavSlot
   activeView: AppView
+  photoUrl: string | null
   onSelect: (view: AppView) => void
 }) {
   const active = slot.view === activeView
@@ -85,8 +90,16 @@ function NavPillItem({
       onClick={handleClick}
       className={cn('focus-ring transition-ui press-scale nav-pill-item')}
     >
-      {slot.icon}
-      <span className="nav-pill-label">{slot.label}</span>
+      <span className="nav-pill-slot transition-ui">
+        {slot.icon ?? (
+          <ProfileAvatar
+            photoUrl={photoUrl}
+            className="nav-pill-avatar transition-ui"
+            glyphClassName="size-4"
+          />
+        )}
+      </span>
+      <span className="sr-only">{slot.label}</span>
     </button>
   )
 }

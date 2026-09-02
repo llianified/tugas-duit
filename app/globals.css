@@ -163,11 +163,13 @@
   /* Pelat di belakang kode QRIS. Nilainya putih, dan itu bukan kelalaian: pemindai QR menuntut modul gelap di atas latar terang, jadi warnanya kebutuhan fungsional — bukan warna tema yang boleh ikut gelap. Ia tetap jadi token supaya alasan itu tertulis satu kali di sini alih-alih jadi `bg-white` mentah yang terlihat seperti kelolosan audit. */
   --qr-plate: #ffffff;
   --duration-ui: 150ms;
+  /* Kontrol tinggi seperti input dan CTA hero "Tarik dana" tetap lapang. Tombol aksi biasa punya token sendiri agar bisa sedikit lebih ringkas tanpa ikut mengecilkan field formulir atau CTA saldo. */
   --control-h: 3.25rem;
+  --button-h: 3rem;
   /* Tombol yang berada di bawah tombol lain dalam hirarki. Yang mengecil KOTAKNYA, bukan labelnya — lihat `--btn-label`. */
   --control-h-sm: 2.5rem;
-  --cta-h: var(--control-h);
-  /* Satu ukuran label untuk SEMUA tombol, kiblatnya "Mulai" di karcis beranda. Sebelum ini `ActionButton` memakai 17px sementara `TapAction` 15px, jadi dua tombol yang berdampingan di kartu yang sama terbaca beda tanpa alasan yang bisa dijelaskan ke user. Hirarki antar tombol dinyatakan lewat bidang dan tinggi kotaknya (`--control-h-sm`), bukan lewat ukuran hurufnya: label yang mengecil membuat tombol lebih SULIT dibaca, padahal yang dimaksud cuma "yang ini bukan aksi utama". */
+  --cta-h: var(--button-h);
+  /* Satu ukuran label untuk SEMUA tombol, kiblatnya "Mulai" di karcis beranda. Sebelum ini `ActionButton` memakai 17px sementara `TapAction` 15px, jadi dua tombol yang berdampingan di kartu yang sama terbaca beda tanpa alasan yang bisa dijelaskan ke user. Hirarki antar tombol dinyatakan lewat bidang dan tinggi kotaknya (`--button-h` / `--control-h-sm`), bukan lewat ukuran hurufnya: label yang mengecil membuat tombol lebih SULIT dibaca, padahal yang dimaksud cuma "yang ini bukan aksi utama". */
   --btn-label: 0.9375rem;
   --meter-h: 0.1875rem;
   --panel-gap: 0.75rem;
@@ -282,6 +284,9 @@
   }
   .control-h {
     height: var(--control-h);
+  }
+  .button-h {
+    height: var(--button-h);
   }
   .control-h-sm {
     height: var(--control-h-sm);

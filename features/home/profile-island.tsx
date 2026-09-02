@@ -41,7 +41,7 @@ export function ProfileIsland({
         <span className="flex min-w-0 items-center">
           <ProfileAvatar
             photoUrl={user.photoUrl}
-            className="aspect-square h-full"
+            className="island-pill-avatar"
             glyphClassName="size-4"
           />
           <span className="island-pill-name truncate text-[11px] font-semibold text-foreground">

@@ -13,8 +13,8 @@ import { cn } from '@/shared/lib/utils'
  *
  * Emas di sini TIDAK memakai `--premium`. Premium sudah memakai emas di cincin
  * avatar dan mahkota; memakai token yang sama untuk dua hal berbeda membuat
- * baris papan tidak bisa dibaca. Karena itu `--medal-*` berdiri sendiri, dengan
- * pasangan terang & gelap di `globals.css`.
+ * baris papan tidak bisa dibaca. Karena itu `--medal-*` berdiri sendiri di
+ * `globals.css`.
  *
  * Angkanya adalah teks nyata, jadi pembaca layar tetap mendengar peringkatnya;
  * hanya bidang pitanya yang `aria-hidden`.

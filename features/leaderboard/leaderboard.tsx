@@ -460,9 +460,9 @@ function BoardPanel({
  * tidak bisa ditebak ia hilang. Kontur `halo` mengurus masalah yang sama untuk pita.
  *
  * Tier dibedakan lewat BENTUK (`TierGlyph`), bukan lewat lima warna baru. Lima warna
- * yang harus tetap terbaca di tema terang dan gelap sekaligus akan menambah palet yang
- * tidak dipakai di mana pun lagi, dan tetap sulit dibedakan pada lingkaran 28px. Bentuk
- * terbaca tanpa itu, dan tetap terbaca oleh yang tidak bisa membedakan warna.
+ * tambahan akan memperlebar palet yang tidak dipakai di mana pun lagi, dan tetap sulit
+ * dibedakan pada lingkaran 28px. Bentuk terbaca tanpa itu, dan tetap terbaca oleh yang
+ * tidak bisa membedakan warna.
  *
  * Emas disimpan HANYA untuk premium supaya ia tidak bersaing dengan bahasa tier.
  */

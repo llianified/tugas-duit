@@ -12,7 +12,7 @@ Telegram Mini App: user mengerjakan captcha → dapat credit → bisa ditarik ja
 | `server/` | Akses DB & logika server. `ledger`, `payout`, `quota`, `challenge`, `session`, `fraud`, `ads`. |
 | `features/` | UI per fitur: `captcha`, `home`, `history`, `stats`, `referral`, `withdraw`, `leaderboard`, `ads`. |
 | `shared/` | `components/` (dipakai lintas fitur) + `lib/` (`format`, `utils`, hooks kecil). |
-| `shell/` | Kerangka aplikasi: shell, router view, tema, toast, hook sesi/task. |
+| `shell/` | Kerangka aplikasi gelap-saja: shell, router view, toast, hook sesi/task, serta sinkronisasi viewport dan warna chrome Telegram. |
 | `navigation/` | Definisi `AppView` + nav pill. |
 | `db/migrations/` | Migrasi SQL berurutan. **Historis — jangan diedit, hanya tambah baru.** |
 | `scripts/` | CLI operasional (migrate, cleanup, grant-admin, ban-user). |

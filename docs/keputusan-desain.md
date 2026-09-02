@@ -110,13 +110,13 @@ sepanjang view Statistik akan melewati tinggi layar 384×639 dan menuntut scroll
 di dalam header, bentuk yang tidak ada di tempat lain di app ini. Streak juga
 sengaja tidak diulang karena sudah jadi satu region di panel rank.
 
-Pill profil **hilang di view task** (`captcha`). Di lebar 384px tiga pill plus
-toggle tema menyisakan ruang terlalu tipis, dan saat mengerjakan task yang
-relevan tinggal rank dan kesulitan. Karena `.brand-band-row` di-center, pill yang
-hilang membuat klaster tier+sulit recenter sendiri, dan `useIslandGeometry`
-mengukur ulang lewat observer barisnya. `ProgressionBadges` mereset `openPanel`
-saat pill sumbernya berhenti dirender supaya panel tidak tertinggal terbuka pada
-komponen yang sudah di-unmount.
+Pill profil **hilang di view task** (`captcha`). Di lebar 384px tiga pill
+menyisakan ruang terlalu tipis, dan saat mengerjakan task yang relevan tinggal
+rank dan kesulitan. Karena `.brand-band-row` di-center, pill yang hilang membuat
+klaster tier+sulit recenter sendiri, dan `useIslandGeometry` mengukur ulang lewat
+observer barisnya. `ProgressionBadges` mereset `openPanel` saat pill sumbernya
+berhenti dirender supaya panel tidak tertinggal terbuka pada komponen yang sudah
+di-unmount.
 
 Glyph rank tingkat satu sengaja **bukan** segitiga. Bentuk sebelumnya —
 segitiga dengan titik di tengah — terbaca sebagai piramida bermata, dan pada

@@ -1,11 +1,9 @@
 # Rencana Adopsi Gaya Visual "fomo"
 
-> **Untuk agent (Claude Code / v0 / lainnya):** dokumen ini adalah satu-satunya sumber
-> kebenaran untuk pekerjaan ini. Baca **BAB 0 (Aturan Wajib)** sebelum menyentuh file
-> apa pun, lalu kerjakan **BAB 3** secara berurutan sambil mencentang ceklisnya.
->
-> Setiap kali menyelesaikan satu langkah: ubah `- [ ]` menjadi `- [x]` **di file ini**
-> dan commit. Jangan mengerjakan langkah N+1 sebelum langkah N tercentang.
+> **Status: arsip implementasi.** Dokumen ini merekam rencana dan penyimpangan saat
+> adopsi gaya fomo; bukan sumber keadaan repo saat ini dan ceklisnya tidak untuk
+> dilanjutkan. Untuk aturan aktif gunakan `CLAUDE.md`, untuk keputusan yang masih
+> berlaku gunakan `docs/keputusan-desain.md`, dan untuk detail akhir percaya pada kode.
 
 ---
 
@@ -705,13 +703,11 @@ Diisi oleh agent selama pengerjaan. Ini penting untuk serah-terima antar agent.
 
 ### Yang dilewati dan alasannya
 
-- **Langkah 9 — `AvatarStack` di baris papan.** Dilewati: tidak ada datanya.
-  `LeaderboardEntry` cuma punya satu `photoUrl` milik peserta itu sendiri, dan
-  tumpukan avatar di fomo berisi **token yang dipegang** trader — konsep yang
-  tidak ada padanannya di app ini. Lencana prestise di baris papan adalah chip
-  teks (`MetaBadge`), bukan avatar, jadi ia juga bukan sumber yang cocok.
-  `AvatarStack` (Langkah 7) karena itu masih tanpa pemakai; jangan hapus dulu,
-  Langkah 10 (feed) belum diperiksa.
+- **Langkah 9 — `AvatarStack` di baris papan.** Dilewati: tiap `LeaderboardEntry`
+  hanya punya satu `photoUrl`, sedangkan tumpukan avatar di fomo mewakili beberapa
+  token milik satu trader — konsep yang tidak ada padanannya di satu baris peserta.
+  Setelah podium ditambahkan, `AvatarStack` mendapat pemakai yang sah di kepala
+  `PodiumRail`: tumpukannya merangkum beberapa peserta lain di bawah tiga besar.
 - **Langkah 9 — `CardRail` untuk padanan "Clans".** Dilewati: tidak ada padanannya.
   "Clans" di fomo adalah grup yang PnL anggotanya dijumlahkan; app ini tidak punya
   entitas grup apa pun — tidak ada tabel, tidak ada relasi, tidak ada UI. Kandidat
@@ -781,18 +777,11 @@ Diisi oleh agent selama pengerjaan. Ini penting untuk serah-terima antar agent.
   (`shared/lib/shape-path.ts` mengimpor tipe dari `features/captcha`). Kalau
   nanti ada fitur ketiga yang butuh avatar, `ProfileAvatar` layak dipindahkan
   ke `shared/components/` — itu pekerjaan terpisah, bukan bagian langkah ini.
-- **Langkah 10 — `PinnedNotice` TIDAK dihubungkan ke tabel `broadcasts`.**
-  Sumber pengumuman satu-satunya di repo ini adalah `broadcasts` (migrasi 0035),
-  dan ia bukan umpan dalam aplikasi: isinya pesan Telegram, penerimanya
-  **bersegmen** (`semua` / premium / aktif), dan daftar penerimanya sengaja tidak
-  disimpan — segmennya dihitung ulang saat kirim. Merendernya di dalam aplikasi
-  berarti menampilkan pesan bersegmen ke semua orang, termasuk yang memang bukan
-  sasarannya, plus menambah kolom "boleh tampil di app" yang belum ada. Jadi
-  `ActivityFeed` menerima prop `notice` opsional dan **belum ada yang
-  mengisinya**; tidak ada teks pengumuman yang ditanam sebagai gantinya.
-  Konsekuensinya `PinnedNotice` untuk sekarang tidak pernah tampil di produksi —
-  Langkah 11 harus memutuskan secara eksplisit: menyimpannya sampai jalur datanya
-  ada, atau menghapusnya bersama prop `notice`.
+- **Langkah 10 — `PinnedNotice` tidak dihubungkan ke tabel `broadcasts`.**
+  `broadcasts` (migrasi 0035) adalah pesan Telegram bersegmen, bukan umpan dalam
+  aplikasi; menampilkannya ke semua user akan melanggar sasaran pesannya. Audit
+  Langkah 11 kemudian menghapus `PinnedNotice` beserta prop `notice` yang tidak
+  punya pemasok data. `ActivityFeed` sekarang hanya menerima entri aktivitas.
 - **Langkah 10 — waktu tetap absolut, bukan relatif.** Rencana meminta "waktu
   relatif redam" (`28s`, `16h` seperti fomo). Yang dirender tetap
   `formatHistoryTime` (`Hari ini · 16.08` / `31 Agu · 15.09`). Alasannya aturan
@@ -801,11 +790,10 @@ Diisi oleh agent selama pengerjaan. Ini penting untuk serah-terima antar agent.
   sana berarti memperluas cakupan sekaligus menampilkan dua konvensi waktu
   berbeda di aplikasi yang sama (Riwayat memakai absolut). Ia juga akan butuh
   pembaruan per detik supaya "28s" tidak jadi bohong.
-- **Langkah 10 — `.clamp-3` + "Baca selengkapnya" hanya ada di `PinnedNotice`.**
-  `ActivityEntry` tidak punya kolom teks bebas — isinya nama, jenis, nominal,
-  dan waktu. Tidak ada apa pun untuk dipotong di baris feed, jadi memasang
-  potongan tiga baris di sana akan jadi kontrol yang tidak pernah aktif.
-  Potongan + tautannya dipasang di tempat yang memang punya badan teks panjang.
+- **Langkah 10 — `.clamp-3` + "Baca selengkapnya" sempat hanya ada di
+  `PinnedNotice`.** `ActivityEntry` tidak punya kolom teks bebas — isinya nama,
+  jenis, nominal, dan waktu — jadi kontrol itu tidak punya pemakai setelah
+  `PinnedNotice` dihapus. Utility dan tautannya ikut dibuang pada audit akhir.
 - **Langkah 10 — avatar baris feed naik dari `size-9` ke `size-10`.** Bukan
   sekadar selera: 1.6 menyebut avatar baris daftar 2.5rem, dan angka bulat itu
   yang membuat sumbu tengahnya `1.25rem` = kelas skala `ml-5` persis, tanpa nilai

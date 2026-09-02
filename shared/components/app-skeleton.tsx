@@ -210,7 +210,7 @@ export function AppViewSkeleton() {
     <div className="home-skin animate-fade-in view-min-h flex flex-col" aria-hidden>
       <div className="hero-band region-under-brand relative z-10">
         {/* Mengikuti `BalanceSummary`: nominal + ekor Rupiah di kiri, SATU tombol "Tarik dana" di kanan. Tombol ikon Riwayat yang dulu digambar di sini sudah pindah ke kepala daftar transaksi, dan judul "Saldo kamu" sudah dilepas — kerangka yang masih membawa keduanya menggeser seluruh hero saat data masuk. */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-end gap-3">
           <div className="min-w-0 flex-1">
             {/* `CreditAmount` size `display`: `heroFontSize()` memuncak di 3rem dengan line-height 1, jadi 48px pada lebar penuh. */}
             <Bar className="h-12 w-28" />

@@ -1,6 +1,6 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { hapticSelect } from '@/shared/lib/haptic'
 import { GlyphCheck, GlyphHome, GlyphTrophy, GlyphUsers } from '@/shared/components/glyph'
 import { ProfileAvatar } from '@/shared/components/profile-avatar'
@@ -32,9 +32,16 @@ export function NavPill({
   photoUrl: string | null
   onSelect: (view: AppView) => void
 }) {
+  const activeIndex = NAV_SLOTS.findIndex((slot) => slot.view === activeView)
+
   return (
     <nav aria-label="Navigasi utama" className="nav-pill">
-      <div className="nav-pill-row">
+      <div
+        className="nav-pill-row"
+        data-has-active={activeIndex >= 0}
+        style={{ '--nav-active-index': activeIndex } as CSSProperties}
+      >
+        <span aria-hidden className="nav-pill-indicator" />
         {NAV_SLOTS.map((slot) => (
           <NavPillItem
             key={slot.view}

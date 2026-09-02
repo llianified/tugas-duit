@@ -24,15 +24,32 @@ export function SegmentedTabs<T extends string>({
   ariaLabel: string
   className?: string
 }) {
+  const activeIndex = Math.max(
+    0,
+    tabs.findIndex((tab) => tab.value === value),
+  )
+  const segmentCount = Math.max(1, tabs.length)
+  const totalGapRem = (segmentCount - 1) * 0.25
+  const segmentInsetRem = (0.25 + totalGapRem) / segmentCount
+  const indicatorWidth = `calc(${100 / segmentCount}% - ${segmentInsetRem}rem)`
+  const indicatorLeftRem = 0.125 + activeIndex * (0.25 - segmentInsetRem)
+  const indicatorLeft = `calc(${(activeIndex * 100) / segmentCount}% + ${indicatorLeftRem}rem)`
+
   return (
     <div
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        'flex h-[var(--brand-pill-h)] gap-1 rounded-lg bg-track-surface p-0.5',
+        'relative flex h-[var(--brand-pill-h)] gap-1 rounded-lg bg-track-surface p-0.5',
         className,
       )}
     >
+      <span
+        aria-hidden="true"
+        className="btn-glass-quiet pointer-events-none absolute inset-y-0.5 rounded-md transition-[left] duration-300 ease-out motion-reduce:transition-none"
+        style={{ left: indicatorLeft, width: indicatorWidth }}
+      />
+
       {tabs.map((tab) => {
         const active = tab.value === value
         return (
@@ -49,10 +66,8 @@ export function SegmentedTabs<T extends string>({
               onChange(tab.value)
             }}
             className={cn(
-              'focus-ring transition-ui flex-1 rounded-md px-3 text-[13px] font-bold tracking-tight',
-              active
-                ? 'btn-glass-quiet text-foreground'
-                : 'text-muted-foreground hover:text-foreground',
+              'focus-ring transition-ui relative flex-1 rounded-md px-3 text-[13px] font-bold tracking-tight',
+              active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
             )}
           >
             {tab.label}

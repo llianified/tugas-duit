@@ -1,0 +1,36 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '02:00'
+      timezone: Asia/Jakarta
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # Update patch/minor digabung jadi satu PR supaya CI tidak dibanjiri.
+      # Major tetap dipisah karena butuh dibaca satu per satu.
+      rutin:
+        patterns: ['*']
+        update-types: [minor, patch]
+    ignore:
+      # Dipin sengaja: next dan eslint-config-next harus naik bersama, dan
+      # typescript dikunci karena eslint-config-next sensitif ke versinya.
+      - dependency-name: next
+        update-types: [version-update:semver-major]
+      - dependency-name: eslint-config-next
+        update-types: [version-update:semver-major]
+      - dependency-name: typescript
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: chore
+      include: scope

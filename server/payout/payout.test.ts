@@ -11,7 +11,7 @@ beforeAll(async () => {
 async function makeUser(balance: number, activeReferrals = 5, activeDays?: number): Promise<number> {
   const { query } = await import('./db')
   const { generateReferralCode } = await import('./referral')
-  const { seedActiveDays, seedActiveReferrals } = await import('./__fixtures__/payout')
+  const { seedActiveDays, seedActiveReferrals } = await import('../__fixtures__/payout')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string }>(
     `insert into users(telegram_id,first_name,referral_code,balance_credits)

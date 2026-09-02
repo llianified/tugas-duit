@@ -9,7 +9,7 @@ beforeAll(async () => {
 it('menyiapkan user preview yang layak menarik dana', async () => {
   const { query } = await import('./db')
   const { seedActiveDays, seedActiveReferrals, clearWithdrawalCooldown } = await import(
-    './__fixtures__/payout'
+    '../__fixtures__/payout'
   )
   const { getPayouts } = await import('./payout')
   const { generateReferralCode } = await import('./referral')

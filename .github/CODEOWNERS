@@ -1,0 +1,11 @@
+# Pemilik repo mereview semuanya. Aturan keras #1 di CLAUDE.md: setiap
+# perubahan wajib dikonfirmasi pemilik repo dulu — ini penegakannya di GitHub.
+* @llianified
+
+# Jalur yang menyentuh uang nyata. Dituliskan terpisah bukan karena pemiliknya
+# berbeda, tapi supaya diff di area ini tidak pernah lolos sebagai "sepele".
+/db/migrations/ @llianified
+/domain/economy/ @llianified
+/server/economy/ @llianified
+/server/payout/ @llianified
+/.github/ @llianified

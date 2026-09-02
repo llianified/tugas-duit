@@ -21,17 +21,15 @@ function getStreakLevel(streak: number) {
 export function StreakGauge({
   streak,
   atRisk,
-  active = true,
   className,
 }: {
   streak: number
   atRisk: boolean
-  active?: boolean
   className?: string
 }) {
   const level = getStreakLevel(streak)
   const step = STREAK_STEPS[Math.max(0, level - 1)]
-  const filled = active ? level : 0
+  const filled = level
   const strength = atRisk ? 'Belum aman hari ini' : step.label
 
   return (

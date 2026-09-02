@@ -150,7 +150,11 @@ function AppShellInner() {
       }
       nav={
         navVisible ? (
-          <NavPill activeView={effectiveView} onSelect={session.selectView} />
+          <NavPill
+            activeView={effectiveView}
+            photoUrl={session.user?.photoUrl ?? null}
+            onSelect={session.selectView}
+          />
         ) : null
       }
     >

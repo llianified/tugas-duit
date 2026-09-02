@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type KeyboardEvent } from 'react'
 import { formatDateTime } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 import {
@@ -93,6 +93,28 @@ export function EconomyForm({
         ? after < before
         : false,
   )
+
+  /** Navigasi panah untuk tablist. Fokusnya dipindahkan ke tab tujuan karena hanya tab aktif yang punya `tabIndex=0`: tanpa ini, panah akan mengganti panel sambil meninggalkan fokus di elemen yang barusan keluar dari urutan Tab. */
+  function onTabKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const index = GROUP_ORDER.indexOf(group)
+    const last = GROUP_ORDER.length - 1
+    const next =
+      event.key === 'ArrowRight'
+        ? (index + 1) % GROUP_ORDER.length
+        : event.key === 'ArrowLeft'
+          ? (index + last) % GROUP_ORDER.length
+          : event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? last
+              : null
+
+    if (next === null) return
+    event.preventDefault()
+    const target = GROUP_ORDER[next]
+    setGroup(target)
+    document.getElementById(`economy-tab-${target}`)?.focus()
+  }
 
   function applyPatch(patch: EconomyPatch, label: string, ignored: string[] = []) {
     const entries = Object.entries(patch) as [EconomyConfigKey, number][]
@@ -187,7 +209,15 @@ export function EconomyForm({
 
       <ConfigLoader current={saved.config} onApply={applyPatch} />
 
-      <div role="tablist" aria-label="Kelompok setelan" className="admin-tabs">
+      {/* Pola tab yang utuh: tiap tab menunjuk panelnya (`aria-controls`), panelnya
+          membawa `role="tabpanel"`, dan hanya tab aktif yang masuk urutan Tab —
+          sisanya dijangkau panah kiri/kanan seperti yang diwajibkan pola ini. */}
+      <div
+        role="tablist"
+        aria-label="Kelompok setelan"
+        onKeyDown={onTabKeyDown}
+        className="admin-tabs"
+      >
         {GROUP_ORDER.map((entry) => {
           const pending = ECONOMY_FIELDS.filter(
             (f) => f.group === entry && changedKeys.has(f.key),
@@ -197,7 +227,10 @@ export function EconomyForm({
               key={entry}
               type="button"
               role="tab"
+              id={`economy-tab-${entry}`}
               aria-selected={entry === group}
+              aria-controls="economy-panel"
+              tabIndex={entry === group ? 0 : -1}
               onClick={() => setGroup(entry)}
               className="focus-ring transition-ui admin-tab"
             >
@@ -215,7 +248,13 @@ export function EconomyForm({
         })}
       </div>
 
-      <ul className="flex flex-col gap-2">
+      <ul
+        role="tabpanel"
+        id="economy-panel"
+        aria-labelledby={`economy-tab-${group}`}
+        tabIndex={0}
+        className="focus-ring flex flex-col gap-2"
+      >
         {ECONOMY_FIELDS.filter((f) => f.group === group).map((field) => {
           const changed = changedKeys.has(field.key)
           const invalid = Boolean(errors[field.key])
@@ -259,7 +298,10 @@ export function EconomyForm({
                   aria-controls={`economy-${field.key}-help`}
                   aria-label={`Penjelasan ${field.label}`}
                   onClick={() => setHelpFor(open ? null : field.key)}
-                  className="focus-ring transition-ui size-8 shrink-0 rounded-full text-sm font-semibold text-muted-foreground hover:text-foreground"
+                  /* Bidangnya 32px, sementara jari butuh ~44px. `after:-inset-1.5` melebarkan
+                     area sentuh 6px ke segala arah tanpa mengubah bentuk tombolnya — pola yang
+                     sama dipakai `info-hint` dan sheet-sheet lain di app ini. */
+                  className='focus-ring transition-ui relative size-8 shrink-0 rounded-full text-sm font-semibold text-muted-foreground after:absolute after:-inset-1.5 after:content-[""] hover:text-foreground'
                 >
                   ?
                 </button>

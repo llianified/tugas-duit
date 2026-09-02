@@ -69,7 +69,7 @@ export function ProgressionBadges({
           stats={stats}
           premium={premium}
           isOpen={profileOpen}
-          slideOutTo={rankOpen || difficultyOpen ? 'left' : undefined}
+          promoted={rankOpen || difficultyOpen}
           onToggle={() => setOpenPanel(profileOpen ? null : 'profile')}
           onClose={closePanel}
         />
@@ -85,7 +85,8 @@ export function ProgressionBadges({
         rewardPoolRegenCredits={rewardPoolRegenCredits}
         rewardPoolSecondsToNext={rewardPoolSecondsToNext}
         isOpen={rankOpen}
-        slideOutTo={profileOpen ? 'right' : difficultyOpen ? 'left' : undefined}
+        promoted={profileOpen}
+        slideOutTo={difficultyOpen ? 'left' : undefined}
         onToggle={() => setOpenPanel(rankOpen ? null : 'rank')}
         onClose={closePanel}
       />

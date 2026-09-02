@@ -192,6 +192,13 @@
   --nav-glyph: 1.75rem;
   /* Avatar 24px + cincin 2px menghasilkan diameter visual 28px seperti referensi. */
   --nav-avatar: 1.5rem;
+  /* Transisi nav meniru hyperisland: bidang aktif melar ke arah tujuan, mengempis balik, lalu isi slot menajam lagi. Ketiga faktor di bawah dikali jarak tempuh (1–4 slot) supaya lompatan jauh terasa lebih berat daripada geser ke sebelah. */
+  --nav-morph-ms: 320ms;
+  /* Ditimpa inline oleh NavPill saat berpindah; nilai nol di sini menjaga skeleton nav tetap diam. */
+  --nav-travel: 0;
+  --nav-stretch: 0.045;
+  --nav-squash: 0.032;
+  --nav-goo-blur: 0.5px;
   --header-gap: 0.75rem;
   --content-px: 1rem;
   --region-gap: 1.25rem;
@@ -902,30 +909,65 @@
     -webkit-backdrop-filter: saturate(180%) blur(18px);
     backdrop-filter: saturate(180%) blur(18px);
     box-shadow: 0 8px 28px color-mix(in oklab, var(--background) 42%, transparent);
+    transition: box-shadow var(--nav-morph-ms) var(--ease-out-quart);
   }
-  /* Satu bidang aktif dipakai bersama semua item supaya perubahan halaman terlihat bergeser, bukan berganti warna di tempat. */
+  /* Satu bidang aktif dipakai bersama semua item supaya perubahan halaman terlihat bergeser, bukan berganti warna di tempat. Perpindahannya dipisah dua lapis: lapis luar hanya menggeser posisi, lapis dalam hanya melar-mengempis. Kalau digabung di satu elemen, `scaleX` ikut mengalikan jarak `translate`-nya dan bidangnya mendarat bukan di slot tujuan. */
   .nav-pill-indicator {
     position: absolute;
     left: var(--nav-pill-px);
     top: 50%;
     width: calc((100% - var(--nav-pill-px) * 2) / 5);
     height: var(--nav-pill-slot);
-    border-radius: 9999px;
-    background-color: color-mix(in oklab, var(--foreground) 8%, var(--muted));
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 12%, var(--border));
     opacity: 1;
     transform: translate3d(calc(var(--nav-active-index) * 100%), -50%, 0);
     transition:
-      transform 220ms var(--ease-out-quart),
+      transform var(--nav-morph-ms) var(--ease-spring-island),
       opacity var(--duration-ui) ease-out;
     pointer-events: none;
+  }
+  .nav-pill-indicator-blob {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--foreground) 8%, var(--muted));
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 12%, var(--border));
+  }
+  .nav-pill-indicator-blob[data-nav-morph='true'] {
+    animation: nav-goo-morph var(--nav-morph-ms) var(--ease-out-quart);
+  }
+  /* Melar di sumbu jalan sambil mengempis di sumbu tegak menjaga volume bidangnya terlihat tetap — itu yang membuat gerakannya terbaca seperti cairan, bukan kotak yang membesar. Blur tipis di puncak gerakan melunakkan tepinya supaya menyatu ke slot tujuan. */
+  @keyframes nav-goo-morph {
+    0% {
+      transform: scale3d(1, 1, 1);
+      filter: blur(0px);
+    }
+    38% {
+      transform: scale3d(
+        calc(1 + var(--nav-stretch) * var(--nav-travel)),
+        calc(1 - var(--nav-squash) * var(--nav-travel)),
+        1
+      );
+      filter: blur(calc(var(--nav-goo-blur) * var(--nav-travel)));
+    }
+    100% {
+      transform: scale3d(1, 1, 1);
+      filter: blur(0px);
+    }
   }
   .nav-pill-row[data-has-active='false'] .nav-pill-indicator {
     opacity: 0;
   }
+  /* Bar-nya sendiri tidak ikut diskalakan: `backdrop-filter` di elemen yang sedang ditransformasi bisa berhenti mencuplik latar di webview iOS. Bayangannya yang dinaikkan sebentar memberi kesan islandnya terangkat saat morph. */
+  .nav-pill-row[data-nav-morph='true'] {
+    box-shadow: 0 12px 34px color-mix(in oklab, var(--background) 56%, transparent);
+  }
   @media (prefers-reduced-motion: reduce) {
     .nav-pill-indicator {
       transition: none;
+    }
+    .nav-pill-indicator-blob[data-nav-morph='true'] {
+      animation: none;
     }
   }
   .nav-pill-item {
@@ -963,6 +1005,31 @@
   }
   .nav-pill-item[aria-current='page'] .nav-pill-avatar {
     box-shadow: 0 0 0 2px var(--foreground);
+  }
+  /* `color` ikut didaftarkan karena aturan ini menimpa `transition-property` dari utilitas `transition-ui` yang dipakai slot dan avatar. */
+  .nav-pill-icon,
+  .nav-pill-avatar {
+    transition:
+      filter 150ms var(--ease-out-quart),
+      opacity 150ms var(--ease-out-quart),
+      transform var(--nav-morph-ms) var(--ease-spring-island),
+      color var(--duration-ui) ease-out;
+  }
+  /* Isi slot asal dan tujuan sengaja melunak sesaat: di referensinya konten memang kabur selagi bentuknya meleleh, lalu menajam setelah bidangnya mendarat. Denyut blur ini yang menyambung gerakan bidang aktif dengan pergantian halamannya. */
+  .nav-pill-item[data-nav-morph='true'] .nav-pill-icon,
+  .nav-pill-item[data-nav-morph='true'] .nav-pill-avatar {
+    filter: blur(1.4px);
+    opacity: 0.68;
+    transform: scale(0.92);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .nav-pill-item[data-nav-morph='true'] .nav-pill-icon,
+    .nav-pill-item[data-nav-morph='true'] .nav-pill-avatar {
+      filter: none;
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
   }
   .admin-safe-b {
     --admin-safe-b: env(safe-area-inset-bottom, 0px);

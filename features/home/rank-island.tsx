@@ -18,6 +18,7 @@ export function RankIsland({
   rewardPoolMax,
   isOpen,
   slideOutTo,
+  promoted = false,
   onToggle,
   onClose,
 }: {
@@ -31,6 +32,8 @@ export function RankIsland({
   rewardPoolSecondsToNext: number | null
   isOpen: boolean
   slideOutTo?: 'left' | 'right'
+  /** Saat island profil terbuka, pill ini yang mengisi pita: bergeser ke tengah tanpa berubah bentuk, karena sudah berupa kapsul berlabel. */
+  promoted?: boolean
   onToggle: () => void
   onClose: () => void
 }) {
@@ -57,6 +60,7 @@ export function RankIsland({
       }
       isOpen={isOpen}
       slideOutTo={slideOutTo}
+      promoted={promoted}
       onToggle={onToggle}
       onClose={onClose}
     >

@@ -669,10 +669,20 @@
     translate: calc(100vw - var(--island-pill-left, 0px) + 0.5rem);
   }
   /* Island yang tidak menyingkir saat tetangganya terbuka, tapi mengambil alih pita: pill-nya
-     jalan ke tengah dan melebar jadi kapsul. Pill-nya diangkat keluar aliran baris supaya lebar
-     wrappernya tetap seukuran lingkaran — kalau wrapper ikut melebar, `--island-pill-left`
-     bergeser di tengah animasi dan pill-nya mengejar sasaran yang masih bergerak. */
+     jalan ke tengah pita. Lebar sasarannya default ke lebar pill itu sendiri, jadi pill yang
+     sudah berupa kapsul berlabel (rank) cukup bergeser tanpa berubah bentuk. */
+  .island[data-island-promoted='true'] .island-pill {
+    translate: calc(
+      var(--island-row-center, 50vw) - var(--island-pill-left, 0px) -
+        var(--island-promoted-w, var(--island-pill-w, 0px)) / 2
+    );
+  }
+  /* Pill yang bentuk tertutupnya cuma lingkaran (profil) melebar jadi kapsul saat dipromosikan.
+     Pill-nya diangkat keluar aliran baris supaya lebar wrappernya tetap seukuran lingkaran —
+     kalau wrapper ikut melebar, `--island-pill-left` bergeser di tengah animasi dan pill-nya
+     mengejar sasaran yang masih bergerak. */
   .island-promotable {
+    --island-promoted-w: var(--brand-promoted-w);
     position: relative;
     width: var(--brand-pill-h);
     height: var(--brand-pill-h);
@@ -683,11 +693,8 @@
     left: 0;
     width: var(--brand-pill-h);
   }
-  .island[data-island-promoted='true'] .island-pill {
+  .island-promotable[data-island-promoted='true'] .island-pill {
     width: var(--brand-promoted-w);
-    translate: calc(
-      var(--island-row-center, 50vw) - var(--island-pill-left, 0px) - var(--brand-promoted-w) / 2
-    );
   }
   /* Namanya tidak ikut memakai `gap`: item selebar 0 masih menagih jaraknya, jadi avatar akan
      duduk melenceng dari titik tengah lingkaran saat pill tertutup. Jaraknya ikut dianimasikan

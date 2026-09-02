@@ -16,7 +16,7 @@ Telegram Mini App: user mengerjakan captcha → dapat credit → bisa ditarik ja
 | `navigation/` | Definisi `AppView` + nav pill. |
 | `db/migrations/` | Migrasi SQL berurutan. **Historis — jangan diedit, hanya tambah baru.** |
 | `scripts/` | CLI operasional (migrate, cleanup, grant-admin, ban-user). |
-| `docs/` | `keputusan-desain.md` — hal yang tampak seperti bug tapi disengaja. Baca sebelum "memperbaiki" sesuatu yang terlihat janggal. |
+| `docs/` | Keputusan desain dan ADR untuk trade-off penting. Baca sebelum "memperbaiki" sesuatu yang terlihat janggal. |
 
 Alias impor: `@/*` → root repo.
 

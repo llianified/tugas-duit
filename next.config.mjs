@@ -1,8 +1,5 @@
 const nextConfig = {
   agentRules: false,
-  images: {
-    unoptimized: true,
-  },
   poweredByHeader: false,
   serverExternalPackages: ['@electric-sql/pglite'],
   async headers() {

@@ -29,7 +29,7 @@ export function ProfileAvatar({
       )}
     >
       {showPhoto ? (
-        // Arbitrary provider-hosted avatar (Telegram/OAuth CDN) with an onError | fallback. `images.unoptimized` is on project-wide, so next/image would | emit this same tag plus wrapper overhead and no optimization.
+        // URL avatar provider arbitrer perlu fallback langsung saat CDN gagal.
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={photoUrl}

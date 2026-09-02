@@ -21,20 +21,18 @@ export function MetaBadge({
   children,
   tone = 'muted',
   className,
-  title,
+  detail,
 }: {
   children: ReactNode
   className?: string
   tone?: ChipTone
-  /** Penjelasan panjang saat chip-nya sendiri terlalu pendek (mis. lencana prestise di papan peringkat). */
-  title?: string
+  /** Penjelasan panjang saat chip-nya sendiri terlalu pendek (mis. lencana prestise di papan peringkat). Dulu ini `title=`, yang di WebView Telegram tidak pernah bisa dibuka: tidak ada hover, dan `<span>` non-fokusabel tidak terjangkau papan tombol. Sekarang ia teks sungguhan yang hanya disembunyikan secara visual, jadi pembaca layar membacanya bersama label chip-nya. Di baris papan yang lebarnya ~200px memang tidak ada ruang untuk popover per chip; keterangan yang sama bisa diketuk di halaman Profil, tempat lencana ini juga tampil. */
+  detail?: string
 }) {
   return (
-    <span
-      title={title}
-      className={cn(CHIP_SHAPE, 'shrink-0 tabular-nums', CHIP_TONE_CLASS[tone], className)}
-    >
+    <span className={cn(CHIP_SHAPE, 'shrink-0 tabular-nums', CHIP_TONE_CLASS[tone], className)}>
       {children}
+      {detail ? <span className="sr-only"> — {detail}</span> : null}
     </span>
   )
 }

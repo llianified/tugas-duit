@@ -2,7 +2,7 @@
 
 import type { CSSProperties, ReactNode } from 'react'
 import { hapticSelect } from '@/shared/lib/haptic'
-import { GlyphCheck, GlyphHome, GlyphTrophy, GlyphUsers } from '@/shared/components/glyph'
+import { GlyphBolt, GlyphHome, GlyphTrophy, GlyphUsers } from '@/shared/components/glyph'
 import { ProfileAvatar } from '@/shared/components/profile-avatar'
 import { cn } from '@/shared/lib/utils'
 import { ROOT_VIEW, type AppView } from '@/navigation/app-view'
@@ -17,7 +17,7 @@ type NavSlot = {
 const NAV_SLOTS: readonly NavSlot[] = [
   { view: ROOT_VIEW, label: 'Beranda', icon: <GlyphHome className="nav-pill-icon" /> },
   { view: 'leaderboard', label: 'Peringkat', icon: <GlyphTrophy className="nav-pill-icon" /> },
-  { view: 'missions', label: 'Misi', icon: <GlyphCheck className="nav-pill-icon" /> },
+  { view: 'missions', label: 'Misi', icon: <GlyphBolt className="nav-pill-icon" /> },
   { view: 'referral', label: 'Teman', icon: <GlyphUsers className="nav-pill-icon" /> },
   { view: 'profile', label: 'Profil', icon: null },
 ]

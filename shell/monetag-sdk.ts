@@ -1,5 +1,7 @@
 'use client'
 
+import type { InAppShowParams } from '@/domain/in-app-ads'
+
 /**
  * Akses ke SDK Monetag, dipakai dua pemanggil: `use-ad-pass.ts` (iklan berhadiah, dipicu
  * tombol) dan `use-in-app-ads.ts` (interstitial otomatis). Keduanya butuh fungsi global
@@ -7,11 +9,11 @@
  * jendela tunggu yang bisa berbeda diam-diam.
  *
  * SDK-nya hanya menempel satu fungsi global per zone — namanya diambil dari atribut
- * `data-sdk` di script tag (lihat `app/layout.tsx`), jadi bentuknya `show_<zone>`. Tidak
- * ada `init`, tidak ada instance yang perlu di-cache atau di-`destroy`: zone-nya sudah
- * menempel di script tag, dan fungsinya boleh dipanggil berulang.
+ * `data-sdk` di script tag (lihat `app/layout.tsx`), jadi bentuknya `show_<zone>`. Rewarded
+ * memanggilnya tanpa parameter setiap kali user memilih menonton; konfigurasi `inApp`
+ * hanya dikirim sekali agar SDK tidak membuat penjadwal otomatis ganda.
  */
-export type MonetagShow = (params?: unknown) => Promise<unknown>
+export type MonetagShow = (params?: InAppShowParams) => Promise<unknown>
 
 /**
  * Nama fungsinya baru diketahui saat runtime (`show_<zone>`), jadi pembacaannya lewat

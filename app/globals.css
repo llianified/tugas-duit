@@ -318,7 +318,7 @@
       transparent
     );
     opacity: 0;
-    animation: accent-progress-sweep 3.2s ease-in-out infinite;
+    animation: accent-progress-sweep 2.7s ease-in-out infinite;
     pointer-events: none;
   }
   @keyframes accent-progress-sweep {

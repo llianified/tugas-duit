@@ -1,7 +1,7 @@
 'use client'
 
 import { useId, useMemo } from 'react'
-import type { EarningsPoint } from '@/features/stats/domain'
+import type { EarningsPoint } from '@/domain/stats'
 
 const WIDTH = 320
 const HEIGHT = 96

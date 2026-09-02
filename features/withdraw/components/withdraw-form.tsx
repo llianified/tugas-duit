@@ -14,7 +14,7 @@ import {
   validateWithdrawalDraft,
   type Withdrawal,
   type WithdrawalDraft,
-} from '@/features/withdraw/domain'
+} from '@/domain/withdrawal'
 import { useToast } from '@/shell/toast'
 
 export type WithdrawStep = 'amount' | 'account' | 'confirm'

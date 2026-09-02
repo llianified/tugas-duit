@@ -1,5 +1,5 @@
 
-import type { Difficulty } from '@/features/captcha/domain'
+import type { Difficulty } from '@/domain/challenge'
 import { economyConfig, parTimeMs, starReward } from './economy-config'
 
 export type StarCount = 1 | 2 | 3

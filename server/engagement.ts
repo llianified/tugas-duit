@@ -3,7 +3,7 @@ import { validateEconomyConfig, setActiveEconomyConfig } from '../domain/economy
 import { maxEnergy, projectEnergy } from '../domain/energy.ts'
 import { isPremiumActive, withdrawalCooldownMs } from '../domain/premium.ts'
 import { projectRewardPool, rewardPoolCapacity } from '../domain/reward-pool.ts'
-import { getRank } from '../features/home/progression.ts'
+import { getRank } from '../domain/progression.ts'
 import { formatCredits, formatRupiah } from '../shared/lib/format.ts'
 import { query } from './db.ts'
 import { requiredActiveDays, requiredActiveReferrals } from './payout-rules.ts'

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { useIslandDismiss, useIslandGeometry } from '@/features/home/use-island-geometry'
-import { hapticTap } from '@/shell/haptic'
+import { hapticTap } from '@/shared/lib/haptic'
 import { cn } from '@/shared/lib/utils'
 
 const ISLAND_PILL_BOX = 'h-[var(--brand-pill-h)] px-3 text-[11px] leading-none'

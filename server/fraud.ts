@@ -1,5 +1,5 @@
 import type { PoolClient } from 'pg'
-import type { Difficulty } from '@/features/captcha/domain'
+import type { Difficulty } from '@/domain/challenge'
 
 type FraudSignal =
   | 'impossibly_fast'

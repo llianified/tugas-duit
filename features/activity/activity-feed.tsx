@@ -1,8 +1,8 @@
 'use client'
 
-import type { ActivityEntry } from '@/features/activity/domain'
-import { ProfileAvatar } from '@/features/home/profile-avatar'
-import { DIFFICULTY_LABEL, type Difficulty } from '@/features/captcha/domain'
+import type { ActivityEntry } from '@/domain/activity'
+import { ProfileAvatar } from '@/shared/components/profile-avatar'
+import { DIFFICULTY_LABEL, type Difficulty } from '@/domain/challenge'
 import { DataListSkeleton } from '@/shared/components/app-skeleton'
 import { DataList } from '@/shared/components/data-list'
 import { EmptyState } from '@/shared/components/empty-state'

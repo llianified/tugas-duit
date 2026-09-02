@@ -7,7 +7,7 @@ import {
   PAYOUT_CHANNELS,
   sanitizeAccountNumber,
   validateWithdrawalDraft,
-} from '@/features/withdraw/domain'
+} from '@/domain/withdrawal'
 import type { PoolClient } from 'pg'
 import { query, transaction } from './db'
 import { appendLedger } from './ledger'

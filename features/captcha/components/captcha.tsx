@@ -15,7 +15,7 @@ import { ActionButton } from '@/shared/components/action-button'
 import { GlyphSpinner } from '@/shared/components/glyph'
 import { PageHeader } from '@/shared/components/page-header'
 import { VIEW_TITLE } from '@/navigation/app-view'
-import type { Challenge, TaskSubmission } from '@/features/captcha/domain'
+import type { Challenge, TaskSubmission } from '@/domain/challenge'
 import { prefetchConfetti } from '@/shared/lib/confetti'
 import { useCaptchaAttempt } from '@/features/captcha/hooks/use-captcha-attempt'
 

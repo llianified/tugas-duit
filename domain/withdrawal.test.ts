@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isDraftValid, validateWithdrawalDraft } from './domain'
+import { isDraftValid, validateWithdrawalDraft } from './withdrawal'
 
 const validDraft = {
   channelId: 'dana',

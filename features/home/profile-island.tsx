@@ -1,8 +1,8 @@
 'use client'
 
 import { IslandDivider, IslandPill, IslandStat } from '@/features/home/island-pill'
-import { ProfileAvatar } from '@/features/home/profile-avatar'
-import type { UserStats } from '@/features/stats/domain'
+import { ProfileAvatar } from '@/shared/components/profile-avatar'
+import type { UserStats } from '@/domain/stats'
 import type { PremiumState, SessionResponse } from '@/shell/session-api'
 import { GlyphCrown } from '@/shared/components/glyph'
 import { formatCredits, formatCreditsDecimal, formatShortDate } from '@/shared/lib/format'

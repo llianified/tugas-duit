@@ -1,6 +1,6 @@
 
-import { getProgression, type Progression } from '@/features/home/progression'
-import { DIFFICULTY_LABEL, type Difficulty } from '@/features/captcha/domain'
+import { getProgression, type Progression } from '@/domain/progression'
+import { DIFFICULTY_LABEL, type Difficulty } from '@/domain/challenge'
 
 const DIFFICULTY_ORDER: readonly Difficulty[] = ['Easy', 'Medium', 'Hard']
 

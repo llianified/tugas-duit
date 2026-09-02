@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { getPayoutChannel } from '@/features/withdraw/domain'
+import { getPayoutChannel } from '@/domain/withdrawal'
 import { readFlaggedUsers, readPayoutHistory, readPremiumInvoices } from '@/server/admin-ops'
 import { BROADCAST_SEGMENTS } from '@/domain/broadcast'
 import { readBroadcasts } from '@/server/broadcast'

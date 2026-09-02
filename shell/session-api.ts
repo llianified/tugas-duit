@@ -5,11 +5,11 @@ import { setActiveEconomyConfig, type EconomyConfig } from '@/domain/economy-con
 import type { EnergyState } from '@/domain/energy'
 import type { PremiumMonths, PremiumPerks, PremiumPlan } from '@/domain/premium'
 import type { RewardPoolState } from '@/domain/reward-pool'
-import type { Challenge, HistoryEntry } from '@/features/captcha/domain'
-import type { ActivityEntry } from '@/features/activity/domain'
-import type { LeaderboardBoard } from '@/features/leaderboard/domain'
-import type { UserStats } from '@/features/stats/domain'
-import type { Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
+import type { Challenge, HistoryEntry } from '@/domain/challenge'
+import type { ActivityEntry } from '@/domain/activity'
+import type { LeaderboardBoard } from '@/domain/leaderboard'
+import type { UserStats } from '@/domain/stats'
+import type { Withdrawal, WithdrawalEligibility } from '@/domain/withdrawal'
 import { fetchJson, sendJson, setPreviewSessionToken } from '@/shell/api-client'
 
 export type SessionResponse = {

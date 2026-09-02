@@ -18,10 +18,10 @@ import {
   type FilterChipOption,
   type SegmentedTab,
 } from '@/shared/components/segmented-tabs'
-import { ProfileAvatar } from '@/features/home/profile-avatar'
+import { ProfileAvatar } from '@/shared/components/profile-avatar'
 import { ActivityFeed } from '@/features/activity/activity-feed'
-import type { ActivityEntry } from '@/features/activity/domain'
-import { TierGlyph } from '@/features/home/tier-glyph'
+import type { ActivityEntry } from '@/domain/activity'
+import { TierGlyph } from '@/shared/components/tier-glyph'
 import { cn } from '@/shared/lib/utils'
 import { MetaBadge, type ChipTone } from '@/shared/components/meta-badge'
 import { PageHeader } from '@/shared/components/page-header'
@@ -29,10 +29,10 @@ import { PageRegion } from '@/shared/components/page-region'
 import { InfoHint } from '@/shared/components/info-hint'
 import { SectionLabel } from '@/shared/components/section-label'
 import { VIEW_TITLE } from '@/navigation/app-view'
-import { getRank } from '@/features/home/progression'
+import { getRank } from '@/domain/progression'
 import { prestigeBadges, type PrestigeKey } from '@/domain/prestige'
 import { formatCredits } from '@/shared/lib/format'
-import type { LeaderboardBoard, LeaderboardEntry } from '@/features/leaderboard/domain'
+import type { LeaderboardBoard, LeaderboardEntry } from '@/domain/leaderboard'
 
 type BoardSurface = 'papan' | 'aktivitas'
 

@@ -5,7 +5,7 @@ import {
   type EconomyConfig,
 } from '@/domain/economy-config'
 import { getStarCutoffs } from '@/domain/stars'
-import { generateChallenge } from '@/features/captcha/domain'
+import { generateChallenge } from '@/domain/challenge'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL

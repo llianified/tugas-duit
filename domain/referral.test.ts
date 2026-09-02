@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { commissionUnitsForReward, splitUnitsIntoCredits, unitsToCredits } from './domain'
+import { commissionUnitsForReward, splitUnitsIntoCredits, unitsToCredits } from './referral'
 
 describe('referral commission invariants', () => {
   it('keeps commission arithmetic in integer units', () => {

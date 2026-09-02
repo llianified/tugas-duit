@@ -11,7 +11,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react'
-import { hapticError } from '@/shell/haptic'
+import { hapticError } from '@/shared/lib/haptic'
 import { EASE_OUT_QUART, SPRING_SOFT } from '@/shared/lib/motion'
 
 const TOAST_TTL_MS = 4000

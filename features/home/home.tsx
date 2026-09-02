@@ -8,13 +8,13 @@ import { ChannelBonusCard } from '@/features/channel/channel-card'
 import { channelBonusReachable } from '@/features/channel/use-channel-bonus'
 import { PremiumCard } from '@/features/premium/components/premium-card'
 import { PremiumDialog } from '@/features/premium/components/premium-dialog'
-import type { Challenge, HistoryEntry } from '@/features/captcha/domain'
+import type { Challenge, HistoryEntry } from '@/domain/challenge'
 import type { EnergyFill } from '@/domain/energy'
 import type { ChannelBonusState, PremiumState } from '@/shell/session-api'
 import { cn } from '@/shared/lib/utils'
 import { WithdrawDialog } from '@/features/withdraw/components/withdraw-dialog'
 import type { WithdrawalSubmitInput } from '@/features/withdraw/components/withdraw-form'
-import type { Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
+import type { Withdrawal, WithdrawalEligibility } from '@/domain/withdrawal'
 
 interface HomeViewProps {
   balance: number

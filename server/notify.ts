@@ -1,4 +1,4 @@
-import { getPayoutChannel, maskAccountNumber, PAYOUT_ETA_TEXT } from '@/features/withdraw/domain'
+import { getPayoutChannel, maskAccountNumber, PAYOUT_ETA_TEXT } from '@/domain/withdrawal'
 import { formatCredits, formatRupiah, formatShortDate } from '@/shared/lib/format'
 import {
   escapeTelegramHtml as escapeHtml,

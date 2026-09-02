@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest'
-import { PAYOUT_CHANNELS } from '@/features/withdraw/domain'
+import { PAYOUT_CHANNELS } from '@/domain/withdrawal'
 import { withdrawalMinimumCredits } from '@/domain/economy'
 
 beforeAll(async () => {
@@ -11,7 +11,7 @@ beforeAll(async () => {
 async function makeUser(balance: number, activeReferrals = 5, activeDays?: number): Promise<number> {
   const { query } = await import('./db')
   const { generateReferralCode } = await import('./referral')
-  const { seedActiveDays, seedActiveReferrals } = await import('./payout-fixtures')
+  const { seedActiveDays, seedActiveReferrals } = await import('./__fixtures__/payout')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string }>(
     `insert into users(telegram_id,first_name,referral_code,balance_credits)
@@ -101,7 +101,7 @@ describe('WD-6 — setiap channel di PAYOUT_CHANNELS diterima database', () => {
 /** Kebalikan WD-6: yang dijaga di sini bukan "channel di kode diterima database", melainkan "channel di database tidak berbohong di layar". Keduanya perlu karena keduanya pernah berselisih ke arah yang berbeda. */
 describe('WD-6b — channel di luar daftar tidak pernah menyamar jadi channel lain', () => {
   it('AUDIT-H2 — memakai id-nya sendiri sebagai nama, bukan channel pertama', async () => {
-    const { getPayoutChannel, PAYOUT_CHANNELS } = await import('@/features/withdraw/domain')
+    const { getPayoutChannel, PAYOUT_CHANNELS } = await import('@/domain/withdrawal')
 
     /** `withdrawals_known_channel` masih menerima `bri` dan `mandiri` dari masa keduanya ditawarkan. Bentuk lama `getPayoutChannel` jatuh ke `PAYOUT_CHANNELS[0]`, jadi baris lama itu terbaca sebagai DANA di antrean payout — label yang dibaca admin tepat sebelum mentransfer — dan di pesan Telegram ke user. */
     for (const legacy of ['bri', 'mandiri']) {
@@ -113,7 +113,7 @@ describe('WD-6b — channel di luar daftar tidak pernah menyamar jadi channel la
   })
 
   it('tetap mengembalikan channel yang sesungguhnya untuk id yang dikenal', async () => {
-    const { getPayoutChannel, PAYOUT_CHANNELS } = await import('@/features/withdraw/domain')
+    const { getPayoutChannel, PAYOUT_CHANNELS } = await import('@/domain/withdrawal')
 
     for (const channel of PAYOUT_CHANNELS) {
       expect(getPayoutChannel(channel.id)).toBe(channel)
@@ -404,7 +404,7 @@ describe('WD-12 — bukti transfer', () => {
 
   it('menolak berkas kosong dan berkas di atas 5 MB', async () => {
     const { readPayoutProof } = await import('./payout-proof')
-    const { PAYOUT_PROOF_MAX_BYTES } = await import('@/features/withdraw/domain')
+    const { PAYOUT_PROOF_MAX_BYTES } = await import('@/domain/withdrawal')
     const besar = new Uint8Array(PAYOUT_PROOF_MAX_BYTES + 1)
     besar.set(jpeg())
 

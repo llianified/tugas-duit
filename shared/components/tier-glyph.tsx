@@ -1,6 +1,6 @@
 'use client'
 
-import type { Rank } from '@/features/home/progression'
+import type { Rank } from '@/domain/progression'
 
 interface TierGlyphProps {
   tier: Rank['tier']

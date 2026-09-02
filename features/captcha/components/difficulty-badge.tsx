@@ -1,6 +1,6 @@
 'use client'
 
-import { DIFFICULTY_LABEL, type Difficulty } from '@/features/captcha/domain'
+import { DIFFICULTY_LABEL, type Difficulty } from '@/domain/challenge'
 import { CHIP_SHAPE } from '@/shared/components/meta-badge'
 
 const DIFFICULTY_STRENGTH: Record<Difficulty, number> = {

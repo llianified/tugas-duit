@@ -181,10 +181,10 @@
   --island-region-py: 0.75rem;
   --bubble-px: 0.875rem;
   --bubble-py: 0.625rem;
-  /* Screenshot fomo 1080px dikalibrasi ke viewport acuan 384px (2.8125x): bar 64px, inset tepi 12px, bidang aktif 52px, dan glyph 28px. */
+  /* Geometri bar mengikuti referensi fomo; jarak luarnya mengikuti ritme layout aplikasi. */
   --nav-pill-h: 4rem;
-  --nav-pill-inset: 0.75rem;
-  --nav-pill-bottom: 0.5rem;
+  --nav-pill-inset: var(--content-px);
+  --nav-pill-bottom: var(--island-region-py);
   --nav-pill-px: 0.25rem;
   --nav-pill-slot: 3.25rem;
   --nav-glyph: 1.75rem;

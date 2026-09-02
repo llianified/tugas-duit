@@ -39,15 +39,49 @@ function importedLayer(file: string, specifier: string): string | null {
   return relative.startsWith('..') ? null : relative.split(path.sep)[0] ?? null
 }
 
+async function importsIn(file: string): Promise<string[]> {
+  const source = await readFile(file, 'utf8')
+  return [...source.matchAll(IMPORT_PATTERN)].map((match) => match[1] ?? match[2])
+}
+
+function findCycle(graph: ReadonlyMap<string, ReadonlySet<string>>): string[] | null {
+  const visited = new Set<string>()
+  const active = new Set<string>()
+  const stack: string[] = []
+
+  function visit(node: string): string[] | null {
+    if (active.has(node)) return [...stack.slice(stack.indexOf(node)), node]
+    if (visited.has(node)) return null
+
+    visited.add(node)
+    active.add(node)
+    stack.push(node)
+
+    for (const dependency of graph.get(node) ?? []) {
+      const cycle = visit(dependency)
+      if (cycle) return cycle
+    }
+
+    stack.pop()
+    active.delete(node)
+    return null
+  }
+
+  for (const node of graph.keys()) {
+    const cycle = visit(node)
+    if (cycle) return cycle
+  }
+
+  return null
+}
+
 describe('batas arsitektur', () => {
   it('menjaga arah dependensi antar-layer', async () => {
     const violations: string[] = []
 
     for (const root of SOURCE_ROOTS) {
       for (const file of await sourceFiles(path.join(ROOT, root))) {
-        const source = await readFile(file, 'utf8')
-        for (const match of source.matchAll(IMPORT_PATTERN)) {
-          const specifier = match[1] ?? match[2]
+        for (const specifier of await importsIn(file)) {
           const dependency = importedLayer(file, specifier)
           if (dependency && FORBIDDEN_DEPENDENCIES[root]?.has(dependency)) {
             violations.push(`${path.relative(ROOT, file)} -> ${specifier}`)
@@ -59,6 +93,24 @@ describe('batas arsitektur', () => {
     expect(violations, violations.join('\n')).toEqual([])
   })
 
+  it('mencegah siklus dependensi antar-feature', async () => {
+    const graph = new Map<string, Set<string>>()
+
+    for (const file of await sourceFiles(path.join(ROOT, 'features'))) {
+      const owner = path.relative(path.join(ROOT, 'features'), file).split(path.sep)[0]
+      const dependencies = graph.get(owner) ?? new Set<string>()
+      graph.set(owner, dependencies)
+
+      for (const specifier of await importsIn(file)) {
+        const match = specifier.match(/^@\/features\/([^/]+)/)
+        if (match?.[1] && match[1] !== owner) dependencies.add(match[1])
+      }
+    }
+
+    const cycle = findCycle(graph)
+    expect(cycle, cycle?.join(' -> ')).toBeNull()
+  })
+
   it('menyimpan business rules di domain root, bukan features/*/domain.ts', async () => {
     const featureFiles = await sourceFiles(path.join(ROOT, 'features'))
     const ambiguous = featureFiles
@@ -66,5 +118,23 @@ describe('batas arsitektur', () => {
       .map((file) => path.relative(ROOT, file))
 
     expect(ambiguous).toEqual([])
+  })
+
+  it('mencegah source produksi mengimpor fixture test', async () => {
+    const violations: string[] = []
+
+    for (const root of SOURCE_ROOTS) {
+      for (const file of await sourceFiles(path.join(ROOT, root))) {
+        if (file.includes(`${path.sep}__fixtures__${path.sep}`) || file.includes('.test.')) continue
+
+        for (const specifier of await importsIn(file)) {
+          if (specifier.includes('/__fixtures__/')) {
+            violations.push(`${path.relative(ROOT, file)} -> ${specifier}`)
+          }
+        }
+      }
+    }
+
+    expect(violations, violations.join('\n')).toEqual([])
   })
 })

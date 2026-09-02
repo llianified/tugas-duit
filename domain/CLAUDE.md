@@ -16,5 +16,6 @@ input → output, tanpa efek samping. Kalau butuh akses DB, itu tidak tergolong 
   `domain/` tidak boleh membaca DB untuk mencarinya sendiri.
 - Rank dan streak menambah **daya tampung** kolam, bukan kecepatan isi ulangnya. Kalau perlu
   mempercepat penghasilan, itu `rewardPoolRegenMinutes`/`rewardPoolRegenCredits`, bukan bonus.
-- Tiap file punya `*.test.ts` pasangan. Ubah logika di sini → perbarui test-nya, jangan hapus
-  test untuk "menyelesaikan" kegagalan.
+- Setiap perubahan business rule wajib memperbarui atau menambah test kontrak yang relevan.
+  Modul tipe/proyeksi sederhana boleh diuji lewat konsumen utamanya; jangan membuat test kosong
+  hanya demi pasangan nama, dan jangan hapus test untuk "menyelesaikan" kegagalan.

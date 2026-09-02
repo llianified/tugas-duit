@@ -1,7 +1,7 @@
 'use client'
 
 import { DifficultyMeter } from '@/features/captcha/components/difficulty-badge'
-import { DIFFICULTY_LABEL, type Difficulty } from '@/features/captcha/domain'
+import { DIFFICULTY_LABEL, type Difficulty } from '@/domain/challenge'
 import { IslandDivider, IslandPill } from '@/features/home/island-pill'
 import { getStarCutoffs, getStarReward, type StarCount } from '@/domain/stars'
 import { StarRating } from '@/shared/components/star-rating'

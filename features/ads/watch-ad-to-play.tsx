@@ -6,7 +6,7 @@ import { AdConfirmDialog } from '@/features/ads/ad-confirm-dialog'
 import { GlyphPlay, GlyphSpinner } from '@/shared/components/glyph'
 import { MetaBadge } from '@/shared/components/meta-badge'
 import { TapAction, TapActionWaiting } from '@/shared/components/tap-action'
-import { hapticTap } from '@/shell/haptic'
+import { hapticTap } from '@/shared/lib/haptic'
 import { formatCountdown, formatCredits } from '@/shared/lib/format'
 
 export function WatchAdToPlay({

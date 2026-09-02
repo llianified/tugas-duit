@@ -21,7 +21,7 @@ async function makeUser(balance = 0): Promise<number> {
     [800_000_000_000_000 + suffix, 'Uji', generateReferralCode(), balance],
   )
   const userId = Number(rows[0].id)
-  const { seedWithdrawalEligibility } = await import('./payout-fixtures')
+  const { seedWithdrawalEligibility } = await import('./__fixtures__/payout')
   await seedWithdrawalEligibility(userId)
   return userId
 }
@@ -118,7 +118,7 @@ describe('ECON-1 — satu tujuan pembayaran milik satu akun', () => {
 
     const { withdrawal } = await createPayout(userId, draft(destination))
     await settlePayout(admin, withdrawal.id, 'paid', '', null)
-    const { clearWithdrawalCooldown } = await import('./payout-fixtures')
+    const { clearWithdrawalCooldown } = await import('./__fixtures__/payout')
     await clearWithdrawalCooldown(userId)
 
     await expect(createPayout(userId, draft(destination))).resolves.toBeTruthy()

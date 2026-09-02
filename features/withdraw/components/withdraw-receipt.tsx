@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { hapticConfirm } from '@/shell/haptic'
+import { hapticConfirm } from '@/shared/lib/haptic'
 import { GlyphCheck } from '@/shared/components/glyph'
 import { ResultPanel } from '@/shared/components/result-panel'
 import { Surface } from '@/shared/components/surface'
@@ -11,7 +11,7 @@ import {
   getPayoutChannel,
   maskAccountNumber,
   type Withdrawal,
-} from '@/features/withdraw/domain'
+} from '@/domain/withdrawal'
 
 export function WithdrawReceipt({ withdrawal }: { withdrawal: Withdrawal }) {
   const channel = getPayoutChannel(withdrawal.channelId)

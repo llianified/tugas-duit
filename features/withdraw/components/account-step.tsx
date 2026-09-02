@@ -11,7 +11,7 @@ import {
   sanitizeAccountNumber,
   type PayoutChannel,
   type WithdrawalDraft,
-} from '@/features/withdraw/domain'
+} from '@/domain/withdrawal'
 import { cn } from '@/shared/lib/utils'
 
 export function AccountStep({

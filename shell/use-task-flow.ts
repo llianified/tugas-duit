@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { KeyedMutator } from 'swr'
 import type { SWRInfiniteKeyedMutator } from 'swr/infinite'
 import { energyCostPerTask } from '@/domain/energy'
-import type { Challenge, TaskSubmission } from '@/features/captcha/domain'
+import type { Challenge, TaskSubmission } from '@/domain/challenge'
 import type { AppView } from '@/navigation/app-view'
 import { ApiError, sendJson, userFacingMessage } from '@/shell/api-client'
 import type {

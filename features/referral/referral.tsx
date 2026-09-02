@@ -25,7 +25,7 @@ import {
   unitsToCredits,
   type Referral,
   type ReferralSummary,
-} from '@/features/referral/domain'
+} from '@/domain/referral'
 
 export function ReferralView({
   referrals,

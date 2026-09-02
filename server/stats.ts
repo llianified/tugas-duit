@@ -1,6 +1,6 @@
 
-import type { Difficulty } from '@/features/captcha/domain'
-import { getUserStats, type DifficultyTally, type UserStats } from '@/features/stats/domain'
+import type { Difficulty } from '@/domain/challenge'
+import { getUserStats, type DifficultyTally, type UserStats } from '@/domain/stats'
 import { STAR_MAX } from '@/domain/stars'
 import { query } from './db'
 import { STREAK_EXPRESSION } from './streak-sql'

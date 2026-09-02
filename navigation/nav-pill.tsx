@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { hapticSelect } from '@/shell/haptic'
+import { hapticSelect } from '@/shared/lib/haptic'
 import {
   GlyphCheck,
   GlyphHome,

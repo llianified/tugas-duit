@@ -16,7 +16,7 @@ async function makeUser(balance = 0): Promise<{ id: number; publicId: string }> 
     [700_000_000_000_000 + suffix, 'Uji', generateReferralCode(), balance],
   )
   const user = { id: Number(rows[0].id), publicId: rows[0].public_id }
-  const { seedWithdrawalEligibility } = await import('./payout-fixtures')
+  const { seedWithdrawalEligibility } = await import('./__fixtures__/payout')
   await seedWithdrawalEligibility(user.id)
   return user
 }
@@ -204,7 +204,7 @@ describe('ECON-11 — invarian ledger di database', () => {
 
   it('menerima SETIAP channel yang ditawarkan aplikasi', async () => {
     const { createPayout } = await import('./payout')
-    const { PAYOUT_CHANNELS } = await import('@/features/withdraw/domain')
+    const { PAYOUT_CHANNELS } = await import('@/domain/withdrawal')
 
     for (const channel of PAYOUT_CHANNELS) {
       const payer = await makeUser(500)

@@ -8,8 +8,8 @@ Telegram Mini App: user mengerjakan captcha → dapat credit → bisa ditarik ja
 | Path | Isi |
 | --- | --- |
 | `app/` | Route Next.js (App Router). `app/api/*` handler, `app/admin/*` panel admin. |
-| `domain/` | Aturan ekonomi murni, tanpa I/O: `economy`, `economy-config`, `energy`, `stars`, `ads`. |
-| `server/` | Akses DB & logika server. `ledger`, `payout`, `quota`, `challenge`, `session`, `fraud`, `ads`. |
+| `domain/` | Aturan dan tipe bisnis murni tanpa I/O: ekonomi, challenge, progression, statistik, referral, dan penarikan. |
+| `server/` | Akses DB dan orkestrasi server: ledger, payout, quota, challenge, session, fraud, serta integrasi eksternal. |
 | `features/` | UI per fitur: `captcha`, `home`, `history`, `stats`, `referral`, `withdraw`, `leaderboard`, `ads`. |
 | `shared/` | `components/` (dipakai lintas fitur) + `lib/` (`format`, `utils`, hooks kecil). |
 | `shell/` | Kerangka aplikasi gelap-saja: shell, router view, toast, hook sesi/task, serta sinkronisasi viewport dan warna chrome Telegram. |

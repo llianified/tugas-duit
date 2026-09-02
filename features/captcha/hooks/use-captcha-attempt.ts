@@ -1,9 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { Challenge, TaskOutcome, TaskSubmission } from '@/features/captcha/domain'
+import type { Challenge, TaskOutcome, TaskSubmission } from '@/domain/challenge'
 import { userFacingMessage } from '@/shell/api-client'
-import { hapticError, hapticSuccess, hapticWarning } from '@/shell/haptic'
+import { hapticError, hapticSuccess, hapticWarning } from '@/shared/lib/haptic'
 
 export type CaptchaAttemptStatus = 'idle' | 'error' | 'success'
 

@@ -1,7 +1,7 @@
 'use client'
 
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react'
-import { hapticTap } from '@/shell/haptic'
+import { hapticTap } from '@/shared/lib/haptic'
 import { cn } from '@/shared/lib/utils'
 
 export const KEYPAD_KEY_CLASS =

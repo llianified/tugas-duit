@@ -1,5 +1,5 @@
 import { loadEconomyConfig } from '@/server/economy-config'
-import { sanitizeAccountNumber } from '@/features/withdraw/domain'
+import { sanitizeAccountNumber } from '@/domain/withdrawal'
 import { apiError, assertSameOrigin, handleRouteError, rateLimited } from '@/server/http'
 import { notifyWithdrawalRequested } from '@/server/notify'
 import { createPayout, getPayouts, PayoutError } from '@/server/payout'

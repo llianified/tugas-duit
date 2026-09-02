@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { getPayoutChannel } from '@/features/withdraw/domain'
+import { getPayoutChannel } from '@/domain/withdrawal'
 import { listPendingPayouts, PENDING_PAYOUT_PAGE_SIZE } from '@/server/payout'
 import { getSessionUser } from '@/server/session'
 import { formatCredits, formatHistoryTime, formatRupiah } from '@/shared/lib/format'

@@ -1,4 +1,4 @@
-import { rankMinTasks } from '../../domain/economy-config.ts'
+import { rankMinTasks } from './economy-config'
 
 export interface Rank {
   tier: number

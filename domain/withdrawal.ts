@@ -1,6 +1,12 @@
-
 import { creditsToRupiah, maxPayoutCredits, withdrawalMinimumCredits } from '@/domain/economy'
-import { formatCredits, formatRupiah } from '@/shared/lib/format'
+
+function formatCreditsForMessage(value: number): string {
+  return value.toLocaleString('id-ID')
+}
+
+function formatRupiahForMessage(value: number): string {
+  return `Rp${Math.round(value).toLocaleString('id-ID')}`
+}
 
 type PayoutKind = 'ewallet' | 'bank'
 
@@ -184,12 +190,12 @@ function getAmountError(value: string, balance: number): string | null {
 
   const credits = parseCreditInput(value)
   if (credits < withdrawalMinimumCredits()) {
-    return `Minimum penarikan ${formatCredits(withdrawalMinimumCredits())} credit (${formatRupiah(
+    return `Minimum penarikan ${formatCreditsForMessage(withdrawalMinimumCredits())} credit (${formatRupiahForMessage(
       creditsToRupiah(withdrawalMinimumCredits()),
     )}).`
   }
   if (credits > maxPayoutCredits()) {
-    return `Maksimum penarikan ${formatCredits(maxPayoutCredits())} credit per pengajuan.`
+    return `Maksimum penarikan ${formatCreditsForMessage(maxPayoutCredits())} credit per pengajuan.`
   }
   if (credits > balance) return 'Jumlahnya lebih besar dari saldo kamu.'
   return null

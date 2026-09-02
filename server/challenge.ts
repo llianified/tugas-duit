@@ -4,7 +4,7 @@ import {
   type Challenge,
   type Difficulty,
   type DistributiveOmit,
-} from '@/features/captcha/domain'
+} from '@/domain/challenge'
 import { getStarReward, getStars, type StarCount } from '@/domain/stars'
 import { economyConfig } from '@/domain/economy-config'
 import { consumeAdPass } from './ads'

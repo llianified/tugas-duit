@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { MissionProgress } from '@/domain/missions'
 import { fetchJson, sendJson, userFacingMessage } from '@/shell/api-client'
-import { hapticTap } from '@/shell/haptic'
+import { hapticTap } from '@/shared/lib/haptic'
 import { useToast } from '@/shell/toast'
 
 type ClaimResponse = { energyGranted: number; energy: number; energyMax: number }

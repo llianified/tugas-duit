@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { maxEnergy } from '@/domain/energy'
-import type { Referral, ReferralSummary } from '@/features/referral/domain'
-import type { Withdrawal, WithdrawalDraft } from '@/features/withdraw/domain'
+import type { Referral, ReferralSummary } from '@/domain/referral'
+import type { Withdrawal, WithdrawalDraft } from '@/domain/withdrawal'
 import { useViewStack } from '@/navigation/use-view-stack'
 import { rememberAdsHint } from '@/shell/ads-hint'
 import { sendJson, userFacingMessage } from '@/shell/api-client'

@@ -1,6 +1,6 @@
 'use client'
 
-import { ProfileAvatar } from '@/features/home/profile-avatar'
+import { ProfileAvatar } from '@/shared/components/profile-avatar'
 import { formatCredits } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 

@@ -123,7 +123,7 @@ describe('agregat dashboard', () => {
     await signIn(admin.id)
 
     const payer = await makeUser({ balance: 500 })
-    const { seedWithdrawalEligibility } = await import('./payout-fixtures')
+    const { seedWithdrawalEligibility } = await import('./__fixtures__/payout')
     await seedWithdrawalEligibility(payer.id)
 
     const before = await readAdminDashboard()

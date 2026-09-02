@@ -1,5 +1,5 @@
 import { loadEconomyConfig } from '@/server/economy-config'
-import { WITHDRAWAL_REJECT_REASON_MAX } from '@/features/withdraw/domain'
+import { WITHDRAWAL_REJECT_REASON_MAX } from '@/domain/withdrawal'
 import { apiError, assertSameOrigin, handleRouteError, rateLimited } from '@/server/http'
 import { notifyWithdrawalPaid, notifyWithdrawalRejected } from '@/server/notify'
 import { PayoutError, savePayoutProof, settlePayout } from '@/server/payout'

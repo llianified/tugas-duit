@@ -45,6 +45,12 @@ const HISTORIC: EconomyConfig = {
 
 const withField = (patch: Partial<EconomyConfig>) => ({ ...DEFAULT_ECONOMY_CONFIG, ...patch })
 
+const CONFIG_WITHOUT_NEW_KEY = (() => {
+  const config: Record<string, number> = { ...DEFAULT_ECONOMY_CONFIG }
+  delete config.withdrawalMinActiveReferrals
+  return config
+})()
+
 describe('default config', () => {
   it('terpaku pada snapshot yang sudah ditinjau, supaya pergeseran diam-diam gagal di sini', () => {
     expect(DEFAULT_ECONOMY_CONFIG).toEqual(HISTORIC)
@@ -220,5 +226,67 @@ describe('invarian setelan panel yang baru dipindah dari kode', () => {
 
   it('hari aktif minimum tidak boleh nol — itu mencabut gerbang waktunya sama sekali', () => {
     expect(validateEconomyConfig(withField({ withdrawalMinActiveDays: 0 })).ok).toBe(false)
+  })
+})
+
+describe('kompatibilitas konfigurasi tersimpan', () => {
+  it('menolak baris yang kekurangan key saat dibaca ketat', () => {
+    const result = validateEconomyConfig(CONFIG_WITHOUT_NEW_KEY)
+
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.errors.withdrawalMinActiveReferrals).toBeTruthy()
+  })
+
+  it('mengisi key baru dari nilai bawaan ketika membaca database lama', () => {
+    const result = validateEconomyConfig(CONFIG_WITHOUT_NEW_KEY, { fillMissing: true })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.config.withdrawalMinActiveReferrals).toBe(
+      DEFAULT_ECONOMY_CONFIG.withdrawalMinActiveReferrals,
+    )
+    expect(result.config.creditValueIdr).toBe(DEFAULT_ECONOMY_CONFIG.creditValueIdr)
+  })
+
+  it('tetap menolak nilai yang ada tetapi rusak', () => {
+    const broken = { ...DEFAULT_ECONOMY_CONFIG, maxEnergy: -3 } as unknown as EconomyConfig
+
+    expect(validateEconomyConfig(broken, { fillMissing: true }).ok).toBe(false)
+  })
+
+  it('mempertahankan semua nilai admin saat mengisi key yang hilang', () => {
+    const configured = {
+      ...CONFIG_WITHOUT_NEW_KEY,
+      rewardPoolCapIdr: 5_000,
+      rewardPoolRegenMinutes: 6,
+      rankPoolCapBonus: 10,
+      maxStreakCapBonus: 10,
+      maxTasksPerDay: 500,
+      energyRegenMinutes: 10,
+      premiumEnergyRegenMinutes: 5,
+      premiumPoolCapBonus: 60,
+      premiumMaxTasksPerDay: 800,
+      rankTier2Tasks: 50,
+      rankTier3Tasks: 150,
+      rankTier4Tasks: 400,
+      rankTier5Tasks: 1_000,
+      dailyCommissionCapIdr: 10_000,
+      maxPayoutIdr: 5_000_000,
+      channelJoinBonusCredits: 10,
+      textLengthMedium: 6,
+      textLengthHard: 8,
+      rewardMedium2: 4,
+      rewardMedium3: 6,
+    }
+    const result = validateEconomyConfig(configured, { fillMissing: true })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.config.energyRegenMinutes).toBe(10)
+    expect(result.config.rewardPoolRegenMinutes).toBe(6)
+    expect(result.config.withdrawalMinActiveReferrals).toBe(
+      DEFAULT_ECONOMY_CONFIG.withdrawalMinActiveReferrals,
+    )
   })
 })

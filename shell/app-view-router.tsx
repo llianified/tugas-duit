@@ -7,7 +7,7 @@ import {
   StatsSkeleton,
 } from '@/shared/components/app-skeleton'
 import { CaptchaView } from '@/features/captcha/components/captcha'
-import type { Challenge } from '@/features/captcha/domain'
+import type { Challenge } from '@/domain/challenge'
 import { HistoryView } from '@/features/history/history'
 import { HomeView } from '@/features/home/home'
 import { leaderboardEnabled } from '@/features/leaderboard/availability'

@@ -1,10 +1,10 @@
-import { query } from './db'
+import { query } from '../db'
 import {
   requiredActiveDays,
   requiredActiveReferrals,
   withdrawalCooldownMsForBase,
-} from './payout-rules'
-import { generateReferralCode } from './referral'
+} from '../payout-rules'
+import { generateReferralCode } from '../referral'
 
 /** Perkakas khusus uji, bukan jalur produksi: `createPayout` menuntut hari aktif, referral aktif, dan cooldown, jadi berkas uji mana pun yang menyentuh penarikan harus menyiapkan ketiganya dulu. Dikumpulkan di sini supaya syaratnya cukup diperbarui sekali kalau gatingnya berubah — bukan disalin ke tiap `*.test.ts`. */
 export async function seedActiveReferrals(

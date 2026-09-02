@@ -2,7 +2,7 @@
 
 import { DataList, DataListAmount, DataListRow } from '@/shared/components/data-list'
 import { StarRating } from '@/shared/components/star-rating'
-import { DIFFICULTY_LABEL, type HistoryEntry } from '@/features/captcha/domain'
+import { DIFFICULTY_LABEL, type HistoryEntry } from '@/domain/challenge'
 import { formatCredits, formatHistoryTime } from '@/shared/lib/format'
 
 export function RecentTransactions({

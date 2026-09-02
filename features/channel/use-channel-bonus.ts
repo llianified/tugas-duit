@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react'
 import { userFacingMessage } from '@/shell/api-client'
-import { hapticSuccess, hapticTap } from '@/shell/haptic'
+import { hapticSuccess, hapticTap } from '@/shared/lib/haptic'
 import { claimChannelBonus, type ChannelBonusState } from '@/shell/session-api'
 import { useToast } from '@/shell/toast'
 

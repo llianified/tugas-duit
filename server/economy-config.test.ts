@@ -200,7 +200,7 @@ describe('konsumen membaca dari satu sumber kebenaran', () => {
 
   it('komisi referral mengikuti persentase yang disetel', async () => {
     const { updateEconomyConfig } = await import('./economy-config')
-    const { commissionUnitsForReward } = await import('@/features/referral/domain')
+    const { commissionUnitsForReward } = await import('@/domain/referral')
     const adminId = await makeUser(true)
 
     expect(commissionUnitsForReward(10)).toBe(100)

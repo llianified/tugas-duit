@@ -13,7 +13,7 @@ import {
 import { WithdrawReceipt } from '@/features/withdraw/components/withdraw-receipt'
 import { WithdrawalList } from '@/features/withdraw/components/withdrawal-list'
 import { getWithdrawalStatus } from '@/domain/economy'
-import type { Withdrawal, WithdrawalEligibility } from '@/features/withdraw/domain'
+import type { Withdrawal, WithdrawalEligibility } from '@/domain/withdrawal'
 
 export function WithdrawDialog({
   open,

@@ -8,7 +8,7 @@ import {
   type RewardPoolState,
 } from '@/domain/reward-pool'
 import { isPremiumActive } from '@/domain/premium'
-import { getRank } from '@/features/home/progression'
+import { getRank } from '@/domain/progression'
 import { query } from './db'
 import { STREAK_EXPRESSION } from './streak-sql'
 

@@ -1,6 +1,6 @@
 'use client'
 
-import type { ShapeKey } from '@/features/captcha/domain'
+import type { ShapeKey } from '@/domain/challenge'
 import { SHAPE_PATH } from '@/shared/lib/shape-path'
 
 export function GlyphShape({

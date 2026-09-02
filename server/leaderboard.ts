@@ -1,5 +1,5 @@
 
-import type { LeaderboardBoard, LeaderboardEntry } from '@/features/leaderboard/domain'
+import type { LeaderboardBoard, LeaderboardEntry } from '@/domain/leaderboard'
 import { FOUNDER_MAX_USER_ID } from '@/domain/prestige'
 import { query } from './db'
 

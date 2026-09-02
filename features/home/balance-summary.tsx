@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { ActionButton } from '@/shared/components/action-button'
 import { CreditAmount } from '@/shared/components/credit-amount'
 import { InfoHint } from '@/shared/components/info-hint'
-import type { HistoryEntry } from '@/features/captcha/domain'
+import type { HistoryEntry } from '@/domain/challenge'
 import { creditsToRupiah } from '@/domain/economy'
 import {
   HERO_COMPACT_FROM,

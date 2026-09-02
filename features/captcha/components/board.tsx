@@ -2,9 +2,9 @@
 
 import type { ReactNode } from 'react'
 import { GlyphShape } from '@/features/captcha/components/glyph-shape'
-import type { SelectOption } from '@/features/captcha/domain'
+import type { SelectOption } from '@/domain/challenge'
 import type { CaptchaAttemptStatus } from '@/features/captcha/hooks/use-captcha-attempt'
-import { hapticSelect } from '@/shell/haptic'
+import { hapticSelect } from '@/shared/lib/haptic'
 
 const BOARD_CONTENT_CLASS = 'flex min-h-16 flex-1 select-none items-center justify-center'
 

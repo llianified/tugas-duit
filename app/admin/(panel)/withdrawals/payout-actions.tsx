@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useId, useRef, useState } from 'react'
-import { PAYOUT_PROOF_ACCEPT, WITHDRAWAL_REJECT_REASON_MAX } from '@/features/withdraw/domain'
+import { PAYOUT_PROOF_ACCEPT, WITHDRAWAL_REJECT_REASON_MAX } from '@/domain/withdrawal'
 import { ApiError, sendFormData, sendJson } from '@/shell/api-client'
 
 type Mode = 'idle' | 'confirm-paid' | 'reject'

@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
-import { TierGlyph } from '@/features/home/tier-glyph'
+import { TierGlyph } from '@/shared/components/tier-glyph'
 import { PageHeader } from '@/shared/components/page-header'
 import { PageRegion } from '@/shared/components/page-region'
 import { ProgressBar } from '@/shared/components/progress-bar'
 import { TotalSummary } from '@/shared/components/total-summary'
 import { SegmentedTabs, type SegmentedTab } from '@/shared/components/segmented-tabs'
 import { VIEW_TITLE } from '@/navigation/app-view'
-import type { UserStats } from '@/features/stats/domain'
+import type { UserStats } from '@/domain/stats'
 import { STAR_MAX } from '@/domain/stars'
 import { creditsToRupiah } from '@/domain/economy'
 import {

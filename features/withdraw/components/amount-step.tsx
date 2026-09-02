@@ -12,7 +12,7 @@ import {
   dropAmountDigit,
   getAmountPresets,
   type PayoutChannel,
-} from '@/features/withdraw/domain'
+} from '@/domain/withdrawal'
 import { cn } from '@/shared/lib/utils'
 
 export function AmountStep({

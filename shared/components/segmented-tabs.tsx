@@ -1,7 +1,7 @@
 'use client'
 
 import { Select } from '@base-ui/react/select'
-import { hapticSelect } from '@/shell/haptic'
+import { hapticSelect } from '@/shared/lib/haptic'
 import { GlyphCheck, GlyphChevron } from '@/shared/components/glyph'
 import { cn } from '@/shared/lib/utils'
 

@@ -1,18 +1,18 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy-config'
+import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy/economy-config'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
   process.env.NEXT_PUBLIC_MONETAG_ZONE_ID = 'uji-block'
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
 
 afterEach(() => setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG))
 
 async function makeUser(): Promise<number> {
-  const { query } = await import('./db')
-  const { generateReferralCode } = await import('./referral')
+  const { query } = await import('../platform/db')
+  const { generateReferralCode } = await import('../economy/referral')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string }>(
     `insert into users(telegram_id,first_name,referral_code,energy)
@@ -23,7 +23,7 @@ async function makeUser(): Promise<number> {
 }
 
 async function makeInvoice(userId: number, months: number, signature: string): Promise<string> {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const orderId = `TD-TEST-${userId}-${months}-${Math.floor(Math.random() * 1_000_000)}`
   await query(
     `insert into premium_payments(user_id,order_id,months,amount_idr,total_amount_idr,signature,expires_at)
@@ -34,7 +34,7 @@ async function makeInvoice(userId: number, months: number, signature: string): P
 }
 
 const readPremiumUntil = async (userId: number) => {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const rows = await query<{ premium_until: Date | null }>(
     'select premium_until from users where id=$1',
     [userId],
@@ -83,7 +83,7 @@ describe('PREM-DB-1 — pembayaran menyalakan premium sekali saja', () => {
 
 describe('PREM-DB-2 — perpanjangan menumpuk dari tanggal berakhir', () => {
   it('menambah dari sisa yang masih berlaku, bukan dari sekarang', async () => {
-    const { query, transaction } = await import('./db')
+    const { query, transaction } = await import('../platform/db')
     const { grantPremium } = await import('./premium')
     const userId = await makeUser()
 
@@ -101,7 +101,7 @@ describe('PREM-DB-2 — perpanjangan menumpuk dari tanggal berakhir', () => {
   })
 
   it('menghitung dari sekarang kalau langganannya sudah lewat', async () => {
-    const { query, transaction } = await import('./db')
+    const { query, transaction } = await import('../platform/db')
     const { grantPremium } = await import('./premium')
     const userId = await makeUser()
 
@@ -115,10 +115,10 @@ describe('PREM-DB-2 — perpanjangan menumpuk dari tanggal berakhir', () => {
 
 describe('PREM-DB-3 — status premium menggerakkan batas yang dibaca server', () => {
   it('memperbesar kapasitas kolam dan energi, dan mematikan interstitial otomatis saja', async () => {
-    const { query } = await import('./db')
-    const { readAdsState } = await import('./ads')
-    const { readEnergy } = await import('./energy')
-    const { readRewardPoolCapacity } = await import('./reward-pool')
+    const { query } = await import('../platform/db')
+    const { readAdsState } = await import('../ads/ads')
+    const { readEnergy } = await import('../economy/energy')
+    const { readRewardPoolCapacity } = await import('../economy/reward-pool')
     const userId = await makeUser()
 
     const kapasitasBiasa = await readRewardPoolCapacity(userId)
@@ -139,12 +139,12 @@ describe('PREM-DB-3 — status premium menggerakkan batas yang dibaca server', (
     const premium = await readAdsState(userId)
     expect(premium.inAppEnabled).toBe(false)
     expect(premium.enabled).toBe(true)
-    const { openAdTicket } = await import('./ads')
+    const { openAdTicket } = await import('../ads/ads')
     await expect(openAdTicket(userId)).resolves.toMatchObject({ ok: true })
   })
 
   it('AUDIT-H1 — melunasi tagihan yang telanjur ditandai kedaluwarsa', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const { settlePremiumPayment } = await import('./premium-payment')
     const userId = await makeUser()
     const orderId = await makeInvoice(userId, 1, 'sig-kedaluwarsa')
@@ -182,8 +182,8 @@ describe('PREM-DB-3 — status premium menggerakkan batas yang dibaca server', (
   })
 
   it('memakai batas task harian premium di consumeQuota', async () => {
-    const { query, transaction } = await import('./db')
-    const { consumeQuota } = await import('./quota')
+    const { query, transaction } = await import('../platform/db')
+    const { consumeQuota } = await import('../economy/quota')
     const userId = await makeUser()
     setActiveEconomyConfig({
       ...DEFAULT_ECONOMY_CONFIG,

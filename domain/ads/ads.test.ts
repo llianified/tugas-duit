@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { adCooldownSecondsLeft, adOpenRefusal, adViewsLeft, adsConfigured } from './ads'
-import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig, type EconomyConfig } from './economy-config'
+import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig, type EconomyConfig } from '../economy/economy-config'
 
 afterEach(() => setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG))
 

@@ -1,6 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
-import { query } from './db.ts'
-import { env } from './env.ts'
+import { query } from '../platform/db.ts'
+import { env } from '../platform/env.ts'
 
 const MAX_AUTH_AGE_SECONDS = 900
 interface TelegramUser { id: number; first_name: string; username?: string; photo_url?: string }

@@ -1,4 +1,4 @@
-import { rankMinTasks } from './economy-config'
+import { rankMinTasks } from '../economy/economy-config'
 
 export interface Rank {
   tier: number

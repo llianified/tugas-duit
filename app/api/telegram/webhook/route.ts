@@ -1,6 +1,6 @@
-import { query } from '@/server/db'
-import { env } from '@/server/env'
-import { escapeTelegramHtml, openAppMarkup, sendTelegramMessage } from '@/server/telegram'
+import { query } from '@/server/platform/db'
+import { env } from '@/server/platform/env'
+import { escapeTelegramHtml, openAppMarkup, sendTelegramMessage } from '@/server/integrations/telegram'
 
 export const runtime = 'nodejs'
 

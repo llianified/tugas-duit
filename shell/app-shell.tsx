@@ -2,10 +2,10 @@
 
 import { MotionConfig } from 'motion/react'
 import { useEffect, useMemo, useState } from 'react'
-import { economyConfig } from '@/domain/economy-config'
-import { inAppAdsSettings } from '@/domain/in-app-ads'
+import { economyConfig } from '@/domain/economy/economy-config'
+import { inAppAdsSettings } from '@/domain/ads/in-app-ads'
 import { ChannelGate } from '@/features/channel/channel-gate'
-import { getProgression } from '@/domain/progression'
+import { getProgression } from '@/domain/progression/progression'
 import { ProgressionBadges } from '@/features/home/progression-badges'
 import { NavPill } from '@/navigation/nav-pill'
 import { AppFrame } from '@/shell/app-frame'

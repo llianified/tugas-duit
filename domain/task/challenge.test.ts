@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_ECONOMY_CONFIG } from './economy-config'
+import { DEFAULT_ECONOMY_CONFIG } from '../economy/economy-config'
 import { DIFFICULTY_LABEL, generateChallenge, TEXT_CHARS } from './challenge'
 
 describe('challenge domain', () => {

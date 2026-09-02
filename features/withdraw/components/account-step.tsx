@@ -5,13 +5,13 @@ import { ActionButton } from '@/shared/components/action-button'
 import { CreditAmount } from '@/shared/components/credit-amount'
 import { EYEBROW_CLASS } from '@/shared/components/section-label'
 import { Surface } from '@/shared/components/surface'
-import { creditsToRupiah } from '@/domain/economy'
+import { creditsToRupiah } from '@/domain/economy/economy'
 import { formatCredits, formatRupiah } from '@/shared/lib/format'
 import {
   sanitizeAccountNumber,
   type PayoutChannel,
   type WithdrawalDraft,
-} from '@/domain/withdrawal'
+} from '@/domain/economy/withdrawal'
 import { cn } from '@/shared/lib/utils'
 
 export function AccountStep({

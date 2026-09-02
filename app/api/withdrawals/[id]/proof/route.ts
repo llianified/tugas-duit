@@ -1,8 +1,8 @@
-import { apiError, assertNotCrossSite, handleRouteError, rateLimited } from '@/server/http'
-import { readPayoutProofFileId } from '@/server/payout'
-import { checkRateLimit } from '@/server/ratelimit'
-import { requireUser } from '@/server/session'
-import { readTelegramFile } from '@/server/telegram'
+import { apiError, assertNotCrossSite, handleRouteError, rateLimited } from '@/server/platform/http'
+import { readPayoutProofFileId } from '@/server/payout/payout'
+import { checkRateLimit } from '@/server/platform/ratelimit'
+import { requireUser } from '@/server/auth/session'
+import { readTelegramFile } from '@/server/integrations/telegram'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

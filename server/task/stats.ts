@@ -1,9 +1,9 @@
 
-import type { Difficulty } from '@/domain/challenge'
-import { getUserStats, type DifficultyTally, type UserStats } from '@/domain/stats'
-import { STAR_MAX } from '@/domain/stars'
-import { query } from './db'
-import { STREAK_EXPRESSION } from './streak-sql'
+import type { Difficulty } from '@/domain/task/challenge'
+import { getUserStats, type DifficultyTally, type UserStats } from '@/domain/progression/stats'
+import { STAR_MAX } from '@/domain/progression/stars'
+import { query } from '../platform/db'
+import { STREAK_EXPRESSION } from '../economy/streak-sql'
 
 const TIME_ZONE = 'Asia/Jakarta'
 

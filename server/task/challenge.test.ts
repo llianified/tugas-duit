@@ -3,13 +3,13 @@ import {
   DEFAULT_ECONOMY_CONFIG,
   setActiveEconomyConfig,
   type EconomyConfig,
-} from '@/domain/economy-config'
-import { getStarCutoffs } from '@/domain/stars'
-import { generateChallenge } from '@/domain/challenge'
+} from '@/domain/economy/economy-config'
+import { getStarCutoffs } from '@/domain/progression/stars'
+import { generateChallenge } from '@/domain/task/challenge'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
 
@@ -19,8 +19,8 @@ const withConfig = (patch: Partial<EconomyConfig>) =>
   setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, ...patch })
 
 async function makeUser(): Promise<number> {
-  const { query } = await import('./db')
-  const { generateReferralCode } = await import('./referral')
+  const { query } = await import('../platform/db')
+  const { generateReferralCode } = await import('../economy/referral')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string }>(
     `insert into users(telegram_id,first_name,referral_code,energy)
@@ -85,7 +85,7 @@ describe('TASK-3 — percobaan dan jendela waktu mengikuti konfigurasi', () => {
   })
 
   it('memakai taskWindowSeconds sebagai umur soal', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const { issueChallenge } = await import('./challenge')
     withConfig({ taskWindowSeconds: 90 })
     const userId = await makeUser()

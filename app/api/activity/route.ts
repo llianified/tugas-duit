@@ -1,8 +1,8 @@
-import { getActivityFeed } from '@/server/activity'
-import { loadEconomyConfig } from '@/server/economy-config'
-import { handleRouteError, rateLimited } from '@/server/http'
-import { checkRateLimit } from '@/server/ratelimit'
-import { requireUser } from '@/server/session'
+import { getActivityFeed } from '@/server/task/activity'
+import { loadEconomyConfig } from '@/server/economy/economy-config'
+import { handleRouteError, rateLimited } from '@/server/platform/http'
+import { checkRateLimit } from '@/server/platform/ratelimit'
+import { requireUser } from '@/server/auth/session'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

@@ -1,18 +1,18 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
-import { ENGAGEMENT_HOURS } from './engagement'
-import { matchesSecret } from './secret'
+import { ENGAGEMENT_HOURS } from '../messaging/engagement'
+import { matchesSecret } from '../platform/secret'
 
-vi.mock('./telegram.ts', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./telegram')>()),
+vi.mock('../integrations/telegram.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../integrations/telegram')>()),
   sendTelegramMessage: vi.fn(async () => {}),
   openAppMarkup: () => ({}),
 }))
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
 
@@ -35,7 +35,7 @@ describe('MAINT-1 — seluruh pernyataan pemeliharaan jalan di database', () => 
   }, 60_000)
 
   it('benar-benar menghapus baris yang sudah lewat masa simpannya', async () => {
-    const { execute, query } = await import('./db')
+    const { execute, query } = await import('../platform/db')
     const { runMaintenance } = await import('./maintenance')
 
     const bucket = `pemeliharaan-${Date.now().toString(36)}`
@@ -51,7 +51,7 @@ describe('MAINT-1 — seluruh pernyataan pemeliharaan jalan di database', () => 
   })
 
   it('membiarkan baris yang masih di dalam masa simpannya', async () => {
-    const { execute, query } = await import('./db')
+    const { execute, query } = await import('../platform/db')
     const { runMaintenance } = await import('./maintenance')
 
     const bucket = `pemeliharaan-baru-${Date.now().toString(36)}`

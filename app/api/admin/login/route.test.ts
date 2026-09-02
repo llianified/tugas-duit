@@ -8,17 +8,17 @@ const mocks = vi.hoisted(() => ({
   notifyAdminLogin: vi.fn(),
 }))
 
-vi.mock('@/server/admin-auth', () => ({ loginAdminWithPassword: mocks.loginAdminWithPassword }))
-vi.mock('@/server/env', () => ({
+vi.mock('@/server/auth/admin-auth', () => ({ loginAdminWithPassword: mocks.loginAdminWithPassword }))
+vi.mock('@/server/platform/env', () => ({
   env: { appOriginOrNull: 'https://app.example', adminTelegramIdOrNull: '99' },
 }))
-vi.mock('@/server/notify', () => ({ notifyAdminLogin: mocks.notifyAdminLogin }))
-vi.mock('@/server/ratelimit', () => ({
+vi.mock('@/server/messaging/notify', () => ({ notifyAdminLogin: mocks.notifyAdminLogin }))
+vi.mock('@/server/platform/ratelimit', () => ({
   checkRateLimit: mocks.checkRateLimit,
   peekRateLimit: mocks.peekRateLimit,
   recordRateLimitHit: mocks.recordRateLimitHit,
 }))
-vi.mock('@/server/session', () => ({
+vi.mock('@/server/auth/session', () => ({
   BannedError: class BannedError extends Error {},
   UnauthorizedError: class UnauthorizedError extends Error {},
 }))

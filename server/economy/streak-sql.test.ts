@@ -2,12 +2,12 @@ import { beforeAll, describe, expect, it } from 'vitest'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
 
 async function makeUser(): Promise<number> {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const { generateReferralCode } = await import('./referral')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string }>(
@@ -18,7 +18,7 @@ async function makeUser(): Promise<number> {
 }
 
 async function completeTaskDaysAgo(userId: number, daysAgo: number) {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const rows = await query<{ id: string }>(
     `insert into challenges(user_id,type,difficulty,payload,answer_hash,max_reward,expires_at,submitted_at,solved)
      values($1,'text','Easy','{}'::jsonb,'\\x00'::bytea,3,now(),now(),true) returning id`,
@@ -35,12 +35,12 @@ async function completeTaskDaysAgo(userId: number, daysAgo: number) {
 /** Streak sekarang masuk lewat kapasitas kolam reward, jadi jalur SQL-nya dibaca dari sana: bonus streak = kapasitas terbaca − kapasitas dasar, karena user uji belum menembus rank apa pun. */
 async function streakBonusFromPool(userId: number): Promise<number> {
   const { readRewardPoolCapacity } = await import('./reward-pool')
-  const { baseRewardPoolCredits } = await import('@/domain/reward-pool')
+  const { baseRewardPoolCredits } = await import('@/domain/economy/reward-pool')
   return (await readRewardPoolCapacity(userId)) - baseRewardPoolCredits()
 }
 
 async function streakFromStats(userId: number): Promise<number> {
-  const { getStats } = await import('./stats')
+  const { getStats } = await import('../task/stats')
   return (await getStats(userId, 0)).streak
 }
 

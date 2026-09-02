@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_ECONOMY_CONFIG, ECONOMY_FIELDS, validateEconomyConfig } from '@/domain/economy-config'
-import { ECONOMY_PRESETS, parseEconomyPatch } from '@/domain/economy-presets'
+import { DEFAULT_ECONOMY_CONFIG, ECONOMY_FIELDS, validateEconomyConfig } from '@/domain/economy/economy-config'
+import { ECONOMY_PRESETS, parseEconomyPatch } from '@/domain/economy/economy-presets'
 
 describe('ECONOMY_PRESETS', () => {
   for (const preset of ECONOMY_PRESETS) {

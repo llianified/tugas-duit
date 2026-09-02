@@ -11,9 +11,9 @@ import { SegmentedTabs, type SegmentedTab } from '@/shared/components/segmented-
 import { StarRating } from '@/shared/components/star-rating'
 import { TotalSummary } from '@/shared/components/total-summary'
 import { VIEW_TITLE } from '@/navigation/app-view'
-import { DIFFICULTY_LABEL, type HistoryEntry } from '@/domain/challenge'
+import { DIFFICULTY_LABEL, type HistoryEntry } from '@/domain/task/challenge'
 import { WithdrawalList } from '@/features/withdraw/components/withdrawal-list'
-import type { Withdrawal } from '@/domain/withdrawal'
+import type { Withdrawal } from '@/domain/economy/withdrawal'
 import { formatCredits, formatCreditsPrecise, formatHistoryTime } from '@/shared/lib/format'
 
 type HistoryTab = 'task' | 'withdrawal'

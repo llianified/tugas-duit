@@ -5,14 +5,14 @@ import { ActionButton } from '@/shared/components/action-button'
 import { KEYPAD_HEIGHT_CLASS } from '@/shared/components/keypad-frame'
 import { NumericKeypad } from '@/shared/components/numeric-keypad'
 import { ChannelSelect } from '@/features/withdraw/components/channel-picker'
-import { creditsToRupiah } from '@/domain/economy'
+import { creditsToRupiah } from '@/domain/economy/economy'
 import { formatCredits, formatRupiah } from '@/shared/lib/format'
 import {
   appendAmountDigit,
   dropAmountDigit,
   getAmountPresets,
   type PayoutChannel,
-} from '@/domain/withdrawal'
+} from '@/domain/economy/withdrawal'
 import { cn } from '@/shared/lib/utils'
 
 export function AmountStep({

@@ -1,4 +1,4 @@
-import { PAYOUT_PROOF_MAX_BYTES } from '@/domain/withdrawal'
+import { PAYOUT_PROOF_MAX_BYTES } from '@/domain/economy/withdrawal'
 
 export interface PayoutProof {
   bytes: Uint8Array

@@ -1,7 +1,7 @@
 'use client'
 
 import type { CSSProperties } from 'react'
-import { creditsToRupiah } from '@/domain/economy'
+import { creditsToRupiah } from '@/domain/economy/economy'
 import { COUPON_TEAR_MS, useChannelBonus } from '@/features/channel/use-channel-bonus'
 import { ActionButton } from '@/shared/components/action-button'
 import { GlyphTelegram } from '@/shared/components/glyph'

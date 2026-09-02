@@ -1,12 +1,12 @@
 'use client'
 
 import { Dialog } from '@base-ui/react/dialog'
-import { adsMaxViewsPerDay } from '@/domain/ads'
+import { adsMaxViewsPerDay } from '@/domain/ads/ads'
 import { ActionButton } from '@/shared/components/action-button'
 import { GlyphCross, GlyphPlay } from '@/shared/components/glyph'
 import { EYEBROW_CLASS } from '@/shared/components/section-label'
 import { Surface } from '@/shared/components/surface'
-import { energyCostPerTask } from '@/domain/energy'
+import { energyCostPerTask } from '@/domain/economy/energy'
 import { formatCredits } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 

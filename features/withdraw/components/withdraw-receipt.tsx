@@ -11,7 +11,7 @@ import {
   getPayoutChannel,
   maskAccountNumber,
   type Withdrawal,
-} from '@/domain/withdrawal'
+} from '@/domain/economy/withdrawal'
 
 export function WithdrawReceipt({ withdrawal }: { withdrawal: Withdrawal }) {
   const channel = getPayoutChannel(withdrawal.channelId)

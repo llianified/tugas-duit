@@ -1,7 +1,7 @@
 'use client'
 
-import { creditsToRupiah } from '@/domain/economy'
-import { getPayoutChannel, maskAccountNumber, PAYOUT_ETA_TEXT } from '@/domain/withdrawal'
+import { creditsToRupiah } from '@/domain/economy/economy'
+import { getPayoutChannel, maskAccountNumber, PAYOUT_ETA_TEXT } from '@/domain/economy/withdrawal'
 import { ActionButton } from '@/shared/components/action-button'
 import { Surface } from '@/shared/components/surface'
 import { formatCredits, formatRupiah } from '@/shared/lib/format'

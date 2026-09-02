@@ -1,6 +1,6 @@
 
-import type { Difficulty } from '@/domain/challenge'
-import { economyConfig, parTimeMs, starReward } from './economy-config'
+import type { Difficulty } from '@/domain/task/challenge'
+import { economyConfig, parTimeMs, starReward } from '../economy/economy-config'
 
 export type StarCount = 1 | 2 | 3
 

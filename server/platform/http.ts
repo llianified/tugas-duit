@@ -1,5 +1,5 @@
 import { env } from './env'
-import { BannedError, UnauthorizedError } from './session'
+import { BannedError, UnauthorizedError } from '../auth/session'
 
 export function apiError(code: string, message: string, status: number, fields?: Record<string, string | null>) {
   return Response.json(

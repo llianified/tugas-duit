@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
-import type { PremiumMonths, PremiumPlan } from '@/domain/premium'
+import type { PremiumMonths, PremiumPlan } from '@/domain/economy/premium'
 import { premiumBenefitList } from '@/features/premium/benefits'
 import { ActionButton } from '@/shared/components/action-button'
 import { GlyphCheck, GlyphCross, GlyphCrown, GlyphSpinner } from '@/shared/components/glyph'

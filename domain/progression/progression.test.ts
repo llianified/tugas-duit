@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from './economy-config'
+import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '../economy/economy-config'
 import { getProgression, getRank } from './progression'
 
 afterEach(() => setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG))

@@ -1,8 +1,8 @@
-import { claimChannelBonus } from '@/server/channel'
-import { loadEconomyConfig } from '@/server/economy-config'
-import { apiError, assertSameOrigin, handleRouteError, rateLimited } from '@/server/http'
-import { checkRateLimit } from '@/server/ratelimit'
-import { requireUser } from '@/server/session'
+import { claimChannelBonus } from '@/server/integrations/channel'
+import { loadEconomyConfig } from '@/server/economy/economy-config'
+import { apiError, assertSameOrigin, handleRouteError, rateLimited } from '@/server/platform/http'
+import { checkRateLimit } from '@/server/platform/ratelimit'
+import { requireUser } from '@/server/auth/session'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

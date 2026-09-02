@@ -9,20 +9,20 @@ const mocks = vi.hoisted(() => ({
   savePayoutProof: vi.fn(),
 }))
 
-vi.mock('@/server/env', () => ({ env: { appOriginOrNull: 'https://app.example' } }))
-vi.mock('@/server/economy-config', () => ({ loadEconomyConfig: vi.fn() }))
-vi.mock('@/server/notify', () => ({
+vi.mock('@/server/platform/env', () => ({ env: { appOriginOrNull: 'https://app.example' } }))
+vi.mock('@/server/economy/economy-config', () => ({ loadEconomyConfig: vi.fn() }))
+vi.mock('@/server/messaging/notify', () => ({
   notifyWithdrawalPaid: mocks.notifyWithdrawalPaid,
   notifyWithdrawalRejected: mocks.notifyWithdrawalRejected,
 }))
-vi.mock('@/server/payout-proof', () => ({ readPayoutProof: vi.fn() }))
-vi.mock('@/server/ratelimit', () => ({ checkRateLimit: mocks.checkRateLimit }))
-vi.mock('@/server/session', () => ({
+vi.mock('@/server/payout/payout-proof', () => ({ readPayoutProof: vi.fn() }))
+vi.mock('@/server/platform/ratelimit', () => ({ checkRateLimit: mocks.checkRateLimit }))
+vi.mock('@/server/auth/session', () => ({
   BannedError: class BannedError extends Error {},
   UnauthorizedError: class UnauthorizedError extends Error {},
   requireUser: mocks.requireUser,
 }))
-vi.mock('@/server/payout', () => {
+vi.mock('@/server/payout/payout', () => {
   class PayoutError extends Error {
     constructor(public code: string, public status: number) {
       super(code)
@@ -71,7 +71,7 @@ describe('PATCH /api/admin/withdrawals/:id', () => {
 
   it('menerjemahkan replay settlement menjadi konflik', async () => {
     mocks.requireUser.mockResolvedValue({ id: 7, isAdmin: true })
-    const { PayoutError } = await import('@/server/payout')
+    const { PayoutError } = await import('@/server/payout/payout')
     mocks.settlePayout.mockRejectedValue(new PayoutError('ALREADY_SETTLED', 409))
 
     const response = await PATCH(request({ action: 'paid' }), context)

@@ -1,4 +1,4 @@
-import { query } from '@/server/db'
+import { query } from '@/server/platform/db'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

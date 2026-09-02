@@ -1,13 +1,13 @@
-import { ECONOMY_FIELDS } from '@/domain/economy-config'
+import { ECONOMY_FIELDS } from '@/domain/economy/economy-config'
 import {
   EconomyConfigError,
   readEconomyAudit,
   readEconomyConfigSnapshot,
   updateEconomyConfig,
-} from '@/server/economy-config'
-import { apiError, assertSameOrigin, handleRouteError, rateLimited, readJsonBody } from '@/server/http'
-import { checkRateLimit } from '@/server/ratelimit'
-import { requireUser } from '@/server/session'
+} from '@/server/economy/economy-config'
+import { apiError, assertSameOrigin, handleRouteError, rateLimited, readJsonBody } from '@/server/platform/http'
+import { checkRateLimit } from '@/server/platform/ratelimit'
+import { requireUser } from '@/server/auth/session'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

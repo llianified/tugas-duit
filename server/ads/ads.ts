@@ -7,12 +7,12 @@ import {
   adsConfigured,
   type AdProvider,
   type AdRefusal,
-} from '@/domain/ads'
-import { economyConfig } from '@/domain/economy-config'
+} from '@/domain/ads/ads'
+import { economyConfig } from '@/domain/economy/economy-config'
 import { resolveAdProvider } from './ad-provider'
-import { isPreviewShell, query, transaction } from './db'
-import { recordAdClaimSignal } from './fraud'
-import { isPremium } from './premium'
+import { isPreviewShell, query, transaction } from '../platform/db'
+import { recordAdClaimSignal } from '../task/fraud'
+import { isPremium } from '../premium/premium'
 
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i

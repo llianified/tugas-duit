@@ -1,8 +1,8 @@
 'use client'
 
-import type { ActivityEntry } from '@/domain/activity'
+import type { ActivityEntry } from '@/domain/progression/activity'
 import { ProfileAvatar } from '@/shared/components/profile-avatar'
-import { DIFFICULTY_LABEL, type Difficulty } from '@/domain/challenge'
+import { DIFFICULTY_LABEL, type Difficulty } from '@/domain/task/challenge'
 import { DataListSkeleton } from '@/shared/components/app-skeleton'
 import { DataList } from '@/shared/components/data-list'
 import { EmptyState } from '@/shared/components/empty-state'

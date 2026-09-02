@@ -1,7 +1,7 @@
-import { channelBonusEnabled, channelGateRequired, channelJoinBonusCredits } from '@/domain/economy'
-import { isPreviewShell, query, transaction } from './db'
-import { env } from './env'
-import { appendLedger } from './ledger'
+import { channelBonusEnabled, channelGateRequired, channelJoinBonusCredits } from '@/domain/economy/economy'
+import { isPreviewShell, query, transaction } from '../platform/db'
+import { env } from '../platform/env'
+import { appendLedger } from '../economy/ledger'
 import { readChannelMembership } from './telegram'
 
 const MEMBER_TTL_MS = 6 * 3_600_000

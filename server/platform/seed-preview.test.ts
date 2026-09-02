@@ -11,8 +11,8 @@ it('menyiapkan user preview yang layak menarik dana', async () => {
   const { seedActiveDays, seedActiveReferrals, clearWithdrawalCooldown } = await import(
     '../__fixtures__/payout'
   )
-  const { getPayouts } = await import('./payout')
-  const { generateReferralCode } = await import('./referral')
+  const { getPayouts } = await import('../payout/payout')
+  const { generateReferralCode } = await import('../economy/referral')
 
   const rows = await query<{ id: string }>(
     `insert into users(telegram_id,username,first_name,referral_code,balance_credits)

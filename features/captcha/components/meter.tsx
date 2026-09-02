@@ -2,10 +2,10 @@
 
 import { useEffect } from 'react'
 import { StarRating } from '@/shared/components/star-rating'
-import type { Difficulty } from '@/domain/challenge'
+import type { Difficulty } from '@/domain/task/challenge'
 import { formatCredits } from '@/shared/lib/format'
 import { useCssVars } from '@/shared/lib/use-css-vars'
-import { getLiveStarState } from '@/domain/stars'
+import { getLiveStarState } from '@/domain/progression/stars'
 
 export function CaptchaMeter({
   difficulty,

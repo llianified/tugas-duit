@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy-config'
+import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy/economy-config'
 
 const jar = vi.hoisted(() => new Map<string, string>())
 
@@ -16,15 +16,15 @@ vi.mock('next/headers', () => ({
 }))
 
 /** Telegram diganti tiruan supaya uji ini tidak pernah mengirim apa pun ke luar. Yang diuji bukan protokolnya, melainkan siapa yang masuk daftar penerima dan berapa kali. */
-vi.mock('./telegram', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./telegram')>()),
+vi.mock('../integrations/telegram', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../integrations/telegram')>()),
   sendTelegramMessage: vi.fn(async () => {}),
   openAppMarkup: () => ({}),
 }))
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
   setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
 }, 120_000)
@@ -32,7 +32,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   jar.clear()
   setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
-  const telegram = await import('./telegram')
+  const telegram = await import('../integrations/telegram')
   vi.mocked(telegram.sendTelegramMessage).mockClear()
 })
 
@@ -41,8 +41,8 @@ let sequence = 0
 async function makeUser(
   options: { admin?: boolean; muted?: boolean; banned?: boolean; balance?: number } = {},
 ): Promise<{ id: number; telegramId: string }> {
-  const { query } = await import('./db')
-  const { generateReferralCode } = await import('./referral')
+  const { query } = await import('../platform/db')
+  const { generateReferralCode } = await import('../economy/referral')
   sequence += 1
   const telegramId = String(200_000_000_000_000 + Date.now() % 1_000_000_000 * 10 + sequence)
   const rows = await query<{ id: string }>(
@@ -63,14 +63,14 @@ async function makeUser(
 }
 
 async function signInAsAdmin(): Promise<void> {
-  const { createSession } = await import('./session')
+  const { createSession } = await import('../auth/session')
   const admin = await makeUser({ admin: true })
   jar.clear()
   await createSession(admin.id, 'uji')
 }
 
 const sentCount = async () => {
-  const telegram = await import('./telegram')
+  const telegram = await import('../integrations/telegram')
   return vi.mocked(telegram.sendTelegramMessage).mock.calls.length
 }
 
@@ -87,7 +87,7 @@ async function runUntilDone(id: string) {
 }
 
 const sentTo = async () => {
-  const telegram = await import('./telegram')
+  const telegram = await import('../integrations/telegram')
   return vi.mocked(telegram.sendTelegramMessage).mock.calls.map((call) => call[0])
 }
 
@@ -96,7 +96,7 @@ describe('SIAR-1 — /stop selalu dihormati', () => {
   it('tidak menghitung maupun mengirimi user yang menekan /stop, di segmen mana pun', async () => {
     await signInAsAdmin()
     const { countBroadcastRecipients, createBroadcast } = await import('./broadcast')
-    const { BROADCAST_SEGMENTS } = await import('@/domain/broadcast')
+    const { BROADCAST_SEGMENTS } = await import('@/domain/messaging/broadcast')
 
     const bisu = await makeUser({ muted: true })
 
@@ -151,7 +151,7 @@ describe('SIAR-2 — klik ganda tidak mengirim dua kali', () => {
     await runUntilDone(pertama.id)
     expect(await sentTo()).toContain(penerima.telegramId)
 
-    const telegram = await import('./telegram')
+    const telegram = await import('../integrations/telegram')
     vi.mocked(telegram.sendTelegramMessage).mockClear()
 
     const kedua = await createBroadcast('semua', 'Siaran kedua')
@@ -178,7 +178,7 @@ describe('SIAR-3 — pratinjau memakai query yang sama dengan pengiriman', () =>
   })
 
   it('segmen premium hanya memuat langganan yang masih berlaku', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     await signInAsAdmin()
     const { countBroadcastRecipients } = await import('./broadcast')
 
@@ -206,7 +206,7 @@ describe('SIAR-4 — badan pesan', () => {
   it('menolak pesan yang melewati batas panjang', async () => {
     await signInAsAdmin()
     const { createBroadcast } = await import('./broadcast')
-    const { BROADCAST_BODY_MAX } = await import('@/domain/broadcast')
+    const { BROADCAST_BODY_MAX } = await import('@/domain/messaging/broadcast')
     await expect(createBroadcast('semua', 'a'.repeat(BROADCAST_BODY_MAX + 1))).rejects.toThrow(
       'BROADCAST_BODY_INVALID',
     )
@@ -216,7 +216,7 @@ describe('SIAR-4 — badan pesan', () => {
   it('meloloskan karakter HTML di badan pesan tanpa merusak kirimannya', async () => {
     await signInAsAdmin()
     const { createBroadcast } = await import('./broadcast')
-    const telegram = await import('./telegram')
+    const telegram = await import('../integrations/telegram')
     await makeUser()
 
     const { id } = await createBroadcast('semua', 'Diskon <b>50%</b> & gratis')

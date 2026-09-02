@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { secondsUntil } from '@/domain/energy'
+import { secondsUntil } from '@/domain/economy/energy'
 import {
   projectRewardPool,
   rewardPoolRegenMs,
   type RewardPoolState,
-} from '@/domain/reward-pool'
+} from '@/domain/economy/reward-pool'
 import type { SessionRewardPool } from '@/shell/session-api'
 
 /** Kembar dari `useEnergyProjection`: server mengirim satu potret, klien memajukannya sendiri supaya hitungan mundurnya berjalan tanpa polling. Begitu proyeksi melewati angka yang dikirim server, session di-refresh sekali supaya keduanya kembali sepakat. */

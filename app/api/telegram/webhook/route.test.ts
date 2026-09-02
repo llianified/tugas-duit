@@ -5,9 +5,9 @@ const mocks = vi.hoisted(() => ({
   sendTelegramMessage: vi.fn(),
 }))
 
-vi.mock('@/server/db', () => ({ query: mocks.query }))
-vi.mock('@/server/env', () => ({ env: { webhookSecret: 'secret-uji' } }))
-vi.mock('@/server/telegram', () => ({
+vi.mock('@/server/platform/db', () => ({ query: mocks.query }))
+vi.mock('@/server/platform/env', () => ({ env: { webhookSecret: 'secret-uji' } }))
+vi.mock('@/server/integrations/telegram', () => ({
   escapeTelegramHtml: (value: string) => value,
   openAppMarkup: vi.fn(() => ({ inline_keyboard: [] })),
   sendTelegramMessage: mocks.sendTelegramMessage,

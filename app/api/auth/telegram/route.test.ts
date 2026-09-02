@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/server/db', () => ({ transaction: vi.fn() }))
-vi.mock('@/server/env', () => ({ env: { appOriginOrNull: 'https://app.example' } }))
-vi.mock('@/server/ratelimit', () => ({ checkRateLimit: vi.fn() }))
-vi.mock('@/server/referral', () => ({ bindUpline: vi.fn(), generateReferralCode: vi.fn() }))
-vi.mock('@/server/session', () => ({
+vi.mock('@/server/platform/db', () => ({ transaction: vi.fn() }))
+vi.mock('@/server/platform/env', () => ({ env: { appOriginOrNull: 'https://app.example' } }))
+vi.mock('@/server/platform/ratelimit', () => ({ checkRateLimit: vi.fn() }))
+vi.mock('@/server/economy/referral', () => ({ bindUpline: vi.fn(), generateReferralCode: vi.fn() }))
+vi.mock('@/server/auth/session', () => ({
   BannedError: class BannedError extends Error {},
   UnauthorizedError: class UnauthorizedError extends Error {},
   createSession: vi.fn(),
 }))
-vi.mock('@/server/telegram', () => ({ claimInitData: vi.fn(), verifyInitData: vi.fn() }))
+vi.mock('@/server/integrations/telegram', () => ({ claimInitData: vi.fn(), verifyInitData: vi.fn() }))
 
 import { POST } from './route'
 

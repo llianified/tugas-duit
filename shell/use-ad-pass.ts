@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { monetagSdkName } from '@/domain/ads'
+import { monetagSdkName } from '@/domain/ads/ads'
 import { showFailureReason, waitForShow } from '@/shell/monetag-sdk'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
 import type { AdClaimResponse, AdsState, AdTicketResponse } from '@/shell/session-api'

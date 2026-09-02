@@ -7,12 +7,12 @@ const mocks = vi.hoisted(() => ({
   startChallenge: vi.fn(),
 }))
 
-vi.mock('@/server/env', () => ({ env: { appOriginOrNull: 'https://app.example' } }))
-vi.mock('@/server/economy-config', () => ({ loadEconomyConfig: vi.fn() }))
-vi.mock('@/server/channel', () => ({ channelGateBlocks: mocks.channelGateBlocks }))
-vi.mock('@/server/challenge', () => ({ startChallenge: mocks.startChallenge }))
-vi.mock('@/server/ratelimit', () => ({ checkRateLimit: mocks.checkRateLimit }))
-vi.mock('@/server/session', () => {
+vi.mock('@/server/platform/env', () => ({ env: { appOriginOrNull: 'https://app.example' } }))
+vi.mock('@/server/economy/economy-config', () => ({ loadEconomyConfig: vi.fn() }))
+vi.mock('@/server/integrations/channel', () => ({ channelGateBlocks: mocks.channelGateBlocks }))
+vi.mock('@/server/task/challenge', () => ({ startChallenge: mocks.startChallenge }))
+vi.mock('@/server/platform/ratelimit', () => ({ checkRateLimit: mocks.checkRateLimit }))
+vi.mock('@/server/auth/session', () => {
   class UnauthorizedError extends Error {}
   return {
     BannedError: class BannedError extends Error {},
@@ -39,7 +39,7 @@ describe('POST /api/task/start', () => {
   })
 
   it('menolak user tanpa sesi', async () => {
-    const { UnauthorizedError } = await import('@/server/session')
+    const { UnauthorizedError } = await import('@/server/auth/session')
     mocks.requireUser.mockRejectedValue(new UnauthorizedError())
 
     const response = await POST(request({ challengeId: 'challenge-1' }))

@@ -6,15 +6,15 @@ const mocks = vi.hoisted(() => ({
   startPremiumCheckout: vi.fn(),
 }))
 
-vi.mock('@/server/env', () => ({ env: { appOriginOrNull: 'https://app.example' } }))
-vi.mock('@/server/economy-config', () => ({ loadEconomyConfig: vi.fn() }))
-vi.mock('@/server/ratelimit', () => ({ checkRateLimit: mocks.checkRateLimit }))
-vi.mock('@/server/session', () => ({
+vi.mock('@/server/platform/env', () => ({ env: { appOriginOrNull: 'https://app.example' } }))
+vi.mock('@/server/economy/economy-config', () => ({ loadEconomyConfig: vi.fn() }))
+vi.mock('@/server/platform/ratelimit', () => ({ checkRateLimit: mocks.checkRateLimit }))
+vi.mock('@/server/auth/session', () => ({
   BannedError: class BannedError extends Error {},
   UnauthorizedError: class UnauthorizedError extends Error {},
   requireUser: mocks.requireUser,
 }))
-vi.mock('@/server/premium-payment', () => {
+vi.mock('@/server/premium/premium-payment', () => {
   class PremiumPaymentError extends Error {
     constructor(public code: string, public status: number) {
       super(code)

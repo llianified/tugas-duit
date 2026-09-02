@@ -1,7 +1,7 @@
-import { assertSameOrigin, handleRouteError, rateLimited } from '@/server/http'
-import { runMaintenance } from '@/server/maintenance'
-import { checkRateLimit } from '@/server/ratelimit'
-import { requireUser } from '@/server/session'
+import { assertSameOrigin, handleRouteError, rateLimited } from '@/server/platform/http'
+import { runMaintenance } from '@/server/ops/maintenance'
+import { checkRateLimit } from '@/server/platform/ratelimit'
+import { requireUser } from '@/server/auth/session'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

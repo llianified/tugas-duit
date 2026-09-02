@@ -1,17 +1,17 @@
 import { beforeAll, describe, expect, it } from 'vitest'
-import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy-config'
-import { missions, type MissionDefinition } from '@/domain/missions'
+import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy/economy-config'
+import { missions, type MissionDefinition } from '@/domain/progression/missions'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
   setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
 }, 120_000)
 
 async function makeUser(energy = 0): Promise<number> {
-  const { query } = await import('./db')
-  const { generateReferralCode } = await import('./referral')
+  const { query } = await import('../platform/db')
+  const { generateReferralCode } = await import('../economy/referral')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string }>(
     `insert into users(telegram_id,first_name,referral_code,energy,energy_updated_at)
@@ -22,7 +22,7 @@ async function makeUser(energy = 0): Promise<number> {
 }
 
 async function completeTasks(userId: number, count: number, stars: number) {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   for (let index = 0; index < count; index += 1) {
     const challengeId = (await query<{ id: string }>('select gen_random_uuid() id'))[0].id
     await query(
@@ -39,7 +39,7 @@ async function completeTasks(userId: number, count: number, stars: number) {
 }
 
 const readEnergyValue = async (userId: number) => {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const rows = await query<{ energy: number }>('select energy from users where id=$1', [userId])
   return Number(rows[0].energy)
 }
@@ -79,7 +79,7 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
 
     expect(await claimMission(userId, 'tasks')).toEqual({ ok: false, reason: 'energy_full' })
 
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const claims = await query<{ jumlah: number }>(
       'select count(*)::int as jumlah from mission_claims where user_id=$1',
       [userId],
@@ -102,8 +102,8 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
 
   it('AUDIT-M1 — menolak klaim yang hadiahnya tidak muat utuh, bukan hanya saat energi penuh', async () => {
     const { claimMission } = await import('./missions')
-    const { maxEnergy } = await import('@/domain/energy')
-    const { query } = await import('./db')
+    const { maxEnergy } = await import('@/domain/economy/energy')
+    const { query } = await import('../platform/db')
 
     const ads = missions().find((mission: MissionDefinition) => mission.key === 'ads')
     if (!ads) throw new Error('misi ads hilang dari daftar')
@@ -130,8 +130,8 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
 
   it('AUDIT-M1 — membayar penuh begitu hadiahnya muat, dan mencatat angka yang sama', async () => {
     const { claimMission } = await import('./missions')
-    const { maxEnergy } = await import('@/domain/energy')
-    const { query } = await import('./db')
+    const { maxEnergy } = await import('@/domain/economy/energy')
+    const { query } = await import('../platform/db')
 
     const ads = missions().find((mission: MissionDefinition) => mission.key === 'ads')
     if (!ads) throw new Error('misi ads hilang dari daftar')

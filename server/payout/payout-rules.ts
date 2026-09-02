@@ -1,5 +1,5 @@
-import { withdrawalMinActiveDays, withdrawalMinActiveReferrals } from '../domain/economy.ts'
-import { withdrawalCooldownMs } from '../domain/premium.ts'
+import { withdrawalMinActiveDays, withdrawalMinActiveReferrals } from '../../domain/economy/economy.ts'
+import { withdrawalCooldownMs } from '../../domain/economy/premium.ts'
 
 /** Dulu konstanta `= 5`. Sekarang setelan panel admin (`withdrawalMinActiveReferrals`), karena ia syarat penarikan yang paling menentukan siapa yang boleh menarik sama sekali — dan satu-satunya yang tidak bisa diuji tanpa deploy. Nilai 0 membuka penarikan untuk user tanpa referral; gerbang waktunya tetap dipegang `requiredActiveDays()`, yang tidak bisa dipercepat dengan menggenjot task. Tetap fungsi, bukan konstanta modul: konfigurasinya baru terpasang setelah `loadEconomyConfig()`, jadi membacanya saat modul dimuat akan membekukan nilai bawaan alih-alih yang tersimpan di database. */
 export function requiredActiveReferrals(): number {

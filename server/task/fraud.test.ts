@@ -5,7 +5,7 @@ import { SWEEP_THRESHOLDS } from './fraud'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
 
@@ -13,8 +13,8 @@ let suffix = 0
 const nextTelegramId = () => 700_000_000_000_000 + Date.now() % 1_000_000_000 + (suffix += 1)
 
 async function makeUser(options: { referredBy?: number; banned?: boolean } = {}): Promise<number> {
-  const { query } = await import('./db')
-  const { generateReferralCode } = await import('./referral')
+  const { query } = await import('../platform/db')
+  const { generateReferralCode } = await import('../economy/referral')
   const rows = await query<{ id: string }>(
     `insert into users(telegram_id,first_name,referral_code,referred_by,banned_at)
      values($1,'Uji Fraud',$2,$3,$4) returning id`,
@@ -35,8 +35,8 @@ async function makeDownlines(
   minutesAgo: number,
   spanSeconds: number,
 ): Promise<void> {
-  const { query } = await import('./db')
-  const { generateReferralCode } = await import('./referral')
+  const { query } = await import('../platform/db')
+  const { generateReferralCode } = await import('../economy/referral')
   const codes = Array.from({ length: count }, () => generateReferralCode())
   const ids = Array.from({ length: count }, () => nextTelegramId())
   await query(
@@ -54,7 +54,7 @@ async function makeSolvedTasks(
   count: number,
   options: { wrong?: number; baseMs?: number; spreadMs?: number } = {},
 ): Promise<void> {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query(
     `with baru as (
        insert into challenges(user_id,type,difficulty,payload,answer_hash,max_reward,
@@ -73,13 +73,13 @@ async function makeSolvedTasks(
 }
 
 async function sweep(): Promise<void> {
-  const { transaction } = await import('./db')
+  const { transaction } = await import('../platform/db')
   const { sweepFraudSignals } = await import('./fraud')
   await transaction((tx) => sweepFraudSignals(tx))
 }
 
 async function signalsFor(userId: number, signal: string): Promise<number> {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const rows = await query<{ jumlah: number }>(
     'select count(*)::int jumlah from fraud_signals where user_id=$1 and signal=$2',
     [userId, signal],
@@ -214,7 +214,7 @@ describe('FRAUD-3 — no_wrong_attempts tidak bisa dimatikan satu jawaban salah'
   })
 
   it('mencatat rasionya supaya bisa ditinjau di panel', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const userId = await makeUser()
     await makeSolvedTasks(userId, SWEEP_THRESHOLDS.noWrongMinSolved, {
       wrong: 1,

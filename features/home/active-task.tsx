@@ -6,9 +6,9 @@ import { DifficultyBadge } from '@/features/captcha/components/difficulty-badge'
 import { EnergyRecoverySheet } from '@/features/home/energy-recovery-sheet'
 import { TapAction, TapActionWaiting } from '@/shared/components/tap-action'
 import { hapticTap } from '@/shared/lib/haptic'
-import type { Challenge } from '@/domain/challenge'
-import { creditsToRupiah } from '@/domain/economy'
-import { energyCostPerTask, type EnergyFill } from '@/domain/energy'
+import type { Challenge } from '@/domain/task/challenge'
+import { creditsToRupiah } from '@/domain/economy/economy'
+import { energyCostPerTask, type EnergyFill } from '@/domain/economy/energy'
 import {
   formatCountdown,
   formatCredits,

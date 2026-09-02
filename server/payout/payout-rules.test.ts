@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy-config'
-import { withdrawalCooldownMs } from '@/domain/premium'
+import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy/economy-config'
+import { withdrawalCooldownMs } from '@/domain/economy/premium'
 import {
   requiredActiveDays,
   requiredActiveReferrals,

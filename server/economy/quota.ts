@@ -1,6 +1,6 @@
 import type { PoolClient } from 'pg'
-import { dailyCommissionCreditCap, maxTasksPerDay } from '@/domain/economy'
-import { isPremium } from './premium'
+import { dailyCommissionCreditCap, maxTasksPerDay } from '@/domain/economy/economy'
+import { isPremium } from '../premium/premium'
 import { readRewardPool, spendRewardPool, type RewardPoolView } from './reward-pool'
 
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"

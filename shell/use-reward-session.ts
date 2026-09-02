@@ -1,9 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { maxEnergy } from '@/domain/energy'
-import type { Referral, ReferralSummary } from '@/domain/referral'
-import type { Withdrawal, WithdrawalDraft } from '@/domain/withdrawal'
+import { maxEnergy } from '@/domain/economy/energy'
+import type { Referral, ReferralSummary } from '@/domain/economy/referral'
+import type { Withdrawal, WithdrawalDraft } from '@/domain/economy/withdrawal'
 import { useViewStack } from '@/navigation/use-view-stack'
 import { rememberAdsHint } from '@/shell/ads-hint'
 import { sendJson, userFacingMessage } from '@/shell/api-client'

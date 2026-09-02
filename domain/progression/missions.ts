@@ -1,6 +1,6 @@
 /** Misi harian: aturan murni, tanpa I/O. Hadiahnya **energi**, bukan credit, dan itu keputusan ekonomi bukan selera. Kolam reward (`domain/reward-pool.ts`) sudah mematok berapa credit yang bisa dibayar dalam sehari; energi tambahan tidak menggeser plafon itu sedikit pun — ia hanya membuat user sampai ke plafonnya lebih cepat, lewat lebih banyak task. Jadi misi menambah alasan untuk kembali dan menambah tayangan iklan, tanpa menambah satu rupiah pun yang harus dibayarkan. Hadiah berupa credit akan menjadi liabilitas baru **di atas** kolam. Kemajuannya tidak disimpan di mana pun: ketiganya dihitung ulang dari tabel yang sudah ada (`task_completions`, `ad_views`). Yang tersimpan hanya klaimnya, satu baris per user per hari per misi. Tanpa itu, ada dua sumber kebenaran untuk hal yang sama dan keduanya pasti berselisih suatu saat. */
 
-import { economyConfig } from './economy-config.ts'
+import { economyConfig } from '../economy/economy-config.ts'
 
 export type MissionKey = 'tasks' | 'stars' | 'ads'
 

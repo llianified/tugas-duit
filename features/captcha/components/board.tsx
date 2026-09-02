@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { GlyphShape } from '@/features/captcha/components/glyph-shape'
-import type { SelectOption } from '@/domain/challenge'
+import type { SelectOption } from '@/domain/task/challenge'
 import type { CaptchaAttemptStatus } from '@/features/captcha/hooks/use-captcha-attempt'
 import { hapticSelect } from '@/shared/lib/haptic'
 

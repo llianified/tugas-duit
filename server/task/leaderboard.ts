@@ -1,7 +1,7 @@
 
-import type { LeaderboardBoard, LeaderboardEntry } from '@/domain/leaderboard'
-import { FOUNDER_MAX_USER_ID } from '@/domain/prestige'
-import { query } from './db'
+import type { LeaderboardBoard, LeaderboardEntry } from '@/domain/progression/leaderboard'
+import { FOUNDER_MAX_USER_ID } from '@/domain/progression/prestige'
+import { query } from '../platform/db'
 
 /** 500, naik dari 20. Papan sepanjang ini tidak dimaksudkan untuk digulir habis — UI-nya memuat 50 baris sekaligus dan menyematkan posisi user di atas — melainkan supaya peringkat masih berarti bagi orang yang tidak akan pernah masuk sepuluh besar. Muatannya tetap kecil: 500 baris berisi angka dan nama pendek, dan querinya sudah memindai seluruh peserta untuk menghitung `participants` sejak sebelum perubahan ini. */
 const BOARD_SIZE = 500

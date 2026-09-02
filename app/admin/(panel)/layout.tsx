@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getSessionUser } from '@/server/session'
+import { getSessionUser } from '@/server/auth/session'
 import { AdminNav } from './admin-nav'
 import { SignOutButton } from './sign-out-button'
 

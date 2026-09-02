@@ -1,14 +1,14 @@
-import { loadEconomyConfig } from '@/server/economy-config'
+import { loadEconomyConfig } from '@/server/economy/economy-config'
 import {
   apiError,
   assertSameOrigin,
   handleRouteError,
   rateLimited,
   readJsonBody,
-} from '@/server/http'
-import { claimMission } from '@/server/missions'
-import { checkRateLimit } from '@/server/ratelimit'
-import { requireUser } from '@/server/session'
+} from '@/server/platform/http'
+import { claimMission } from '@/server/task/missions'
+import { checkRateLimit } from '@/server/platform/ratelimit'
+import { requireUser } from '@/server/auth/session'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

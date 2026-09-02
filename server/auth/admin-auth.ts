@@ -1,6 +1,6 @@
-import { query } from './db'
-import { env } from './env'
-import { matchesSecret } from './secret'
+import { query } from '../platform/db'
+import { env } from '../platform/env'
+import { matchesSecret } from '../platform/secret'
 import { createSession } from './session'
 
 const MIN_PASSWORD_LENGTH = 24

@@ -1,14 +1,14 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { DEFAULT_ECONOMY_CONFIG, type EconomyConfig } from '@/domain/economy-config'
+import { DEFAULT_ECONOMY_CONFIG, type EconomyConfig } from '@/domain/economy/economy-config'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
 
 afterEach(async () => {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const { invalidateEconomyConfigCache, loadEconomyConfig } = await import('./economy-config')
   await query('update economy_config set config=$1::jsonb, version=1, updated_by=null where id=1', [
     JSON.stringify(DEFAULT_ECONOMY_CONFIG),
@@ -19,7 +19,7 @@ afterEach(async () => {
 })
 
 async function makeUser(isAdmin: boolean): Promise<number> {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const { generateReferralCode } = await import('./referral')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string }>(
@@ -34,14 +34,14 @@ const patched = (patch: Partial<EconomyConfig>) => ({ ...DEFAULT_ECONOMY_CONFIG,
 
 describe('default di database', () => {
   it('baris yang disemai migrasi sama persis dengan DEFAULT_ECONOMY_CONFIG', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const rows = await query<{ config: EconomyConfig }>('select config from economy_config where id=1')
     expect(rows[0].config).toEqual(DEFAULT_ECONOMY_CONFIG)
   })
 
   it('loadEconomyConfig memasangnya untuk seluruh modul domain', async () => {
     const { loadEconomyConfig } = await import('./economy-config')
-    const { economyConfig } = await import('@/domain/economy-config')
+    const { economyConfig } = await import('@/domain/economy/economy-config')
     const loaded = await loadEconomyConfig()
     expect(loaded).toEqual(DEFAULT_ECONOMY_CONFIG)
     expect(economyConfig()).toEqual(DEFAULT_ECONOMY_CONFIG)
@@ -58,7 +58,7 @@ describe('otorisasi', () => {
   })
 
   it('menolak admin yang sedang ditangguhkan', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const { updateEconomyConfig } = await import('./economy-config')
     const adminId = await makeUser(true)
     await query('update users set banned_at=now() where id=$1', [adminId])
@@ -86,7 +86,7 @@ describe('otorisasi', () => {
 
 describe('jejak audit', () => {
   it('mencatat satu baris per field yang berubah, bukan per penyimpanan', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const { updateEconomyConfig } = await import('./economy-config')
     const adminId = await makeUser(true)
 
@@ -102,7 +102,7 @@ describe('jejak audit', () => {
   })
 
   it('penyimpanan tanpa perubahan tidak menulis baris audit', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const { updateEconomyConfig } = await import('./economy-config')
     const adminId = await makeUser(true)
     await updateEconomyConfig(adminId, { ...DEFAULT_ECONOMY_CONFIG }, 1)
@@ -150,7 +150,7 @@ describe('cache dan invalidasi', () => {
 describe('konsumen membaca dari satu sumber kebenaran', () => {
   it('reward task mengikuti tabel yang disetel', async () => {
     const { updateEconomyConfig } = await import('./economy-config')
-    const { getStarReward, getMaxReward } = await import('@/domain/stars')
+    const { getStarReward, getMaxReward } = await import('@/domain/progression/stars')
     const adminId = await makeUser(true)
 
     expect(getStarReward('Hard', 3)).toBe(9)
@@ -161,7 +161,7 @@ describe('konsumen membaca dari satu sumber kebenaran', () => {
 
   it('kapasitas kolam reward mengikuti kapasitas dasar dan bonus rank yang disetel', async () => {
     const { updateEconomyConfig } = await import('./economy-config')
-    const { rewardPoolCapacity } = await import('@/domain/reward-pool')
+    const { rewardPoolCapacity } = await import('@/domain/economy/reward-pool')
     const adminId = await makeUser(true)
 
     expect(rewardPoolCapacity({ rankTier: 1, streak: 0 })).toBe(30)
@@ -172,7 +172,7 @@ describe('konsumen membaca dari satu sumber kebenaran', () => {
 
   it('laju isi ulang kolam mengikuti interval dan langkah yang disetel', async () => {
     const { updateEconomyConfig } = await import('./economy-config')
-    const { rewardPoolRegenMs, rewardPoolCreditsPerDay } = await import('@/domain/reward-pool')
+    const { rewardPoolRegenMs, rewardPoolCreditsPerDay } = await import('@/domain/economy/reward-pool')
     const adminId = await makeUser(true)
 
     expect(rewardPoolRegenMs()).toBe(2_880_000)
@@ -188,7 +188,7 @@ describe('konsumen membaca dari satu sumber kebenaran', () => {
 
   it('energi mengikuti kapasitas dan interval yang disetel', async () => {
     const { updateEconomyConfig } = await import('./economy-config')
-    const { maxEnergy, energyRegenMs } = await import('@/domain/energy')
+    const { maxEnergy, energyRegenMs } = await import('@/domain/economy/energy')
     const adminId = await makeUser(true)
 
     expect(maxEnergy()).toBe(5)
@@ -200,7 +200,7 @@ describe('konsumen membaca dari satu sumber kebenaran', () => {
 
   it('komisi referral mengikuti persentase yang disetel', async () => {
     const { updateEconomyConfig } = await import('./economy-config')
-    const { commissionUnitsForReward } = await import('@/domain/referral')
+    const { commissionUnitsForReward } = await import('@/domain/economy/referral')
     const adminId = await makeUser(true)
 
     expect(commissionUnitsForReward(10)).toBe(100)
@@ -210,7 +210,7 @@ describe('konsumen membaca dari satu sumber kebenaran', () => {
 
   it('minimum dan maksimum penarikan mengikuti nominal yang disetel', async () => {
     const { updateEconomyConfig } = await import('./economy-config')
-    const { withdrawalMinimumCredits, maxPayoutCredits } = await import('@/domain/economy')
+    const { withdrawalMinimumCredits, maxPayoutCredits } = await import('@/domain/economy/economy')
     const adminId = await makeUser(true)
 
     expect(withdrawalMinimumCredits()).toBe(100)
@@ -221,7 +221,7 @@ describe('konsumen membaca dari satu sumber kebenaran', () => {
 
   it('createPayout menolak nominal di bawah minimum yang baru disetel', async () => {
     const { updateEconomyConfig } = await import('./economy-config')
-    const { createPayout } = await import('./payout')
+    const { createPayout } = await import('../payout/payout')
     const adminId = await makeUser(true)
     const userId = await makeUser(false)
 

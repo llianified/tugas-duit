@@ -1,4 +1,4 @@
-import { pool, transaction } from '../server/db.ts'
+import { pool, transaction } from '../server/platform/db.ts'
 
 const REASON_MAX_LENGTH = 500
 

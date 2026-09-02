@@ -1,6 +1,6 @@
 
-import { getProgression, type Progression } from '@/domain/progression'
-import { DIFFICULTY_LABEL, type Difficulty } from '@/domain/challenge'
+import { getProgression, type Progression } from '@/domain/progression/progression'
+import { DIFFICULTY_LABEL, type Difficulty } from '@/domain/task/challenge'
 
 const DIFFICULTY_ORDER: readonly Difficulty[] = ['Easy', 'Medium', 'Hard']
 

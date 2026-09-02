@@ -1,16 +1,16 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy-config'
+import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy/economy-config'
 import { pickMessage, type CandidateRow } from './engagement'
 
-vi.mock('./telegram.ts', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./telegram')>()),
+vi.mock('../integrations/telegram.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../integrations/telegram')>()),
   sendTelegramMessage: vi.fn(async () => {}),
   openAppMarkup: () => ({}),
 }))
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
 
@@ -196,8 +196,8 @@ describe('ENG-8 — query pemindai jalan di database', () => {
 
 describe('ENG-9 — pengiriman dan penanda sekali kirim', () => {
   it('mengirim sekali lalu diam pada putaran berikutnya', async () => {
-    const { query } = await import('./db')
-    const { generateReferralCode } = await import('./referral')
+    const { query } = await import('../platform/db')
+    const { generateReferralCode } = await import('../economy/referral')
     const { runEngagementNotifications } = await import('./engagement')
 
     const suffix = Math.floor(Math.random() * 1_000_000_000)
@@ -235,8 +235,8 @@ describe('ENG-9 — pengiriman dan penanda sekali kirim', () => {
   })
 
   it('melewati user yang menekan /stop', async () => {
-    const { query } = await import('./db')
-    const { generateReferralCode } = await import('./referral')
+    const { query } = await import('../platform/db')
+    const { generateReferralCode } = await import('../economy/referral')
     const { runEngagementNotifications } = await import('./engagement')
 
     const suffix = Math.floor(Math.random() * 1_000_000_000)

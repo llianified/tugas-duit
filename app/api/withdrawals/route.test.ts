@@ -6,16 +6,16 @@ const mocks = vi.hoisted(() => ({
   createPayout: vi.fn(),
 }))
 
-vi.mock('@/server/env', () => ({ env: { appOriginOrNull: 'https://app.example' } }))
-vi.mock('@/server/session', () => ({
+vi.mock('@/server/platform/env', () => ({ env: { appOriginOrNull: 'https://app.example' } }))
+vi.mock('@/server/auth/session', () => ({
   BannedError: class BannedError extends Error {},
   UnauthorizedError: class UnauthorizedError extends Error {},
   requireUser: mocks.requireUser,
 }))
-vi.mock('@/server/economy-config', () => ({ loadEconomyConfig: vi.fn() }))
-vi.mock('@/server/ratelimit', () => ({ checkRateLimit: mocks.checkRateLimit }))
-vi.mock('@/server/notify', () => ({ notifyWithdrawalRequested: vi.fn() }))
-vi.mock('@/server/payout', () => ({
+vi.mock('@/server/economy/economy-config', () => ({ loadEconomyConfig: vi.fn() }))
+vi.mock('@/server/platform/ratelimit', () => ({ checkRateLimit: mocks.checkRateLimit }))
+vi.mock('@/server/messaging/notify', () => ({ notifyWithdrawalRequested: vi.fn() }))
+vi.mock('@/server/payout/payout', () => ({
   createPayout: mocks.createPayout,
   getPayouts: vi.fn(),
   PayoutError: class PayoutError extends Error {},

@@ -1,4 +1,4 @@
-import { query } from './db'
+import { query } from '../platform/db'
 
 export type ActivityKind = 'perfect' | 'payout'
 

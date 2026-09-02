@@ -1,16 +1,16 @@
 import { beforeAll, describe, expect, it } from 'vitest'
-import { PAYOUT_CHANNELS } from '@/domain/withdrawal'
-import { withdrawalMinimumCredits } from '@/domain/economy'
+import { PAYOUT_CHANNELS } from '@/domain/economy/withdrawal'
+import { withdrawalMinimumCredits } from '@/domain/economy/economy'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
 
 async function makeUser(balance: number, activeReferrals = 5, activeDays?: number): Promise<number> {
-  const { query } = await import('./db')
-  const { generateReferralCode } = await import('./referral')
+  const { query } = await import('../platform/db')
+  const { generateReferralCode } = await import('../economy/referral')
   const { seedActiveDays, seedActiveReferrals } = await import('../__fixtures__/payout')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string }>(
@@ -50,7 +50,7 @@ describe('gating withdrawal', () => {
 
   it('menerapkan cooldown 7 hari sejak pengajuan meskipun ditolak', async () => {
     const { createPayout, withdrawalCooldownMsForBase } = await import('./payout')
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const credits = withdrawalMinimumCredits()
     const userId = await makeUser(credits * 2)
     const input = {
@@ -101,7 +101,7 @@ describe('WD-6 — setiap channel di PAYOUT_CHANNELS diterima database', () => {
 /** Kebalikan WD-6: yang dijaga di sini bukan "channel di kode diterima database", melainkan "channel di database tidak berbohong di layar". Keduanya perlu karena keduanya pernah berselisih ke arah yang berbeda. */
 describe('WD-6b — channel di luar daftar tidak pernah menyamar jadi channel lain', () => {
   it('AUDIT-H2 — memakai id-nya sendiri sebagai nama, bukan channel pertama', async () => {
-    const { getPayoutChannel, PAYOUT_CHANNELS } = await import('@/domain/withdrawal')
+    const { getPayoutChannel, PAYOUT_CHANNELS } = await import('@/domain/economy/withdrawal')
 
     /** `withdrawals_known_channel` masih menerima `bri` dan `mandiri` dari masa keduanya ditawarkan. Bentuk lama `getPayoutChannel` jatuh ke `PAYOUT_CHANNELS[0]`, jadi baris lama itu terbaca sebagai DANA di antrean payout — label yang dibaca admin tepat sebelum mentransfer — dan di pesan Telegram ke user. */
     for (const legacy of ['bri', 'mandiri']) {
@@ -113,7 +113,7 @@ describe('WD-6b — channel di luar daftar tidak pernah menyamar jadi channel la
   })
 
   it('tetap mengembalikan channel yang sesungguhnya untuk id yang dikenal', async () => {
-    const { getPayoutChannel, PAYOUT_CHANNELS } = await import('@/domain/withdrawal')
+    const { getPayoutChannel, PAYOUT_CHANNELS } = await import('@/domain/economy/withdrawal')
 
     for (const channel of PAYOUT_CHANNELS) {
       expect(getPayoutChannel(channel.id)).toBe(channel)
@@ -176,8 +176,8 @@ describe('WD-7 — satu nomor tujuan hanya untuk satu akun', () => {
 describe('WD-8 — premium memakai jeda penarikan yang lebih pendek', () => {
   it('membuka pengajuan berikutnya setelah jeda premium, bukan jeda tujuh hari', async () => {
     const { createPayout } = await import('./payout')
-    const { DEFAULT_ECONOMY_CONFIG } = await import('@/domain/economy-config')
-    const { query } = await import('./db')
+    const { DEFAULT_ECONOMY_CONFIG } = await import('@/domain/economy/economy-config')
+    const { query } = await import('../platform/db')
     const credits = withdrawalMinimumCredits()
     const userId = await makeUser(credits * 2)
     const input = {
@@ -213,8 +213,8 @@ describe('WD-9 — kelayakan yang dibaca UI sama dengan yang diterima server', (
   /** Jalur baca (`getPayouts`, yang menggerbang dialog penarikan) dan jalur tulis (`createPayout`) pernah punya SQL kembar. Saat premium menambah jeda 3 hari, hanya jalur tulis yang ikut berubah — UI menahan pembeli premium sampai hari ketujuh padahal server sudah menerimanya sejak hari ketiga. Yang diuji di sini kesepakatan keduanya, bukan salah satunya. */
   it('menutup dan membuka gerbang pada hari yang sama di kedua jalur', async () => {
     const { createPayout, getPayouts } = await import('./payout')
-    const { DEFAULT_ECONOMY_CONFIG } = await import('@/domain/economy-config')
-    const { query } = await import('./db')
+    const { DEFAULT_ECONOMY_CONFIG } = await import('@/domain/economy/economy-config')
+    const { query } = await import('../platform/db')
     const credits = withdrawalMinimumCredits()
     const userId = await makeUser(credits * 3)
     const input = {
@@ -254,8 +254,8 @@ describe('WD-9 — kelayakan yang dibaca UI sama dengan yang diterima server', (
 describe('WD-10 — notifikasi memakai jeda efektif user, bukan angka tetap', () => {
   it('mengembalikan jeda premium dari createPayout', async () => {
     const { createPayout } = await import('./payout')
-    const { DEFAULT_ECONOMY_CONFIG } = await import('@/domain/economy-config')
-    const { query } = await import('./db')
+    const { DEFAULT_ECONOMY_CONFIG } = await import('@/domain/economy/economy-config')
+    const { query } = await import('../platform/db')
     const credits = withdrawalMinimumCredits()
     const userId = await makeUser(credits)
     await query("update users set premium_until=now()+interval '30 days' where id=$1", [userId])
@@ -323,7 +323,7 @@ describe('WD-11 — syarat hari aktif sebelum penarikan pertama', () => {
 
   /** Yang dipilih pemilik repo hari aktif berbeda, bukan streak: bolong sehari tidak boleh mengulang dari nol. Fixture di sini sengaja berjarak dua hari supaya tidak ada satu pun rentetan berturut-turut yang panjangnya tujuh. */
   it('menghitung hari yang tidak berturut-turut', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const { createPayout, getPayouts, requiredActiveDays } = await import('./payout')
     const userId = await makeUser(withdrawalMinimumCredits(), 5, 0)
 
@@ -348,7 +348,7 @@ describe('WD-11 — syarat hari aktif sebelum penarikan pertama', () => {
   })
 
   it('dua task di hari yang sama tetap dihitung satu hari', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const { getPayouts } = await import('./payout')
     const userId = await makeUser(withdrawalMinimumCredits(), 5, 0)
 
@@ -404,7 +404,7 @@ describe('WD-12 — bukti transfer', () => {
 
   it('menolak berkas kosong dan berkas di atas 5 MB', async () => {
     const { readPayoutProof } = await import('./payout-proof')
-    const { PAYOUT_PROOF_MAX_BYTES } = await import('@/domain/withdrawal')
+    const { PAYOUT_PROOF_MAX_BYTES } = await import('@/domain/economy/withdrawal')
     const besar = new Uint8Array(PAYOUT_PROOF_MAX_BYTES + 1)
     besar.set(jpeg())
 
@@ -415,7 +415,7 @@ describe('WD-12 — bukti transfer', () => {
   })
 
   it('hasProof mengikuti kolom bukti tanpa membocorkan file_id', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const { createPayout, getPayouts, savePayoutProof } = await import('./payout')
     const credits = withdrawalMinimumCredits()
     const userId = await makeUser(credits)

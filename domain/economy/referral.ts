@@ -1,4 +1,4 @@
-import { economyConfig } from '@/domain/economy-config'
+import { economyConfig } from '@/domain/economy/economy-config'
 
 function referralCommissionRate(): number {
   return economyConfig().referralCommissionPercent / 100

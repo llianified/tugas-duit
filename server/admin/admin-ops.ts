@@ -1,5 +1,5 @@
-import { query } from './db'
-import { requireAdmin } from './session'
+import { query } from '../platform/db'
+import { requireAdmin } from '../auth/session'
 
 /** Pembacaan operasional yang tidak muat di halaman lain: tagihan premium, akun bersinyal, dan riwayat penarikan yang sudah selesai. Ketiganya jawaban atas pertanyaan yang sebelumnya hanya bisa dijawab lewat SQL manual. Antrean payout hanya menampilkan `processing`, jadi begitu satu pengajuan diputuskan ia hilang dari pandangan; dashboard menghitung akun bersinyal tanpa menyebut siapa; dan pembayaran premium tidak punya permukaan sama sekali walau ia satu-satunya pemasukan langsung dari user. */
 

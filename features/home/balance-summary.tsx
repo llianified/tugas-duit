@@ -4,8 +4,8 @@ import { useMemo } from 'react'
 import { ActionButton } from '@/shared/components/action-button'
 import { CreditAmount } from '@/shared/components/credit-amount'
 import { InfoHint } from '@/shared/components/info-hint'
-import type { HistoryEntry } from '@/domain/challenge'
-import { creditsToRupiah } from '@/domain/economy'
+import type { HistoryEntry } from '@/domain/task/challenge'
+import { creditsToRupiah } from '@/domain/economy/economy'
 import {
   HERO_COMPACT_FROM,
   formatCompact,

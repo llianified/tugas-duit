@@ -2,12 +2,12 @@ import { beforeAll, describe, expect, it } from 'vitest'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
 
 async function makeUser(balance = 0): Promise<{ id: number; publicId: string }> {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const { generateReferralCode } = await import('./referral')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string; public_id: string }>(
@@ -23,7 +23,7 @@ async function makeUser(balance = 0): Promise<{ id: number; publicId: string }> 
 
 describe('WD-1 — idempotensi appendLedger', () => {
   it('memulangkan entri yang sama tanpa membayar dua kali', async () => {
-    const { transaction } = await import('./db')
+    const { transaction } = await import('../platform/db')
     const { appendLedger } = await import('./ledger')
     const user = await makeUser()
     const key = `test:${Math.random()}`
@@ -36,13 +36,13 @@ describe('WD-1 — idempotensi appendLedger', () => {
       expect(repeat.balance).toBe(10)
     })
 
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const rows = await query<{ balance_credits: string }>('select balance_credits from users where id=$1', [user.id])
     expect(Number(rows[0].balance_credits)).toBe(10)
   })
 
   it('memulangkan saldo terkini, bukan balance_after historis', async () => {
-    const { transaction } = await import('./db')
+    const { transaction } = await import('../platform/db')
     const { appendLedger } = await import('./ledger')
     const user = await makeUser()
     const firstKey = `test:${Math.random()}`
@@ -60,7 +60,7 @@ describe('WD-1 — idempotensi appendLedger', () => {
 describe('ECON-5 — jalur koreksi adjustment', () => {
   it('menambah saldo dan mencatatnya sebagai adjustment', async () => {
     const { recordAdjustment } = await import('./ledger')
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const user = await makeUser(50)
 
     const result = await recordAdjustment({
@@ -115,7 +115,7 @@ describe('ECON-6 — backstop transisi penarikan di database', () => {
   })
 
   async function paidWithdrawal(): Promise<string> {
-    const { createPayout, settlePayout } = await import('./payout')
+    const { createPayout, settlePayout } = await import('../payout/payout')
     const admin = await makeUser()
     const user = await makeUser(500)
     const { withdrawal } = await createPayout(user.id, draft(`0816${Math.floor(Math.random() * 100_000_000)}`))
@@ -124,7 +124,7 @@ describe('ECON-6 — backstop transisi penarikan di database', () => {
   }
 
   it('menolak paid -> rejected', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const id = await paidWithdrawal()
     await expect(
       query("update withdrawals set state='rejected',rejected_at=now(),paid_at=null where id=$1", [id]),
@@ -132,7 +132,7 @@ describe('ECON-6 — backstop transisi penarikan di database', () => {
   })
 
   it('menolak paid -> processing', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const id = await paidWithdrawal()
     await expect(
       query("update withdrawals set state='processing',paid_at=null where id=$1", [id]),
@@ -140,7 +140,7 @@ describe('ECON-6 — backstop transisi penarikan di database', () => {
   })
 
   it('mengizinkan update yang tidak menyentuh state', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const id = await paidWithdrawal()
     await expect(
       query("update withdrawals set admin_note='catatan' where id=$1", [id]),
@@ -148,7 +148,7 @@ describe('ECON-6 — backstop transisi penarikan di database', () => {
   })
 
   it('menolak baris paid yang juga bertanda rejected', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const id = await paidWithdrawal()
     await expect(
       query('update withdrawals set rejected_at=now() where id=$1', [id]),
@@ -158,7 +158,7 @@ describe('ECON-6 — backstop transisi penarikan di database', () => {
 
 describe('ECON-11 — invarian ledger di database', () => {
   it('menolak tanda amount yang tidak cocok dengan kind', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const user = await makeUser(100)
     await expect(
       query(
@@ -178,7 +178,7 @@ describe('ECON-11 — invarian ledger di database', () => {
   })
 
   it('mengizinkan adjustment ke dua arah', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const user = await makeUser(100)
     await expect(
       query(
@@ -190,7 +190,7 @@ describe('ECON-11 — invarian ledger di database', () => {
   })
 
   it('menolak channel pembayaran yang tidak dikenal', async () => {
-    const { createPayout, PayoutError } = await import('./payout')
+    const { createPayout, PayoutError } = await import('../payout/payout')
     const user = await makeUser(500)
     await expect(
       createPayout(user.id, {
@@ -203,8 +203,8 @@ describe('ECON-11 — invarian ledger di database', () => {
   })
 
   it('menerima SETIAP channel yang ditawarkan aplikasi', async () => {
-    const { createPayout } = await import('./payout')
-    const { PAYOUT_CHANNELS } = await import('@/domain/withdrawal')
+    const { createPayout } = await import('../payout/payout')
+    const { PAYOUT_CHANNELS } = await import('@/domain/economy/withdrawal')
 
     for (const channel of PAYOUT_CHANNELS) {
       const payer = await makeUser(500)
@@ -228,8 +228,8 @@ describe('ECON-11 — invarian ledger di database', () => {
   })
 
   it('menolak baris rejected tanpa alasan', async () => {
-    const { query } = await import('./db')
-    const { createPayout } = await import('./payout')
+    const { query } = await import('../platform/db')
+    const { createPayout } = await import('../payout/payout')
     const user = await makeUser(500)
     const { withdrawal } = await createPayout(user.id, {
       channelId: 'dana',
@@ -243,7 +243,7 @@ describe('ECON-11 — invarian ledger di database', () => {
   })
 
   it('menolak truncate pada credit_ledger', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     await expect(query('truncate credit_ledger cascade')).rejects.toThrow(/append-only/)
   })
 })

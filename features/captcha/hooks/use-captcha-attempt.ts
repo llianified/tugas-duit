@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { Challenge, TaskOutcome, TaskSubmission } from '@/domain/challenge'
+import type { Challenge, TaskOutcome, TaskSubmission } from '@/domain/task/challenge'
 import { userFacingMessage } from '@/shell/api-client'
 import { hapticError, hapticSuccess, hapticWarning } from '@/shared/lib/haptic'
 

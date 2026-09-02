@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { cookies, headers } from 'next/headers'
-import { isPreviewShell, query } from './db'
-import { env } from './env'
+import { isPreviewShell, query } from '../platform/db'
+import { env } from '../platform/env'
 
 const COOKIE_NAME = 'td_session'
 

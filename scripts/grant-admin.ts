@@ -1,4 +1,4 @@
-import { pool } from '../server/db.ts'
+import { pool } from '../server/platform/db.ts'
 
 async function main() {
   const args = process.argv.slice(2)

@@ -1,4 +1,4 @@
-import { getPayoutChannel, maskAccountNumber, PAYOUT_ETA_TEXT } from '@/domain/withdrawal'
+import { getPayoutChannel, maskAccountNumber, PAYOUT_ETA_TEXT } from '@/domain/economy/withdrawal'
 import { formatCredits, formatRupiah, formatShortDate } from '@/shared/lib/format'
 import {
   escapeTelegramHtml as escapeHtml,
@@ -7,7 +7,7 @@ import {
   sendTelegramPhoto,
   type SendMessageOptions,
   type TelegramPhotoInput,
-} from './telegram'
+} from '../integrations/telegram'
 
 async function send(telegramId: string, text: string, event: string, options: SendMessageOptions = {}) {
   try {

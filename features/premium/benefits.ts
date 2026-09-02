@@ -1,4 +1,4 @@
-import type { PremiumPerks } from '@/domain/premium'
+import type { PremiumPerks } from '@/domain/economy/premium'
 import { formatCredits } from '@/shared/lib/format'
 
 export interface PremiumBenefit {

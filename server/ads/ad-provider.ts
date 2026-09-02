@@ -1,5 +1,5 @@
-import type { AdProvider } from '@/domain/ads'
-import { env } from './env'
+import type { AdProvider } from '@/domain/ads/ads'
+import { env } from '../platform/env'
 
 export interface ResolvedAdProvider {
   provider: AdProvider

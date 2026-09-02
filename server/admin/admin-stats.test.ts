@@ -16,7 +16,7 @@ vi.mock('next/headers', () => ({
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
 
@@ -27,8 +27,8 @@ beforeEach(() => {
 async function makeUser(
   options: { balance?: number; admin?: boolean } = {},
 ): Promise<{ id: number; publicId: string }> {
-  const { query } = await import('./db')
-  const { generateReferralCode } = await import('./referral')
+  const { query } = await import('../platform/db')
+  const { generateReferralCode } = await import('../economy/referral')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string; public_id: string }>(
     `insert into users(telegram_id,first_name,referral_code,balance_credits,is_admin)
@@ -44,7 +44,7 @@ async function makeUser(
 }
 
 async function signIn(userId: number): Promise<void> {
-  const { createSession } = await import('./session')
+  const { createSession } = await import('../auth/session')
   jar.clear()
   await createSession(userId, 'uji')
 }
@@ -63,7 +63,7 @@ describe('otorisasi', () => {
   })
 
   it('menolak admin yang ditangguhkan', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const { readAdminDashboard } = await import('./admin-stats')
     const admin = await makeUser({ admin: true })
     await signIn(admin.id)
@@ -95,8 +95,8 @@ describe('agregat dashboard', () => {
   })
 
   it('menghitung credit dibayar hanya dari task dan komisi', async () => {
-    const { transaction } = await import('./db')
-    const { appendLedger } = await import('./ledger')
+    const { transaction } = await import('../platform/db')
+    const { appendLedger } = await import('../economy/ledger')
     const { readAdminDashboard } = await import('./admin-stats')
     const admin = await makeUser({ admin: true })
     await signIn(admin.id)
@@ -117,7 +117,7 @@ describe('agregat dashboard', () => {
   })
 
   it('memisahkan antrean payout menurut statusnya', async () => {
-    const { createPayout, settlePayout } = await import('./payout')
+    const { createPayout, settlePayout } = await import('../payout/payout')
     const { readAdminDashboard } = await import('./admin-stats')
     const admin = await makeUser({ admin: true })
     await signIn(admin.id)
@@ -149,8 +149,8 @@ describe('agregat dashboard', () => {
 
 describe('umpan aktivitas', () => {
   it('menggabungkan pendaftaran dan pergerakan ledger dalam satu urutan waktu', async () => {
-    const { transaction } = await import('./db')
-    const { appendLedger } = await import('./ledger')
+    const { transaction } = await import('../platform/db')
+    const { appendLedger } = await import('../economy/ledger')
     const { readAdminActivity } = await import('./admin-stats')
     const admin = await makeUser({ admin: true })
 

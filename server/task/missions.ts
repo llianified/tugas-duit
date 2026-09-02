@@ -6,10 +6,10 @@ import {
   type MissionCounts,
   type MissionKey,
   type MissionProgress,
-} from '@/domain/missions'
-import { applyEnergyGrant, maxEnergy, projectEnergy } from '@/domain/energy'
-import { isPremiumActive } from '@/domain/premium'
-import { query, transaction } from './db'
+} from '@/domain/progression/missions'
+import { applyEnergyGrant, maxEnergy, projectEnergy } from '@/domain/economy/energy'
+import { isPremiumActive } from '@/domain/economy/premium'
+import { query, transaction } from '../platform/db'
 
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
 

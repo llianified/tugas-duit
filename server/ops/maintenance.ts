@@ -1,6 +1,6 @@
-import { execute, query, transaction } from './db.ts'
-import { runEngagementNotifications } from './engagement.ts'
-import { sweepFraudSignals } from './fraud.ts'
+import { execute, query, transaction } from '../platform/db.ts'
+import { runEngagementNotifications } from '../messaging/engagement.ts'
+import { sweepFraudSignals } from '../task/fraud.ts'
 
 const CHALLENGE_RETENTION = '7 days'
 

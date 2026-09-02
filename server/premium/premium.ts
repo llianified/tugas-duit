@@ -1,6 +1,6 @@
 import type { PoolClient } from 'pg'
-import { isPremiumActive, premiumDaysLeft, type PremiumMonths } from '@/domain/premium'
-import { query } from './db'
+import { isPremiumActive, premiumDaysLeft, type PremiumMonths } from '@/domain/economy/premium'
+import { query } from '../platform/db'
 
 export interface PremiumStatus {
   active: boolean

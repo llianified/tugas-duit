@@ -1,5 +1,5 @@
-import { creditsToRupiah, maxPayoutCredits, withdrawalMinimumCredits } from '@/domain/economy'
-import { isPremiumActive, withdrawalCooldownMs } from '@/domain/premium'
+import { creditsToRupiah, maxPayoutCredits, withdrawalMinimumCredits } from '@/domain/economy/economy'
+import { isPremiumActive, withdrawalCooldownMs } from '@/domain/economy/premium'
 import {
   getPayoutChannel,
   isDraftValid,
@@ -7,16 +7,16 @@ import {
   PAYOUT_CHANNELS,
   sanitizeAccountNumber,
   validateWithdrawalDraft,
-} from '@/domain/withdrawal'
+} from '@/domain/economy/withdrawal'
 import type { PoolClient } from 'pg'
-import { query, transaction } from './db'
-import { appendLedger } from './ledger'
+import { query, transaction } from '../platform/db'
+import { appendLedger } from '../economy/ledger'
 import {
   requiredActiveDays,
   requiredActiveReferrals,
   withdrawalCooldownMsForBase,
 } from './payout-rules'
-import { requireAdmin, UnauthorizedError } from './session'
+import { requireAdmin, UnauthorizedError } from '../auth/session'
 
 export class PayoutError extends Error {
   code: string

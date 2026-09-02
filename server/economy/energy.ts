@@ -5,10 +5,10 @@ import {
   projectEnergy,
   type EnergySnapshot,
   type EnergyState,
-} from '@/domain/energy'
-import { isPremiumActive } from '@/domain/premium'
-import { restoreAdPass } from './ads'
-import { query } from './db'
+} from '@/domain/economy/energy'
+import { isPremiumActive } from '@/domain/economy/premium'
+import { restoreAdPass } from '../ads/ads'
+import { query } from '../platform/db'
 
 export type EnergyView = EnergyState & { now: number }
 

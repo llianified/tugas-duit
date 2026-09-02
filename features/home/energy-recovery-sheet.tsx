@@ -7,7 +7,7 @@ import { ActionButton } from '@/shared/components/action-button'
 import { GlyphChevron, GlyphCross, GlyphCrown, GlyphPlay, GlyphTrophy } from '@/shared/components/glyph'
 import { EYEBROW_CLASS } from '@/shared/components/section-label'
 import { Surface } from '@/shared/components/surface'
-import type { EnergyFill } from '@/domain/energy'
+import type { EnergyFill } from '@/domain/economy/energy'
 import { formatCredits, formatLongCountdown } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 

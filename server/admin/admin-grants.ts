@@ -1,9 +1,9 @@
 import type { PoolClient } from 'pg'
-import { isPremiumActive } from '@/domain/premium'
-import { query, transaction } from './db'
-import { grantEnergy } from './energy'
-import { refillRewardPool } from './reward-pool'
-import { requireAdmin } from './session'
+import { isPremiumActive } from '@/domain/economy/premium'
+import { query, transaction } from '../platform/db'
+import { grantEnergy } from '../economy/energy'
+import { refillRewardPool } from '../economy/reward-pool'
+import { requireAdmin } from '../auth/session'
 
 /** Aksi admin yang mengubah keadaan akun tanpa menyentuh saldo. `admin-users.ts` mengurus identitas dan akses — nama, penangguhan, hak admin. Yang di sini mengurus hal yang punya nilai ekonomi: premium, energi, dan stok reward. Dipisah karena ketiganya menuntut hal yang sama dan berbeda dari yang di sana: alasan wajib, jejak audit di `admin_actions`, dan kehati-hatian terhadap invarian yang sama dengan jalur user biasa (`users_energy_range`, kapasitas kolam, penumpukan tanggal premium). Yang TIDAK ada di sini: koreksi saldo. Itu tetap di `ledger.ts`, karena satu-satunya jalan mengubah `balance_credits` adalah `appendLedger` — dan jejaknya sudah dijamin ledger yang append-only, bukan oleh tabel audit ini. */
 

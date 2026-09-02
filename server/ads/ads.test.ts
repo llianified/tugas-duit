@@ -3,13 +3,13 @@ import {
   DEFAULT_ECONOMY_CONFIG,
   setActiveEconomyConfig,
   type EconomyConfig,
-} from '@/domain/economy-config'
+} from '@/domain/economy/economy-config'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
   // Monetag adalah satu-satunya provider. `unitId` di sini menempati kolom | `ad_views.block_id` yang sama seperti blockId Adsgram dan project ID GigaPub dulu.
   process.env.NEXT_PUBLIC_MONETAG_ZONE_ID = 'uji-block'
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
 
@@ -19,8 +19,8 @@ const withConfig = (patch: Partial<EconomyConfig>) =>
   setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, ...patch, adsCooldownSeconds: 0 })
 
 async function makeUser(energy = 5): Promise<number> {
-  const { query } = await import('./db')
-  const { generateReferralCode } = await import('./referral')
+  const { query } = await import('../platform/db')
+  const { generateReferralCode } = await import('../economy/referral')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string }>(
     `insert into users(telegram_id,first_name,referral_code,energy)
@@ -40,13 +40,13 @@ async function grantPass(userId: number): Promise<string> {
 }
 
 async function readEnergyValue(userId: number): Promise<number> {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const rows = await query<{ energy: number }>('select energy from users where id=$1', [userId])
   return Number(rows[0].energy)
 }
 
 async function readAdView(id: string) {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const rows = await query<{
     state: string
     consumed_at: Date | null
@@ -57,7 +57,7 @@ async function readAdView(id: string) {
 }
 
 async function readChallengeEntry(challengeId: string) {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const rows = await query<{
     ad_view_id: string | null
     energy_spent_at: Date | null
@@ -72,7 +72,7 @@ async function readChallengeEntry(challengeId: string) {
 describe('ADS-DB-1 — pass membayar ongkos masuk, energi tidak tersentuh', () => {
   it('memulai task tanpa memotong energi dan menandai challenge-nya', async () => {
     withConfig({})
-    const { issueChallenge, startChallenge } = await import('./challenge')
+    const { issueChallenge, startChallenge } = await import('../task/challenge')
     const userId = await makeUser(5)
     const ticketId = await grantPass(userId)
     const challenge = await issueChallenge(userId)
@@ -90,7 +90,7 @@ describe('ADS-DB-1 — pass membayar ongkos masuk, energi tidak tersentuh', () =
 
   it('tetap memotong energi saat task dibayar energi', async () => {
     withConfig({})
-    const { issueChallenge, startChallenge } = await import('./challenge')
+    const { issueChallenge, startChallenge } = await import('../task/challenge')
     const userId = await makeUser(5)
     const challenge = await issueChallenge(userId)
 
@@ -105,8 +105,8 @@ describe('ADS-DB-1 — pass membayar ongkos masuk, energi tidak tersentuh', () =
 describe('ADS-DB-2 — kolam reward kosong menolak lebih dulu', () => {
   it('menolak start dan meninggalkan pass tetap siap pakai', async () => {
     withConfig({})
-    const { query } = await import('./db')
-    const { issueChallenge, startChallenge } = await import('./challenge')
+    const { query } = await import('../platform/db')
+    const { issueChallenge, startChallenge } = await import('../task/challenge')
     const userId = await makeUser(5)
     const ticketId = await grantPass(userId)
     await query('update users set reward_pool=0, reward_pool_updated_at=now() where id=$1', [userId])
@@ -122,9 +122,9 @@ describe('ADS-DB-2 — kolam reward kosong menolak lebih dulu', () => {
 describe('ADS-DB-3 — task hangus tanpa percobaan mengembalikan tiketnya', () => {
   it('menghidupkan pass sekali saja, dan tiket itu boleh membayar task berikutnya', async () => {
     withConfig({})
-    const { query, transaction } = await import('./db')
-    const { issueChallenge, startChallenge } = await import('./challenge')
-    const { refundEntry } = await import('./energy')
+    const { query, transaction } = await import('../platform/db')
+    const { issueChallenge, startChallenge } = await import('../task/challenge')
+    const { refundEntry } = await import('../economy/energy')
     const userId = await makeUser(5)
     const ticketId = await grantPass(userId)
     const first = await issueChallenge(userId)
@@ -155,8 +155,8 @@ describe('ADS-DB-3 — task hangus tanpa percobaan mengembalikan tiketnya', () =
 describe('ADS-DB-4 — satu pass tidak bisa membayar dua task', () => {
   it('hanya meloloskan satu dari dua start yang berjalan bersamaan', async () => {
     withConfig({})
-    const { query } = await import('./db')
-    const { issueChallenge, startChallenge } = await import('./challenge')
+    const { query } = await import('../platform/db')
+    const { issueChallenge, startChallenge } = await import('../task/challenge')
     const userId = await makeUser(5)
     await grantPass(userId)
 
@@ -178,7 +178,7 @@ describe('ADS-DB-4 — satu pass tidak bisa membayar dua task', () => {
 describe('ADS-DB-5 — plafon harian menolak sebelum tiket dibuka', () => {
   it('tidak menyisakan baris tiket baru saat jatah habis', async () => {
     withConfig({ adsMaxViewsPerDay: 1 })
-    const { query, transaction } = await import('./db')
+    const { query, transaction } = await import('../platform/db')
     const { consumeAdPass, openAdTicket } = await import('./ads')
     const userId = await makeUser(5)
     await grantPass(userId)
@@ -198,8 +198,8 @@ describe('ADS-DB-5 — plafon harian menolak sebelum tiket dibuka', () => {
 describe('ADS-DB-6 — pass kedaluwarsa tidak membayar apa pun', () => {
   it('menolak start berbayar iklan, dan energi tetap yang membayar kalau user memilih energi', async () => {
     withConfig({})
-    const { query } = await import('./db')
-    const { issueChallenge, startChallenge } = await import('./challenge')
+    const { query } = await import('../platform/db')
+    const { issueChallenge, startChallenge } = await import('../task/challenge')
     const userId = await makeUser(5)
     const ticketId = await grantPass(userId)
     await query("update ad_views set expires_at=now()-interval '1 second' where id=$1", [ticketId])
@@ -220,7 +220,7 @@ describe('ADS-DB-7 — tiket tidak bisa ditumpuk di atas task yang sedang dibaya
   it('menolak membuka tiket baru selama challenge berbayar iklan belum ditutup', async () => {
     withConfig({})
     const { openAdTicket } = await import('./ads')
-    const { issueChallenge, startChallenge } = await import('./challenge')
+    const { issueChallenge, startChallenge } = await import('../task/challenge')
     const userId = await makeUser(5)
     await grantPass(userId)
     const challenge = await issueChallenge(userId)
@@ -232,9 +232,9 @@ describe('ADS-DB-7 — tiket tidak bisa ditumpuk di atas task yang sedang dibaya
   it('mengembalikan tiketnya utuh saat task itu hangus tanpa percobaan', async () => {
     withConfig({})
     const { openAdTicket } = await import('./ads')
-    const { transaction } = await import('./db')
-    const { issueChallenge, startChallenge } = await import('./challenge')
-    const { refundEntry } = await import('./energy')
+    const { transaction } = await import('../platform/db')
+    const { issueChallenge, startChallenge } = await import('../task/challenge')
+    const { refundEntry } = await import('../economy/energy')
     const userId = await makeUser(5)
     const ticketId = await grantPass(userId)
     const challenge = await issueChallenge(userId)
@@ -249,9 +249,9 @@ describe('ADS-DB-7 — tiket tidak bisa ditumpuk di atas task yang sedang dibaya
 
   it('tidak menghanguskan tiket saat pass lain sudah siap — utangnya tetap tercatat', async () => {
     withConfig({})
-    const { query, transaction } = await import('./db')
-    const { issueChallenge, startChallenge } = await import('./challenge')
-    const { refundEntry } = await import('./energy')
+    const { query, transaction } = await import('../platform/db')
+    const { issueChallenge, startChallenge } = await import('../task/challenge')
+    const { refundEntry } = await import('../economy/energy')
     const userId = await makeUser(5)
     const ticketId = await grantPass(userId)
     const challenge = await issueChallenge(userId)
@@ -277,7 +277,7 @@ describe('ADS-DB-7 — tiket tidak bisa ditumpuk di atas task yang sedang dibaya
 describe('ADS-DB-8 — tayangan yang tidak pernah diklaim tidak memotong jatah', () => {
   it('menyerahkan kembali tiket yang sama, tanpa menambah baris maupun memotong jatah', async () => {
     withConfig({ adsMaxViewsPerDay: 2 })
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const { openAdTicket, readAdsState } = await import('./ads')
     const userId = await makeUser(5)
 
@@ -310,9 +310,9 @@ describe('ADS-DB-9 — pass yang dihidupkan ulang memakai tenggat aslinya', () =
   it('tidak memperpanjang umur pass dan menolak menghidupkan pass yang sudah lewat tenggat', async () => {
     withConfig({})
     const ttlMs = DEFAULT_ECONOMY_CONFIG.adsPassTtlMinutes * 60_000
-    const { query, transaction } = await import('./db')
-    const { issueChallenge, startChallenge } = await import('./challenge')
-    const { refundEntry } = await import('./energy')
+    const { query, transaction } = await import('../platform/db')
+    const { issueChallenge, startChallenge } = await import('../task/challenge')
+    const { refundEntry } = await import('../economy/energy')
     const userId = await makeUser(5)
     const ticketId = await grantPass(userId)
 

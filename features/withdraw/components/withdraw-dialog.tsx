@@ -12,8 +12,8 @@ import {
 } from '@/features/withdraw/components/withdraw-form'
 import { WithdrawReceipt } from '@/features/withdraw/components/withdraw-receipt'
 import { WithdrawalList } from '@/features/withdraw/components/withdrawal-list'
-import { getWithdrawalStatus } from '@/domain/economy'
-import type { Withdrawal, WithdrawalEligibility } from '@/domain/withdrawal'
+import { getWithdrawalStatus } from '@/domain/economy/economy'
+import type { Withdrawal, WithdrawalEligibility } from '@/domain/economy/withdrawal'
 
 export function WithdrawDialog({
   open,

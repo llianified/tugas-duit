@@ -1,4 +1,4 @@
-import { env } from './env'
+import { env } from '../platform/env'
 
 const REQUEST_TIMEOUT_MS = 15_000
 const DEFAULT_EXPIRY_MINUTES = 60

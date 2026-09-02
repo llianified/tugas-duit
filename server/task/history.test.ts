@@ -1,16 +1,16 @@
 import { beforeAll, describe, expect, it } from 'vitest'
-import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy-config'
+import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy/economy-config'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
   setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
 }, 120_000)
 
 async function makeUser(): Promise<number> {
-  const { query } = await import('./db')
-  const { generateReferralCode } = await import('./referral')
+  const { query } = await import('../platform/db')
+  const { generateReferralCode } = await import('../economy/referral')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string }>(
     `insert into users(telegram_id,first_name,referral_code)
@@ -22,7 +22,7 @@ async function makeUser(): Promise<number> {
 
 /** Menyelesaikan task pada waktu yang ditentukan sampai mikrodetik. Waktunya dikirim sebagai teks, bukan `Date`, justru karena `Date` yang tidak bisa membawa mikrodetik — itu inti kasus yang diuji di bawah. */
 async function completeAt(userId: number, completedAt: string) {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const challengeId = (await query<{ id: string }>('select gen_random_uuid() id'))[0].id
   await query(
     `insert into challenges(id,user_id,type,difficulty,payload,answer_hash,max_reward,expires_at,started_at,submitted_at,solved)

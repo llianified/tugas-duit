@@ -6,10 +6,10 @@ import {
   ECONOMY_FIELDS,
   setActiveEconomyConfig,
   validateEconomyConfig,
-} from '@/domain/economy-config'
-import { query, transaction } from './db'
-import { env } from './env'
-import { requireAdmin } from './session'
+} from '@/domain/economy/economy-config'
+import { query, transaction } from '../platform/db'
+import { env } from '../platform/env'
+import { requireAdmin } from '../auth/session'
 
 const CACHE_TTL_MS = 30_000
 

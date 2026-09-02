@@ -4,17 +4,17 @@ import {
   type Challenge,
   type Difficulty,
   type DistributiveOmit,
-} from '@/domain/challenge'
-import { getStarReward, getStars, type StarCount } from '@/domain/stars'
-import { economyConfig } from '@/domain/economy-config'
-import { consumeAdPass } from './ads'
-import { query, transaction } from './db'
-import { readEnergy, refundEntry, spendEnergy, type EnergyView } from './energy'
+} from '@/domain/task/challenge'
+import { getStarReward, getStars, type StarCount } from '@/domain/progression/stars'
+import { economyConfig } from '@/domain/economy/economy-config'
+import { consumeAdPass } from '../ads/ads'
+import { query, transaction } from '../platform/db'
+import { readEnergy, refundEntry, spendEnergy, type EnergyView } from '../economy/energy'
 import { recordSubmitSignals, recordSubmitWithoutStart } from './fraud'
-import { appendLedger } from './ledger'
-import { accrueCommission } from './referral'
-import { consumeQuota } from './quota'
-import { readRewardPool } from './reward-pool'
+import { appendLedger } from '../economy/ledger'
+import { accrueCommission } from '../economy/referral'
+import { consumeQuota } from '../economy/quota'
+import { readRewardPool } from '../economy/reward-pool'
 
 type PublicChallenge = Challenge
 type ChallengePayload = DistributiveOmit<Challenge, 'id' | 'issuedAt' | 'startedAt' | 'expiresAt'>

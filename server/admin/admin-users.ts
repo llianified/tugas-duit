@@ -1,8 +1,8 @@
 import { readAdminActions, type AdminActionEntry } from './admin-grants'
-import { query, transaction } from './db'
-import { env } from './env'
-import { requireAdmin } from './session'
-import { STREAK_EXPRESSION } from './streak-sql'
+import { query, transaction } from '../platform/db'
+import { env } from '../platform/env'
+import { requireAdmin } from '../auth/session'
+import { STREAK_EXPRESSION } from '../economy/streak-sql'
 
 const SEARCH_LIMIT = 25
 

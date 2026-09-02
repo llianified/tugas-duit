@@ -1,5 +1,5 @@
 // Pakai path relatif ke modul daun, BUKAN alias '@/domain/ads'. File ini ikut dimuat | script di `scripts/` yang dijalankan Node langsung (--experimental-strip-types), dan | Node tidak mengerti alias `@/...` dari tsconfig — lihat catatan di monetag-zone.ts.
-import { MONETAG_DEFAULT_ZONE_ID } from '../domain/monetag-zone.ts'
+import { MONETAG_DEFAULT_ZONE_ID } from '../../domain/ads/monetag-zone.ts'
 
 function required(name: string): string {
   const value = process.env[name]

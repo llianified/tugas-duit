@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
-import { readEconomyAudit, readEconomyConfigSnapshot } from '@/server/economy-config'
-import { getSessionUser } from '@/server/session'
+import { readEconomyAudit, readEconomyConfigSnapshot } from '@/server/economy/economy-config'
+import { getSessionUser } from '@/server/auth/session'
 import { EconomyForm } from './economy-form'
 
 export const runtime = 'nodejs'

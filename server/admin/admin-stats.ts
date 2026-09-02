@@ -1,5 +1,5 @@
-import { query } from './db'
-import { requireAdmin } from './session'
+import { query } from '../platform/db'
+import { requireAdmin } from '../auth/session'
 
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
 

@@ -1,6 +1,6 @@
 'use client'
 
-import type { ShapeKey } from '@/domain/challenge'
+import type { ShapeKey } from '@/domain/task/challenge'
 import { SHAPE_PATH } from '@/shared/lib/shape-path'
 
 export function GlyphShape({

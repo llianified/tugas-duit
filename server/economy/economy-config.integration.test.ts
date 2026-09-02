@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { DEFAULT_ECONOMY_CONFIG, type EconomyConfig } from '@/domain/economy-config'
+import { DEFAULT_ECONOMY_CONFIG, type EconomyConfig } from '@/domain/economy/economy-config'
 
 /** Produksi pernah mati total karena migrasi 0027 menyemai nilai premium sebagai angka mati, sementara baris aslinya sudah lama disetel admin ke angka lain. Test ini menjalankan SQL migrasi 0028 yang sesungguhnya — dibaca dari disk, bukan disalin — lawan baris yang bentuknya sama dengan produksi saat itu. */
 const REPAIR_SQL_PATH = path.join(
@@ -17,12 +17,12 @@ const PRODUKSI: EconomyConfig = {
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
 
 afterEach(async () => {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const { invalidateEconomyConfigCache, loadEconomyConfig } = await import('./economy-config')
   await query('update economy_config set config=$1::jsonb, version=1, updated_by=null where id=1', [
     JSON.stringify(DEFAULT_ECONOMY_CONFIG),
@@ -32,21 +32,21 @@ afterEach(async () => {
 })
 
 async function writeConfig(config: EconomyConfig) {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const { invalidateEconomyConfigCache } = await import('./economy-config')
   await query('update economy_config set config=$1::jsonb where id=1', [JSON.stringify(config)])
   invalidateEconomyConfigCache()
 }
 
 async function runRepair() {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const { invalidateEconomyConfigCache } = await import('./economy-config')
   await query(await readFile(REPAIR_SQL_PATH, 'utf8'))
   invalidateEconomyConfigCache()
 }
 
 const readStored = async (): Promise<EconomyConfig> => {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const rows = await query<{ config: EconomyConfig }>('select config from economy_config where id=1')
   return rows[0].config
 }

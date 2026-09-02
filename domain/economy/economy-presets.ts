@@ -3,7 +3,7 @@ import {
   ECONOMY_FIELDS,
   type EconomyConfig,
   type EconomyConfigKey,
-} from '@/domain/economy-config'
+} from '@/domain/economy/economy-config'
 
 export interface EconomyPreset {
   id: string

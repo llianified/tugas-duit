@@ -1,14 +1,14 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import type { Difficulty } from '@/domain/challenge'
-import type { EnergyFill } from '@/domain/energy'
-import { getStarReward } from '@/domain/stars'
+import type { Difficulty } from '@/domain/task/challenge'
+import type { EnergyFill } from '@/domain/economy/energy'
+import { getStarReward } from '@/domain/progression/stars'
 import { DifficultyIsland } from '@/features/home/difficulty-island'
-import type { Progression } from '@/domain/progression'
+import type { Progression } from '@/domain/progression/progression'
 import { ProfileIsland } from '@/features/home/profile-island'
 import { RankIsland } from '@/features/home/rank-island'
-import type { UserStats } from '@/domain/stats'
+import type { UserStats } from '@/domain/progression/stats'
 import type { PremiumState, SessionResponse } from '@/shell/session-api'
 
 export function ProgressionBadges({

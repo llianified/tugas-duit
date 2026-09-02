@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import type { PoolClient } from 'pg'
-import { TEXT_CHARS } from '@/domain/challenge'
-import { commissionUnitsForReward, splitUnitsIntoCredits } from '@/domain/referral'
+import { TEXT_CHARS } from '@/domain/task/challenge'
+import { commissionUnitsForReward, splitUnitsIntoCredits } from '@/domain/economy/referral'
 import { appendLedger } from './ledger'
 import { consumeCommissionQuota } from './quota'
 

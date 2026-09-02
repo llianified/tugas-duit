@@ -5,7 +5,7 @@ import {
   BROADCAST_BODY_MAX,
   BROADCAST_SEGMENTS,
   type BroadcastSegment,
-} from '@/domain/broadcast'
+} from '@/domain/messaging/broadcast'
 import { ApiError, sendJson } from '@/shell/api-client'
 import { formatCredits } from '@/shared/lib/format'
 

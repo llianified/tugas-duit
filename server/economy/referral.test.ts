@@ -1,6 +1,6 @@
 import type { PoolClient } from 'pg'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { TEXT_CHARS } from '@/domain/challenge'
+import { TEXT_CHARS } from '@/domain/task/challenge'
 
 const mocks = vi.hoisted(() => ({
   appendLedger: vi.fn(),
@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   splitUnitsIntoCredits: vi.fn(() => ({ credits: 2, remainderUnits: 5 })),
 }))
 
-vi.mock('@/domain/referral', () => ({
+vi.mock('@/domain/economy/referral', () => ({
   commissionUnitsForReward: mocks.commissionUnitsForReward,
   splitUnitsIntoCredits: mocks.splitUnitsIntoCredits,
 }))

@@ -1,8 +1,8 @@
-import { loginAdminWithPassword, type AdminLoginFailure } from '@/server/admin-auth'
-import { env } from '@/server/env'
-import { apiError, assertSameOrigin, clientIp, handleRouteError, rateLimited, readJsonBody } from '@/server/http'
-import { notifyAdminLogin } from '@/server/notify'
-import { checkRateLimit, peekRateLimit, recordRateLimitHit } from '@/server/ratelimit'
+import { loginAdminWithPassword, type AdminLoginFailure } from '@/server/auth/admin-auth'
+import { env } from '@/server/platform/env'
+import { apiError, assertSameOrigin, clientIp, handleRouteError, rateLimited, readJsonBody } from '@/server/platform/http'
+import { notifyAdminLogin } from '@/server/messaging/notify'
+import { checkRateLimit, peekRateLimit, recordRateLimitHit } from '@/server/platform/ratelimit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

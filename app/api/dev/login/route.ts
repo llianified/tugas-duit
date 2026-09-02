@@ -1,8 +1,8 @@
-import { isPreviewDb, query } from '@/server/db'
-import { assertSameOrigin, clientIp, handleRouteError, rateLimited } from '@/server/http'
-import { checkRateLimit } from '@/server/ratelimit'
-import { generateReferralCode } from '@/server/referral'
-import { createSession, previewSessionToken } from '@/server/session'
+import { isPreviewDb, query } from '@/server/platform/db'
+import { assertSameOrigin, clientIp, handleRouteError, rateLimited } from '@/server/platform/http'
+import { checkRateLimit } from '@/server/platform/ratelimit'
+import { generateReferralCode } from '@/server/economy/referral'
+import { createSession, previewSessionToken } from '@/server/auth/session'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

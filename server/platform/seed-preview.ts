@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import type { PoolClient } from 'pg'
-import { commissionUnitsForReward, splitUnitsIntoCredits } from '@/domain/referral'
-import { missionDefinition } from '@/domain/missions'
-import { creditsToRupiah } from '@/domain/economy'
+import { commissionUnitsForReward, splitUnitsIntoCredits } from '@/domain/economy/referral'
+import { missionDefinition } from '@/domain/progression/missions'
+import { creditsToRupiah } from '@/domain/economy/economy'
 import { transaction } from './db'
-import { generateReferralCode } from './referral'
-import { appendLedger } from './ledger'
+import { generateReferralCode } from '../economy/referral'
+import { appendLedger } from '../economy/ledger'
 
 /** Isi data untuk preview yang dilihat manusia — bukan fixture uji. Bedanya dengan `server/__fixtures__/payout.ts`: di sana yang dikejar adalah lolos gerbang dengan data seminimal mungkin, di sini yang dikejar adalah setiap layar punya isi yang masuk akal dibaca — riwayat yang tersebar di beberapa hari, papan peringkat yang punya pesaing, referral yang komisinya benar-benar terhitung, penarikan yang pernah dibayar dan pernah ditolak. Dijalankan dari `app/api/dev/seed/route.ts`, di dalam proses server dev — bukan skrip CLI. PGlite memegang `dataDir` per proses, jadi proses kedua yang membuka direktori yang sama saat `pnpm dev` hidup akan bertabrakan di lock filenya. */
 

@@ -1,6 +1,6 @@
 
-import type { Difficulty } from '@/domain/challenge'
-import type { StarCount } from '@/domain/stars'
+import type { Difficulty } from '@/domain/task/challenge'
+import type { StarCount } from '@/domain/progression/stars'
 
 export interface EconomyConfig {
   creditValueIdr: number

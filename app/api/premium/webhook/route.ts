@@ -1,8 +1,8 @@
-import { loadEconomyConfig } from '@/server/economy-config'
-import { clientIp, readJsonBody } from '@/server/http'
-import { notifyPremiumActivated } from '@/server/notify'
-import { settlePremiumPayment, webhookStatusIsPaid } from '@/server/premium-payment'
-import { checkRateLimit } from '@/server/ratelimit'
+import { loadEconomyConfig } from '@/server/economy/economy-config'
+import { clientIp, readJsonBody } from '@/server/platform/http'
+import { notifyPremiumActivated } from '@/server/messaging/notify'
+import { settlePremiumPayment, webhookStatusIsPaid } from '@/server/premium/premium-payment'
+import { checkRateLimit } from '@/server/platform/ratelimit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

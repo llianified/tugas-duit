@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy-config'
+import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy/economy-config'
 
 const gateway = vi.hoisted(() => ({
   creates: 0,
@@ -7,8 +7,8 @@ const gateway = vi.hoisted(() => ({
   lastOrderId: '',
 }))
 
-vi.mock('./klikqris', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./klikqris')>()),
+vi.mock('../integrations/klikqris', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../integrations/klikqris')>()),
   klikqrisConfigured: () => true,
   createInvoice: vi.fn(async (input: { orderId: string; amountIdr: number }) => {
     gateway.creates += 1
@@ -34,7 +34,7 @@ vi.mock('./klikqris', async (importOriginal) => ({
 beforeAll(async () => {
   delete process.env.DATABASE_URL
   process.env.APP_ORIGIN = 'https://uji.tugasduit.test'
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
 
@@ -45,8 +45,8 @@ afterEach(() => {
 })
 
 async function makeUser(): Promise<number> {
-  const { query } = await import('./db')
-  const { generateReferralCode } = await import('./referral')
+  const { query } = await import('../platform/db')
+  const { generateReferralCode } = await import('../economy/referral')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string }>(
     `insert into users(telegram_id,first_name,referral_code) values($1,'Uji Checkout',$2) returning id`,
@@ -56,7 +56,7 @@ async function makeUser(): Promise<number> {
 }
 
 const countInvoices = async (userId: number, state: string) => {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const rows = await query<{ jumlah: number }>(
     'select count(*)::int as jumlah from premium_payments where user_id=$1 and state=$2',
     [userId, state],
@@ -99,7 +99,7 @@ describe('PREM-DB-4 — satu tagihan menganggur per user', () => {
 
   it('menyelesaikan tagihan yang ternyata sudah dibayar, bukan membuangnya', async () => {
     const { startPremiumCheckout } = await import('./premium-payment')
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const userId = await makeUser()
 
     await startPremiumCheckout(userId, 1)
@@ -121,7 +121,7 @@ describe('PREM-DB-4 — satu tagihan menganggur per user', () => {
 
   it('menandai tagihan yang sudah kedaluwarsa lalu membuat yang baru', async () => {
     const { startPremiumCheckout } = await import('./premium-payment')
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const userId = await makeUser()
 
     const first = await startPremiumCheckout(userId, 1)

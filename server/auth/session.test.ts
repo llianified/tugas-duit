@@ -15,8 +15,8 @@ vi.mock('next/headers', () => ({
   }),
   headers: async () => new Headers(),
 }))
-vi.mock('./db', () => ({ query: mocks.query, isPreviewShell: () => false }))
-vi.mock('./env', () => ({ env: { adminTelegramIdOrNull: null } }))
+vi.mock('../platform/db', () => ({ query: mocks.query, isPreviewShell: () => false }))
+vi.mock('../platform/env', () => ({ env: { adminTelegramIdOrNull: null } }))
 
 import {
   BannedError,

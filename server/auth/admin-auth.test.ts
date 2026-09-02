@@ -6,14 +6,14 @@ const mocks = vi.hoisted(() => ({
   matchesSecret: vi.fn(),
 }))
 
-vi.mock('./db', () => ({ query: mocks.query }))
-vi.mock('./env', () => ({
+vi.mock('../platform/db', () => ({ query: mocks.query }))
+vi.mock('../platform/env', () => ({
   env: {
     adminPasswordOrNull: 'rahasia-admin-yang-panjang-sekali',
     adminTelegramIdOrNull: '123456',
   },
 }))
-vi.mock('./secret', () => ({ matchesSecret: mocks.matchesSecret }))
+vi.mock('../platform/secret', () => ({ matchesSecret: mocks.matchesSecret }))
 vi.mock('./session', () => ({ createSession: mocks.createSession }))
 
 import { loginAdminWithPassword } from './admin-auth'

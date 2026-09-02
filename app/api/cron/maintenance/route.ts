@@ -1,7 +1,7 @@
-import { env } from '@/server/env'
-import { apiError, handleRouteError } from '@/server/http'
-import { runMaintenance } from '@/server/maintenance'
-import { matchesSecret } from '@/server/secret'
+import { env } from '@/server/platform/env'
+import { apiError, handleRouteError } from '@/server/platform/http'
+import { runMaintenance } from '@/server/ops/maintenance'
+import { matchesSecret } from '@/server/platform/secret'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

@@ -8,9 +8,9 @@ import { ProgressBar } from '@/shared/components/progress-bar'
 import { TotalSummary } from '@/shared/components/total-summary'
 import { SegmentedTabs, type SegmentedTab } from '@/shared/components/segmented-tabs'
 import { VIEW_TITLE } from '@/navigation/app-view'
-import type { UserStats } from '@/domain/stats'
-import { STAR_MAX } from '@/domain/stars'
-import { creditsToRupiah } from '@/domain/economy'
+import type { UserStats } from '@/domain/progression/stats'
+import { STAR_MAX } from '@/domain/progression/stars'
+import { creditsToRupiah } from '@/domain/economy/economy'
 import {
   formatCredits,
   formatCreditsDecimal,

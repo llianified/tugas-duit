@@ -7,15 +7,15 @@ const mocks = vi.hoisted(() => ({
   loadEconomyConfig: vi.fn(),
 }))
 
-vi.mock('@/server/env', () => ({ env: { appOriginOrNull: null } }))
-vi.mock('@/server/session', () => ({
+vi.mock('@/server/platform/env', () => ({ env: { appOriginOrNull: null } }))
+vi.mock('@/server/auth/session', () => ({
   BannedError: class BannedError extends Error {},
   UnauthorizedError: class UnauthorizedError extends Error {},
 }))
-vi.mock('@/server/ratelimit', () => ({ checkRateLimit: mocks.checkRateLimit }))
-vi.mock('@/server/economy-config', () => ({ loadEconomyConfig: mocks.loadEconomyConfig }))
-vi.mock('@/server/notify', () => ({ notifyPremiumActivated: vi.fn() }))
-vi.mock('@/server/premium-payment', () => ({
+vi.mock('@/server/platform/ratelimit', () => ({ checkRateLimit: mocks.checkRateLimit }))
+vi.mock('@/server/economy/economy-config', () => ({ loadEconomyConfig: mocks.loadEconomyConfig }))
+vi.mock('@/server/messaging/notify', () => ({ notifyPremiumActivated: vi.fn() }))
+vi.mock('@/server/premium/premium-payment', () => ({
   settlePremiumPayment: mocks.settlePremiumPayment,
   webhookStatusIsPaid: mocks.webhookStatusIsPaid,
 }))

@@ -7,7 +7,7 @@ import {
   KeypadFrame,
   KeypadKey,
 } from '@/shared/components/keypad-frame'
-import { TEXT_CHARS } from '@/domain/challenge'
+import { TEXT_CHARS } from '@/domain/task/challenge'
 import { cn } from '@/shared/lib/utils'
 
 const QWERTY_ROWS = ['23456789', 'QWERTYUP', 'ASDFGHJKL', 'ZXCVBNM'] as const

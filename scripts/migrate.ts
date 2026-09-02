@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { createPool } from '../server/db.ts'
-import { env } from '../server/env.ts'
+import { createPool } from '../server/platform/db.ts'
+import { env } from '../server/platform/env.ts'
 
 const directory = path.join(process.cwd(), 'db/migrations')
 

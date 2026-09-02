@@ -1,6 +1,6 @@
 
-import { getMaxReward, type StarCount } from '@/domain/stars'
-import { mathCeiling, mathDigits, selectOptionCount, textLength } from '@/domain/economy-config'
+import { getMaxReward, type StarCount } from '@/domain/progression/stars'
+import { mathCeiling, mathDigits, selectOptionCount, textLength } from '@/domain/economy/economy-config'
 
 type CaptchaType = 'text' | 'math' | 'select'
 

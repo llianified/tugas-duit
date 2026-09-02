@@ -7,15 +7,15 @@ const mocks = vi.hoisted(() => ({
   readTelegramFile: vi.fn(),
 }))
 
-vi.mock('@/server/env', () => ({ env: { appOriginOrNull: 'https://app.example' } }))
-vi.mock('@/server/payout', () => ({ readPayoutProofFileId: mocks.readPayoutProofFileId }))
-vi.mock('@/server/ratelimit', () => ({ checkRateLimit: mocks.checkRateLimit }))
-vi.mock('@/server/session', () => ({
+vi.mock('@/server/platform/env', () => ({ env: { appOriginOrNull: 'https://app.example' } }))
+vi.mock('@/server/payout/payout', () => ({ readPayoutProofFileId: mocks.readPayoutProofFileId }))
+vi.mock('@/server/platform/ratelimit', () => ({ checkRateLimit: mocks.checkRateLimit }))
+vi.mock('@/server/auth/session', () => ({
   BannedError: class BannedError extends Error {},
   UnauthorizedError: class UnauthorizedError extends Error {},
   requireUser: mocks.requireUser,
 }))
-vi.mock('@/server/telegram', () => ({ readTelegramFile: mocks.readTelegramFile }))
+vi.mock('@/server/integrations/telegram', () => ({ readTelegramFile: mocks.readTelegramFile }))
 
 import { GET } from './route'
 

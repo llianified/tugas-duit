@@ -6,10 +6,10 @@ import {
   rewardPoolCapacity,
   type RewardPoolSnapshot,
   type RewardPoolState,
-} from '@/domain/reward-pool'
-import { isPremiumActive } from '@/domain/premium'
-import { getRank } from '@/domain/progression'
-import { query } from './db'
+} from '@/domain/economy/reward-pool'
+import { isPremiumActive } from '@/domain/economy/premium'
+import { getRank } from '@/domain/progression/progression'
+import { query } from '../platform/db'
 import { STREAK_EXPRESSION } from './streak-sql'
 
 export type RewardPoolView = RewardPoolState & { now: number }

@@ -1,4 +1,4 @@
-import { creditsToRupiah } from '@/domain/economy'
+import { creditsToRupiah } from '@/domain/economy/economy'
 import { formatCredits, formatRupiah } from '@/shared/lib/format'
 
 export interface ShareStats {

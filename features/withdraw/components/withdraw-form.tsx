@@ -14,7 +14,7 @@ import {
   validateWithdrawalDraft,
   type Withdrawal,
   type WithdrawalDraft,
-} from '@/domain/withdrawal'
+} from '@/domain/economy/withdrawal'
 import { useToast } from '@/shell/toast'
 
 export type WithdrawStep = 'amount' | 'account' | 'confirm'

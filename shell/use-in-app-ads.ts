@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect } from 'react'
-import { MONETAG_DEFAULT_ZONE_ID, monetagSdkName } from '@/domain/ads'
+import { MONETAG_DEFAULT_ZONE_ID, monetagSdkName } from '@/domain/ads/ads'
 import {
   DEFAULT_IN_APP_ADS_SETTINGS,
   inAppShowParams,
   type InAppAdsSettings,
-} from '@/domain/in-app-ads'
+} from '@/domain/ads/in-app-ads'
 import { readShow, showFailureReason, waitForShow } from '@/shell/monetag-sdk'
 
 /** Jeda sebelum mencoba lagi kalau fungsi global SDK belum tersedia. */

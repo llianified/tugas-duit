@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 import { redirect } from 'next/navigation'
-import { readAdminActivity, readAdminDashboard, type AdminActivityEntry } from '@/server/admin-stats'
-import { loadEconomyConfig } from '@/server/economy-config'
-import { getSessionUser } from '@/server/session'
-import { creditsToRupiah } from '@/domain/economy'
+import { readAdminActivity, readAdminDashboard, type AdminActivityEntry } from '@/server/admin/admin-stats'
+import { loadEconomyConfig } from '@/server/economy/economy-config'
+import { getSessionUser } from '@/server/auth/session'
+import { creditsToRupiah } from '@/domain/economy/economy'
 import { formatCompact, formatCredits, formatHistoryTime, formatRupiah } from '@/shared/lib/format'
 import { AutoRefresh } from '../auto-refresh'
 

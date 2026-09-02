@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy-config'
+import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy/economy-config'
 
 const membership = vi.hoisted(() => ({ value: null as boolean | null }))
 
@@ -10,7 +10,7 @@ vi.mock('./telegram', async (importOriginal) => ({
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
 
@@ -20,8 +20,8 @@ afterEach(() => {
 })
 
 async function makeUser(): Promise<{ id: number; telegramId: string }> {
-  const { query } = await import('./db')
-  const { generateReferralCode } = await import('./referral')
+  const { query } = await import('../platform/db')
+  const { generateReferralCode } = await import('../economy/referral')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const telegramId = String(900_000_000_000_000 + suffix)
   const rows = await query<{ id: string }>(
@@ -33,7 +33,7 @@ async function makeUser(): Promise<{ id: number; telegramId: string }> {
 }
 
 const readBalance = async (userId: number) => {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const rows = await query<{ balance_credits: string }>(
     'select balance_credits from users where id=$1',
     [userId],
@@ -42,7 +42,7 @@ const readBalance = async (userId: number) => {
 }
 
 const countLedger = async (userId: number) => {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const rows = await query<{ jumlah: number }>(
     "select count(*)::int as jumlah from credit_ledger where user_id=$1 and idempotency_key like 'channel_bonus:%'",
     [userId],
@@ -110,7 +110,7 @@ describe('CHAN-1 — bonus hanya untuk anggota channel yang terbukti', () => {
 })
 
 async function gateUser(user: { id: number; telegramId: string }) {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const rows = await query<{ channel_member: boolean | null; channel_checked_at: Date | null }>(
     'select channel_member, channel_checked_at from users where id=$1',
     [user.id],

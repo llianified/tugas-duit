@@ -1,8 +1,8 @@
-import { isPreviewDb } from '@/server/db'
-import { loadEconomyConfig } from '@/server/economy-config'
-import { assertSameOrigin, clientIp, rateLimited } from '@/server/http'
-import { checkRateLimit } from '@/server/ratelimit'
-import { seedPreview } from '@/server/seed-preview'
+import { isPreviewDb } from '@/server/platform/db'
+import { loadEconomyConfig } from '@/server/economy/economy-config'
+import { assertSameOrigin, clientIp, rateLimited } from '@/server/platform/http'
+import { checkRateLimit } from '@/server/platform/ratelimit'
+import { seedPreview } from '@/server/platform/seed-preview'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

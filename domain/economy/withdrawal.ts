@@ -1,4 +1,4 @@
-import { creditsToRupiah, maxPayoutCredits, withdrawalMinimumCredits } from '@/domain/economy'
+import { creditsToRupiah, maxPayoutCredits, withdrawalMinimumCredits } from '@/domain/economy/economy'
 
 function formatCreditsForMessage(value: number): string {
   return value.toLocaleString('id-ID')

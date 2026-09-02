@@ -1,6 +1,6 @@
 'use client'
 
-import type { MissionProgress } from '@/domain/missions'
+import type { MissionProgress } from '@/domain/progression/missions'
 import { useMissions } from '@/features/missions/use-missions'
 import { MissionListSkeleton } from '@/shared/components/app-skeleton'
 import { EmptyState } from '@/shared/components/empty-state'

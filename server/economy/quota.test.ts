@@ -9,11 +9,11 @@ const mocks = vi.hoisted(() => ({
   spendRewardPool: vi.fn(),
 }))
 
-vi.mock('@/domain/economy', () => ({
+vi.mock('@/domain/economy/economy', () => ({
   maxTasksPerDay: mocks.maxTasksPerDay,
   dailyCommissionCreditCap: mocks.dailyCommissionCreditCap,
 }))
-vi.mock('./premium', () => ({ isPremium: mocks.isPremium }))
+vi.mock('../premium/premium', () => ({ isPremium: mocks.isPremium }))
 vi.mock('./reward-pool', () => ({
   readRewardPool: mocks.readRewardPool,
   spendRewardPool: mocks.spendRewardPool,

@@ -6,7 +6,7 @@ const BOT_TOKEN = 'test-bot-token'
 beforeAll(async () => {
   process.env.TELEGRAM_BOT_TOKEN = BOT_TOKEN
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
 
@@ -75,7 +75,7 @@ describe('claimInitData', () => {
 
   it('menyimpan kedaluwarsa pada akhir jendela auth_date, bukan lebih lama', async () => {
     const { claimInitData } = await import('./telegram')
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const hash = freshHash()
     const authDate = Math.floor(Date.now() / 1000)
     await claimInitData(hash, authDate)

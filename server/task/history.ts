@@ -1,7 +1,7 @@
 
-import { CHALLENGE_TITLE, type Difficulty, type HistoryEntry } from '@/domain/challenge'
-import type { StarCount } from '@/domain/stars'
-import { query } from './db'
+import { CHALLENGE_TITLE, type Difficulty, type HistoryEntry } from '@/domain/task/challenge'
+import type { StarCount } from '@/domain/progression/stars'
+import { query } from '../platform/db'
 
 const PAGE_SIZE = 30
 

@@ -1,4 +1,4 @@
-import { economyConfig } from './economy-config'
+import { economyConfig } from '../economy/economy-config'
 
 export function adsMaxViewsPerDay(): number {
   return economyConfig().adsMaxViewsPerDay

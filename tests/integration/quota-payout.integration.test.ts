@@ -1,16 +1,16 @@
 import { beforeAll, describe, expect, it } from 'vitest'
-import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy-config'
+import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy/economy-config'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../../server/platform/db')
   await query('select 1')
   setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
 }, 120_000)
 
 async function makeUser(balance = 0): Promise<number> {
-  const { query } = await import('./db')
-  const { generateReferralCode } = await import('./referral')
+  const { query } = await import('../../server/platform/db')
+  const { generateReferralCode } = await import('../../server/economy/referral')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string }>(
     `insert into users(telegram_id,first_name,referral_code,balance_credits)
@@ -21,7 +21,7 @@ async function makeUser(balance = 0): Promise<number> {
 }
 
 const tasksToday = async (userId: number) => {
-  const { query } = await import('./db')
+  const { query } = await import('../../server/platform/db')
   const rows = await query<{ tasks_completed: number }>(
     `select tasks_completed from daily_quotas
       where user_id=$1 and quota_date=(now() at time zone 'Asia/Jakarta')::date`,
@@ -32,8 +32,8 @@ const tasksToday = async (userId: number) => {
 
 describe('AUDIT-1 — plafon harian tidak menghitung task yang tidak dibayar', () => {
   it('mengembalikan penghitung saat kolam kosong', async () => {
-    const { transaction, query } = await import('./db')
-    const { consumeQuota } = await import('./quota')
+    const { transaction, query } = await import('../../server/platform/db')
+    const { consumeQuota } = await import('../../server/economy/quota')
     const userId = await makeUser()
     await query('update users set reward_pool=0, reward_pool_updated_at=now() where id=$1', [
       userId,
@@ -47,8 +47,8 @@ describe('AUDIT-1 — plafon harian tidak menghitung task yang tidak dibayar', (
   })
 
   it('tetap menghitung task yang benar-benar dibayar', async () => {
-    const { transaction, query } = await import('./db')
-    const { consumeQuota } = await import('./quota')
+    const { transaction, query } = await import('../../server/platform/db')
+    const { consumeQuota } = await import('../../server/economy/quota')
     const userId = await makeUser()
     await query('update users set reward_pool=10, reward_pool_updated_at=now() where id=$1', [
       userId,
@@ -64,7 +64,7 @@ describe('AUDIT-1 — plafon harian tidak menghitung task yang tidak dibayar', (
 
 describe('AUDIT-2 — syarat referral penarikan datang dari panel admin', () => {
   it('nol membuka penarikan untuk user tanpa referral sama sekali', async () => {
-    const { requiredActiveReferrals } = await import('./payout-rules')
+    const { requiredActiveReferrals } = await import('../../server/payout/payout-rules')
 
     setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, withdrawalMinActiveReferrals: 0 })
     expect(requiredActiveReferrals()).toBe(0)
@@ -75,9 +75,9 @@ describe('AUDIT-2 — syarat referral penarikan datang dari panel admin', () => 
   })
 
   it('user tanpa referral bisa menarik setelah cukup hari aktif', async () => {
-    const { query } = await import('./db')
-    const { createPayout } = await import('./payout')
-    const { requiredActiveDays } = await import('./payout-rules')
+    const { query } = await import('../../server/platform/db')
+    const { createPayout } = await import('../../server/payout/payout')
+    const { requiredActiveDays } = await import('../../server/payout/payout-rules')
     setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, withdrawalMinActiveReferrals: 0 })
 
     const userId = await makeUser(500)

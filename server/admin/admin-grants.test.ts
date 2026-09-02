@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy-config'
+import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy/economy-config'
 
 const jar = vi.hoisted(() => new Map<string, string>())
 
@@ -17,7 +17,7 @@ vi.mock('next/headers', () => ({
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   await query('select 1')
   setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
 }, 120_000)
@@ -28,8 +28,8 @@ beforeEach(() => {
 })
 
 async function makeUser(admin = false): Promise<{ id: number; publicId: string }> {
-  const { query } = await import('./db')
-  const { generateReferralCode } = await import('./referral')
+  const { query } = await import('../platform/db')
+  const { generateReferralCode } = await import('../economy/referral')
   const suffix = Math.floor(Math.random() * 1_000_000_000)
   const rows = await query<{ id: string; public_id: string }>(
     `insert into users(telegram_id,first_name,referral_code,is_admin,energy,energy_updated_at)
@@ -40,7 +40,7 @@ async function makeUser(admin = false): Promise<{ id: number; publicId: string }
 }
 
 async function signInAsAdmin(): Promise<number> {
-  const { createSession } = await import('./session')
+  const { createSession } = await import('../auth/session')
   const admin = await makeUser(true)
   jar.clear()
   await createSession(admin.id, 'uji')
@@ -48,7 +48,7 @@ async function signInAsAdmin(): Promise<number> {
 }
 
 const premiumUntil = async (userId: number) => {
-  const { query } = await import('./db')
+  const { query } = await import('../platform/db')
   const rows = await query<{ premium_until: Date | null }>(
     'select premium_until from users where id=$1',
     [userId],
@@ -66,7 +66,7 @@ describe('otorisasi', () => {
   })
 
   it('menolak user biasa yang sudah punya sesi', async () => {
-    const { createSession } = await import('./session')
+    const { createSession } = await import('../auth/session')
     const { grantUserPremium } = await import('./admin-grants')
     const biasa = await makeUser(false)
     jar.clear()
@@ -100,7 +100,7 @@ describe('GRANT-1 — premium dari panel menumpuk, tidak menimpa', () => {
 
   /** Inti keputusannya: pemberian admin tidak boleh memotong hari yang sudah DIBAYAR user. Bentuk "menimpa tanggal berakhir" akan memangkas langganan 90 hari jadi 7 hanya karena admin memberi bonus seminggu. */
   it('menumpuk di atas langganan berbayar yang masih berjalan', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const adminId = await signInAsAdmin()
     const { grantUserPremium } = await import('./admin-grants')
     const target = await makeUser()
@@ -125,7 +125,7 @@ describe('GRANT-1 — premium dari panel menumpuk, tidak menimpa', () => {
   })
 
   it('mencabut premium dan menyimpan tanggal lamanya di jejak audit', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const adminId = await signInAsAdmin()
     const { grantUserPremium, revokeUserPremium, readAdminActions } = await import(
       './admin-grants'
@@ -184,7 +184,7 @@ describe('GRANT-2 — alasan wajib, jumlah dijepit', () => {
   it('menjepit energi di kapasitas, bukan menembusnya', async () => {
     const adminId = await signInAsAdmin()
     const { grantUserEnergy } = await import('./admin-grants')
-    const { maxEnergy } = await import('@/domain/energy')
+    const { maxEnergy } = await import('@/domain/economy/energy')
     const target = await makeUser()
 
     const result = await grantUserEnergy({
@@ -201,7 +201,7 @@ describe('GRANT-2 — alasan wajib, jumlah dijepit', () => {
   it('menjepit stok reward di kapasitas kolam user', async () => {
     const adminId = await signInAsAdmin()
     const { refillUserRewardPool } = await import('./admin-grants')
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const target = await makeUser()
 
     await query('update users set reward_pool=0, reward_pool_updated_at=now() where id=$1', [
@@ -221,7 +221,7 @@ describe('GRANT-2 — alasan wajib, jumlah dijepit', () => {
 
 describe('GRANT-3 — penanda notifikasi dan gerbang channel', () => {
   it('membuka bisu yang dipasang /stop', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const adminId = await signInAsAdmin()
     const { setUserNotificationsMuted } = await import('./admin-grants')
     const target = await makeUser()
@@ -239,7 +239,7 @@ describe('GRANT-3 — penanda notifikasi dan gerbang channel', () => {
   })
 
   it('menghapus hasil pemeriksaan channel yang tersimpan', async () => {
-    const { query } = await import('./db')
+    const { query } = await import('../platform/db')
     const adminId = await signInAsAdmin()
     const { resetUserChannelGate } = await import('./admin-grants')
     const target = await makeUser()

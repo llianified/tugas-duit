@@ -10,13 +10,13 @@ import {
   type EconomyConfigKey,
   type EconomyGroup,
   type EconomyValidationErrors,
-} from '@/domain/economy-config'
+} from '@/domain/economy/economy-config'
 import {
   ECONOMY_PRESETS,
   parseEconomyPatch,
   type EconomyPatch,
-} from '@/domain/economy-presets'
-import type { EconomyAuditEntry, EconomyConfigSnapshot } from '@/server/economy-config'
+} from '@/domain/economy/economy-presets'
+import type { EconomyAuditEntry, EconomyConfigSnapshot } from '@/server/economy/economy-config'
 
 const GROUP_LABEL: Record<EconomyGroup, string> = {
   earnings: 'Plafon',

@@ -1,8 +1,8 @@
-import { loadEconomyConfig } from '@/server/economy-config'
-import { issueChallenge } from '@/server/challenge'
-import { assertNotCrossSite, handleRouteError, rateLimited } from '@/server/http'
-import { checkRateLimit } from '@/server/ratelimit'
-import { requireUser } from '@/server/session'
+import { loadEconomyConfig } from '@/server/economy/economy-config'
+import { issueChallenge } from '@/server/task/challenge'
+import { assertNotCrossSite, handleRouteError, rateLimited } from '@/server/platform/http'
+import { checkRateLimit } from '@/server/platform/ratelimit'
+import { requireUser } from '@/server/auth/session'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

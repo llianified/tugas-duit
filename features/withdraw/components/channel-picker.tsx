@@ -2,7 +2,7 @@
 
 import { Select } from '@base-ui/react/select'
 import { GlyphCheck, GlyphChevron, GlyphWallet } from '@/shared/components/glyph'
-import { PAYOUT_CHANNELS, getPayoutChannel, type PayoutChannel } from '@/domain/withdrawal'
+import { PAYOUT_CHANNELS, getPayoutChannel, type PayoutChannel } from '@/domain/economy/withdrawal'
 import { hapticSelect } from '@/shared/lib/haptic'
 import { cn } from '@/shared/lib/utils'
 

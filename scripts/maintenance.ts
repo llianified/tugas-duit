@@ -1,5 +1,5 @@
-import { pool } from '../server/db.ts'
-import { runMaintenance } from '../server/maintenance.ts'
+import { pool } from '../server/platform/db.ts'
+import { runMaintenance } from '../server/ops/maintenance.ts'
 
 main()
 

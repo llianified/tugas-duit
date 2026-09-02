@@ -1,15 +1,15 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import type { PoolClient } from 'pg'
-import { premiumPriceIdr, type PremiumMonths } from '@/domain/premium'
-import { query, transaction } from './db'
-import { env } from './env'
+import { premiumPriceIdr, type PremiumMonths } from '@/domain/economy/premium'
+import { query, transaction } from '../platform/db'
+import { env } from '../platform/env'
 import {
   createInvoice,
   klikqrisConfigured,
   normalizeStatus,
   readInvoiceStatus,
   type InvoiceStatus,
-} from './klikqris'
+} from '../integrations/klikqris'
 import { grantPremium } from './premium'
 
 export class PremiumPaymentError extends Error {

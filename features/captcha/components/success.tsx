@@ -5,9 +5,9 @@ import { ActionButton } from '@/shared/components/action-button'
 import { GlyphChevron } from '@/shared/components/glyph'
 import { ResultPanel } from '@/shared/components/result-panel'
 import { StarRating } from '@/shared/components/star-rating'
-import type { TaskOutcome } from '@/domain/challenge'
+import type { TaskOutcome } from '@/domain/task/challenge'
 import { useConfettiBurst } from '@/shared/lib/confetti'
-import { creditsToRupiah } from '@/domain/economy'
+import { creditsToRupiah } from '@/domain/economy/economy'
 import {
   formatCredits,
   formatCreditsPrecise,

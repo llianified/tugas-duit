@@ -8,7 +8,7 @@ import {
   secondsUntil,
   type EnergyFill,
   type EnergyState,
-} from '@/domain/energy'
+} from '@/domain/economy/energy'
 import type { SessionEnergy } from '@/shell/session-api'
 
 const FULL: EnergyFill = { secondsToFull: null, fraction: 1 }

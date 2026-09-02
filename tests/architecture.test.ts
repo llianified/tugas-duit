@@ -2,7 +2,9 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const ROOT = import.meta.dirname
+// Berkas ini ada di `tests/`, jadi root repo berada satu tingkat di atasnya.
+// Semua path layer di bawah di-resolve terhadap root, bukan terhadap `tests/`.
+const ROOT = path.resolve(import.meta.dirname, '..')
 const SOURCE_ROOTS = ['app', 'domain', 'features', 'navigation', 'server', 'shared', 'shell'] as const
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx'])
 const IMPORT_PATTERN = /(?:import|export)\s+(?:type\s+)?(?:[^'";]+?\s+from\s+)?['"]([^'"]+)['"]|import\(\s*['"]([^'"]+)['"]\s*\)/g

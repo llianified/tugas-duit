@@ -1,7 +1,7 @@
-import { getHistoryPage, parseHistoryCursor } from '@/server/history'
-import { handleRouteError, rateLimited } from '@/server/http'
-import { checkRateLimit } from '@/server/ratelimit'
-import { requireUser } from '@/server/session'
+import { getHistoryPage, parseHistoryCursor } from '@/server/task/history'
+import { handleRouteError, rateLimited } from '@/server/platform/http'
+import { checkRateLimit } from '@/server/platform/ratelimit'
+import { requireUser } from '@/server/auth/session'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

@@ -1,6 +1,6 @@
 'use client'
 
-import { STAR_MAX } from '@/domain/stars'
+import { STAR_MAX } from '@/domain/progression/stars'
 import { SHAPE_PATH } from '@/shared/lib/shape-path'
 import { cn } from '@/shared/lib/utils'
 

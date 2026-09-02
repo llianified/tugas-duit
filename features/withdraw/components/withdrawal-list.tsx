@@ -15,7 +15,7 @@ import {
   maskAccountNumber,
   PAYOUT_ETA_TEXT,
   type Withdrawal,
-} from '@/domain/withdrawal'
+} from '@/domain/economy/withdrawal'
 
 export function WithdrawalList({ withdrawals }: { withdrawals: Withdrawal[] }) {
   const [proofId, setProofId] = useState<string | null>(null)

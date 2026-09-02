@@ -1,4 +1,4 @@
-import type { ShapeKey } from '@/domain/challenge'
+import type { ShapeKey } from '@/domain/task/challenge'
 
 export const SHAPE_PATH: Record<ShapeKey, string> = {
   circle: 'M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17z',

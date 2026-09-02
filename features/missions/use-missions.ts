@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import type { MissionProgress } from '@/domain/missions'
+import type { MissionProgress } from '@/domain/progression/missions'
 import { fetchJson, sendJson, userFacingMessage } from '@/shell/api-client'
 import { hapticTap } from '@/shared/lib/haptic'
 import { useToast } from '@/shell/toast'

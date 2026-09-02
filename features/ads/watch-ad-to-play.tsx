@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { adsMaxViewsPerDay } from '@/domain/ads'
+import { adsMaxViewsPerDay } from '@/domain/ads/ads'
 import { AdConfirmDialog } from '@/features/ads/ad-confirm-dialog'
 import { GlyphPlay, GlyphSpinner } from '@/shared/components/glyph'
 import { MetaBadge } from '@/shared/components/meta-badge'

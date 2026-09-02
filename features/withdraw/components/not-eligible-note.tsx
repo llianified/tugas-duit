@@ -7,7 +7,7 @@ import {
   creditsToRupiah,
   firstWithdrawalEstimateDays,
   withdrawalMinimumCredits,
-} from '@/domain/economy'
+} from '@/domain/economy/economy'
 import { formatCredits, formatHistoryTime, formatRupiah } from '@/shared/lib/format'
 
 export function NotEligibleNote({

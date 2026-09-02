@@ -7,17 +7,17 @@ import {
   resetUserChannelGate,
   revokeUserPremium,
   setUserNotificationsMuted,
-} from '@/server/admin-grants'
+} from '@/server/admin/admin-grants'
 import {
   AdminUserError,
   BAN_REASON_MAX,
   setUserAdminFlag,
   setUserSuspension,
   updateAdminUserProfile,
-} from '@/server/admin-users'
-import { apiError, assertSameOrigin, handleRouteError, rateLimited } from '@/server/http'
-import { checkRateLimit } from '@/server/ratelimit'
-import { requireUser } from '@/server/session'
+} from '@/server/admin/admin-users'
+import { apiError, assertSameOrigin, handleRouteError, rateLimited } from '@/server/platform/http'
+import { checkRateLimit } from '@/server/platform/ratelimit'
+import { requireUser } from '@/server/auth/session'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

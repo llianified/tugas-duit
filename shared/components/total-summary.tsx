@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { CreditAmount } from '@/shared/components/credit-amount'
 import { InfoHint } from '@/shared/components/info-hint'
 import { SectionLabel } from '@/shared/components/section-label'
-import { creditsToRupiah } from '@/domain/economy'
+import { creditsToRupiah } from '@/domain/economy/economy'
 import { formatCreditsPrecise, formatRupiah } from '@/shared/lib/format'
 
 export function TotalSummary({

@@ -528,7 +528,8 @@
     --island-duration: 500ms;
     --island-settle: calc(var(--island-duration) * 0.4);
     --island-open-w: calc(min(100vw, 28rem) - var(--content-px) * 2 - 2px);
-    --island-open-top: calc(var(--brand-band-top) + var(--brand-band-h) + 0.5rem);
+    /* Jaraknya 0.75rem, bukan 0.5rem, karena segitu persis panjang ekor `.brand-band::before`: pita itu z-30 dengan `backdrop-filter`, panel ini z-29, jadi 0.25rem tepi atas panel dulu duduk di bawah selubung blur yang belum habis. Panel sekarang mulai tepat di titik mask-nya nol. */
+    --island-open-top: calc(var(--brand-band-top) + var(--brand-band-h) + 0.75rem);
     --island-open-left: calc(50% - (var(--island-open-w) + 2px) / 2);
     --island-closed-top: var(--island-pill-top, var(--island-open-top));
     --island-closed-left: var(--island-pill-left, var(--island-open-left));

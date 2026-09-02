@@ -215,7 +215,12 @@ function TaskStats({
             ? 'penuh'
             : `penuh ${formatLongCountdown(energyFill.secondsToFull)}`
         }
-        hint={`Energi tersisa ${formatCredits(energy)} dari ${formatCredits(energyMax)}. Terisi sendiri tanpa perlu membuka aplikasi.`}
+        /* Waktu penuhnya ikut disebut di sini karena catatan di bawah tile dipotong kalau kepanjangan — gelembung ini yang menampungnya utuh. */
+        hint={`Energi tersisa ${formatCredits(energy)} dari ${formatCredits(energyMax)}. Terisi sendiri tanpa perlu membuka aplikasi${
+          energyFill.secondsToFull === null
+            ? ', dan sekarang sudah penuh.'
+            : `, penuh dalam ${formatLongCountdown(energyFill.secondsToFull)}.`
+        }`}
       />
     </dl>
   )
@@ -244,7 +249,8 @@ function Stat({
       <dd className="mt-1 text-lg font-bold tracking-tight tabular-nums text-foreground">
         {value}
       </dd>
-      <dd className="text-[11px] font-normal tabular-nums text-muted-foreground/70">{note}</dd>
+      {/* Dua hal sekaligus di baris 11px ini. Warnanya tidak lagi diredam `/70`: pada bidang hero `#08080c` itu jatuh persis di 4,5:1, lolos AA tanpa sisa sama sekali — teks sekecil ini tidak punya alasan berdiri di garis. Dan `truncate`: kolomnya cuma ~87px, jadi kalau laju isi energi diubah di panel admin sampai catatannya berbunyi "penuh 2j 30m", teksnya akan membungkus dan MENINGGIKAN ketiga tile sekaligus karena barisnya satu grid. Keterangan panjangnya sudah ada di gelembung `InfoHint` di atasnya. */}
+      <dd className="truncate text-[11px] font-normal tabular-nums text-muted-foreground">{note}</dd>
     </div>
   )
 }

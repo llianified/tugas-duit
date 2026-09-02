@@ -298,7 +298,10 @@ export function EconomyForm({
                   aria-controls={`economy-${field.key}-help`}
                   aria-label={`Penjelasan ${field.label}`}
                   onClick={() => setHelpFor(open ? null : field.key)}
-                  className="focus-ring transition-ui size-8 shrink-0 rounded-full text-sm font-semibold text-muted-foreground hover:text-foreground"
+                  /* Bidangnya 32px, sementara jari butuh ~44px. `after:-inset-1.5` melebarkan
+                     area sentuh 6px ke segala arah tanpa mengubah bentuk tombolnya — pola yang
+                     sama dipakai `info-hint` dan sheet-sheet lain di app ini. */
+                  className='focus-ring transition-ui relative size-8 shrink-0 rounded-full text-sm font-semibold text-muted-foreground after:absolute after:-inset-1.5 after:content-[""] hover:text-foreground'
                 >
                   ?
                 </button>

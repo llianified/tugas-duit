@@ -43,8 +43,6 @@ export function BalanceSummary({
           <div className="flex">
             <CreditAmount
               value={formatCompact(displayedBalance, { from: HERO_COMPACT_FROM })}
-              /* Yang diukur nilai akhirnya, bukan angka yang sedang berjalan naik — kalau tidak, ukuran hurufnya turun satu tingkat di tengah animasi begitu digitnya bertambah. */
-              measure={formatCompact(balance, { from: HERO_COMPACT_FROM })}
               size="display"
               tone="neutral"
               hint={
@@ -69,7 +67,7 @@ export function BalanceSummary({
           </p>
         </div>
 
-        <ActionButton size="lg" className="w-auto shrink-0 px-5" onClick={onWithdraw}>
+        <ActionButton className="w-auto shrink-0 px-5" onClick={onWithdraw}>
           Tarik dana
         </ActionButton>
       </div>

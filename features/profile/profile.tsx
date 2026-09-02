@@ -69,7 +69,6 @@ export function ProfileView({
   onOpenPhotoNote: () => void
 }) {
   const [range, setRange] = useState<RangeKey>('30')
-  const [openBadge, setOpenBadge] = useState<PrestigeKey | null>(null)
   const isPremium = Boolean(premium?.active)
   const handle = user.username ? `@${user.username}` : user.id
   const rank = stats.progression.rank
@@ -80,8 +79,6 @@ export function ProfileView({
     founder,
     premium: isPremium,
   })
-
-  const openDetail = badges.find((badge) => badge.key === openBadge)?.detail ?? null
 
   const series = useMemo(() => {
     const days = RANGES.find((item) => item.key === range)?.days ?? 0
@@ -131,44 +128,20 @@ export function ProfileView({
           </p>
           <p className="truncate text-[15px] leading-snug text-muted-foreground">{handle}</p>
 
-          {/* Keterangan lencana dulu ditaruh di `title=`: di WebView Telegram tidak ada
-              hover, jadi ia tidak pernah terbaca. Sekarang chip-nya sendiri yang jadi
-              pemicu — satu ketukan membuka keterangannya sebaris di bawah, dan bidang
-              sentuhnya diperlebar `after:-inset-1.5` seperti pemicu kecil lain di app ini. */}
           {badges.length > 0 ? (
-            <div className="mt-1.5">
-              <div className="flex flex-wrap gap-1">
-                {badges.map((badge) => {
-                  const open = openBadge === badge.key
-                  return (
-                    <button
-                      key={badge.key}
-                      type="button"
-                      aria-expanded={open}
-                      aria-controls={open ? 'prestige-detail' : undefined}
-                      onClick={() => setOpenBadge(open ? null : badge.key)}
-                      className={cn(
-                        'focus-ring transition-ui relative rounded-md px-1.5 py-0.5 text-[11px] font-bold',
-                        'after:absolute after:-inset-1.5 after:content-[""]',
-                        CHIP_TONE[badge.key],
-                        open && 'ring-1 ring-current',
-                      )}
-                    >
-                      {badge.label}
-                    </button>
-                  )
-                })}
-              </div>
-
-              {openDetail ? (
-                <p
-                  id="prestige-detail"
-                  role="note"
-                  className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground text-pretty"
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {badges.map((badge) => (
+                <span
+                  key={badge.key}
+                  title={badge.detail}
+                  className={cn(
+                    'rounded-md px-1.5 py-0.5 text-[11px] font-bold',
+                    CHIP_TONE[badge.key],
+                  )}
                 >
-                  {openDetail}
-                </p>
-              ) : null}
+                  {badge.label}
+                </span>
+              ))}
             </div>
           ) : null}
         </div>

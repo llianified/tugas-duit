@@ -7,7 +7,6 @@ export function useIslandGeometry() {
   const contentRef = useRef<HTMLDivElement>(null)
   const [contentHeight, setContentHeight] = useState<number | null>(null)
   const [pillBox, setPillBox] = useState<{ top: number; left: number; width: number } | null>(null)
-  const [rowCenter, setRowCenter] = useState<number | null>(null)
   const islandRef = useCssVars<HTMLDivElement>({
     ...(contentHeight === null ? {} : { '--panel-h': `${contentHeight}px` }),
     ...(pillBox
@@ -17,7 +16,6 @@ export function useIslandGeometry() {
           '--island-pill-w': `${pillBox.width}px`,
         }
       : {}),
-    ...(rowCenter === null ? {} : { '--island-row-center': `${rowCenter}px` }),
   })
 
   useEffect(() => {
@@ -45,14 +43,6 @@ export function useIslandGeometry() {
           ? previous
           : { top: rect.top, left: rect.left, width: rect.width },
       )
-      // Titik tengah barisnya, bukan titik tengah viewport: frame app dibatasi `max-w-md` dan
-      // dipusatkan, jadi di layar lebar 50vw bukan tengah pita. Pill yang "naik ke tengah" saat
-      // island lain terbuka butuh angka ini supaya berhenti tepat di tengah pita.
-      const rowRect = pillBoxSource!.parentElement?.getBoundingClientRect()
-      if (rowRect) {
-        const center = rowRect.left + rowRect.width / 2
-        setRowCenter((previous) => (previous === center ? previous : center))
-      }
     }
 
     measurePill()

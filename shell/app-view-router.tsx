@@ -171,6 +171,7 @@ export function AppViewRouter({
       referralCredits={session.referralCredits}
       withdrawnCredits={session.withdrawnCredits}
       history={session.history}
+      completedCount={session.completedCount}
       task={session.task}
       energy={session.energy}
       energyMax={session.energyMax}

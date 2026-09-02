@@ -1,70 +1,60 @@
 'use client'
 
-import type { CSSProperties, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { hapticSelect } from '@/shared/lib/haptic'
-import { GlyphBolt, GlyphHome, GlyphTrophy, GlyphUsers } from '@/shared/components/glyph'
-import { ProfileAvatar } from '@/shared/components/profile-avatar'
+import {
+  GlyphCheck,
+  GlyphHome,
+  GlyphTrophy,
+  GlyphUser,
+  GlyphUsers,
+} from '@/shared/components/glyph'
 import { cn } from '@/shared/lib/utils'
 import { ROOT_VIEW, type AppView } from '@/navigation/app-view'
 
 type NavSlot = {
   view: AppView
   label: string
-  /** `null` = slot foto: Profil memakai avatar user, bukan glyph. */
-  icon: ReactNode | null
+  icon: ReactNode
 }
 
 const NAV_SLOTS: readonly NavSlot[] = [
-  { view: ROOT_VIEW, label: 'Beranda', icon: <GlyphHome className="nav-pill-icon" /> },
-  { view: 'leaderboard', label: 'Peringkat', icon: <GlyphTrophy className="nav-pill-icon" /> },
-  { view: 'missions', label: 'Misi', icon: <GlyphBolt className="nav-pill-icon" /> },
-  { view: 'referral', label: 'Teman', icon: <GlyphUsers className="nav-pill-icon" /> },
-  { view: 'profile', label: 'Profil', icon: null },
+  { view: ROOT_VIEW, label: 'Beranda', icon: <GlyphHome className="glyph-md" /> },
+  { view: 'leaderboard', label: 'Peringkat', icon: <GlyphTrophy className="glyph-md" /> },
+  { view: 'missions', label: 'Misi', icon: <GlyphCheck className="glyph-md" /> },
+  { view: 'referral', label: 'Teman', icon: <GlyphUsers className="glyph-md" /> },
+  { view: 'profile', label: 'Profil', icon: <GlyphUser className="glyph-md" /> },
 ]
 
-/** Nav ikon-only: labelnya pindah ke `sr-only` supaya tombol tetap punya nama yang bisa dibaca pembaca layar. Tanpa itu lima tombol ini cuma terbaca "tombol", dan slot Profil — yang isinya `<img alt="">` — tidak terbaca sama sekali. */
 export function NavPill({
   activeView,
-  photoUrl,
   onSelect,
 }: {
   activeView: AppView
-  photoUrl: string | null
   onSelect: (view: AppView) => void
 }) {
-  const activeIndex = NAV_SLOTS.findIndex((slot) => slot.view === activeView)
-
   return (
     <nav aria-label="Navigasi utama" className="nav-pill">
-      <div
-        className="nav-pill-row"
-        data-has-active={activeIndex >= 0}
-        style={{ '--nav-active-index': activeIndex } as CSSProperties}
-      >
-        <span aria-hidden className="nav-pill-indicator" />
+      <div className="nav-pill-row">
         {NAV_SLOTS.map((slot) => (
-          <NavPillItem
-            key={slot.view}
-            slot={slot}
-            activeView={activeView}
-            photoUrl={photoUrl}
-            onSelect={onSelect}
-          />
+          <NavPillItem key={slot.view} slot={slot} activeView={activeView} onSelect={onSelect} />
         ))}
       </div>
     </nav>
   )
 }
 
+/** Sejajar urutan NAV_SLOTS: Beranda, Peringkat, Misi, Teman, Profil. */
+const NAV_LABEL_W = ['w-11', 'w-12', 'w-7', 'w-9', 'w-9'] as const
+
 export function NavPillSkeleton() {
   return (
     <div aria-hidden className="nav-pill">
       <div className="nav-pill-row">
-        {NAV_SLOTS.map((slot) => (
+        {NAV_SLOTS.map((slot, index) => (
           <div className="nav-pill-item" key={slot.view}>
-            <div className="nav-pill-slot">
-              <div className="nav-pill-icon animate-pulse rounded-full bg-muted" />
-            </div>
+            <div className="glyph-md animate-pulse rounded-md bg-muted" />
+            <div className={cn('h-2.5 animate-pulse rounded-sm bg-muted', NAV_LABEL_W[index])} />
           </div>
         ))}
       </div>
@@ -75,12 +65,10 @@ export function NavPillSkeleton() {
 function NavPillItem({
   slot,
   activeView,
-  photoUrl,
   onSelect,
 }: {
   slot: NavSlot
   activeView: AppView
-  photoUrl: string | null
   onSelect: (view: AppView) => void
 }) {
   const active = slot.view === activeView
@@ -97,16 +85,8 @@ function NavPillItem({
       onClick={handleClick}
       className={cn('focus-ring transition-ui press-scale nav-pill-item')}
     >
-      <span className="nav-pill-slot transition-ui">
-        {slot.icon ?? (
-          <ProfileAvatar
-            photoUrl={photoUrl}
-            className="nav-pill-avatar transition-ui"
-            glyphClassName="size-4"
-          />
-        )}
-      </span>
-      <span className="sr-only">{slot.label}</span>
+      {slot.icon}
+      <span className="nav-pill-label">{slot.label}</span>
     </button>
   )
 }

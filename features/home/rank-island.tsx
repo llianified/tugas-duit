@@ -18,7 +18,6 @@ export function RankIsland({
   rewardPoolMax,
   isOpen,
   slideOutTo,
-  promoted = false,
   onToggle,
   onClose,
 }: {
@@ -32,8 +31,6 @@ export function RankIsland({
   rewardPoolSecondsToNext: number | null
   isOpen: boolean
   slideOutTo?: 'left' | 'right'
-  /** Saat island profil terbuka, pill ini yang mengisi pita: bergeser ke tengah tanpa berubah bentuk, karena sudah berupa kapsul berlabel. */
-  promoted?: boolean
   onToggle: () => void
   onClose: () => void
 }) {
@@ -60,13 +57,12 @@ export function RankIsland({
       }
       isOpen={isOpen}
       slideOutTo={slideOutTo}
-      promoted={promoted}
       onToggle={onToggle}
       onClose={onClose}
     >
-      <RankProgressRegion progression={progression} />
+      <RankProgressRegion progression={progression} isOpen={isOpen} />
       <IslandDivider />
-      <StreakRegion streak={streak} streakSecured={streakSecured} />
+      <StreakRegion streak={streak} streakSecured={streakSecured} isOpen={isOpen} />
       <IslandDivider />
       {poolKnown ? (
         <>
@@ -85,7 +81,7 @@ export function RankIsland({
 
 function RankPillLabel({ rank }: { rank: Progression['rank'] }) {
   return (
-    <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
+    <span className="flex min-w-0 items-center gap-1.5 text-primary">
       <TierGlyph tier={rank.tier} className="size-3.5 shrink-0" />
       <span className="truncate">
         <span className="sr-only">Rank </span>
@@ -96,7 +92,13 @@ function RankPillLabel({ rank }: { rank: Progression['rank'] }) {
 }
 
 /** Setiap region hanya menampilkan judul dan meter. Angka mentahnya tetap hidup di `valueText` meter, jadi pembaca layar masih mendapat progres yang persis sama sementara panelnya tampil sebagai bentuk, bukan sebagai papan angka yang menuntut dibaca. */
-function RankProgressRegion({ progression }: { progression: Progression }) {
+function RankProgressRegion({
+  progression,
+  isOpen,
+}: {
+  progression: Progression
+  isOpen: boolean
+}) {
   const { rank, nextRank, rankProgress, rankSpan } = progression
   const isMaxRank = nextRank === null
   const progressValue = isMaxRank ? 1 : rankProgress
@@ -110,7 +112,7 @@ function RankProgressRegion({ progression }: { progression: Progression }) {
       label="Rank"
       meter={
         <ProgressBar
-          value={progressValue}
+          value={isOpen ? progressValue : 0}
           max={progressMax}
           valueText={progressText}
           tone={isMaxRank ? 'success' : 'primary'}
@@ -123,14 +125,16 @@ function RankProgressRegion({ progression }: { progression: Progression }) {
 function StreakRegion({
   streak,
   streakSecured,
+  isOpen,
 }: {
   streak: number
   streakSecured: boolean
+  isOpen: boolean
 }) {
   return (
     <IslandStat
       label="Streak"
-      meter={<StreakGauge streak={streak} atRisk={!streakSecured} />}
+      meter={<StreakGauge streak={streak} atRisk={!streakSecured} active={isOpen} />}
     />
   )
 }
@@ -151,10 +155,9 @@ function RewardPoolRegion({
       label="Stok reward"
       meter={
         <ProgressBar
-          value={poolLeft}
+          value={isOpen ? poolLeft : 0}
           max={rewardPoolMax}
           valueText={`${formatCredits(poolLeft)} dari ${formatCredits(rewardPoolMax)} credit stok reward tersisa`}
-          accentSweep={isOpen}
         />
       }
     />
@@ -176,12 +179,7 @@ function EnergyRegion({
     <IslandStat
       label="Energi"
       meter={
-        <EnergyPips
-          energy={energy}
-          max={energyMax}
-          fraction={fill.fraction}
-          accentSweep={isOpen}
-        />
+        <EnergyPips energy={energy} max={energyMax} fraction={fill.fraction} active={isOpen} />
       }
     />
   )

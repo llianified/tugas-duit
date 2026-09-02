@@ -8,14 +8,12 @@ export function ProgressBar({
   max,
   valueText,
   tone = 'primary',
-  accentSweep = false,
   className,
 }: {
   value: number
   max: number
   valueText: string
   tone?: 'primary' | 'success'
-  accentSweep?: boolean
   className?: string
 }) {
   const safeMax = Math.max(0, max)
@@ -38,7 +36,6 @@ export function ProgressBar({
         className={cn(
           'h-full w-[var(--progress-bar-fill,0%)] rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none',
           tone === 'success' ? 'bg-success' : 'bg-primary',
-          accentSweep && 'accent-progress-sweep',
         )}
       />
     </div>

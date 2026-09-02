@@ -7,18 +7,18 @@ export function EnergyPips({
   energy,
   max,
   fraction = 0,
-  accentSweep = false,
+  active = true,
   className,
 }: {
   energy: number
   max: number
   fraction?: number
-  accentSweep?: boolean
+  active?: boolean
   className?: string
 }) {
   const clamped = Math.max(0, Math.min(max, energy))
-  const filled = clamped
-  const partial = Math.max(0, Math.min(1, fraction))
+  const filled = active ? clamped : 0
+  const partial = active ? Math.max(0, Math.min(1, fraction)) : 0
 
   return (
     <div
@@ -42,7 +42,6 @@ export function EnergyPips({
                   isFilled
                     ? 'bg-primary transition-colors duration-300 ease-out motion-reduce:transition-none'
                     : 'bg-primary/45 transition-[width] duration-1000 ease-linear motion-reduce:transition-none',
-                  accentSweep && 'accent-progress-sweep',
                 )}
                 style={{ width: isFilled ? '100%' : `${(partial * 100).toFixed(1)}%` }}
               />

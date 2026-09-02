@@ -1695,6 +1695,92 @@
 .home-skin .task-card[data-tearing='true'] {
   pointer-events: none;
 }
+
+/* Ceruk di belakang karcis: yang membuat gerigi punya arti.
+   Kedua bagian karcis dipindahkan dengan `translate`, jadi kartunya TETAP
+   memegang tingginya sampai halaman berganti. Tanpa apa pun di belakangnya,
+   ruang itu membuka ke bidang beranda yang warnanya sama — dan sobekan yang
+   membuka ke warna yang sama terbaca sebagai "kartunya hilang", bukan
+   "kartunya diangkat". Yang hilang bukan tempatnya, cuma kertasnya.
+
+   Gelapnya hanya seluas slot karcis. Scrim se-halaman akan menggelapkan
+   beranda sesaat sebelum halaman task yang terang muncul — terang, gelap,
+   terang lagi dalam setengah detik.
+
+   Yang menanggung beban justru TEPINYA, bukan gelapnya. Di tema gelap app ini
+   `--hero-band` (#08080c) cuma sepuluh derajat lebih gelap dari latar beranda
+   (#101014); kalau cerukannya hanya bidang gelap, ia tetap terbaca sebagai
+   lubang. Garis rambut yang mengikuti siluet karcis-lah yang mengubahnya jadi
+   tempat yang jelas-jelas menunggu diisi.
+
+   Dua lapisannya memakai cara yang sama dengan `.ticket-part`: elemen luar
+   berisi warna garis, lapisan di atasnya sejauh 1px di dalamnya berisi dasar
+   ceruk. Border biasa tak bisa dipakai karena `clip-path` memotongnya ikut
+   terpotong di guntingan sudut. Keduanya `z-index: -1` di dalam `isolation`
+   milik kartu, jadi berhenti di belakang kertasnya dan tidak menembus ke
+   bawah beranda; `::after` menimpa `::before` karena urutan cetaknya. */
+.home-skin .task-card::before,
+.home-skin .task-card::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  opacity: 0;
+}
+/* Garis rambutnya: siluet karcis utuh — sudut digunting di keempat penjuru,
+   gabungan `clip-path` pangkal dan sobekannya. */
+.home-skin .task-card::before {
+  inset: 0;
+  background-color: color-mix(in oklab, var(--foreground) 13%, transparent);
+  clip-path: polygon(
+    var(--ticket-notch) 0,
+    calc(100% - var(--ticket-notch)) 0,
+    100% var(--ticket-notch),
+    100% calc(100% - var(--ticket-notch)),
+    calc(100% - var(--ticket-notch)) 100%,
+    var(--ticket-notch) 100%,
+    0 calc(100% - var(--ticket-notch)),
+    0 var(--ticket-notch)
+  );
+}
+/* Dasar cerukan: tepi lebih gelap, tengahnya sedikit terangkat — cahaya yang
+   jatuh ke dasar. Itu yang memberi kedalaman; bidang gelap rata cuma lubang. */
+.home-skin .task-card::after {
+  inset: 1px;
+  background-color: color-mix(in oklab, var(--hero-band) 88%, #000);
+  background-image: radial-gradient(
+    130% 90% at 50% 45%,
+    color-mix(in oklab, var(--hero-band) 82%, var(--card) 18%) 0%,
+    color-mix(in oklab, var(--hero-band) 88%, #000) 74%
+  );
+  clip-path: polygon(
+    calc(var(--ticket-notch) - 1px) 0,
+    calc(100% - var(--ticket-notch) + 1px) 0,
+    100% calc(var(--ticket-notch) - 1px),
+    100% calc(100% - var(--ticket-notch) + 1px),
+    calc(100% - var(--ticket-notch) + 1px) 100%,
+    calc(var(--ticket-notch) - 1px) 100%,
+    0 calc(100% - var(--ticket-notch) + 1px),
+    0 calc(var(--ticket-notch) - 1px)
+  );
+}
+/* Cerukannya menyala tepat saat kertasnya putus, bukan saat tombol ditekan:
+   selama karcisnya masih ditarik dan menahan (0–16% di keyframe sobekan) belum
+   ada yang terbelah, jadi belum ada yang boleh terlihat di belakangnya. */
+.home-skin .task-card[data-tearing='true']::before,
+.home-skin .task-card[data-tearing='true']::after {
+  animation: ticket-well-open var(--tear-ms, 520ms) linear forwards;
+}
+@keyframes ticket-well-open {
+  0%,
+  14% {
+    opacity: 0;
+  }
+  38%,
+  100% {
+    opacity: 1;
+  }
+}
+
 .home-skin .task-card[data-tearing='true'] .ticket-part-top {
   mask-image:
     conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg),
@@ -1778,6 +1864,14 @@
   .home-skin .task-card[data-tearing='true'] .ticket-perf {
     animation: none;
     mask-image: none;
+  }
+  /* Tanpa sobekan tak ada yang perlu dibuka. Komponen memang sudah melewati
+     animasinya di mode ini, tapi aturannya ditulis di sini juga supaya CSS-nya
+     berdiri sendiri kalau kelak `data-tearing` dipasang di jalan lain. */
+  .home-skin .task-card[data-tearing='true']::before,
+  .home-skin .task-card[data-tearing='true']::after {
+    animation: none;
+    opacity: 0;
   }
 }
 

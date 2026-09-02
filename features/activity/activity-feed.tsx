@@ -11,7 +11,7 @@ import { MetaBadge } from '@/shared/components/meta-badge'
 import { formatCredits, formatHistoryTime, formatRupiah } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 
-/** Jarak ke baris tab dibawa tiap cabang sendiri, bukan oleh pembungkus di `LeaderboardView`. `EmptyState` memusatkan dirinya lewat `flex-1 justify-center`, jadi ia butuh tinggi sisa view — dan margin atas apa pun di atasnya menggeser titik pusat itu ke bawah, membuat posisinya beda dari empty state tab Papan yang duduk langsung sebagai anak `view-min-h`. Daftar dan kerangkanya tetap butuh jaraknya. Umpan ini tidak punya slot pengumuman tersemat. Satu-satunya sumber pengumuman di repo ini adalah tabel `broadcasts`, yang isinya pesan Telegram bersegmen dan tidak layak disiarkan ke semua orang — lihat catatan Langkah 11 di `docs/rencana-gaya-fomo.md`. */
+/** Jarak ke baris tab dibawa tiap cabang sendiri, bukan oleh pembungkus di `LeaderboardView`. `EmptyState` memusatkan dirinya lewat `flex-1 justify-center`, jadi ia butuh tinggi sisa view — dan margin atas apa pun di atasnya menggeser titik pusat itu ke bawah, membuat posisinya beda dari empty state tab Papan yang duduk langsung sebagai anak `view-min-h`. Daftar dan kerangkanya tetap butuh jaraknya. Umpan ini tidak punya slot pengumuman tersemat. Satu-satunya sumber pengumuman di repo ini adalah tabel `broadcasts`, yang isinya pesan Telegram bersegmen dan tidak layak disiarkan ke semua orang. */
 export function ActivityFeed({ entries }: { entries: ActivityEntry[] | null }) {
   if (entries === null) {
     return (

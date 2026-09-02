@@ -1,6 +1,6 @@
 'use client'
 
-import type { CSSProperties, ReactNode } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { hapticSelect } from '@/shared/lib/haptic'
 import { GlyphBolt, GlyphHome, GlyphTrophy, GlyphUsers } from '@/shared/components/glyph'
 import { ProfileAvatar } from '@/shared/components/profile-avatar'
@@ -22,6 +22,17 @@ const NAV_SLOTS: readonly NavSlot[] = [
   { view: 'profile', label: 'Profil', icon: null },
 ]
 
+/** Harus sama dengan `--nav-morph-ms` di globals.css: penanda morph dilepas tepat saat animasi gooey-nya habis. */
+const NAV_MORPH_MS = 320
+
+type NavMorph = {
+  /** Slot asal dan tujuan; jaraknya menentukan seberapa jauh bidang aktif melar. */
+  from: number
+  to: number
+  /** Naik tiap perpindahan supaya `key` berubah dan animasi CSS-nya mulai dari nol lagi. */
+  token: number
+}
+
 /** Nav ikon-only: labelnya pindah ke `sr-only` supaya tombol tetap punya nama yang bisa dibaca pembaca layar. Tanpa itu lima tombol ini cuma terbaca "tombol", dan slot Profil — yang isinya `<img alt="">` — tidak terbaca sama sekali. */
 export function NavPill({
   activeView,
@@ -33,22 +44,52 @@ export function NavPill({
   onSelect: (view: AppView) => void
 }) {
   const activeIndex = NAV_SLOTS.findIndex((slot) => slot.view === activeView)
+  const [morph, setMorph] = useState<NavMorph | null>(null)
+  const previousIndexRef = useRef(activeIndex)
+  const tokenRef = useRef(0)
+
+  /* Transisi hyperisland butuh tahu dari slot mana bidang aktif datang — CSS sendiri cuma tahu posisi tujuan, jadi jarak tempuhnya dihitung di sini lalu dikirim sebagai variabel. */
+  useEffect(() => {
+    const previousIndex = previousIndexRef.current
+    previousIndexRef.current = activeIndex
+    /* Indeks negatif berarti tidak ada slot nav yang aktif (indikatornya disembunyikan), jadi tidak ada yang perlu dilelehkan. */
+    if (previousIndex === activeIndex || previousIndex < 0 || activeIndex < 0) return
+
+    tokenRef.current += 1
+    setMorph({ from: previousIndex, to: activeIndex, token: tokenRef.current })
+    const timer = window.setTimeout(() => setMorph(null), NAV_MORPH_MS)
+    return () => window.clearTimeout(timer)
+  }, [activeIndex])
 
   return (
     <nav aria-label="Navigasi utama" className="nav-pill">
       <div
         className="nav-pill-row"
         data-has-active={activeIndex >= 0}
-        style={{ '--nav-active-index': activeIndex } as CSSProperties}
+        data-nav-morph={morph ? 'true' : undefined}
+        style={
+          {
+            '--nav-active-index': activeIndex,
+            '--nav-travel': morph ? Math.abs(morph.to - morph.from) : 0,
+          } as CSSProperties
+        }
       >
-        <span aria-hidden className="nav-pill-indicator" />
-        {NAV_SLOTS.map((slot) => (
+        <span aria-hidden className="nav-pill-indicator">
+          {/* `key` sengaja ikut token: elemen baru = animasi gooey-nya jalan ulang walau arah pindahnya sama. */}
+          <span
+            key={morph ? morph.token : 'idle'}
+            className="nav-pill-indicator-blob"
+            data-nav-morph={morph ? 'true' : undefined}
+          />
+        </span>
+        {NAV_SLOTS.map((slot, index) => (
           <NavPillItem
             key={slot.view}
             slot={slot}
             activeView={activeView}
             photoUrl={photoUrl}
             onSelect={onSelect}
+            morphing={morph ? index === morph.from || index === morph.to : false}
           />
         ))}
       </div>
@@ -77,11 +118,14 @@ function NavPillItem({
   activeView,
   photoUrl,
   onSelect,
+  morphing,
 }: {
   slot: NavSlot
   activeView: AppView
   photoUrl: string | null
   onSelect: (view: AppView) => void
+  /** Hanya slot asal dan tujuan yang ikut blur, supaya cuma dua lapis filter yang aktif saat berpindah. */
+  morphing: boolean
 }) {
   const active = slot.view === activeView
 
@@ -94,6 +138,7 @@ function NavPillItem({
     <button
       type="button"
       aria-current={active ? 'page' : undefined}
+      data-nav-morph={morphing ? 'true' : undefined}
       onClick={handleClick}
       className={cn('focus-ring transition-ui press-scale nav-pill-item')}
     >

@@ -33,7 +33,7 @@ export function IslandStat({
   footer,
 }: {
   label: ReactNode
-  value: ReactNode
+  value?: ReactNode
   tone?: keyof typeof ISLAND_VALUE_TONE
   meter?: ReactNode
   footer?: ReactNode
@@ -44,14 +44,16 @@ export function IslandStat({
         <span className="min-w-0 truncate text-[11px] leading-none text-muted-foreground tabular-nums">
           {label}
         </span>
-        <span
-          className={cn(
-            'shrink-0 text-xs leading-none font-semibold tracking-tight tabular-nums',
-            ISLAND_VALUE_TONE[tone],
-          )}
-        >
-          {value}
-        </span>
+        {value ? (
+          <span
+            className={cn(
+              'shrink-0 text-xs leading-none font-semibold tracking-tight tabular-nums',
+              ISLAND_VALUE_TONE[tone],
+            )}
+          >
+            {value}
+          </span>
+        ) : null}
       </div>
       {meter ? <div className="island-row">{meter}</div> : null}
       {footer ? <div className="island-row">{footer}</div> : null}

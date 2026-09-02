@@ -23,7 +23,6 @@ interface HomeViewProps {
   referralCredits: number
   withdrawnCredits: number
   history: HistoryEntry[]
-  completedCount: number
   task: Challenge
   energy: number
   energyMax: number
@@ -53,7 +52,6 @@ const ENTER_STEP_CLASS = ['enter-step-0', 'enter-step-1', 'enter-step-2'] as con
 export function HomeView({
   balance,
   history,
-  completedCount,
   task,
   energy,
   energyMax,
@@ -137,11 +135,7 @@ export function HomeView({
         <CardCarousel ariaLabel="Penawaran" items={stamps} />
 
         <div className={cn('home-ledger', stamps.length > 0 && 'region-gap-t')}>
-          <RecentTransactions
-            history={history}
-            completedCount={completedCount}
-            onSeeAll={onOpenHistory}
-          />
+          <RecentTransactions history={history} onSeeAll={onOpenHistory} />
         </div>
       </div>
 

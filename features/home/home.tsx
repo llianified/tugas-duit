@@ -8,6 +8,7 @@ import { ChannelBonusCard } from '@/features/channel/channel-card'
 import { channelBonusReachable } from '@/features/channel/use-channel-bonus'
 import { PremiumCard } from '@/features/premium/components/premium-card'
 import { PremiumDialog } from '@/features/premium/components/premium-dialog'
+import { CardCarousel } from '@/shared/components/card-carousel'
 import type { Challenge, HistoryEntry } from '@/domain/task/challenge'
 import type { EnergyFill } from '@/domain/economy/energy'
 import type { ChannelBonusState, PremiumState } from '@/shell/session-api'
@@ -82,6 +83,24 @@ export function HomeView({
   const premiumReachable = Boolean(premium && (premium.active || premium.paymentEnabled))
   const bonusReachable = channelBonusReachable(channelBonus)
 
+  /** Dua perangko berbagi SATU tempat dan bergantian tiap lima detik. Sebelumnya keduanya berdiri bertumpuk, dan itu memberi beranda dua ajakan sederajat yang saling menekan tepat sebelum daftar transaksi — yang di bawah hampir selalu terlewat. Daftarnya disaring di sini, bukan di dalam carousel: kartu yang tidak tersedia TIDAK BOLEH masuk sebagai `null`, karena `null` tetap terhitung satu slide dan carousel-nya akan berputar ke halaman kosong. Konsekuensinya juga yang diinginkan — kalau tinggal satu yang tersedia (bonus sudah diklaim, atau pembayaran premium dimatikan), `CardCarousel` mengembalikannya sebagai kartu tunggal tanpa trek dan tanpa titik. Kalau tidak ada satu pun, tidak ada apa-apa, dan `region-gap-t` di atas daftar transaksi ikut hilang bersamanya. */
+  const stamps = [
+    premium && premiumReachable
+      ? {
+          key: 'premium',
+          label: 'Lihat kartu premium',
+          node: <PremiumCard premium={premium} onOpen={() => setPremiumOpen(true)} />,
+        }
+      : null,
+    bonusReachable
+      ? {
+          key: 'channel-bonus',
+          label: 'Lihat kartu bonus channel',
+          node: <ChannelBonusCard bonus={channelBonus} onClaimed={onRefreshSession} />,
+        }
+      : null,
+  ].filter((item): item is NonNullable<typeof item> => item !== null)
+
   return (
     <div className="home-skin view-min-h flex flex-col">
       <h1 className="sr-only">Beranda Tugas Duit</h1>
@@ -115,22 +134,9 @@ export function HomeView({
       </div>
 
       <div className={`animate-view-in region-t ${ENTER_STEP_CLASS[2]}`}>
-        {premium && premiumReachable ? (
-          <PremiumCard premium={premium} onOpen={() => setPremiumOpen(true)} />
-        ) : null}
+        <CardCarousel ariaLabel="Penawaran" items={stamps} />
 
-        {bonusReachable ? (
-          <div className={premium && premiumReachable ? 'region-gap-t' : undefined}>
-            <ChannelBonusCard bonus={channelBonus} onClaimed={onRefreshSession} />
-          </div>
-        ) : null}
-
-        <div
-          className={cn(
-            'home-ledger',
-            ((premium && premiumReachable) || bonusReachable) && 'region-gap-t',
-          )}
-        >
+        <div className={cn('home-ledger', stamps.length > 0 && 'region-gap-t')}>
           <RecentTransactions
             history={history}
             completedCount={completedCount}

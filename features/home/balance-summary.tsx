@@ -69,7 +69,7 @@ export function BalanceSummary({
           </p>
         </div>
 
-        <ActionButton className="w-auto shrink-0 px-5" onClick={onWithdraw}>
+        <ActionButton size="lg" className="w-auto shrink-0 px-5" onClick={onWithdraw}>
           Tarik dana
         </ActionButton>
       </div>

@@ -9,7 +9,7 @@
  * dan env.ts ikut dimuat oleh script CLI di `scripts/` yang dijalankan Node langsung
  * dengan --experimental-strip-types. Node tidak mengerti alias `@/...` dari tsconfig,
  * jadi begitu env.ts menarik modul yang (lewat rantai importnya) memakai alias, semua
- * script mati dengan ERR_MODULE_NOT_FOUND — termasuk `db:migrate` di startCommand
- * Railway. Jangan tambahkan import ke file ini.
+ * script mati dengan ERR_MODULE_NOT_FOUND — termasuk `db:migrate` dan migrasi
+ * otomatis lewat `vercel-build`. Jangan tambahkan import ke file ini.
  */
 export const MONETAG_DEFAULT_ZONE_ID = '11615417'

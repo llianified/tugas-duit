@@ -21,7 +21,7 @@ export function PremiumCard({
 
 /**
  * Emasnya dibangun dari `--premium` lewat `color-mix`, bukan dari nilai warna baru, supaya
- * ikut berbalik sendiri antara tema terang (amber gelap) dan gelap (amber terang). Garis
+ * seluruh gradasi tetap mengikuti satu sumber warna premium di app gelap-saja ini. Garis
  * tipis di tepi atas memberi kesan permukaan yang tertimpa cahaya tanpa menambah bayangan
  * — bentuk yang masih sejalan dengan kartu lain di app ini yang semuanya rata.
  */

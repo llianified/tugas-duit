@@ -207,8 +207,11 @@
   --brand-band-top: max(var(--header-gap), env(safe-area-inset-top), var(--telegram-safe-top));
   --brand-band-h: 2rem;
   --brand-pill-h: min(1.875rem, var(--brand-band-h));
-  /* Lebar kapsul pill profil saat ia mengambil alih pita karena island lain terbuka. Dipatok, tidak mengikuti panjang nama, supaya titik tengahnya bisa dihitung sekali dan animasinya tidak mengejar lebar yang masih berubah. */
-  --brand-promoted-w: 8.5rem;
+  /* Lebar kapsul pill profil saat ia mengambil alih pita karena island lain terbuka. Dipatok
+     seukuran pill rank saat idle (glyph + label + padding 0.75rem), bukan mengikuti panjang nama:
+     kedua pill jadi terbaca sebagai kapsul yang sama, dan titik tengahnya bisa dihitung sekali
+     sehingga animasinya tidak mengejar lebar yang masih berubah. */
+  --brand-promoted-w: 6.5rem;
   --brand-control-inset: calc((var(--brand-band-h) - var(--brand-pill-h)) / 2);
   --telegram-safe-top: var(--tg-safe-area-inset-top, 0px);
   --telegram-safe-bottom: var(--tg-safe-area-inset-bottom, 0px);
@@ -710,6 +713,16 @@
   .island-promotable[data-island-promoted='true'] .island-pill {
     width: var(--brand-promoted-w);
   }
+  /* Saat profil menjadi kapsul, pusatkan berdasarkan isi membuat glyph avatar tampak punya
+     ruang kiri 0.375rem lebih besar daripada glyph rank: avatar 1.75rem masih menyimpan glyph
+     1rem di tengahnya. Geser isi sebesar setengah selisih itu agar tepi visual kiri keduanya
+     sama, tanpa mengubah posisi lingkaran profil saat idle. */
+  .island-promotable .island-pill > span:first-child {
+    transition: translate var(--island-duration) var(--ease-out-quart);
+  }
+  .island-promotable[data-island-promoted='true'] .island-pill > span:first-child {
+    translate: -0.375rem 0;
+  }
   /* Avatar di pill profil harus punya ukuran pasti. `aspect-square h-full` tidak pernah selesai
      dihitung di sini: wrappernya tingginya auto, jadi `height: 100%` jatuh ke tinggi konten, dan
      konten fotonya adalah `<img>` yang lalu memakai ukuran intrinsiknya sendiri — jauh lebih besar
@@ -732,8 +745,12 @@
       padding-left var(--island-duration) var(--ease-out-quart),
       opacity 140ms var(--ease-out-quart);
   }
+  /* Batas namanya dihitung dari sisa kapsul sesudah avatar dan padding 0.75rem di kedua tepi —
+     angka padding yang sama dengan pill rank. Pill ini sendiri tanpa padding (`p-0`) supaya
+     avatarnya tetap di titik tengah lingkaran saat tertutup, jadi tepinya lahir dari batas ini:
+     nama sepanjang apa pun terpotong sebelum menyentuh tepi, bukan mendesaknya. */
   .island[data-island-promoted='true'] .island-pill-name {
-    max-width: calc(var(--brand-promoted-w) - var(--brand-pill-h) - 1rem);
+    max-width: calc(var(--brand-promoted-w) - var(--brand-pill-h) + 2px - 1.5rem);
     padding-left: 0.375rem;
     opacity: 1;
     transition-delay: 0s, 0s, var(--island-settle);

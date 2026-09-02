@@ -2221,3 +2221,133 @@
 .home-ledger li:hover {
   background-color: transparent;
 }
+
+/* ============================================================================
+   Kartu premium: "perangko emas"
+   ============================================================================
+   Kartu ini satu-satunya bidang di beranda yang bukan kertas: pelat gradien
+   emas bersudut bulat, berdiri persis di antara karcis yang digunting dan
+   kupon yang disobek. Emas yang dipudarkan bukan penanda apa pun — kartu mana
+   saja bisa memakainya — jadi yang menyatakan "ini premium" tinggal warnanya.
+
+   Perangko dipilih karena benda kertas inilah yang cara kerjanya persis sama
+   dengan premium: DIBELI pada nominal yang tercetak di sudutnya, lalu
+   DITEMPEL supaya dilihat orang lain. Jadi harganya jatuh ke tempat nominal
+   perangko, mahkotanya menempati posisi potret, dan gigi perforasi di keempat
+   tepi jadi satu-satunya bentuk di halaman ini yang tidak bisa tertukar
+   dengan karcis (sudut digunting) atau kupon (satu sisi disobek).
+
+   Saat premiumnya aktif, perangkonya DICAP: sisa hari duduk di dalam cap pos
+   bundar yang miring. Dua keadaan, satu bentuk — yang membedakan bukan warna
+   melainkan apakah perangkonya sudah terpakai.
+
+   Tidak di-scope ke `.home-skin`, sama alasannya dengan `.bonus-coupon`: yang
+   dibentuk kartunya sendiri, bukan kulit halaman yang menumpanginya.
+   ========================================================================== */
+.premium-stamp {
+  /* Radius lubang gigi, sengaja jauh lebih kecil dari lubang sobek karcis
+     (`--ticket-hole`, 0.3125rem): gigi perangko adalah deret lubang RAPAT, dan
+     pada ukuran lubang karcis ia berhenti terbaca sebagai gigi lalu mulai
+     terbaca sebagai kartu yang tepinya rusak. */
+  --stamp-tooth: 0.28rem;
+  --stamp-step: 1rem;
+  --stamp-p: 0.9375rem;
+  --stamp-ink: color-mix(in oklab, var(--premium) 32%, transparent);
+  position: relative;
+  isolation: isolate;
+  display: block;
+  padding: var(--stamp-p);
+  /* Dua lapis: serat kertas diagonal — angka yang sama dengan pangkal karcis,
+     karena kertasnya keluar dari mesin yang sama — di atas bidang emas yang
+     DICAMPUR ke `--card`. Emasnya bukan lapisan transparan seperti versi lama:
+     perangko itu kertas yang dicetak, jadi warnanya harus bidang, bukan kabut
+     yang menumpang di atas latar halaman. */
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      color-mix(in oklab, var(--foreground) 4%, transparent) 0 1px,
+      transparent 1px 7px
+    ),
+    linear-gradient(
+      155deg,
+      color-mix(in oklab, var(--premium) 24%, var(--card)),
+      color-mix(in oklab, var(--premium) 10%, var(--card)) 60%,
+      var(--card)
+    );
+  /* Giginya dilubangi, bukan digambar: empat lapis mask, satu per tepi, tiap
+     lapis satu lubang yang diulang sepanjang tepinya. `round` yang membuat
+     jumlah lubangnya bulat — dengan `repeat` biasa, gigi terakhir terpotong
+     separuh di sudut dan tepi kanan tidak lagi seirama tepi kiri.
+     Kalau `mask-composite` tidak didukung, hasilnya hanya persegi tanpa gigi
+     (semua lapis di-`add`), jadi kartunya tetap terbaca — tidak pernah jadi
+     bidang berlubang di mana-mana. */
+  mask-image:
+    radial-gradient(var(--stamp-tooth) at 50% 0, #0000 98%, #000),
+    radial-gradient(var(--stamp-tooth) at 50% 100%, #0000 98%, #000),
+    radial-gradient(var(--stamp-tooth) at 0 50%, #0000 98%, #000),
+    radial-gradient(var(--stamp-tooth) at 100% 50%, #0000 98%, #000);
+  mask-size:
+    var(--stamp-step) 100%,
+    var(--stamp-step) 100%,
+    100% var(--stamp-step),
+    100% var(--stamp-step);
+  mask-repeat: round no-repeat, round no-repeat, no-repeat round, no-repeat round;
+  mask-composite: intersect;
+}
+
+/* Bingkai cetak. Di perangko sungguhan garis inilah yang membatasi area cetak
+   — bukan tepi kertasnya — jadi ia berdiri DI DALAM gigi, bukan menempel di
+   lubangnya. `z-index: -1` menaruhnya di atas bidang emas tapi di bawah teks;
+   `isolation` di induknya yang menahan nilai negatif itu agar tidak jatuh ke
+   belakang halaman. */
+.premium-stamp::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: calc(var(--stamp-tooth) + 0.1875rem);
+  border: 1px dashed var(--stamp-ink);
+  pointer-events: none;
+}
+
+/* Label kecil nada emas. Kelas sendiri, BUKAN utility `text-premium` yang
+   ditempel di elemen yang sama: `.home-tag` hidup di luar layer, jadi ia
+   mengalahkan utility warna apa pun. Kelas ini berdiri setelahnya di berkas
+   yang sama dengan kekhususan yang setara, jadi urutannya yang menentukan —
+   dan itu tertulis di sini supaya tidak terbaca sebagai kebetulan. */
+.premium-stamp-tag {
+  color: color-mix(in oklab, var(--premium) 90%, transparent);
+}
+
+/* Cap pos: dua cincin sepusat berisi sisa hari. Miringnya yang penting — cap
+   tegak terbaca sebagai lencana yang dirancang, sementara cap miring terbaca
+   sebagai sesuatu yang ditekankan ke kertas SETELAH perangkonya ditempel.
+   Angkanya duduk di dalam cap karena sisa hari memang satu-satunya hal yang
+   diminta dibaca dari perangko yang sudah terpakai; cap yang cuma berisi
+   tulisan hiasan tidak akan berhak menempati ruang sebesar ini. */
+.premium-postmark {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in oklab, var(--premium) 52%, transparent);
+  rotate: -7deg;
+}
+.premium-postmark::before {
+  content: '';
+  position: absolute;
+  inset: 0.1875rem;
+  border-radius: inherit;
+  border: 1px dashed color-mix(in oklab, var(--premium) 34%, transparent);
+}
+/* `.home-tag` memberi jarak huruf 0.2em yang menempel di SISI KANAN huruf
+   terakhir, jadi teks yang di-`center` di dalam cap tampak bergeser ke kiri
+   sebanyak itu. `text-indent` membayarnya balik alih-alih mengurangi jarak
+   hurufnya, supaya nada "cetakan mesin"-nya tidak ikut hilang. */
+.premium-postmark .home-tag {
+  text-indent: 0.2em;
+}

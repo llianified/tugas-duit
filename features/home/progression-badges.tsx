@@ -69,7 +69,7 @@ export function ProgressionBadges({
           stats={stats}
           premium={premium}
           isOpen={profileOpen}
-          promoted={openPanel !== null}
+          slideOutTo={rankOpen || difficultyOpen ? 'left' : undefined}
           onToggle={() => setOpenPanel(profileOpen ? null : 'profile')}
           onClose={closePanel}
         />

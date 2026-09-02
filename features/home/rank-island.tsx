@@ -60,9 +60,9 @@ export function RankIsland({
       onToggle={onToggle}
       onClose={onClose}
     >
-      <RankProgressRegion progression={progression} isOpen={isOpen} />
+      <RankProgressRegion progression={progression} />
       <IslandDivider />
-      <StreakRegion streak={streak} streakSecured={streakSecured} isOpen={isOpen} />
+      <StreakRegion streak={streak} streakSecured={streakSecured} />
       <IslandDivider />
       {poolKnown ? (
         <>
@@ -92,13 +92,7 @@ function RankPillLabel({ rank }: { rank: Progression['rank'] }) {
 }
 
 /** Setiap region hanya menampilkan judul dan meter. Angka mentahnya tetap hidup di `valueText` meter, jadi pembaca layar masih mendapat progres yang persis sama sementara panelnya tampil sebagai bentuk, bukan sebagai papan angka yang menuntut dibaca. */
-function RankProgressRegion({
-  progression,
-  isOpen,
-}: {
-  progression: Progression
-  isOpen: boolean
-}) {
+function RankProgressRegion({ progression }: { progression: Progression }) {
   const { rank, nextRank, rankProgress, rankSpan } = progression
   const isMaxRank = nextRank === null
   const progressValue = isMaxRank ? 1 : rankProgress
@@ -112,7 +106,7 @@ function RankProgressRegion({
       label="Rank"
       meter={
         <ProgressBar
-          value={isOpen ? progressValue : 0}
+          value={progressValue}
           max={progressMax}
           valueText={progressText}
           tone={isMaxRank ? 'success' : 'primary'}
@@ -125,16 +119,14 @@ function RankProgressRegion({
 function StreakRegion({
   streak,
   streakSecured,
-  isOpen,
 }: {
   streak: number
   streakSecured: boolean
-  isOpen: boolean
 }) {
   return (
     <IslandStat
       label="Streak"
-      meter={<StreakGauge streak={streak} atRisk={!streakSecured} active={isOpen} />}
+      meter={<StreakGauge streak={streak} atRisk={!streakSecured} />}
     />
   )
 }
@@ -155,9 +147,10 @@ function RewardPoolRegion({
       label="Stok reward"
       meter={
         <ProgressBar
-          value={isOpen ? poolLeft : 0}
+          value={poolLeft}
           max={rewardPoolMax}
           valueText={`${formatCredits(poolLeft)} dari ${formatCredits(rewardPoolMax)} credit stok reward tersisa`}
+          accentSweep={isOpen}
         />
       }
     />
@@ -179,7 +172,12 @@ function EnergyRegion({
     <IslandStat
       label="Energi"
       meter={
-        <EnergyPips energy={energy} max={energyMax} fraction={fill.fraction} active={isOpen} />
+        <EnergyPips
+          energy={energy}
+          max={energyMax}
+          fraction={fill.fraction}
+          accentSweep={isOpen}
+        />
       }
     />
   )

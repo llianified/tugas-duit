@@ -200,7 +200,6 @@
   --brand-band-top: max(var(--header-gap), env(safe-area-inset-top), var(--telegram-safe-top));
   --brand-band-h: 2rem;
   --brand-pill-h: min(1.875rem, var(--brand-band-h));
-  --rank-island-pill-w: 4.75rem;
   --brand-control-inset: calc((var(--brand-band-h) - var(--brand-pill-h)) / 2);
   --telegram-safe-top: var(--tg-safe-area-inset-top, 0px);
   --telegram-safe-bottom: var(--tg-safe-area-inset-bottom, 0px);
@@ -603,8 +602,7 @@
       scale var(--island-duration) var(--ease-spring-island),
       opacity 220ms var(--ease-out-quart),
       transform 140ms var(--ease-out-quart),
-      translate var(--island-duration) var(--ease-spring-island),
-      width var(--island-duration) var(--ease-spring-island);
+      translate var(--island-duration) var(--ease-spring-island);
     transition-delay: 0s, var(--island-settle), 0s, 0s;
   }
   .island-pill:active {

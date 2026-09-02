@@ -58,6 +58,7 @@ export function RankIsland({
       isOpen={isOpen}
       slideOutTo={slideOutTo}
       onToggle={onToggle}
+      pillClassName="w-[var(--rank-island-pill-w)]"
       onClose={onClose}
     >
       <RankProgressRegion progression={progression} />

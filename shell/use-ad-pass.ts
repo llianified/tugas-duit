@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from 'react'
 import { monetagSdkName } from '@/domain/ads'
-import { beginRewarded, endRewarded, waitForInAppIdle } from '@/shell/ad-gate'
 import { showFailureReason, waitForShow } from '@/shell/monetag-sdk'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
 import type { AdClaimResponse, AdsState, AdTicketResponse } from '@/shell/session-api'
@@ -34,14 +33,13 @@ export function useAdPass({
   const [watchingAd, setWatchingAd] = useState(false)
 
   /**
-   * Mengembalikan fungsi tayang, bukan SDK-nya: `ticketId` ikut dikirim sebagai `ymid`
-   * supaya satu tayangan Monetag bisa dicocokkan dengan barisnya di `ad_views` kalau
-   * suatu saat postback server-ke-server mereka dipakai.
+   * Rewarded Interstitial memakai pemanggilan SDK tanpa `type: 'inApp'`. Promise hanya
+   * dianggap selesai setelah Monetag menyelesaikan tayangan; barulah tiket diklaim.
    */
-  const getPlayer = useCallback(async (unitId: string, ticketId: string) => {
+  const getPlayer = useCallback(async (unitId: string) => {
     const show = await waitForShow(monetagSdkName(unitId))
     if (!show) return null
-    return () => show({ ymid: ticketId })
+    return () => show()
   }, [])
 
   const hasPass = Boolean(ads?.pass)
@@ -50,23 +48,13 @@ export function useAdPass({
     if (watchingAd) return false
     if (hasPass) return true
     setWatchingAd(true)
-    /**
-     * Palang dinaikkan sebelum tiket dibuat, bukan sebelum `play()`: sejak tiket ada,
-     * ada credit yang dipertaruhkan, dan interstitial otomatis harus sudah menahan
-     * jadwalnya. Menurunkannya di `finally` supaya kegagalan di tengah tidak
-     * mengunci jadwal interstitial selamanya.
-     */
-    beginRewarded()
     try {
       const ticket = await sendJson<AdTicketResponse>('/api/ads/ticket', 'POST')
-      const play = await getPlayer(ticket.unitId, ticket.ticketId)
+      const play = await getPlayer(ticket.unitId)
       if (!play) {
         notifyError(SDK_MISSING_MESSAGE)
         return false
       }
-      // Kalau interstitial keburu tayang sebelum palangnya naik, tunggu selesai dulu
-      // supaya dua iklan tidak bertumpuk di layar yang sama.
-      await waitForInAppIdle()
       try {
         await play()
       } catch (error) {
@@ -80,7 +68,6 @@ export function useAdPass({
       notifyError(userFacingMessage(error))
       return false
     } finally {
-      endRewarded()
       setWatchingAd(false)
       await refreshSession()
     }

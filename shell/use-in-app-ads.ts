@@ -5,62 +5,19 @@ import { MONETAG_DEFAULT_ZONE_ID, monetagSdkName } from '@/domain/ads'
 import {
   DEFAULT_IN_APP_ADS_SETTINGS,
   inAppShowParams,
-  msUntilInAppWindowReset,
-  newInAppSession,
-  nextInAppDelayMs,
-  parseInAppSession,
-  recordInAppShown,
-  rollInAppSession,
-  type InAppAdsSession,
   type InAppAdsSettings,
 } from '@/domain/in-app-ads'
-import {
-  beginInApp,
-  endInApp,
-  isInAppActive,
-  isRewardedActive,
-  subscribeAdGate,
-} from '@/shell/ad-gate'
 import { readShow, showFailureReason, waitForShow } from '@/shell/monetag-sdk'
 
-/**
- * Interstitial otomatis Monetag: efek sampingnya di sini, aturan kapan tayangnya di
- * `domain/in-app-ads.ts`.
- *
- * Jadwalnya dipegang sendiri alih-alih diserahkan ke SDK karena jadwal milik SDK tidak
- * bisa dijeda, sementara zone ini dipakai bersama iklan berhadiah — alasan lengkapnya ada
- * di komentar `domain/in-app-ads.ts` dan `shell/ad-gate.ts`.
- */
-
-const SESSION_KEY = 'tugasduit.in-app-ads.session'
-
-/** Jeda sebelum mencoba lagi kalau SDK-nya tidak muncul dalam jendela tunggu. */
+/** Jeda sebelum mencoba lagi kalau fungsi global SDK belum tersedia. */
 const SDK_RETRY_MS = 30_000
 
 /**
- * Sesi ditaruh di `sessionStorage`, bukan state React: `everyPage: false` berarti plafon
- * `frequency` harus tetap berlaku setelah muat ulang halaman, dan state React hilang di
- * situ. `sessionStorage` juga otomatis bersih saat tab ditutup, yang memang arti "sesi".
+ * Zone yang sudah menerima konfigurasi native pada dokumen ini. React dapat menjalankan
+ * effect lagi saat state sesi berubah; memanggil payload `inApp` untuk kedua kalinya akan
+ * membuat penjadwal otomatis tambahan di SDK.
  */
-function readStoredSession(settings: InAppAdsSettings, now: number): InAppAdsSession {
-  if (settings.everyPage) return newInAppSession(now)
-  try {
-    const raw = window.sessionStorage.getItem(SESSION_KEY)
-    const parsed = raw ? parseInAppSession(JSON.parse(raw) as unknown) : null
-    return parsed ? rollInAppSession(parsed, settings, now) : newInAppSession(now)
-  } catch {
-    // WebView dengan storage terkunci tidak boleh mematikan iklan; sesi baru saja.
-    return newInAppSession(now)
-  }
-}
-
-function writeStoredSession(session: InAppAdsSession): void {
-  try {
-    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
-  } catch {
-    // Diabaikan: kehilangan sesi paling buruk hanya membuat hitungan mulai dari nol.
-  }
-}
+const initializedZones = new Set<string>()
 
 export function useInAppAds({
   enabled,
@@ -72,110 +29,41 @@ export function useInAppAds({
   settings?: InAppAdsSettings
 }): void {
   useEffect(() => {
-    if (!enabled) return
+    if (!enabled || settings.frequency <= 0) return
 
     const sdkName = monetagSdkName(zoneId)
-    let session = readStoredSession(settings, Date.now())
-    let timer: ReturnType<typeof setTimeout> | undefined
-    let showing = false
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
     let cancelled = false
 
-    const schedule = (ms: number) => {
-      clearTimeout(timer)
-      timer = setTimeout(() => {
-        void run()
-      }, ms)
-    }
-
-    /**
-     * Menghitung ulang kapan tayangan berikutnya boleh jalan, lalu memasang satu timer.
-     *
-     * Saat iklan berhadiah aktif atau aplikasi di latar belakang, sengaja TIDAK ada timer
-     * yang dipasang: yang membangunkan jadwalnya adalah `subscribeAdGate` dan
-     * `visibilitychange`. Kalau di sini dipasang timer polling, iklan bisa tetap nongol
-     * tepat di jendela yang mau dihindari.
-     */
-    const plan = () => {
-      if (cancelled || showing) return
-      const now = Date.now()
-      session = rollInAppSession(session, settings, now)
-      const delay = nextInAppDelayMs(session, settings, now)
-      if (delay === null) {
-        // Jendela capping penuh — tunggu sampai bergulir, plus sedikit agar tidak
-        // terbangun persis di batas dan menghitung jendela lama.
-        schedule(msUntilInAppWindowReset(session, settings, now) + 250)
-        return
-      }
-      if (isRewardedActive() || isInAppActive() || document.hidden) return
-      schedule(delay)
-    }
-
-    const run = async () => {
-      if (cancelled || showing) return
-      // `showing` hanya berlaku untuk instance efek ini. `isInAppActive()` palang modul
-      // yang ikut terlihat oleh instance lain — tanpa itu efek yang jalan ulang (mis.
-      // `enabled` berubah saat sesi dimuat ulang) bisa menayangkan iklan kedua di atas
-      // iklan yang masih di layar. Yang membangunkannya lagi `subscribeAdGate`, sama
-      // seperti jalur berhadiah di bawah.
-      if (isRewardedActive() || isInAppActive() || document.hidden) return
-
-      const now = Date.now()
-      session = rollInAppSession(session, settings, now)
-      const delay = nextInAppDelayMs(session, settings, now)
-      if (delay === null || delay > 0) {
-        plan()
-        return
-      }
+    const initialize = async () => {
+      if (cancelled || initializedZones.has(sdkName)) return
 
       const show = readShow(sdkName) ?? (await waitForShow(sdkName))
-      if (cancelled) return
+      if (cancelled || initializedZones.has(sdkName)) return
       if (!show) {
-        schedule(SDK_RETRY_MS)
+        retryTimer = setTimeout(() => {
+          void initialize()
+        }, SDK_RETRY_MS)
         return
       }
-      // Palang dinaikkan sebelum menunggu, bukan sesudah: `useAdPass` harus melihat
-      // interstitial ini sedang tayang sejak detik pertama.
-      showing = true
-      beginInApp()
+
+      // Tandai sebelum memanggil SDK agar dua effect yang selesai menunggu bersamaan
+      // tidak dapat mendaftarkan dua penjadwal untuk zone yang sama.
+      initializedZones.add(sdkName)
       try {
-        // `type: 'inApp'` wajib dikirim agar impresinya terhitung sebagai InApp
-        // Interstitial; `show()` polos membuatnya masuk bucket berhadiah yang CPM-nya
-        // jauh lebih rendah. Jadwal yang dikirim sama dengan jadwal yang dipakai
-        // penjadwal di sini, jadi plafonnya tidak bisa terlampaui.
+        // Satu-satunya pemanggilan otomatis: SDK Monetag mengurus timeout, interval,
+        // frequency, dan capping setelah menerima payload native ini.
         await show(inAppShowParams(settings))
       } catch (error) {
-        // Reject di sini tidak merugikan siapa pun — tidak ada tiket dan tidak ada credit
-        // yang bergantung padanya, beda dengan sisi berhadiah. Cukup dicatat.
         console.warn('[ads] in-app show_<zone>() reject', showFailureReason(error))
-      } finally {
-        endInApp()
-        showing = false
       }
-      /**
-       * Dihitung tayang walau reject. Kalau hanya tayangan sukses yang dihitung, stok
-       * iklan yang kosong membuat `shown` tidak pernah naik dan penjadwalnya memanggil
-       * SDK terus-menerus sepanjang jendela.
-       */
-      session = recordInAppShown(session, Date.now())
-      writeStoredSession(session)
-      plan()
     }
 
-    const unsubscribeGate = subscribeAdGate(() => {
-      if (!isRewardedActive()) plan()
-    })
-    const onVisibility = () => {
-      if (!document.hidden) plan()
-    }
-    document.addEventListener('visibilitychange', onVisibility)
-
-    plan()
+    void initialize()
 
     return () => {
       cancelled = true
-      clearTimeout(timer)
-      unsubscribeGate()
-      document.removeEventListener('visibilitychange', onVisibility)
+      clearTimeout(retryTimer)
     }
   }, [enabled, zoneId, settings])
 }

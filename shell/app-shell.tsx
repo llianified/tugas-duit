@@ -38,11 +38,10 @@ function AppShellInner() {
    * tetap dirender karena sifatnya opt-in. Dipasang di sini, bukan di `app/layout.tsx`,
    * karena saklarnya baru diketahui setelah sesi termuat.
    *
-   * Jadwalnya dibaca dari config ekonomi yang dikirim `/api/session`, dan sengaja
-   * di-memo per nilai — bukan per render. `useInAppAds` menaruh `settings` di dependency
-   * effect-nya, jadi objek baru tiap render akan membongkar penjadwal dan memulai jendela
-   * capping dari nol terus-menerus, yang justru membuat iklan tayang lebih sering daripada
-   * plafonnya.
+   * Jadwalnya dibaca dari config ekonomi yang dikirim `/api/session`, lalu di-memo per
+   * nilai agar effect tidak dijalankan ulang hanya karena identitas objek berubah. Hook
+   * mengirim konfigurasi `type: 'inApp'` satu kali per dokumen; timeout, interval,
+   * frequency, dan capping setelah itu dikelola langsung oleh SDK Monetag.
    */
   const {
     inAppAdsFrequency,

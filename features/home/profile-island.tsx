@@ -15,7 +15,7 @@ export function ProfileIsland({
   stats,
   premium = null,
   isOpen,
-  slideOutTo,
+  promoted = false,
   onToggle,
   onClose,
   onOpenStats,
@@ -24,29 +24,42 @@ export function ProfileIsland({
   stats: UserStats
   premium?: PremiumState | null
   isOpen: boolean
-  slideOutTo?: 'left' | 'right'
+  /** Saat island lain terbuka, pill ini yang mengisi pita: pindah ke tengah dan melebar jadi kapsul bernama. */
+  promoted?: boolean
   onToggle: () => void
   onClose: () => void
   onOpenStats?: () => void
 }) {
   const handle = user.username ? `@${user.username}` : user.id
   const isPremium = Boolean(premium?.active)
+  const pillName = user.username ? `@${user.username}` : user.firstName
 
   return (
     <IslandPill
       panelId="profile-island"
-      pillLabel={<ProfileAvatar photoUrl={user.photoUrl} className="size-full" />}
+      pillLabel={
+        <span className="flex min-w-0 items-center">
+          <ProfileAvatar
+            photoUrl={user.photoUrl}
+            className="aspect-square h-full"
+            glyphClassName="size-4"
+          />
+          <span className="island-pill-name truncate text-[11px] font-semibold text-foreground">
+            {pillName}
+          </span>
+        </span>
+      }
       pillTitle={user.firstName}
       openLabel="Buka ringkasan profil"
       closeLabel="Tutup ringkasan profil"
       srSummary={`, ${user.firstName}, ${formatCredits(stats.completedCount)} task selesai`}
       isOpen={isOpen}
-      slideOutTo={slideOutTo}
+      promoted={promoted}
       onToggle={onToggle}
       onClose={onClose}
-      className="mr-1.5"
+      className="island-promotable mr-1.5"
       pillClassName={cn(
-        'w-[var(--brand-pill-h)] overflow-hidden p-0',
+        'overflow-hidden p-0',
         isPremium && 'shadow-[0_0_0_1.5px_var(--premium)]',
       )}
     >

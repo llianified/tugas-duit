@@ -1,6 +1,5 @@
 'use client'
 
-import type { CSSProperties } from 'react'
 import { cn } from '@/shared/lib/utils'
 
 /** Pip energi dengan pip berikutnya terisi sebagian. Tanpa `fraction` meter ini diam belasan menit lalu melompat satu pip, dan diam yang lama itulah yang membuat user menyimpulkan aplikasinya menghukum dia. Dengan pip parsial yang naik tiap detik, jeda yang sama terbaca sebagai sesuatu yang sedang berjalan. */

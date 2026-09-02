@@ -1797,8 +1797,8 @@
   pointer-events: none;
 }
 .stamp-strike .stamp-postmark {
-  /* Bidangnya diberi kertas sendiri supaya angka di bawahnya tidak terbaca menembus cap. */
-  background-color: color-mix(in oklab, var(--card) 82%, transparent);
+  /* Bidangnya diberi kertas sendiri supaya kalimat di bawahnya tidak terbaca menembus cap. Nyaris pekat, bukan separuh tembus: pada 82% huruf paragraf di belakangnya masih terbaca melintasi kata di dalam cap, dan dua teks yang saling menimpa membuat capnya terlihat seperti galat render — bukan seperti tinta. Sisa 4%-nya yang menjaga ia tetap terbaca sebagai sesuatu yang DITEKANKAN ke kertas, bukan sebagai cakram yang ditempel di atasnya. */
+  background-color: color-mix(in oklab, var(--card) 96%, transparent);
   animation: stamp-strike-in calc(var(--stamp-ms, 640ms) * 0.42)
     cubic-bezier(0.2, 1.35, 0.3, 1) forwards;
   will-change: scale, rotate, opacity;

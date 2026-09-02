@@ -5,7 +5,9 @@ import type { PremiumState } from '@/shell/session-api'
 import { GlyphCheck, GlyphChevron, GlyphCrown } from '@/shared/components/glyph'
 import { formatCredits, formatRupiah, formatShortDate } from '@/shared/lib/format'
 
-/** Bentuknya perangko — gigi perforasi di keempat tepi, bingkai cetak di dalam, harga di posisi nominal. Alasannya ada di `.premium-stamp` (globals.css): premium dibeli pada nominal tercetak lalu ditempel supaya kelihatan orang lain, dan itu persis cara kerja perangko. */
+/** Bentuknya perangko — gigi perforasi di keempat tepi, bingkai cetak di dalam, harga di posisi nominal. Alasannya ada di `.stamp` (globals.css): premium dibeli pada nominal tercetak lalu ditempel supaya kelihatan orang lain, dan itu persis cara kerja perangko.
+
+Bentuk itu sekarang milik BERSAMA dengan `ChannelBonusCard`, dan namanya ikut pindah: `.premium-stamp` jadi `.stamp`, yang menyatakan premium tinggal tintanya (`--stamp-accent`, emas sebagai bawaan). Yang berubah di berkas ini hanya nama kelasnya — tata letaknya justru jadi kiblat kartu satunya. */
 export function PremiumCard({
   premium,
   onOpen,
@@ -18,11 +20,11 @@ export function PremiumCard({
   return <PremiumUpsellStamp premium={premium} onOpen={onOpen} />
 }
 
-/** Potret perangko: satu-satunya keuntungan premium yang dilihat orang lain. */
+/** Potret perangko: satu-satunya keuntungan premium yang dilihat orang lain. Bidang bundarnya pindah ke `.stamp-portrait` supaya ukuran dan tint-nya satu sumber dengan potret di perangko bonus channel — sebelumnya nilainya nilai arbitrer yang ditulis di sini, jadi mengubah potret satu kartu diam-diam meninggalkan kartu lainnya. */
 function CrownPortrait() {
   return (
-    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--premium)_20%,transparent)]">
-      <GlyphCrown className="size-4 text-premium" />
+    <span className="stamp-portrait">
+      <GlyphCrown className="stamp-ink-fg size-4" />
     </span>
   )
 }
@@ -43,19 +45,20 @@ function PremiumUpsellStamp({
   const [, ...others] = premiumBenefitList(premium.perks)
   const printed = others.slice(0, 2)
 
+  /** Tombolnya `flex`, bukan `block`, dan kertasnya `flex-1`. Di dalam carousel tinggi tombol ini diregangkan ke kartu tertinggi; sebagai `block`, kertas di dalamnya tetap setinggi isinya sendiri — `height: 100%` milik `.stamp` tidak punya apa pun untuk diukur, dan kartunya berhenti sebelum tepi slide sambil menyisakan bidang tombol kosong di bawahnya. */
   return (
     <button
       type="button"
       onClick={onOpen}
       aria-label="Lihat paket premium"
-      className="focus-ring transition-ui press-scale-soft block w-full text-left"
+      className="focus-ring transition-ui press-scale-soft flex w-full text-left"
     >
-      <span className="premium-stamp">
-        {/* Nominal perangko: harga di sudut kanan atas, ukuran yang sama dengan angka nominal di kupon bonus — dua kertas, satu tinggi angka. */}
+      <span className="stamp min-w-0 flex-1">
+        {/* Nominal perangko: harga di sudut kanan atas, ukuran yang sama dengan angka nominal di perangko bonus — dua kertas, satu tinggi angka. */}
         <span className="flex items-start justify-between gap-3">
-          <span className="home-tag premium-stamp-tag pt-1">Premium</span>
+          <span className="home-tag stamp-tag pt-1">Premium</span>
           <span className="flex flex-col items-end gap-1">
-            <span className="num-display text-[1.375rem] text-premium">
+            <span className="num-display stamp-ink-fg text-[1.375rem]">
               {formatRupiah(cheapest.pricePerMonthIdr)}
             </span>
             <span className="home-tag">per bulan</span>
@@ -72,19 +75,22 @@ function PremiumUpsellStamp({
         <span className="stack-gap-t block space-y-1">
           {printed.map((benefit) => (
             <span key={benefit.key} className="flex items-start gap-1.5 text-xs text-muted-foreground">
-              <GlyphCheck className="mt-0.5 size-3 shrink-0 text-premium" />
+              <GlyphCheck className="stamp-ink-fg mt-0.5 size-3 shrink-0" />
               <span className="leading-snug">{benefit.title}</span>
             </span>
           ))}
         </span>
 
-        <span className="stack-gap-t flex items-center justify-between gap-2">
+        {/* Baris aksi kartu ini: ajakan "lihat paket" plus chevron-nya. `.stamp-foot`
+            menahannya di garis bawah kertas, jadi ia berhenti setinggi baris tombol
+            di perangko bonus channel alih-alih menggantung di tengah slide. */}
+        <span className="stamp-foot flex items-center justify-between gap-2">
           <span className="text-[11px] leading-snug text-muted-foreground">
             {bestValue
               ? `Ambil ${formatCredits(bestValue.months)} bulan, hemat ${formatCredits(bestValue.savingPercent)}%`
               : 'Lihat semua paket'}
           </span>
-          <GlyphChevron className="size-4 shrink-0 text-premium" direction="right" />
+          <GlyphChevron className="stamp-ink-fg size-4 shrink-0" direction="right" />
         </span>
       </span>
     </button>
@@ -97,10 +103,10 @@ function PremiumActiveStamp({ premium }: { premium: PremiumState }) {
   const benefits = others.slice(0, 2)
 
   return (
-    <section aria-label="Status premium" className="premium-stamp">
+    <section aria-label="Status premium" className="stamp">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <p className="home-tag premium-stamp-tag">Premium</p>
+          <p className="home-tag stamp-tag">Premium</p>
           <p className="stack-gap-t flex items-center gap-2 text-sm font-semibold leading-none text-foreground">
             <CrownPortrait />
             Sudah terpasang
@@ -114,16 +120,16 @@ function PremiumActiveStamp({ premium }: { premium: PremiumState }) {
         </div>
 
         {/* Cap pos: sisa hari, dibaca sebagai "sisa 12 hari". */}
-        <p className="premium-postmark premium-stamp-tag">
-          <span className="home-tag premium-stamp-tag">Sisa</span>
-          <span className="num-display mt-0.5 text-xl text-premium">
+        <p className="stamp-postmark stamp-tag">
+          <span className="home-tag stamp-tag">Sisa</span>
+          <span className="num-display stamp-ink-fg mt-0.5 text-xl">
             {formatCredits(premium.daysLeft)}
           </span>
-          <span className="home-tag premium-stamp-tag mt-0.5">Hari</span>
+          <span className="home-tag stamp-tag mt-0.5">Hari</span>
         </p>
       </div>
 
-      <ul className="stack-gap-t flex flex-wrap gap-1.5">
+      <ul className="stamp-foot flex flex-wrap gap-1.5">
         {benefits.map((benefit) => (
           <li
             key={benefit.key}

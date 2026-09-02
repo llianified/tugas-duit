@@ -42,8 +42,26 @@ function sslConfig() {
 const SERVERLESS_MAX_CLIENTS = 3
 const LONG_LIVED_MAX_CLIENTS = 10
 
+/**
+ * Connection pooler Neon memakai transaction pooling: satu koneksi backend dipakai
+ * ulang oleh banyak klien. Akibatnya `set` tingkat sesi yang tertinggal dari klien
+ * lain — sesi psql/agen yang lupa `reset`, misalnya — ikut terbawa ke request kita.
+ * Yang paling mematikan `default_transaction_read_only = on`: seluruh write gagal
+ * dengan 25006 tanpa satu baris kode pun berubah, dan `select` tetap jalan sehingga
+ * health check ikut menipu.
+ *
+ * Menaruhnya di startup packet (`options: '-c ...'`) ditolak pooler-nya, jadi satu-
+ * satunya jalan adalah menegaskan ulang lewat `set` tiap koneksi baru terbentuk.
+ * Murah: sekali per koneksi fisik, bukan per query.
+ */
 export function createPool(connectionString: string, max: number): Pool {
-  return new Pool({ connectionString, max, idleTimeoutMillis: 30_000, ssl: sslConfig() })
+  const created = new Pool({ connectionString, max, idleTimeoutMillis: 30_000, ssl: sslConfig() })
+  created.on('connect', (client) => {
+    client.query('set default_transaction_read_only = off').catch((error: unknown) => {
+      console.error('[db] gagal menegaskan mode read-write pada koneksi baru:', error)
+    })
+  })
+  return created
 }
 
 const globalForDb = globalThis as unknown as { pool?: Pool }
@@ -113,6 +131,13 @@ export async function transaction<T>(fn: (tx: PoolClient) => Promise<T>): Promis
   let failure: unknown
   try {
     await client.query('begin')
+    /**
+     * Hook `connect` di atas menutup mayoritas kasus, tapi di transaction pooling
+     * koneksi yang kita pegang sekarang belum tentu backend yang tadi kita `set`.
+     * Di dalam `begin` backend-nya pasti terpaku pada satu sesi, jadi di sinilah
+     * jaminannya benar-benar bisa ditegakkan — dan otomatis lepas saat commit.
+     */
+    await client.query('set transaction read write')
     const value = await fn(client)
     await client.query('commit')
     return value

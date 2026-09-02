@@ -5,7 +5,7 @@ import { loadEconomyConfig } from '@/server/economy-config'
 import { readAdsState } from '@/server/ads'
 import { FOUNDER_MAX_USER_ID } from '@/domain/prestige'
 import { readChannelGateState } from '@/server/channel'
-import { query } from '@/server/db'
+import { isPreviewShell, query } from '@/server/db'
 import { readEnergy } from '@/server/energy'
 import { env } from '@/server/env'
 import { klikqrisConfigured } from '@/server/klikqris'
@@ -80,7 +80,16 @@ export async function GET(request: Request) {
         active: isPremiumActive(premiumUntil, now),
         until: premiumUntil,
         daysLeft: premiumDaysLeft(premiumUntil, now),
-        paymentEnabled: klikqrisConfigured(),
+        /**
+         * Di preview, gerbang ini dibuka tanpa gateway. `paymentEnabled` adalah satu-satunya
+         * hal yang menentukan kartu premium dirender atau tidak (`PremiumCard` mengembalikan
+         * null tanpanya), dan preview tidak punya KLIKQRIS_API_KEY — jadi seluruh permukaan
+         * premium tidak pernah muncul di sana, termasuk untuk dilihat. Yang menjaga uangnya
+         * bukan flag ini melainkan `startPremiumCheckout`, yang tetap membaca
+         * `klikqrisConfigured()` sendiri dan menjawab PAYMENT_DISABLED: di preview kartunya
+         * bisa dibuka dan dibaca, tapi checkout-nya berhenti dengan pesan yang sopan.
+         */
+        paymentEnabled: klikqrisConfigured() || isPreviewShell(),
         plans: premiumPlans(),
         perks: premiumPerks(),
         invoice,

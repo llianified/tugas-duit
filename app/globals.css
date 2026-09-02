@@ -710,6 +710,16 @@
   .island-promotable[data-island-promoted='true'] .island-pill {
     width: var(--brand-promoted-w);
   }
+  /* Avatar di pill profil harus punya ukuran pasti. `aspect-square h-full` tidak pernah selesai
+     dihitung di sini: wrappernya tingginya auto, jadi `height: 100%` jatuh ke tinggi konten, dan
+     konten fotonya adalah `<img>` yang lalu memakai ukuran intrinsiknya sendiri — jauh lebih besar
+     dari pill. Selama pill masih lingkaran, `overflow: hidden` menggunting foto raksasa itu
+     sehingga kebetulan terlihat benar; begitu pill melebar jadi kapsul promosi, guntingannya ikut
+     melebar dan fotonya menutupi seluruh kapsul beserta namanya. */
+  .island-pill-avatar {
+    width: calc(var(--brand-pill-h) - 2px);
+    height: calc(var(--brand-pill-h) - 2px);
+  }
   /* Namanya tidak ikut memakai `gap`: item selebar 0 masih menagih jaraknya, jadi avatar akan
      duduk melenceng dari titik tengah lingkaran saat pill tertutup. Jaraknya ikut dianimasikan
      lewat padding milik nama itu sendiri. */

@@ -657,8 +657,15 @@
   .island[data-island='open'] .island-pill {
     scale: 0.94;
   }
+  /* Pill island yang terbuka ikut kehilangan hit box-nya. Kalau tidak, kotak tak terlihat itu
+     masih duduk di posisi aslinya di pita dan menutupi kapsul island yang dipromosikan ke
+     tengah: menekan namanya justru mengenai pill tak terlihat itu dan menutup panel yang
+     sedang terbuka, sementara hanya avatar yang menyembul di luar tumpangan itu yang bisa
+     ditekan. Panel yang terbuka sudah punya jalan tutupnya sendiri — tekan di luar, Escape,
+     atau Enter di pill yang masih bisa difokus keyboard. */
   .island[data-island='open'] .island-pill {
     opacity: 0;
+    pointer-events: none;
     transition-delay: 0s;
     transition-duration: 0s, 80ms, 140ms;
   }

@@ -86,7 +86,17 @@ export function useIslandDismiss({
     if (!isOpen) return
 
     function closeOnOutsidePress(event: PointerEvent) {
-      if (!islandRef.current?.contains(event.target as Node)) onClose()
+      const target = event.target
+      if (!(target instanceof Node)) return
+      if (islandRef.current?.contains(target)) return
+      // Tekanan yang mendarat di pill island lain tidak ditutup di sini, karena menutup panel
+      // sekarang akan mengubah tata letak pita di tengah gestur: pill yang sedang dipromosikan
+      // langsung menyusut balik ke lingkaran, jadi pointerup mendarat di elemen lain dan
+      // browser menaikkan `click`-nya ke pita — panelnya tertutup tanpa ada yang terbuka.
+      // Toggle pill itu sendiri yang menentukan panel berikutnya, dan itu sudah menggantikan
+      // panel yang terbuka.
+      if (target instanceof Element && target.closest('.island-pill')) return
+      onClose()
     }
 
     function closeOnEscape(event: KeyboardEvent) {

@@ -7,7 +7,7 @@ import { TierGlyph } from '@/features/home/tier-glyph'
 import type { Progression } from '@/features/home/progression'
 import type { EnergyFill } from '@/domain/energy'
 import { ProgressBar } from '@/shared/components/progress-bar'
-import { formatCredits, formatLongCountdown, formatUnitCountdown } from '@/shared/lib/format'
+import { formatCredits } from '@/shared/lib/format'
 
 export function RankIsland({
   progression,
@@ -16,8 +16,6 @@ export function RankIsland({
   energyFill,
   rewardPoolCredits,
   rewardPoolMax,
-  rewardPoolRegenCredits,
-  rewardPoolSecondsToNext,
   isOpen,
   slideOutTo,
   onToggle,
@@ -43,8 +41,7 @@ export function RankIsland({
     ? `Rank tertinggi: ${rank.name}`
     : `${formatCredits(tasksToNextRank)} task menuju rank ${nextRank.name}`
 
-  const poolKnown =
-    rewardPoolCredits !== null && rewardPoolMax !== null && rewardPoolRegenCredits !== null
+  const poolKnown = rewardPoolCredits !== null && rewardPoolMax !== null
 
   return (
     <IslandPill
@@ -72,8 +69,6 @@ export function RankIsland({
           <RewardPoolRegion
             rewardPoolCredits={rewardPoolCredits}
             rewardPoolMax={rewardPoolMax}
-            rewardPoolRegenCredits={rewardPoolRegenCredits}
-            rewardPoolSecondsToNext={rewardPoolSecondsToNext}
             isOpen={isOpen}
           />
           <IslandDivider />
@@ -96,6 +91,13 @@ function RankPillLabel({ rank }: { rank: Progression['rank'] }) {
   )
 }
 
+/**
+ * Setiap region hanya menampilkan judul dan meter.
+ *
+ * Angka mentahnya tetap hidup di `valueText` meter, jadi pembaca layar masih
+ * mendapat progres yang persis sama sementara panelnya tampil sebagai bentuk,
+ * bukan sebagai papan angka yang menuntut dibaca.
+ */
 function RankProgressRegion({
   progression,
   isOpen,
@@ -103,7 +105,7 @@ function RankProgressRegion({
   progression: Progression
   isOpen: boolean
 }) {
-  const { rank, nextRank, tasksToNextRank, rankProgress, rankSpan } = progression
+  const { rank, nextRank, rankProgress, rankSpan } = progression
   const isMaxRank = nextRank === null
   const progressValue = isMaxRank ? 1 : rankProgress
   const progressMax = isMaxRank ? 1 : rankSpan
@@ -113,21 +115,7 @@ function RankProgressRegion({
 
   return (
     <IslandStat
-      label={
-        isMaxRank
-          ? `Bonus plafon +${formatCredits((rank.tier - 1) * 3)}`
-          : `${formatCredits(tasksToNextRank)} task lagi`
-      }
-      tone="primary"
-      value={
-        <span className="flex min-w-0 items-center gap-1.5">
-          <TierGlyph tier={nextRank?.tier ?? rank.tier} className="size-3.5 shrink-0" />
-          <span className="truncate">
-            <span className="sr-only">{isMaxRank ? 'Rank ' : 'rank tujuan '}</span>
-            {isMaxRank ? rank.name : nextRank.name}
-          </span>
-        </span>
-      }
+      label="Rank"
       meter={
         <ProgressBar
           value={isOpen ? progressValue : 0}
@@ -149,21 +137,9 @@ function StreakRegion({
   streakSecured: boolean
   isOpen: boolean
 }) {
-  const bonusWeeks = Math.floor(streak / 7)
-
   return (
     <IslandStat
-      label={
-        bonusWeeks > 0 ? (
-          <>
-            Streak {formatCredits(streak)} · bonus +{formatCredits(Math.min(4, bonusWeeks))}
-          </>
-        ) : (
-          <>Streak {formatCredits(streak)} · bonus hari ke-7</>
-        )
-      }
-      tone={streakSecured ? 'success' : 'muted'}
-      value={streakSecured ? 'Aman' : 'Selesaikan 1 task'}
+      label="Streak"
       meter={<StreakGauge streak={streak} atRisk={!streakSecured} active={isOpen} />}
     />
   )
@@ -172,28 +148,17 @@ function StreakRegion({
 function RewardPoolRegion({
   rewardPoolCredits,
   rewardPoolMax,
-  rewardPoolRegenCredits,
-  rewardPoolSecondsToNext,
   isOpen,
 }: {
   rewardPoolCredits: number
   rewardPoolMax: number
-  rewardPoolRegenCredits: number
-  rewardPoolSecondsToNext: number | null
   isOpen: boolean
 }) {
   const poolLeft = Math.max(0, Math.min(rewardPoolMax, rewardPoolCredits))
-  const poolFull = rewardPoolSecondsToNext === null
 
   return (
     <IslandStat
       label="Stok reward"
-      tone={poolFull ? 'success' : 'primary'}
-      value={
-        poolFull
-          ? 'Penuh'
-          : `+${formatCredits(rewardPoolRegenCredits)} · ${formatUnitCountdown(rewardPoolSecondsToNext)}`
-      }
       meter={
         <ProgressBar
           value={isOpen ? poolLeft : 0}
@@ -205,13 +170,6 @@ function RewardPoolRegion({
   )
 }
 
-/**
- * Energi dilaporkan sebagai "penuh dalam sekian", bukan "+1 sekian".
- *
- * Hitungan per butir memberi user angka terburuk yang bisa dia lihat setiap
- * kali membuka panel, padahal yang dia rencanakan adalah kapan bisa main
- * banyak lagi — dan itu waktu menuju penuh.
- */
 function EnergyRegion({
   energy,
   energyMax,
@@ -223,13 +181,9 @@ function EnergyRegion({
   fill: EnergyFill
   isOpen: boolean
 }) {
-  const secondsToFull = fill.secondsToFull
-
   return (
     <IslandStat
-      label={`Energi ${formatCredits(energy)}/${formatCredits(energyMax)}`}
-      tone={secondsToFull === null ? 'success' : 'primary'}
-      value={secondsToFull === null ? 'Penuh' : `Penuh ${formatLongCountdown(secondsToFull)}`}
+      label="Energi"
       meter={
         <EnergyPips energy={energy} max={energyMax} fraction={fill.fraction} active={isOpen} />
       }

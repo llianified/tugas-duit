@@ -181,8 +181,12 @@
   --island-region-py: 0.75rem;
   --bubble-px: 0.875rem;
   --bubble-py: 0.625rem;
-  --nav-pill-h: 3.75rem;
-  --nav-pill-gap: 0.5rem;
+  /* Nav ikon-only meniru fomo: tanpa baris label, tinggi pill turun ke 3.25rem dan slotnya jadi bulat penuh (2.5rem = tinggi pill − padding kiri-kanan), jadi chip aktif persis mengisi tingginya tanpa sisa. */
+  --nav-pill-h: 3.25rem;
+  --nav-pill-gap: 0.375rem;
+  --nav-pill-slot: calc(var(--nav-pill-h) - var(--nav-pill-gap) * 2);
+  --nav-glyph: 1.5rem;
+  --nav-avatar: 1.75rem;
   --header-gap: 0.75rem;
   --content-px: 1rem;
   --region-gap: 1.25rem;
@@ -792,21 +796,38 @@
     display: flex;
     flex: 1 1 0%;
     min-width: 0;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.25rem;
-    height: calc(var(--nav-pill-h) - var(--nav-pill-gap) * 2);
+    height: var(--nav-pill-slot);
     border-radius: 9999px;
     color: var(--muted-foreground);
   }
   .nav-pill-item[aria-current='page'] {
     color: var(--foreground);
   }
-  .nav-pill-label {
-    font-size: 0.6875rem;
-    line-height: 1;
-    font-weight: 500;
+  /* Penanda aktif berupa bidang bulat, bukan garis: tanpa label, jarak antar ikon jadi lebar dan underline setipis itu tidak terbaca sebagai milik ikon mana pun. Warnanya diambil dari `--background` supaya chip terlihat "berlubang" lebih gelap dari badan pill, sama seperti fomo. */
+  .nav-pill-slot {
+    display: flex;
+    width: var(--nav-pill-slot);
+    height: var(--nav-pill-slot);
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+  }
+  .nav-pill-item[aria-current='page'] .nav-pill-slot {
+    background-color: color-mix(in oklab, var(--background) 62%, transparent);
+  }
+  .nav-pill-icon {
+    width: var(--nav-glyph);
+    height: var(--nav-glyph);
+  }
+  /* Cincin dipasang lewat box-shadow, bukan border: avatarnya `overflow-hidden` dan fotonya `object-cover` seukuran kotak, jadi border akan memakan tepi fotonya. */
+  .nav-pill-avatar {
+    width: var(--nav-avatar);
+    height: var(--nav-avatar);
+  }
+  .nav-pill-item[aria-current='page'] .nav-pill-avatar {
+    box-shadow: 0 0 0 2px var(--foreground);
   }
   .admin-safe-b {
     --admin-safe-b: env(safe-area-inset-bottom, 0px);

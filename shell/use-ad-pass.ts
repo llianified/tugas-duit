@@ -9,13 +9,7 @@ import type { AdClaimResponse, AdsState, AdTicketResponse } from '@/shell/sessio
 const SHOW_FAILED_MESSAGE = 'Iklannya belum selesai ditonton, jadi tiketnya belum bisa dipakai.'
 const SDK_MISSING_MESSAGE = 'Iklannya gagal dimuat. Coba lagi sebentar lagi ya.'
 
-/**
- * `show_<zone>()` bisa reject karena dua hal yang tampak sama di UI tapi beda akarnya:
- * penonton menutup iklan lebih awal (wajar), atau kreatifnya memang tidak pernah termuat
- * (stok kosong / diblokir). Alasan mentahnya diringkas oleh `showFailureReason` lalu
- * ditempelkan ke pesan. Tanpa ini satu-satunya petunjuk yang tersisa cuma "belum selesai
- * ditonton", yang menyesatkan saat penyebabnya iklan gagal muat.
- */
+/** `show_<zone>()` bisa reject karena dua hal yang tampak sama di UI tapi beda akarnya: penonton menutup iklan lebih awal (wajar), atau kreatifnya memang tidak pernah termuat (stok kosong / diblokir). Alasan mentahnya diringkas oleh `showFailureReason` lalu ditempelkan ke pesan. Tanpa ini satu-satunya petunjuk yang tersisa cuma "belum selesai ditonton", yang menyesatkan saat penyebabnya iklan gagal muat. */
 function showFailureMessage(error: unknown): string {
   const reason = showFailureReason(error).trim().slice(0, 80)
   return reason ? `${SHOW_FAILED_MESSAGE} (${reason})` : SHOW_FAILED_MESSAGE
@@ -32,10 +26,7 @@ export function useAdPass({
 }) {
   const [watchingAd, setWatchingAd] = useState(false)
 
-  /**
-   * Rewarded Interstitial memakai pemanggilan SDK tanpa `type: 'inApp'`. Promise hanya
-   * dianggap selesai setelah Monetag menyelesaikan tayangan; barulah tiket diklaim.
-   */
+  /** Rewarded Interstitial memakai pemanggilan SDK tanpa `type: 'inApp'`. Promise hanya dianggap selesai setelah Monetag menyelesaikan tayangan; barulah tiket diklaim. */
   const getPlayer = useCallback(async (unitId: string) => {
     const show = await waitForShow(monetagSdkName(unitId))
     if (!show) return null

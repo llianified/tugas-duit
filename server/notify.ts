@@ -24,10 +24,7 @@ interface WithdrawalNotice {
   accountName: string
   credits: number
   amountIdr: number
-  /**
-   * Datang dari pemanggil, bukan dari konstanta modul: jedanya 3 hari untuk user premium
-   * dan 7 untuk yang lain, dan hanya `server/payout.ts` yang tahu status premium orangnya.
-   */
+  /** Datang dari pemanggil, bukan dari konstanta modul: jedanya 3 hari untuk user premium dan 7 untuk yang lain, dan hanya `server/payout.ts` yang tahu status premium orangnya. */
   cooldownDays: number
 }
 

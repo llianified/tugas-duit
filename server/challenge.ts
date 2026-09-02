@@ -244,14 +244,7 @@ export async function submitAnswer(
     }
     const paidReward = quota.paidReward
 
-    /**
-     * `solved` ditulis SETELAH kuota membayar, bukan bersamaan dengan `submitted_at`.
-     * Jawaban yang benar tapi tidak dibayar (kolam kosong / plafon harian) tetap soal
-     * yang ditutup, bukan soal yang selesai: tidak ada baris `task_completions` maupun
-     * ledger untuknya. Menandainya `solved` membuat hitungan admin tidak cocok dengan
-     * jumlah completion, dan membuatnya luput dari sapuan `runMaintenance` yang memang
-     * hanya menghapus soal ber-`solved = false`.
-     */
+    /** `solved` ditulis SETELAH kuota membayar, bukan bersamaan dengan `submitted_at`. Jawaban yang benar tapi tidak dibayar (kolam kosong / plafon harian) tetap soal yang ditutup, bukan soal yang selesai: tidak ada baris `task_completions` maupun ledger untuknya. Menandainya `solved` membuat hitungan admin tidak cocok dengan jumlah completion, dan membuatnya luput dari sapuan `runMaintenance` yang memang hanya menghapus soal ber-`solved = false`. */
     await tx.query('update challenges set solved=true where id=$1', [id])
     const completion = await tx.query<{ id: string }>(
       `insert into task_completions(user_id,challenge_id,type,difficulty,elapsed_ms,stars,reward) values($1,$2,$3,$4,$5,$6,$7) returning id`,

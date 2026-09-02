@@ -1,24 +1,6 @@
--- Memisahkan "kapan soal diterbitkan" dari "kapan user mulai mengerjakannya".
---
--- Durasi pengerjaan sebelumnya dihitung `now() - issued_at`, dan `issued_at` adalah
--- momen `GET /api/task` — permintaan yang dijalankan SWR begitu sesi terbentuk, yaitu
--- saat app dibuka. Beranda memang harus tahu judul, kesulitan, dan reward maksimum
--- task sebelum task dimulai, jadi penerbitannya di muka bukan kesalahan; yang salah
--- adalah memakai momen itu sebagai titik nol timer. Akibatnya user yang membuka app,
--- membaca saldo, lalu menekan "Mulai task" satu menit kemudian menyelesaikan task
--- pertamanya dengan catatan waktu satu menit lebih — dan bintangnya, yang menentukan
--- reward, jatuh ke tingkat terendah tanpa sebab yang terlihat di layar.
---
--- `started_at` nullable, tanpa backfill: soal yang sudah terjawab menyimpan durasinya
--- di `task_completions.elapsed_ms` dan tidak dihitung ulang, sedangkan soal terbuka
--- milik user yang sedang aktif akan mendapat cap begitu ia menekan "Mulai task".
--- Selama kolomnya masih `null`, `submitAnswer` jatuh kembali ke `issued_at` (perilaku
--- lama) alih-alih menganggap durasinya nol — pengukuran yang hilang tidak boleh
--- menjadi jalan pintas ke reward tertinggi.
+-- Memisahkan "kapan soal diterbitkan" dari "kapan user mulai mengerjakannya". | Durasi pengerjaan sebelumnya dihitung `now() - issued_at`, dan `issued_at` adalah | momen `GET /api/task` — permintaan yang dijalankan SWR begitu sesi terbentuk, yaitu | saat app dibuka. Beranda memang harus tahu judul, kesulitan, dan reward maksimum | task sebelum task dimulai, jadi penerbitannya di muka bukan kesalahan; yang salah | adalah memakai momen itu sebagai titik nol timer. Akibatnya user yang membuka app, | membaca saldo, lalu menekan "Mulai task" satu menit kemudian menyelesaikan task | pertamanya dengan catatan waktu satu menit lebih — dan bintangnya, yang menentukan | reward, jatuh ke tingkat terendah tanpa sebab yang terlihat di layar. | `started_at` nullable, tanpa backfill: soal yang sudah terjawab menyimpan durasinya | di `task_completions.elapsed_ms` dan tidak dihitung ulang, sedangkan soal terbuka | milik user yang sedang aktif akan mendapat cap begitu ia menekan "Mulai task". | Selama kolomnya masih `null`, `submitAnswer` jatuh kembali ke `issued_at` (perilaku | lama) alih-alih menganggap durasinya nol — pengukuran yang hilang tidak boleh | menjadi jalan pintas ke reward tertinggi.
 alter table challenges add column started_at timestamptz;
 
--- `expires_at` ikut bergeser saat soal dimulai (lihat `startChallenge`), jadi jendela
--- 5 menitnya berlaku atas waktu pengerjaan, bukan atas waktu app dibuka. Constraint
--- ini menjaga arah waktunya: soal tidak bisa dimulai sebelum diterbitkan.
+-- `expires_at` ikut bergeser saat soal dimulai (lihat `startChallenge`), jadi jendela | 5 menitnya berlaku atas waktu pengerjaan, bukan atas waktu app dibuka. Constraint | ini menjaga arah waktunya: soal tidak bisa dimulai sebelum diterbitkan.
 alter table challenges add constraint challenges_started_after_issued
   check (started_at is null or started_at >= issued_at);

@@ -108,13 +108,7 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
     const ads = missions().find((mission: MissionDefinition) => mission.key === 'ads')
     if (!ads) throw new Error('misi ads hilang dari daftar')
 
-    /**
-     * Satu energi di bawah kapasitas, dengan hadiah 3: bentuk lamanya meloloskan ini karena
-     * energinya belum PENUH, lalu `applyEnergyGrant` memotong di kapasitas. User diberi tahu
-     * 3, menerima 1, dan `mission_claims.energy_granted` menyimpan 3 — padahal migrasi 0031
-     * mensyaratkan kolom itu mencatat yang benar-benar diberikan. Klaimnya habis untuk hari
-     * itu, jadi selisihnya hilang tanpa jejak.
-     */
+    /** Satu energi di bawah kapasitas, dengan hadiah 3: bentuk lamanya meloloskan ini karena energinya belum PENUH, lalu `applyEnergyGrant` memotong di kapasitas. User diberi tahu 3, menerima 1, dan `mission_claims.energy_granted` menyimpan 3 — padahal migrasi 0031 mensyaratkan kolom itu mencatat yang benar-benar diberikan. Klaimnya habis untuk hari itu, jadi selisihnya hilang tanpa jejak. */
     const userId = await makeUser(maxEnergy() - 1)
     for (let index = 0; index < ads.target; index += 1) {
       await query(

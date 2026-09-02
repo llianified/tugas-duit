@@ -51,13 +51,7 @@ const STATS_TABS: readonly SegmentedTab<StatsPanel>[] = [
   { value: 'tarik', label: 'Tarik' },
 ]
 
-/**
- * Enam seksi statistik ditumpuk berderet menuntut gulir hampir seribu piksel, dan tidak
- * ada satu pun pertanyaan yang butuh keenamnya sekaligus: yang mengecek progres tidak
- * sedang mengecek penarikan. Dikelompokkan jadi tiga tab, tiap jawaban muat dalam satu
- * layar — bentuk yang sama dengan beranda dan riwayat, jadi tidak ada pola baru yang
- * harus dipelajari user.
- */
+/** Enam seksi statistik ditumpuk berderet menuntut gulir hampir seribu piksel, dan tidak ada satu pun pertanyaan yang butuh keenamnya sekaligus: yang mengecek progres tidak sedang mengecek penarikan. Dikelompokkan jadi tiga tab, tiap jawaban muat dalam satu layar — bentuk yang sama dengan beranda dan riwayat, jadi tidak ada pola baru yang harus dipelajari user. */
 function StatsPanels({ stats }: { stats: UserStats }) {
   const [panel, setPanel] = useState<StatsPanel>('progres')
 

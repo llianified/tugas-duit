@@ -83,57 +83,24 @@ export async function recordAdClaimSignal(
   )
 }
 
-/**
- * Ambang sapuan, dikalibrasi dari sebaran nyata di produksi (36.033 task sejak 19 Agu),
- * bukan dari tebakan. Angka-angka ini tinggal di kode dan bukan di panel admin karena
- * sinyal hanya mencatat — tidak pernah mengubah reward maupun menolak pembayaran —
- * sesuai baris `FLOOR_MS` di `docs/keputusan-desain.md`.
- */
+/** Ambang sapuan, dikalibrasi dari sebaran nyata di produksi (36.033 task sejak 19 Agu), bukan dari tebakan. Angka-angka ini tinggal di kode dan bukan di panel admin karena sinyal hanya mencatat — tidak pernah mengubah reward maupun menolak pembayaran — sesuai baris `FLOOR_MS` di `docs/keputusan-desain.md`. */
 
 /** Sampel minimum sebelum keseragaman waktu berarti apa-apa. */
 const IDENTICAL_TIMING_MIN_SAMPLE = 50
 
-/**
- * Ambang lama 150ms tidak pernah bisa disentuh: `elapsed_ms` mengukur waktu manusia
- * membaca soal, bukan latensi mesin, dan spread terkecil di seluruh dataset produksi
- * adalah 1.877ms — 12x di atas ambangnya. 600ms memberi jarak ~3x di bawah lantai
- * manusia paling konsisten, sambil menangkap skrip ber-jitter yang dulu lolos.
- */
+/** Ambang lama 150ms tidak pernah bisa disentuh: `elapsed_ms` mengukur waktu manusia membaca soal, bukan latensi mesin, dan spread terkecil di seluruh dataset produksi adalah 1.877ms — 12x di atas ambangnya. 600ms memberi jarak ~3x di bawah lantai manusia paling konsisten, sambil menangkap skrip ber-jitter yang dulu lolos. */
 const IDENTICAL_TIMING_MAX_SPREAD_MS = 600
 
 const NO_WRONG_MIN_SOLVED = 200
 
-/**
- * Dulu syaratnya `max(attempts) = 0` — rekor sempurna. Itu bisa dimatikan permanen oleh
- * SATU jawaban salah yang disengaja, jadi diganti rasio. Populasi produksi rata-rata
- * ~6,5% percobaan salah per task; 1% menandai yang enam kali lebih bersih dari itu dan
- * memaksa pengelak membuang dua task per dua ratus, bukan satu.
- */
+/** Dulu syaratnya `max(attempts) = 0` — rekor sempurna. Itu bisa dimatikan permanen oleh SATU jawaban salah yang disengaja, jadi diganti rasio. Populasi produksi rata-rata ~6,5% percobaan salah per task; 1% menandai yang enam kali lebih bersih dari itu dan memaksa pengelak membuang dua task per dua ratus, bukan satu. */
 const NO_WRONG_MAX_ERROR_RATIO = 0.01
 
-/**
- * Rentang yang disapu harus LEBIH PANJANG dari periode cron, kalau tidak detektornya buta
- * di sela antar-jalan. Versi lama memakai jendela 10 menit sementara cron jalan tiap jam
- * (`railway.cron.json`), jadi 50 dari 60 menit tidak pernah terlihat — burst 34 akun pada
- * 25 Agu 09:13–09:16 lolos bukan karena ambangnya kurang, tapi karena tidak ada satu pun
- * eksekusi yang jendelanya menutupi menit-menit itu. Tiga jam memberi ruang untuk cron
- * yang telat atau satu-dua eksekusi yang terlewat.
- */
-/**
- * Harus lebih panjang daripada jarak antar-jalan cron, plus margin. Kalau lebih pendek,
- * selisihnya jadi lubang buta permanen: sapuan tidak akan pernah melihat apa yang terjadi
- * di antara dua jalan. 25 jam menutupi cron harian di `vercel.json` dengan margin satu jam.
- * FRAUD-4 mengunci kaitan ini — kalau jadwal cron-nya dipercepat lagi, test itu yang
- * memberi tahu berapa nilai yang masih sah.
- */
+/** Rentang yang disapu harus LEBIH PANJANG dari periode cron, kalau tidak detektornya buta di sela antar-jalan. Versi lama memakai jendela 10 menit sementara cron jalan tiap jam (`railway.cron.json`), jadi 50 dari 60 menit tidak pernah terlihat — burst 34 akun pada 25 Agu 09:13–09:16 lolos bukan karena ambangnya kurang, tapi karena tidak ada satu pun eksekusi yang jendelanya menutupi menit-menit itu. Tiga jam memberi ruang untuk cron yang telat atau satu-dua eksekusi yang terlewat. */
+/** Harus lebih panjang daripada jarak antar-jalan cron, plus margin. Kalau lebih pendek, selisihnya jadi lubang buta permanen: sapuan tidak akan pernah melihat apa yang terjadi di antara dua jalan. 25 jam menutupi cron harian di `vercel.json` dengan margin satu jam. FRAUD-4 mengunci kaitan ini — kalau jadwal cron-nya dipercepat lagi, test itu yang memberi tahu berapa nilai yang masih sah. */
 const REFERRAL_BURST_LOOKBACK_MINUTES = 1_500
 
-/**
- * Kerapatan yang dicari tetap sama seperti dulu — sekian pendaftar dalam sepuluh menit —
- * hanya saja sekarang dicari di SETIAP titik sepanjang rentang sapuan, bukan hanya di
- * sepuluh menit terakhir. Melebarkan jendelanya saja akan menumpulkan artinya: 20
- * pendaftar dalam tiga jam itu wajar, 20 dalam sepuluh menit tidak.
- */
+/** Kerapatan yang dicari tetap sama seperti dulu — sekian pendaftar dalam sepuluh menit — hanya saja sekarang dicari di SETIAP titik sepanjang rentang sapuan, bukan hanya di sepuluh menit terakhir. Melebarkan jendelanya saja akan menumpulkan artinya: 20 pendaftar dalam tiga jam itu wajar, 20 dalam sepuluh menit tidak. */
 const REFERRAL_BURST_WINDOW_MINUTES = 10
 
 const REFERRAL_BURST_THRESHOLD = 20

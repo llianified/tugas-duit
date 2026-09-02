@@ -86,15 +86,7 @@ export function ReferralView({
   )
 }
 
-/**
- * `summary` datang dari `referral_wallets` + ledger, sedangkan daftar di bawahnya
- * menjumlahkan `referral_commissions` per downline. Keduanya bisa tidak nol bersamaan:
- * komisi yang belum genap 1 credit hidup sebagai unit di dompet, dan komisi yang hangus
- * kena plafon harian (lihat `docs/keputusan-desain.md`) tetap tercatat di barisnya.
- * Karena itu "belum ada komisi" hanya boleh muncul kalau ketiganya nol — kalau tidak,
- * layarnya menyatakan teman belum mengerjakan apa pun tepat di atas daftar yang
- * menunjukkan mereka sudah.
- */
+/** `summary` datang dari `referral_wallets` + ledger, sedangkan daftar di bawahnya menjumlahkan `referral_commissions` per downline. Keduanya bisa tidak nol bersamaan: komisi yang belum genap 1 credit hidup sebagai unit di dompet, dan komisi yang hangus kena plafon harian (lihat `docs/keputusan-desain.md`) tetap tercatat di barisnya. Karena itu "belum ada komisi" hanya boleh muncul kalau ketiganya nol — kalau tidak, layarnya menyatakan teman belum mengerjakan apa pun tepat di atas daftar yang menunjukkan mereka sudah. */
 function CommissionSummary({
   summary,
   hasReferrals,
@@ -160,12 +152,7 @@ function InviteCard({
     }
   }, [])
 
-  /**
-   * Tombol utamanya berbagi, bukan menyalin. Menyalin menaruh tautan di papan klip lalu
-   * menyerahkan sisanya ke user — satu langkah lagi yang sebagian besar orang tidak
-   * lakukan. Lembar berbagi sistem membuka daftar aplikasi tujuannya langsung, dan itu
-   * satu-satunya jalan tautan ini keluar dari Telegram ke tempat teman-temannya berada.
-   */
+  /** Tombol utamanya berbagi, bukan menyalin. Menyalin menaruh tautan di papan klip lalu menyerahkan sisanya ke user — satu langkah lagi yang sebagian besar orang tidak lakukan. Lembar berbagi sistem membuka daftar aplikasi tujuannya langsung, dan itu satu-satunya jalan tautan ini keluar dari Telegram ke tempat teman-temannya berada. */
   async function handleShare() {
     if (!shareUrl) return
     setSharing(true)

@@ -43,16 +43,7 @@ describe('RL-1 — penghitung jendela', () => {
 })
 
 describe('RL-2 — setiap route bersesi wajib punya rate limit', () => {
-  /**
-   * `GET /api/withdrawals` sempat jadi satu-satunya baca milik user tanpa plafon, padahal
-   * ia yang paling berat — dan seluruh permukaan admin yang sudah terautentikasi juga
-   * kosong. Keduanya tidak terlihat saat membaca satu berkas; yang menemukannya justru
-   * membandingkan semua route sekaligus. Test ini melakukan perbandingan itu setiap kali.
-   *
-   * Aturannya: kalau sebuah route memakai sesi (`requireUser`/`requireAdmin`), ia harus
-   * memanggil `checkRateLimit`. Webhook dan probe tidak bersesi, jadi terkecualikan
-   * dengan sendirinya tanpa perlu daftar pengecualian yang harus dirawat.
-   */
+  /** `GET /api/withdrawals` sempat jadi satu-satunya baca milik user tanpa plafon, padahal ia yang paling berat — dan seluruh permukaan admin yang sudah terautentikasi juga kosong. Keduanya tidak terlihat saat membaca satu berkas; yang menemukannya justru membandingkan semua route sekaligus. Test ini melakukan perbandingan itu setiap kali. Aturannya: kalau sebuah route memakai sesi (`requireUser`/`requireAdmin`), ia harus memanggil `checkRateLimit`. Webhook dan probe tidak bersesi, jadi terkecualikan dengan sendirinya tanpa perlu daftar pengecualian yang harus dirawat. */
   it('tidak menyisakan route bersesi yang tanpa plafon', async () => {
     const root = path.join(process.cwd(), 'app/api')
     const entries = await readdir(root, { recursive: true })

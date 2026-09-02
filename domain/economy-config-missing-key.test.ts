@@ -5,14 +5,7 @@ import {
   type EconomyConfig,
 } from './economy-config'
 
-/**
- * Produksi mati total saat `withdrawalMinActiveReferrals` masuk ke kode sementara
- * migrasinya belum dijalankan: baris tersimpan belum punya key itu, `loadEconomyConfig`
- * menolak seluruh baris, dan setiap route yang memanggilnya menjawab 500 — layarnya
- * berhenti di "Datanya nggak kebuka".
- *
- * Baris di bawah adalah bentuk konfigurasi produksi yang sesungguhnya saat itu.
- */
+/** Produksi mati total saat `withdrawalMinActiveReferrals` masuk ke kode sementara migrasinya belum dijalankan: baris tersimpan belum punya key itu, `loadEconomyConfig` menolak seluruh baris, dan setiap route yang memanggilnya menjawab 500 — layarnya berhenti di "Datanya nggak kebuka". Baris di bawah adalah bentuk konfigurasi produksi yang sesungguhnya saat itu. */
 const PRODUKSI_TANPA_KEY_BARU = (() => {
   const config: Record<string, number> = { ...DEFAULT_ECONOMY_CONFIG }
   delete config.withdrawalMinActiveReferrals

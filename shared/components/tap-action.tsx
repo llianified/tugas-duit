@@ -55,9 +55,7 @@ export function TapAction({
       {icon ? <span className="flex shrink-0 items-center">{icon}</span> : null}
       <span
         className={cn(
-          /* Tombol ini yang jadi kiblat ukuran label seluruh app; angkanya kini
-             hidup di `--btn-label` lewat `.btn-label` supaya tombol lain
-             mengikutinya dari satu tempat, bukan dari salinan 15px. */
+          /* Tombol ini yang jadi kiblat ukuran label seluruh app; angkanya kini hidup di `--btn-label` lewat `.btn-label` supaya tombol lain mengikutinya dari satu tempat, bukan dari salinan 15px. */
           'btn-label truncate font-bold tracking-tight',
           compact ? 'min-w-0' : 'min-w-0 flex-1',
         )}

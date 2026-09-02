@@ -1,18 +1,4 @@
-/**
- * Misi harian: aturan murni, tanpa I/O.
- *
- * Hadiahnya **energi**, bukan credit, dan itu keputusan ekonomi bukan selera. Kolam
- * reward (`domain/reward-pool.ts`) sudah mematok berapa credit yang bisa dibayar dalam
- * sehari; energi tambahan tidak menggeser plafon itu sedikit pun — ia hanya membuat user
- * sampai ke plafonnya lebih cepat, lewat lebih banyak task. Jadi misi menambah alasan
- * untuk kembali dan menambah tayangan iklan, tanpa menambah satu rupiah pun yang harus
- * dibayarkan. Hadiah berupa credit akan menjadi liabilitas baru **di atas** kolam.
- *
- * Kemajuannya tidak disimpan di mana pun: ketiganya dihitung ulang dari tabel yang sudah
- * ada (`task_completions`, `ad_views`). Yang tersimpan hanya klaimnya, satu baris per
- * user per hari per misi. Tanpa itu, ada dua sumber kebenaran untuk hal yang sama dan
- * keduanya pasti berselisih suatu saat.
- */
+/** Misi harian: aturan murni, tanpa I/O. Hadiahnya **energi**, bukan credit, dan itu keputusan ekonomi bukan selera. Kolam reward (`domain/reward-pool.ts`) sudah mematok berapa credit yang bisa dibayar dalam sehari; energi tambahan tidak menggeser plafon itu sedikit pun — ia hanya membuat user sampai ke plafonnya lebih cepat, lewat lebih banyak task. Jadi misi menambah alasan untuk kembali dan menambah tayangan iklan, tanpa menambah satu rupiah pun yang harus dibayarkan. Hadiah berupa credit akan menjadi liabilitas baru **di atas** kolam. Kemajuannya tidak disimpan di mana pun: ketiganya dihitung ulang dari tabel yang sudah ada (`task_completions`, `ad_views`). Yang tersimpan hanya klaimnya, satu baris per user per hari per misi. Tanpa itu, ada dua sumber kebenaran untuk hal yang sama dan keduanya pasti berselisih suatu saat. */
 
 import { economyConfig } from './economy-config.ts'
 
@@ -27,19 +13,7 @@ export interface MissionDefinition {
   reward: number
 }
 
-/**
- * Kuncinya tetap konstanta, targetnya dan hadiahnya tidak.
- *
- * Tiga kunci ini terpaku pada `mission_claims_known_key` di migrasi 0031, jadi menambah misi
- * baru memang menuntut migrasi — dan memang seharusnya, karena kemajuan tiap misi dihitung
- * dari kolom yang berbeda. Yang tidak punya alasan untuk menuntut deploy adalah besarannya:
- * berapa yang harus dikumpulkan, dan berapa energi yang dibayarkan. Keduanya sekarang dari
- * `economy-config`, seperti seluruh besaran lain di aplikasi ini.
- *
- * Judulnya ikut menyebut targetnya, jadi ia ikut berubah begitu targetnya disetel — teks
- * misi yang mengatakan "5 task" sementara servernya menuntut 8 adalah bentuk kesalahan yang
- * paling merusak untuk daftar yang seluruh gunanya menunjukkan progres.
- */
+/** Kuncinya tetap konstanta, targetnya dan hadiahnya tidak. Tiga kunci ini terpaku pada `mission_claims_known_key` di migrasi 0031, jadi menambah misi baru memang menuntut migrasi — dan memang seharusnya, karena kemajuan tiap misi dihitung dari kolom yang berbeda. Yang tidak punya alasan untuk menuntut deploy adalah besarannya: berapa yang harus dikumpulkan, dan berapa energi yang dibayarkan. Keduanya sekarang dari `economy-config`, seperti seluruh besaran lain di aplikasi ini. Judulnya ikut menyebut targetnya, jadi ia ikut berubah begitu targetnya disetel — teks misi yang mengatakan "5 task" sementara servernya menuntut 8 adalah bentuk kesalahan yang paling merusak untuk daftar yang seluruh gunanya menunjukkan progres. */
 export const MISSION_KEYS: readonly MissionKey[] = ['tasks', 'stars', 'ads']
 
 export function missions(): MissionDefinition[] {

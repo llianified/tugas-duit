@@ -14,19 +14,7 @@ const FRAUD_SIGNAL_RETENTION = '180 days'
 
 const BOT_NOTIFICATION_RETENTION = '90 days'
 
-/**
- * Jendela rekonsiliasi saldo.
- *
- * Bentuk lamanya menjumlahkan SELURUH `credit_ledger` yang di-join ke SELURUH `users`
- * dengan `group by` per user, lalu baru memotongnya dengan `limit 50` — biaya yang naik
- * seiring umur ledger dan pada akhirnya memakan seluruh jatah `maxDuration` route cron
- * sebelum satu pesan pun sempat dikirim.
- *
- * Yang dipersempit hanya himpunan user yang diperiksa, bukan penjumlahannya: saldo
- * hanya bisa melenceng lewat tulisan, dan setiap tulisan saldo (`appendLedger`) ikut
- * menyetel `users.updated_at`. Jadi drift baru selalu berada di dalam jendela ini
- * selama cron berjalan lebih sering daripada panjangnya.
- */
+/** Jendela rekonsiliasi saldo. Bentuk lamanya menjumlahkan SELURUH `credit_ledger` yang di-join ke SELURUH `users` dengan `group by` per user, lalu baru memotongnya dengan `limit 50` — biaya yang naik seiring umur ledger dan pada akhirnya memakan seluruh jatah `maxDuration` route cron sebelum satu pesan pun sempat dikirim. Yang dipersempit hanya himpunan user yang diperiksa, bukan penjumlahannya: saldo hanya bisa melenceng lewat tulisan, dan setiap tulisan saldo (`appendLedger`) ikut menyetel `users.updated_at`. Jadi drift baru selalu berada di dalam jendela ini selama cron berjalan lebih sering daripada panjangnya. */
 const BALANCE_CHECK_WINDOW = '3 days'
 
 export type MaintenanceSummary = {

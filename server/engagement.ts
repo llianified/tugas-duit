@@ -24,11 +24,7 @@ const HOUR_FIRST = 8
 const HOUR_LAST = 20
 const STREAK_REMINDER_HOURS = [19, 20]
 
-/**
- * Diekspor supaya jadwal cron bisa diuji terhadapnya. Jalan pemeliharaan yang jatuh di
- * luar rentang ini menyelesaikan pembersihan dengan normal tapi tidak mengirim satu
- * pesan pun — kegagalan yang tidak memunculkan error di mana pun.
- */
+/** Diekspor supaya jadwal cron bisa diuji terhadapnya. Jalan pemeliharaan yang jatuh di luar rentang ini menyelesaikan pembersihan dengan normal tapi tidak mengirim satu pesan pun — kegagalan yang tidak memunculkan error di mana pun. */
 export const ENGAGEMENT_HOURS = {
   first: HOUR_FIRST,
   last: HOUR_LAST,
@@ -40,20 +36,7 @@ const STREAK_LOOKBACK_DAYS = 120
 const MAX_SENDS_PER_RUN = 500
 const SEND_GAP_MS = 60
 
-/**
- * Anggaran waktu, bukan sekadar plafon jumlah.
- *
- * `MAX_SENDS_PER_RUN` sendirian tidak pernah bisa menghentikan putaran tepat waktu:
- * 500 kirim x `SEND_GAP_MS` sudah 30 detik sebelum satu pun round-trip Telegram
- * dihitung, sementara route cron-nya dibatasi `maxDuration = 60`. Yang terjadi bukan
- * "sisanya jam depan" melainkan proses dibunuh di tengah — dan karena `deliver()`
- * menulis penanda `bot_notifications` SEBELUM mengirim, user yang penandanya sempat
- * tertulis tapi pesannya belum terkirim tidak akan pernah dicoba lagi.
- *
- * Jadi putaran berhenti sendiri sebelum tenggatnya, dengan sisa yang cukup untuk
- * merapikan dan mengembalikan ringkasan. Penanda hanya ditulis untuk pesan yang
- * benar-benar sempat dikirim.
- */
+/** Anggaran waktu, bukan sekadar plafon jumlah. `MAX_SENDS_PER_RUN` sendirian tidak pernah bisa menghentikan putaran tepat waktu: 500 kirim x `SEND_GAP_MS` sudah 30 detik sebelum satu pun round-trip Telegram dihitung, sementara route cron-nya dibatasi `maxDuration = 60`. Yang terjadi bukan "sisanya jam depan" melainkan proses dibunuh di tengah — dan karena `deliver()` menulis penanda `bot_notifications` SEBELUM mengirim, user yang penandanya sempat tertulis tapi pesannya belum terkirim tidak akan pernah dicoba lagi. Jadi putaran berhenti sendiri sebelum tenggatnya, dengan sisa yang cukup untuk merapikan dan mengembalikan ringkasan. Penanda hanya ditulis untuk pesan yang benar-benar sempat dikirim. */
 export const DEFAULT_SEND_BUDGET_MS = 30_000
 
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
@@ -93,12 +76,7 @@ const CANDIDATE_SQL = `select
     and u.notifications_muted_at is null
     and exists (select 1 from task_completions tc where tc.user_id=u.id)`
 
-/**
- * Rentetan hari aktif yang berakhir **kemarin**, bukan yang berakhir hari ini: pesannya justru
- * untuk user yang belum menyentuh task hari ini, jadi hari ini tidak boleh ikut dihitung.
- * Bentuk kolomnya sengaja sama dengan `STREAK_EXPRESSION` di `streak-sql.ts` — batas hari WIB,
- * baris pertama yang tidak jatuh tepat `rn - 1` hari sebelum acuan adalah tempat putusnya.
- */
+/** Rentetan hari aktif yang berakhir **kemarin**, bukan yang berakhir hari ini: pesannya justru untuk user yang belum menyentuh task hari ini, jadi hari ini tidak boleh ikut dihitung. Bentuk kolomnya sengaja sama dengan `STREAK_EXPRESSION` di `streak-sql.ts` — batas hari WIB, baris pertama yang tidak jatuh tepat `rn - 1` hari sebelum acuan adalah tempat putusnya. */
 const STREAK_SQL = `with active as (
     select user_id, (completed_at at time zone 'Asia/Jakarta')::date as day
       from task_completions
@@ -337,12 +315,7 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
   return null
 }
 
-/**
- * Penanda ditulis dulu, baru pesannya dikirim: `bot_notifications_once` yang memastikan satu
- * pesan tidak berangkat dua kali, dan itu hanya berlaku kalau barisnya sudah commit sebelum
- * panggilan ke Telegram. Kirim yang gagal menghapus penandanya lagi supaya cron berikutnya
- * boleh mencoba ulang — lebih baik telat sejam daripada hilang diam-diam.
- */
+/** Penanda ditulis dulu, baru pesannya dikirim: `bot_notifications_once` yang memastikan satu pesan tidak berangkat dua kali, dan itu hanya berlaku kalau barisnya sudah commit sebelum panggilan ke Telegram. Kirim yang gagal menghapus penandanya lagi supaya cron berikutnya boleh mencoba ulang — lebih baik telat sejam daripada hilang diam-diam. */
 async function deliver(row: CandidateRow, message: Message): Promise<boolean> {
   const claimed = await query<{ id: string }>(
     `insert into bot_notifications(user_id, kind, dedupe_key) values($1,$2,$3)

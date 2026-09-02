@@ -9,13 +9,7 @@ export const dynamic = 'force-dynamic'
 
 const ok = () => Response.json({ ok: true })
 
-/**
- * URL ini publik dan tidak bisa dilindungi origin check maupun sesi — yang membedakan
- * callback asli dari POST karangan hanya `signature`, yang dibandingkan dengan signature
- * yang tersimpan saat tagihannya dibuat. Karena itu balasan 200 diberikan juga untuk
- * order yang tidak dikenal: gateway berhenti mengulang, dan penyerang tidak mendapat
- * jawaban yang membocorkan order mana yang ada.
- */
+/** URL ini publik dan tidak bisa dilindungi origin check maupun sesi — yang membedakan callback asli dari POST karangan hanya `signature`, yang dibandingkan dengan signature yang tersimpan saat tagihannya dibuat. Karena itu balasan 200 diberikan juga untuk order yang tidak dikenal: gateway berhenti mengulang, dan penyerang tidak mendapat jawaban yang membocorkan order mana yang ada. */
 export async function POST(request: Request) {
   try {
     const limit = await checkRateLimit(`premium:webhook:${clientIp(request)}`, 120, 60)

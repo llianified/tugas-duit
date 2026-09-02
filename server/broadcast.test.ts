@@ -15,10 +15,7 @@ vi.mock('next/headers', () => ({
   }),
 }))
 
-/**
- * Telegram diganti tiruan supaya uji ini tidak pernah mengirim apa pun ke luar. Yang diuji
- * bukan protokolnya, melainkan siapa yang masuk daftar penerima dan berapa kali.
- */
+/** Telegram diganti tiruan supaya uji ini tidak pernah mengirim apa pun ke luar. Yang diuji bukan protokolnya, melainkan siapa yang masuk daftar penerima dan berapa kali. */
 vi.mock('./telegram', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./telegram')>()),
   sendTelegramMessage: vi.fn(async () => {}),
@@ -77,11 +74,7 @@ const sentCount = async () => {
   return vi.mocked(telegram.sendTelegramMessage).mock.calls.length
 }
 
-/**
- * Menjalankan siaran sampai tuntas, persis seperti admin menekan "Lanjutkan kirim" sampai
- * sisanya nol. Jedanya nol dan anggarannya panjang karena basis user uji menumpuk lintas
- * berkas; yang diuji siapa yang menerima, bukan temponya.
- */
+/** Menjalankan siaran sampai tuntas, persis seperti admin menekan "Lanjutkan kirim" sampai sisanya nol. Jedanya nol dan anggarannya panjang karena basis user uji menumpuk lintas berkas; yang diuji siapa yang menerima, bukan temponya. */
 async function runUntilDone(id: string) {
   const { runBroadcast } = await import('./broadcast')
   let total = { id, sent: 0, failed: 0, remaining: 0, done: false }
@@ -99,11 +92,7 @@ const sentTo = async () => {
 }
 
 describe('SIAR-1 — /stop selalu dihormati', () => {
-  /**
-   * Ini penjagaan yang paling tidak boleh punya jalan memutar. User yang menekan /stop sudah
-   * menjawab, dan siaran yang menembusnya adalah alasan paling langsung sebuah bot
-   * dilaporkan spam — dan bot yang dibekukan Telegram ikut mematikan notifikasi penarikan.
-   */
+  /** Ini penjagaan yang paling tidak boleh punya jalan memutar. User yang menekan /stop sudah menjawab, dan siaran yang menembusnya adalah alasan paling langsung sebuah bot dilaporkan spam — dan bot yang dibekukan Telegram ikut mematikan notifikasi penarikan. */
   it('tidak menghitung maupun mengirimi user yang menekan /stop, di segmen mana pun', async () => {
     await signInAsAdmin()
     const { countBroadcastRecipients, createBroadcast } = await import('./broadcast')
@@ -133,12 +122,7 @@ describe('SIAR-1 — /stop selalu dihormati', () => {
 })
 
 describe('SIAR-2 — klik ganda tidak mengirim dua kali', () => {
-  /**
-   * Penandanya di `bot_notifications` ditulis sebelum kirim dengan `dedupe_key` berisi id
-   * siaran, jadi putaran kedua atas siaran yang sama tidak menemukan penerima yang tersisa.
-   * Tanpa ini, admin yang ragu dan menekan tombolnya lagi mengirim pesan yang sama dua kali
-   * ke seluruh basis user.
-   */
+  /** Penandanya di `bot_notifications` ditulis sebelum kirim dengan `dedupe_key` berisi id siaran, jadi putaran kedua atas siaran yang sama tidak menemukan penerima yang tersisa. Tanpa ini, admin yang ragu dan menekan tombolnya lagi mengirim pesan yang sama dua kali ke seluruh basis user. */
   it('putaran kedua atas siaran yang sama tidak mengirim apa-apa lagi', async () => {
     await signInAsAdmin()
     const { createBroadcast, runBroadcast } = await import('./broadcast')
@@ -157,10 +141,7 @@ describe('SIAR-2 — klik ganda tidak mengirim dua kali', () => {
     expect(await sentCount()).toBe(setelahPertama)
   })
 
-  /**
-   * Sebaliknya: siaran BARU harus tetap menjangkau orang yang sama. Dedupe-nya per siaran,
-   * bukan per user — kalau tidak, siaran kedua tidak akan pernah terkirim ke siapa pun.
-   */
+  /** Sebaliknya: siaran BARU harus tetap menjangkau orang yang sama. Dedupe-nya per siaran, bukan per user — kalau tidak, siaran kedua tidak akan pernah terkirim ke siapa pun. */
   it('siaran baru tetap menjangkau orang yang sudah menerima siaran sebelumnya', async () => {
     await signInAsAdmin()
     const { createBroadcast } = await import('./broadcast')
@@ -231,11 +212,7 @@ describe('SIAR-4 — badan pesan', () => {
     )
   })
 
-  /**
-   * Teks user dikirim sebagai HTML ke Telegram, jadi `<` mentah akan membuat panggilannya
-   * ditolak dengan "can't parse entities" — dan seluruh siaran gagal karena satu kurung
-   * siku di pengumuman.
-   */
+  /** Teks user dikirim sebagai HTML ke Telegram, jadi `<` mentah akan membuat panggilannya ditolak dengan "can't parse entities" — dan seluruh siaran gagal karena satu kurung siku di pengumuman. */
   it('meloloskan karakter HTML di badan pesan tanpa merusak kirimannya', async () => {
     await signInAsAdmin()
     const { createBroadcast } = await import('./broadcast')

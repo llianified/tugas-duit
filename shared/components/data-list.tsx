@@ -16,22 +16,11 @@ export function DataList({
 }: {
   label: string
   badge?: ReactNode
-  /**
-   * Aksi opsional di kanan kepala daftar — tempat yang benar untuk "lihat
-   * selengkapnya", karena ia menempel pada data yang dilanjutkannya alih-alih
-   * berdiri sebagai tombol tersendiri di tempat lain. `badge` tetap didahulukan
-   * agar ringkasan angka tidak terdorong keluar ketika keduanya dipakai.
-   */
+  /** Aksi opsional di kanan kepala daftar — tempat yang benar untuk "lihat selengkapnya", karena ia menempel pada data yang dilanjutkannya alih-alih berdiri sebagai tombol tersendiri di tempat lain. `badge` tetap didahulukan agar ringkasan angka tidak terdorong keluar ketika keduanya dipakai. */
   action?: ReactNode
   children: ReactNode
   ariaLabel?: string
-  /**
-   * Menyembunyikan kepala daftar ketika judulnya cuma mengulang nama layar yang
-   * sudah tertulis di tab aktif — dan menyembunyikannya berarti barisnya HILANG,
-   * bukan dikosongkan: `label-gap-t` ikut dilepas, jadi daftar naik menempel ke
-   * tab tanpa meninggalkan celah setinggi kepala yang dihapus. `label` tetap
-   * wajib karena ia yang menamai section ini bagi pembaca layar.
-   */
+  /** Menyembunyikan kepala daftar ketika judulnya cuma mengulang nama layar yang sudah tertulis di tab aktif — dan menyembunyikannya berarti barisnya HILANG, bukan dikosongkan: `label-gap-t` ikut dilepas, jadi daftar naik menempel ke tab tanpa meninggalkan celah setinggi kepala yang dihapus. `label` tetap wajib karena ia yang menamai section ini bagi pembaca layar. */
   hideLabel?: boolean
 }) {
   return (

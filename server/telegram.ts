@@ -44,12 +44,7 @@ export async function claimInitData(hash: string, authDate: number): Promise<boo
 
 const JOINED_STATUSES = new Set(['creator', 'administrator', 'member', 'restricted'])
 
-/**
- * `null` berarti **tidak bisa dipastikan** — token belum diset, bot belum jadi admin
- * channel, token salah, atau Telegram sedang tidak menjawab. Dibedakan dari `false` supaya pemanggilnya tidak
- * pernah menerjemahkan kegagalan pemeriksaan menjadi "user tidak join", dan sebaliknya
- * tidak pernah memberi bonus atas dasar tebakan.
- */
+/** `null` berarti **tidak bisa dipastikan** — token belum diset, bot belum jadi admin channel, token salah, atau Telegram sedang tidak menjawab. Dibedakan dari `false` supaya pemanggilnya tidak pernah menerjemahkan kegagalan pemeriksaan menjadi "user tidak join", dan sebaliknya tidak pernah memberi bonus atas dasar tebakan. */
 export async function readChannelMembership(telegramId: string): Promise<boolean | null> {
   const token = env.botTokenOrNull
   if (!token) return null

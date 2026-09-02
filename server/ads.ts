@@ -68,13 +68,7 @@ async function readState(userId: number, tx?: PoolClient) {
 export interface AdsSessionState {
   /** Tiket iklan berhadiah: tombol opt-in yang membayar ongkos masuk satu task. */
   enabled: boolean
-  /**
-   * Interstitial otomatis yang nongol sendiri tanpa diminta. Dipisah dari `enabled`
-   * karena premium hanya membeli ketenangan, bukan penghapusan jalan keluar: yang
-   * dimatikan cuma iklan yang mengganggu, sementara tiket berhadiah tetap ada supaya
-   * user premium yang energinya habis masih punya pilihan — dan impresi berhadiah itu
-   * tetap terhitung sebagai pemasukan.
-   */
+  /** Interstitial otomatis yang nongol sendiri tanpa diminta. Dipisah dari `enabled` karena premium hanya membeli ketenangan, bukan penghapusan jalan keluar: yang dimatikan cuma iklan yang mengganggu, sementara tiket berhadiah tetap ada supaya user premium yang energinya habis masih punya pilihan — dan impresi berhadiah itu tetap terhitung sebagai pemasukan. */
   inAppEnabled: boolean
   provider: AdProvider | null
   unitId: string | null
@@ -93,12 +87,7 @@ const ADS_OFF: AdsSessionState = {
   pass: null,
 }
 
-/**
- * Premium mematikan interstitial otomatis saja (`inAppEnabled: false`). Tiket berhadiah
- * sengaja tetap hidup untuk premium: ia tidak pernah muncul sendiri, hanya dirender
- * sebagai tombol saat user butuh task tambahan, jadi tidak melanggar janji "bebas iklan
- * yang ganggu" tapi tetap menjaga impresi yang membayari reward pool.
- */
+/** Premium mematikan interstitial otomatis saja (`inAppEnabled: false`). Tiket berhadiah sengaja tetap hidup untuk premium: ia tidak pernah muncul sendiri, hanya dirender sebagai tombol saat user butuh task tambahan, jadi tidak melanggar janji "bebas iklan yang ganggu" tapi tetap menjaga impresi yang membayari reward pool. */
 export async function readAdsState(userId: number): Promise<AdsSessionState> {
   const resolved = resolveAdProvider()
   const enabled = Boolean(resolved) && adsConfigured()
@@ -107,14 +96,7 @@ export async function readAdsState(userId: number): Promise<AdsSessionState> {
   const state = await readState(userId)
   return {
     enabled: true,
-    /**
-     * Interstitial otomatis dimatikan di preview (`isPreviewShell()`, jadi suite tes
-     * tetap memakai perilaku produksi). Iframe preview tidak
-     * bisa dipakai Monetag — kreatifnya butuh jendela pihak ketiga — jadi yang tersisa
-     * hanya overlay hitam yang menutupi UI dan `show_<zone>()` yang reject terus.
-     * Tiket berhadiah (`enabled`) sengaja tetap hidup: itu opt-in dan jalur "Iklan"-nya
-     * masih perlu bisa diuji. Produksi tidak berubah.
-     */
+    /** Interstitial otomatis dimatikan di preview (`isPreviewShell()`, jadi suite tes tetap memakai perilaku produksi). Iframe preview tidak bisa dipakai Monetag — kreatifnya butuh jendela pihak ketiga — jadi yang tersisa hanya overlay hitam yang menutupi UI dan `show_<zone>()` yang reject terus. Tiket berhadiah (`enabled`) sengaja tetap hidup: itu opt-in dan jalur "Iklan"-nya masih perlu bisa diuji. Produksi tidak berubah. */
     inAppEnabled: !premium && !isPreviewShell(),
     provider: resolved.provider,
     unitId: resolved.unitId,

@@ -24,11 +24,7 @@ type PoolRow = {
 const POOL_SELECT =
   'select reward_pool, reward_pool_updated_at, premium_until, now() as now from users where id=$1'
 
-/**
- * Kapasitas dibaca terpisah dari stoknya karena ia bukan milik user, melainkan turunan rank
- * dan streak. Dua query, bukan satu: baris `users` perlu dikunci `for update` saat belanja,
- * dan `for update` tidak bisa hidup satu query dengan agregat penghitung rank.
- */
+/** Kapasitas dibaca terpisah dari stoknya karena ia bukan milik user, melainkan turunan rank dan streak. Dua query, bukan satu: baris `users` perlu dikunci `for update` saat belanja, dan `for update` tidak bisa hidup satu query dengan agregat penghitung rank. */
 const CAPACITY_SQL = `with active_days as (
     select distinct (completed_at at time zone 'Asia/Jakarta')::date as day
       from task_completions where user_id=$1
@@ -92,10 +88,7 @@ function emptyView(capacity: number): RewardPoolView {
   return { ...projectRewardPool({ credits: 0, updatedAt: now }, capacity, now), now }
 }
 
-/**
- * Membayar sebanyak yang tersisa, tidak pernah lebih: reward yang lebih besar dari sisa kolam
- * dipotong, bukan ditolak, supaya task terakhir sebelum kolam kosong tetap dibayar sebagian.
- */
+/** Membayar sebanyak yang tersisa, tidak pernah lebih: reward yang lebih besar dari sisa kolam dipotong, bukan ditolak, supaya task terakhir sebelum kolam kosong tetap dibayar sebagian. */
 export async function spendRewardPool(
   tx: PoolClient,
   userId: number,
@@ -118,15 +111,7 @@ export async function spendRewardPool(
   return { paid: change.paid, state: { ...change.state, now } }
 }
 
-/**
- * Mengisi kembali kolam seorang user, dijepit di kapasitasnya. Dipakai panel admin untuk
- * memulihkan user yang dirugikan gangguan — tanpa ini satu-satunya obat adalah koreksi
- * saldo, yang mencetak credit alih-alih mengembalikan kesempatan menghasilkannya.
- *
- * Bentuknya mengikuti `spendRewardPool`: kapasitas dibaca terpisah, baris `users` dikunci
- * `for update`, dan jam acuan regen digeser lewat `applyRewardPoolRefund` supaya menit
- * yang belum genap tidak hangus.
- */
+/** Mengisi kembali kolam seorang user, dijepit di kapasitasnya. Dipakai panel admin untuk memulihkan user yang dirugikan gangguan — tanpa ini satu-satunya obat adalah koreksi saldo, yang mencetak credit alih-alih mengembalikan kesempatan menghasilkannya. Bentuknya mengikuti `spendRewardPool`: kapasitas dibaca terpisah, baris `users` dikunci `for update`, dan jam acuan regen digeser lewat `applyRewardPoolRefund` supaya menit yang belum genap tidak hangus. */
 export async function refillRewardPool(
   tx: PoolClient,
   userId: number,

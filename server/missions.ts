@@ -13,14 +13,7 @@ import { query, transaction } from './db'
 
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
 
-/**
- * Ketiga penghitung dibaca dari sumber aslinya, bukan dari kolom penghitung sendiri.
- *
- * `ads` menghitung tiket yang `ready_at`-nya terisi — yaitu iklan yang benar-benar
- * selesai ditonton — bukan tiket yang dibuka. Bentuk yang sama dipakai `views_today` di
- * `server/ads.ts`, jadi angka yang dilihat user di kartu misi dan di jatah iklannya
- * tidak akan pernah berselisih.
- */
+/** Ketiga penghitung dibaca dari sumber aslinya, bukan dari kolom penghitung sendiri. `ads` menghitung tiket yang `ready_at`-nya terisi — yaitu iklan yang benar-benar selesai ditonton — bukan tiket yang dibuka. Bentuk yang sama dipakai `views_today` di `server/ads.ts`, jadi angka yang dilihat user di kartu misi dan di jatah iklannya tidak akan pernah berselisih. */
 const COUNTS_SQL = `select
     (select count(*) from task_completions
       where user_id=$1 and (completed_at at time zone 'Asia/Jakarta')::date = ${TODAY})::int
@@ -67,19 +60,7 @@ export type MissionClaimResult =
 
 const PG_UNIQUE_VIOLATION = '23505'
 
-/**
- * Energi yang diberikan melewati kapasitas akan hangus tanpa jejak — `applyEnergyGrant`
- * memotong di `maxEnergy()`, persis alasan `docs/keputusan-desain.md` menolak energi sebagai
- * hadiah iklan. Di sini kerugian diam-diam itu ditolak lebih dulu: misinya tetap bisa diklaim
- * nanti, dan user diberi tahu kenapa sekarang belum bisa.
- *
- * Yang diperiksa adalah apakah hadiahnya muat SELURUHNYA, bukan sekadar apakah energinya
- * sudah penuh. Penjagaan "penuh" saja meloloskan potongan sebagian: pada 4 dari 5 energi,
- * misi berhadiah 3 hanya menambah 1, sementara klien tetap diberi tahu 3 dan
- * `mission_claims.energy_granted` ikut menyimpan 3 — padahal migrasi `0031` mensyaratkan
- * kolom itu mencatat yang benar-benar diberikan. Klaimnya pun habis untuk hari itu, jadi
- * dua credit energi hilang tanpa ada yang menyebutnya.
- */
+/** Energi yang diberikan melewati kapasitas akan hangus tanpa jejak — `applyEnergyGrant` memotong di `maxEnergy()`, persis alasan `docs/keputusan-desain.md` menolak energi sebagai hadiah iklan. Di sini kerugian diam-diam itu ditolak lebih dulu: misinya tetap bisa diklaim nanti, dan user diberi tahu kenapa sekarang belum bisa. Yang diperiksa adalah apakah hadiahnya muat SELURUHNYA, bukan sekadar apakah energinya sudah penuh. Penjagaan "penuh" saja meloloskan potongan sebagian: pada 4 dari 5 energi, misi berhadiah 3 hanya menambah 1, sementara klien tetap diberi tahu 3 dan `mission_claims.energy_granted` ikut menyimpan 3 — padahal migrasi `0031` mensyaratkan kolom itu mencatat yang benar-benar diberikan. Klaimnya pun habis untuk hari itu, jadi dua credit energi hilang tanpa ada yang menyebutnya. */
 export async function claimMission(
   userId: number,
   key: string,

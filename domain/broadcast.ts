@@ -1,11 +1,4 @@
-/**
- * Bentuk siaran: segmen yang tersedia dan batas panjang pesannya. Aturan murni, tanpa I/O.
- *
- * Berdiri di `domain/` dan bukan di `server/broadcast.ts` karena penyusun pesannya adalah
- * komponen klien: mengimpornya dari `server/` akan menyeret `db`, `next/headers`, dan klien
- * Telegram ke dalam bundel browser. Yang tinggal di `server/` adalah query dan pengirimannya
- * — hal-hal yang memang tidak boleh ada di klien.
- */
+/** Bentuk siaran: segmen yang tersedia dan batas panjang pesannya. Aturan murni, tanpa I/O. Berdiri di `domain/` dan bukan di `server/broadcast.ts` karena penyusun pesannya adalah komponen klien: mengimpornya dari `server/` akan menyeret `db`, `next/headers`, dan klien Telegram ke dalam bundel browser. Yang tinggal di `server/` adalah query dan pengirimannya — hal-hal yang memang tidak boleh ada di klien. */
 
 export type BroadcastSegment =
   | 'semua'

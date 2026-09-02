@@ -5,12 +5,7 @@ import type { PremiumState } from '@/shell/session-api'
 import { GlyphCheck, GlyphChevron, GlyphCrown } from '@/shared/components/glyph'
 import { formatCredits, formatRupiah, formatShortDate } from '@/shared/lib/format'
 
-/**
- * Bentuknya perangko — gigi perforasi di keempat tepi, bingkai cetak di dalam,
- * harga di posisi nominal. Alasannya ada di `.premium-stamp` (globals.css):
- * premium dibeli pada nominal tercetak lalu ditempel supaya kelihatan orang
- * lain, dan itu persis cara kerja perangko.
- */
+/** Bentuknya perangko — gigi perforasi di keempat tepi, bingkai cetak di dalam, harga di posisi nominal. Alasannya ada di `.premium-stamp` (globals.css): premium dibeli pada nominal tercetak lalu ditempel supaya kelihatan orang lain, dan itu persis cara kerja perangko. */
 export function PremiumCard({
   premium,
   onOpen,
@@ -44,12 +39,7 @@ function PremiumUpsellStamp({
   )
   const bestValue = premium.plans.find((plan) => plan.best && plan.savingPercent > 0) ?? null
 
-  /**
-   * Mahkota dilepas dari daftar, bukan diambil dua kali. `premiumBenefitList`
-   * menaruhnya di urutan pertama justru supaya ia jadi kalimat utama di sini —
-   * versi sebelumnya memakai tiga teratas apa adanya, jadi baris pertama daftar
-   * cuma mengulang kalimat yang persis di atasnya.
-   */
+  /** Mahkota dilepas dari daftar, bukan diambil dua kali. `premiumBenefitList` menaruhnya di urutan pertama justru supaya ia jadi kalimat utama di sini — versi sebelumnya memakai tiga teratas apa adanya, jadi baris pertama daftar cuma mengulang kalimat yang persis di atasnya. */
   const [, ...others] = premiumBenefitList(premium.perks)
   const printed = others.slice(0, 2)
 
@@ -61,8 +51,7 @@ function PremiumUpsellStamp({
       className="focus-ring transition-ui press-scale-soft block w-full text-left"
     >
       <span className="premium-stamp">
-        {/* Nominal perangko: harga di sudut kanan atas, ukuran yang sama dengan
-            angka nominal di kupon bonus — dua kertas, satu tinggi angka. */}
+        {/* Nominal perangko: harga di sudut kanan atas, ukuran yang sama dengan angka nominal di kupon bonus — dua kertas, satu tinggi angka. */}
         <span className="flex items-start justify-between gap-3">
           <span className="home-tag premium-stamp-tag pt-1">Premium</span>
           <span className="flex flex-col items-end gap-1">
@@ -103,13 +92,7 @@ function PremiumUpsellStamp({
 }
 
 function PremiumActiveStamp({ premium }: { premium: PremiumState }) {
-  /**
-     * Mahkota dilepas dari chip dengan alasan yang sama seperti di kartu upsell:
-     * ia sudah jadi kalimat utama di atas. Sisanya dipotong dua, bukan tiga —
-     * judul chip di sini panjang-panjang, jadi tiap chip memakan satu baris
-     * penuh di 384px dan yang ketiga membayar setinggi baris untuk perk yang
-     * daftar lengkapnya toh ada di dialog.
-     */
+  /** Mahkota dilepas dari chip dengan alasan yang sama seperti di kartu upsell: ia sudah jadi kalimat utama di atas. Sisanya dipotong dua, bukan tiga — judul chip di sini panjang-panjang, jadi tiap chip memakan satu baris penuh di 384px dan yang ketiga membayar setinggi baris untuk perk yang daftar lengkapnya toh ada di dialog. */
   const [, ...others] = premiumBenefitList(premium.perks)
   const benefits = others.slice(0, 2)
 

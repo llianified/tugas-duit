@@ -13,22 +13,7 @@ export interface HistoryCursor {
 
 const CURSOR_TIME_SHAPE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/
 
-/**
- * Cursor menyimpan waktunya sebagai teks ber-mikrodetik, bukan milidetik.
- *
- * `pg` mengembalikan `timestamptz` sebagai `Date`, yang cuma bermilidetik, sedangkan `now()`
- * menulis mikrodetik. Cursor berbasis `getTime()` karena itu dibulatkan ke bawah, dan
- * perbandingan `(completed_at, id) < ($2, $3)` ikut menggeser batasnya: baris yang jatuh di
- * dalam milidetik yang sama tapi sub-milidetik lebih awal — dengan id lebih besar — tidak
- * pernah muncul di halaman berikutnya. Riwayat task-nya hilang diam-diam, dan tidak ada yang
- * bisa melihatnya kecuali dua task selesai dalam milidetik yang sama.
- *
- * Waktunya dibaca ulang dari database sebagai teks supaya tidak pernah melewati `Date`, dan
- * dikirim balik sebagai `timestamptz` sehingga `task_completions_user_completed_idx` tetap
- * terpakai.
- *
- * Id ditaruh di depan karena ISO-nya sendiri mengandung titik dua.
- */
+/** Cursor menyimpan waktunya sebagai teks ber-mikrodetik, bukan milidetik. `pg` mengembalikan `timestamptz` sebagai `Date`, yang cuma bermilidetik, sedangkan `now()` menulis mikrodetik. Cursor berbasis `getTime()` karena itu dibulatkan ke bawah, dan perbandingan `(completed_at, id) < ($2, $3)` ikut menggeser batasnya: baris yang jatuh di dalam milidetik yang sama tapi sub-milidetik lebih awal — dengan id lebih besar — tidak pernah muncul di halaman berikutnya. Riwayat task-nya hilang diam-diam, dan tidak ada yang bisa melihatnya kecuali dua task selesai dalam milidetik yang sama. Waktunya dibaca ulang dari database sebagai teks supaya tidak pernah melewati `Date`, dan dikirim balik sebagai `timestamptz` sehingga `task_completions_user_completed_idx` tetap terpakai. Id ditaruh di depan karena ISO-nya sendiri mengandung titik dua. */
 export function parseHistoryCursor(raw: string | null): HistoryCursor | null {
   if (!raw) return null
   const separator = raw.indexOf(':')

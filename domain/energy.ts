@@ -99,15 +99,7 @@ export function secondsUntil(target: number | null, now: number): number | null 
   return Math.max(0, Math.ceil((target - now) / 1000))
 }
 
-/**
- * Bentuk energi yang dipakai UI, bukan angka mentah.
- *
- * `fraction` ada supaya meter energi bisa bergerak setiap detik walaupun satu
- * energi baru genap belasan menit sekali: bar yang naik pelan terasa seperti
- * sedang terisi, sedangkan angka yang menghitung turun terasa seperti dinding.
- * `secondsToFull` menggantikan hitungan "+1 sekian menit" — user butuh tahu
- * kapan stoknya utuh lagi, bukan kapan satu butir berikutnya jatuh.
- */
+/** Bentuk energi yang dipakai UI, bukan angka mentah. `fraction` ada supaya meter energi bisa bergerak setiap detik walaupun satu energi baru genap belasan menit sekali: bar yang naik pelan terasa seperti sedang terisi, sedangkan angka yang menghitung turun terasa seperti dinding. `secondsToFull` menggantikan hitungan "+1 sekian menit" — user butuh tahu kapan stoknya utuh lagi, bukan kapan satu butir berikutnya jatuh. */
 export interface EnergyFill {
   /** Detik sampai energi kembali penuh. `null` kalau sudah penuh. */
   secondsToFull: number | null

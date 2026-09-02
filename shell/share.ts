@@ -12,25 +12,7 @@ function telegramWebApp(): TelegramShareWebApp | undefined {
 
 export type ShareOutcome = 'shared' | 'copied' | 'dismissed' | 'failed'
 
-/**
- * Tiga jalur berbagi, dicoba berurutan, karena tidak ada satu pun yang tersedia di semua
- * tempat aplikasi ini dibuka.
- *
- * 1. `navigator.share` — satu-satunya yang bisa menembus ke luar Telegram (WhatsApp,
- *    Instagram, TikTok). Inilah yang sebenarnya dibutuhkan: tautan referral yang tidak
- *    pernah keluar dari Telegram cuma beredar di antara orang yang sudah memakai app ini.
- *    Tidak ada di WebView iOS lama dan di desktop tanpa dukungan, jadi tidak bisa berdiri
- *    sendiri.
- * 2. `openTelegramLink` ke `t.me/share/url` — lembar berbagi milik Telegram sendiri
- *    (chat, channel, Stories). Selalu ada di dalam Mini App, tapi hanya menjangkau
- *    Telegram.
- * 3. Papan klip — bukan berbagi, tapi lebih baik daripada tombol yang tidak melakukan
- *    apa pun. Pemanggil memakai nilai balik `copied` untuk mengubah labelnya.
- *
- * `AbortError` dari `navigator.share` berarti user menutup lembarnya sendiri. Itu bukan
- * kegagalan dan tidak boleh jatuh ke jalur berikutnya — memaksa lembar Telegram terbuka
- * setelah user baru saja membatalkan justru terasa seperti aplikasi yang tidak mendengar.
- */
+/** Tiga jalur berbagi, dicoba berurutan, karena tidak ada satu pun yang tersedia di semua tempat aplikasi ini dibuka. 1. `navigator.share` — satu-satunya yang bisa menembus ke luar Telegram (WhatsApp, Instagram, TikTok). Inilah yang sebenarnya dibutuhkan: tautan referral yang tidak pernah keluar dari Telegram cuma beredar di antara orang yang sudah memakai app ini. Tidak ada di WebView iOS lama dan di desktop tanpa dukungan, jadi tidak bisa berdiri sendiri. 2. `openTelegramLink` ke `t.me/share/url` — lembar berbagi milik Telegram sendiri (chat, channel, Stories). Selalu ada di dalam Mini App, tapi hanya menjangkau Telegram. 3. Papan klip — bukan berbagi, tapi lebih baik daripada tombol yang tidak melakukan apa pun. Pemanggil memakai nilai balik `copied` untuk mengubah labelnya. `AbortError` dari `navigator.share` berarti user menutup lembarnya sendiri. Itu bukan kegagalan dan tidak boleh jatuh ke jalur berikutnya — memaksa lembar Telegram terbuka setelah user baru saja membatalkan justru terasa seperti aplikasi yang tidak mendengar. */
 export async function shareLink(input: {
   url: string
   text: string

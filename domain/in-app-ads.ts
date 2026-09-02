@@ -1,11 +1,4 @@
-/**
- * Konfigurasi native In-App Interstitial Monetag.
- *
- * Satu panggilan `show_<zone>({ type: 'inApp', inAppSettings })` mendaftarkan
- * penjadwal otomatis di SDK. Pemanggil tidak boleh menambahkan timer tayang sendiri atau
- * memanggil payload ini berulang-ulang dalam dokumen yang sama, karena setiap panggilan
- * dapat membuat penjadwal native tambahan.
- */
+/** Konfigurasi native In-App Interstitial Monetag. Satu panggilan `show_<zone>({ type: 'inApp', inAppSettings })` mendaftarkan penjadwal otomatis di SDK. Pemanggil tidak boleh menambahkan timer tayang sendiri atau memanggil payload ini berulang-ulang dalam dokumen yang sama, karena setiap panggilan dapat membuat penjadwal native tambahan. */
 
 export interface InAppAdsSettings {
   /** Banyak iklan yang ditayangkan dalam satu jendela capping. */
@@ -29,10 +22,7 @@ export const DEFAULT_IN_APP_ADS_SETTINGS: InAppAdsSettings = {
   everyPage: false,
 }
 
-/**
- * Jadwal aktif berasal dari config ekonomi. Capping disimpan sebagai menit di panel
- * admin, lalu diubah ke jam karena SDK Monetag membaca `capping` dalam satuan jam.
- */
+/** Jadwal aktif berasal dari config ekonomi. Capping disimpan sebagai menit di panel admin, lalu diubah ke jam karena SDK Monetag membaca `capping` dalam satuan jam. */
 export function inAppAdsSettings(config: {
   inAppAdsFrequency: number
   inAppAdsCappingMinutes: number
@@ -59,10 +49,7 @@ export interface InAppShowParams {
   }
 }
 
-/**
- * Payload ini sengaja selalu memuat `type: 'inApp'`. Tanpa discriminator tersebut,
- * Monetag menganggap `show_<zone>()` sebagai Rewarded Interstitial.
- */
+/** Payload ini sengaja selalu memuat `type: 'inApp'`. Tanpa discriminator tersebut, Monetag menganggap `show_<zone>()` sebagai Rewarded Interstitial. */
 export function inAppShowParams(settings: InAppAdsSettings): InAppShowParams {
   return {
     type: 'inApp',

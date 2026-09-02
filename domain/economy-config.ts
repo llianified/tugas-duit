@@ -532,21 +532,7 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
 
 export type EconomyValidationErrors = Partial<Record<EconomyConfigKey, string>> & { _?: string }
 
-/**
- * `fillMissing` HANYA untuk baris yang dibaca dari database, tidak pernah untuk masukan
- * admin.
- *
- * Menambah satu key baru di kode berarti ada jendela — antara deploy dan migrasi yang
- * mengisi key itu — ketika baris tersimpan belum memilikinya. Tanpa toleransi ini,
- * jendela tersebut mematikan SELURUH API: `loadEconomyConfig` dipanggil hampir setiap
- * route, dan satu key yang hilang membuat baris utuh ditolak. Itu persis yang terjadi
- * saat `withdrawalMinActiveReferrals` masuk, dan bentuk kegagalan yang sama sudah pernah
- * merobohkan produksi lewat migrasi 0027.
- *
- * Yang ditoleransi hanya key yang benar-benar TIDAK ADA. Key yang ada tapi bukan bilangan
- * bulat, atau di luar rentangnya, tetap menggagalkan baris — penjagaan itu yang menangkap
- * konfigurasi rusak, dan tidak boleh ikut dilonggarkan.
- */
+/** `fillMissing` HANYA untuk baris yang dibaca dari database, tidak pernah untuk masukan admin. Menambah satu key baru di kode berarti ada jendela — antara deploy dan migrasi yang mengisi key itu — ketika baris tersimpan belum memilikinya. Tanpa toleransi ini, jendela tersebut mematikan SELURUH API: `loadEconomyConfig` dipanggil hampir setiap route, dan satu key yang hilang membuat baris utuh ditolak. Itu persis yang terjadi saat `withdrawalMinActiveReferrals` masuk, dan bentuk kegagalan yang sama sudah pernah merobohkan produksi lewat migrasi 0027. Yang ditoleransi hanya key yang benar-benar TIDAK ADA. Key yang ada tapi bukan bilangan bulat, atau di luar rentangnya, tetap menggagalkan baris — penjagaan itu yang menangkap konfigurasi rusak, dan tidak boleh ikut dilonggarkan. */
 export function validateEconomyConfig(
   input: unknown,
   options: { fillMissing?: boolean } = {},
@@ -631,12 +617,7 @@ export function validateEconomyConfig(
     }
   }
 
-  /**
-   * Jadwal interstitial harus muat di jendelanya sendiri. Kalau tunda iklan pertama plus
-   * jeda antar iklan melampaui panjang jendela, jendela sudah bergulir sebelum iklan
-   * terakhir sempat tayang — plafon `inAppAdsFrequency` jadi angka yang tidak pernah
-   * tercapai, dan admin tidak punya cara melihat bahwa impresinya hilang di situ.
-   */
+  /** Jadwal interstitial harus muat di jendelanya sendiri. Kalau tunda iklan pertama plus jeda antar iklan melampaui panjang jendela, jendela sudah bergulir sebelum iklan terakhir sempat tayang — plafon `inAppAdsFrequency` jadi angka yang tidak pernah tercapai, dan admin tidak punya cara melihat bahwa impresinya hilang di situ. */
   if (config.inAppAdsFrequency > 0) {
     const needed =
       config.inAppAdsTimeoutSeconds +
@@ -663,12 +644,7 @@ export function validateEconomyConfig(
       `Regen energi premium tidak boleh lebih lambat daripada regen biasa (${config.energyRegenMinutes} menit).`
   }
 
-  /**
-   * Hadiah misi harus muat di kapasitas energi biasa, bukan premium: `claimMission` menolak
-   * klaim yang hadiahnya terpotong, jadi hadiah yang lebih besar dari kapasitas membuat
-   * misinya tidak pernah bisa diambil user non-premium — gagal diam-diam, karena yang
-   * terlihat cuma tombol klaim yang selalu menolak.
-   */
+  /** Hadiah misi harus muat di kapasitas energi biasa, bukan premium: `claimMission` menolak klaim yang hadiahnya terpotong, jadi hadiah yang lebih besar dari kapasitas membuat misinya tidak pernah bisa diambil user non-premium — gagal diam-diam, karena yang terlihat cuma tombol klaim yang selalu menolak. */
   const missionRewards: [EconomyConfigKey, string][] = [
     ['missionTasksReward', 'Selesaikan task'],
     ['missionStarsReward', 'Task bintang tiga'],

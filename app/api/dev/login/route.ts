@@ -31,13 +31,7 @@ export async function POST(request: Request) {
     if (user.banned_at) return new Response(null, { status: 403 })
 
     const token = await createSession(Number(user.id), 'dev-preview')
-    /**
-     * Token dikembalikan ke klien supaya preview tetap punya sesi walau cookie-nya
-     * dibuang browser — preview selalu dibingkai situs lain, jadi cookie sesinya
-     * adalah cookie pihak ketiga. Route ini sudah 404 kalau bukan preview
-     * (`isPreviewDb()` di atas), dan `previewSessionToken` menolak lagi di produksi,
-     * jadi tidak ada jalan token ini bocor ke deploy sungguhan.
-     */
+    /** Token dikembalikan ke klien supaya preview tetap punya sesi walau cookie-nya dibuang browser — preview selalu dibingkai situs lain, jadi cookie sesinya adalah cookie pihak ketiga. Route ini sudah 404 kalau bukan preview (`isPreviewDb()` di atas), dan `previewSessionToken` menolak lagi di produksi, jadi tidak ada jalan token ini bocor ke deploy sungguhan. */
     return Response.json({ token: previewSessionToken(token) })
   } catch (error) {
     return handleRouteError(error)

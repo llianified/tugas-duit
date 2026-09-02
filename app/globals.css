@@ -109,8 +109,7 @@
   --foreground: #f4f4f5;
   --card: #18181d;
   --primary: #4f56f2;
-  /* Aksennya kini jauh lebih pekat dari periwinkle lama, jadi label gelap tidak
-     lagi lolos: teks di atas bidang aksen memakai putih. */
+  /* Aksennya kini jauh lebih pekat dari periwinkle lama, jadi label gelap tidak lagi lolos: teks di atas bidang aksen memakai putih. */
   --primary-foreground: #ffffff;
   --primary-hover: #666cf5;
   --primary-active: #3f45d9;
@@ -118,9 +117,7 @@
   --muted-foreground: #a1a1aa;
   --destructive: #f87171;
   --border: #2c2c34;
-  /* Cincin fokus tergambar di atas latar gelap, bukan di atas bidang aksen,
-     jadi ia memakai nada terang yang sama dengan `--chip-fg-primary` — biru
-     pekat `--primary` tak cukup terbaca sebagai garis 2px di atas #101014. */
+  /* Cincin fokus tergambar di atas latar gelap, bukan di atas bidang aksen, jadi ia memakai nada terang yang sama dengan `--chip-fg-primary` — biru pekat `--primary` tak cukup terbaca sebagai garis 2px di atas #101014. */
   --ring: #9095ff;
   --success: #4ade80;
   --star: #facc15;
@@ -128,112 +125,49 @@
   --scrim: oklch(0 0 0 / 0.62);
   --hero-band: #08080b;
   --hero-curve: 1.5rem;
-  /* Sudut kartu & kontrol untuk SELURUH app.
-     Nilainya dulu hidup di `.home-skin` — beranda memangkas sudutnya supaya
-     kapsul 1.25rem tidak berdiri di dalam karcis yang sudutnya digunting lurus —
-     dan sisa app masih memakai 0.875rem/1.25rem. Dua keluarga bentuk di satu
-     aplikasi, dan yang terlihat justru bahwa halaman lain "belum diurus". Jadi
-     bentuk beranda yang menang dan pindah ke sini.
-
-     Yang TIDAK ikut ke sini, dan itu disengaja: `--radius-bubble` dan radius
-     island yang diturunkan dari `--brand-pill-h`. Island atas disamakan dengan
-     komponen fullscreen Telegram, bukan dengan kartu — memaksanya ikut token ini
-     akan memutus kesamaan yang justru sedang dijaga. */
+  /* Sudut kartu & kontrol untuk SELURUH app. Nilainya dulu hidup di `.home-skin` — beranda memangkas sudutnya supaya kapsul 1.25rem tidak berdiri di dalam karcis yang sudutnya digunting lurus — dan sisa app masih memakai 0.875rem/1.25rem. Dua keluarga bentuk di satu aplikasi, dan yang terlihat justru bahwa halaman lain "belum diurus". Jadi bentuk beranda yang menang dan pindah ke sini. Yang TIDAK ikut ke sini, dan itu disengaja: `--radius-bubble` dan radius island yang diturunkan dari `--brand-pill-h`. Island atas disamakan dengan komponen fullscreen Telegram, bukan dengan kartu — memaksanya ikut token ini akan memutus kesamaan yang justru sedang dijaga. */
   --radius: 0.5rem;
   --cta-radius: 0.625rem;
-  /* Gaya tombol fomo: tombol solid biasa, bukan pelat neobrutal. Yang membuatnya
-     terasa "kaca" hanyalah hairline 1px di setengah atas tepinya — `inset`,
-     tanpa cincin penuh dan tanpa bayangan yang jatuh ke luar. */
-  /* Di permukaan gelap hairline-nya TERANG (gelap tak bisa lebih gelap). Cincin
-     penuhnya sudah dibuang di `.btn-glass`, jadi yang tersisa hanya kilau
-     setengah atas ini. */
+  /* Gaya tombol fomo: tombol solid biasa, bukan pelat neobrutal. Yang membuatnya terasa "kaca" hanyalah hairline 1px di setengah atas tepinya — `inset`, tanpa cincin penuh dan tanpa bayangan yang jatuh ke luar. */
+  /* Di permukaan gelap hairline-nya TERANG (gelap tak bisa lebih gelap). Cincin penuhnya sudah dibuang di `.btn-glass`, jadi yang tersisa hanya kilau setengah atas ini. */
   --bevel-sheen: color-mix(in oklab, white 11%, transparent);
-  /* Kilau untuk bidang AKSEN (`.btn-glass` di atas `bg-primary`). Persentasenya
-     jauh lebih besar dari `--bevel-sheen` bukan karena mau tampak lebih tebal —
-     targetnya justru SAMA — tapi karena putih 11% tak berarti apa-apa di atas
-     warna yang sudah terang.
-
-     Angkanya dihitung, bukan dikira, dan ikut berubah tiap kali `--primary`
-     berubah. Sekarang `--primary` itu rgb(79,86,242) dengan kecerahan OKLab
-     L = 0.547 — jauh lebih pekat dari periwinkle lama, jadi putih tak lagi
-     mentok di kanal biru dan tak perlu setebal dulu. Di bidang tenang
-     rgb(35,35,41) putih 11% mengangkat L sebesar 0.096; untuk kenaikan yang
-     sama di atas aksen kini cukup 21% (0.547 + 0.21 x 0.453 = 0.643).
-
-     Jadi kedua tombol punya kilau yang setara di MATA, bukan setara di angka
-     alfa — dan tepinya tetap terbaca biru muda, bukan putih. */
+  /* Kilau untuk bidang AKSEN (`.btn-glass` di atas `bg-primary`). Persentasenya jauh lebih besar dari `--bevel-sheen` bukan karena mau tampak lebih tebal — targetnya justru SAMA — tapi karena putih 11% tak berarti apa-apa di atas warna yang sudah terang. Angkanya dihitung, bukan dikira, dan ikut berubah tiap kali `--primary` berubah. Sekarang `--primary` itu rgb(79,86,242) dengan kecerahan OKLab L = 0.547 — jauh lebih pekat dari periwinkle lama, jadi putih tak lagi mentok di kanal biru dan tak perlu setebal dulu. Di bidang tenang rgb(35,35,41) putih 11% mengangkat L sebesar 0.096; untuk kenaikan yang sama di atas aksen kini cukup 21% (0.547 + 0.21 x 0.453 = 0.643). Jadi kedua tombol punya kilau yang setara di MATA, bukan setara di angka alfa — dan tepinya tetap terbaca biru muda, bukan putih. */
   --bevel-sheen-accent: color-mix(in oklab, white 21%, transparent);
-  /* Bidang tombol tenang (`.btn-glass-quiet`). Token sendiri, BUKAN `--card`
-     langsung: `--card` (#18181d) cuma 8 poin di atas latar (#101014), jadi begitu
-     cincin luarnya dibuang tombol tenang ikut tenggelam. Bidangnya diangkat ke
-     nada `--muted`, sementara kartu tetap #18181d. */
+  /* Bidang tombol tenang (`.btn-glass-quiet`). Token sendiri, BUKAN `--card` langsung: `--card` (#18181d) cuma 8 poin di atas latar (#101014), jadi begitu cincin luarnya dibuang tombol tenang ikut tenggelam. Bidangnya diangkat ke nada `--muted`, sementara kartu tetap #18181d. */
   --btn-quiet-surface: #232329;
-  /* Alas track segmented (wadah di belakang deretan tab). Sengaja LEBIH GELAP
-     dari bidang tab aktif, bukan senada dengannya: track dulu memakai `--muted`
-     sementara tab aktifnya memakai `--btn-quiet-surface`, dan keduanya bernilai
-     #232329 — jadi tab aktif lenyap total di dalam wadahnya dan yang tersisa
-     hanya hairline `--bevel-sheen`. Nilainya ditaruh di bawah `--card` supaya
-     tangga elevasinya terbaca satu arah: track < kartu < tab aktif. */
+  /* Alas track segmented (wadah di belakang deretan tab). Sengaja LEBIH GELAP dari bidang tab aktif, bukan senada dengannya: track dulu memakai `--muted` sementara tab aktifnya memakai `--btn-quiet-surface`, dan keduanya bernilai #232329 — jadi tab aktif lenyap total di dalam wadahnya dan yang tersisa hanya hairline `--bevel-sheen`. Nilainya ditaruh di bawah `--card` supaya tangga elevasinya terbaca satu arah: track < kartu < tab aktif. */
   --track-surface: #15151a;
   --rail-card-w: 9.5rem;
   --rail-gap: 0.75rem;
-  /* Ruang vertikal di dalam kotak gulir rail. `overflow-x: auto` memaksa
-     `overflow-y` ikut jadi `auto`, jadi rail MEMOTONG apa pun yang tergambar di
-     luar kotak paddingnya (mis. cincin fokus kartu, yang tingginya persis
-     setinggi rail). Padding ini yang memberi ruangnya; lihat `.rail` untuk cara
-     mengembalikan jaraknya agar tata letak tak bergeser. */
+  /* Ruang vertikal di dalam kotak gulir rail. `overflow-x: auto` memaksa `overflow-y` ikut jadi `auto`, jadi rail MEMOTONG apa pun yang tergambar di luar kotak paddingnya (mis. cincin fokus kartu, yang tingginya persis setinggi rail). Padding ini yang memberi ruangnya; lihat `.rail` untuk cara mengembalikan jaraknya agar tata letak tak bergeser. */
   --rail-py: 0.75rem;
-  /* Lebar pemudaran tepi kanan rail (lihat `.rail-fade-e`). Sengaja lebih sempit
-     dari `--rail-gap` supaya yang memudar hanya sisi kartu yang terpotong, bukan
-     seluruh kartu terakhir yang masih terlihat. */
+  /* Lebar pemudaran tepi kanan rail (lihat `.rail-fade-e`). Sengaja lebih sempit dari `--rail-gap` supaya yang memudar hanya sisi kartu yang terpotong, bukan seluruh kartu terakhir yang masih terlihat. */
   --rail-fade-w: 1.5rem;
   --chip-radius: 0.5rem;
-  /* Chip padat: latar tinted transparan (alpha, bukan campur ke --card) supaya
-     chip aman dipakai di atas background maupun card. Di gelap token nada sudah
-     terang, jadi dipakai langsung; tint-nya perlu cukup kuat supaya latar chip
-     tetap terbaca di atas #101014. */
+  /* Chip padat: latar tinted transparan (alpha, bukan campur ke --card) supaya chip aman dipakai di atas background maupun card. Di gelap token nada sudah terang, jadi dipakai langsung; tint-nya perlu cukup kuat supaya latar chip tetap terbaca di atas #101014. */
   --chip-tint: 18%;
   --chip-fg-muted: var(--muted-foreground);
-  /* Satu-satunya nada yang TIDAK memakai tokennya sendiri mentah-mentah:
-     `--primary` sekarang biru pekat (rgb(79,86,242)), dan sebagai teks 11px di
-     atas #101014 kontrasnya hanya ~3.5:1 — gagal untuk teks kecil. Bidangnya
-     tetap biru pekat itu, tapi teksnya diangkat ke nada yang lebih terang. */
+  /* Satu-satunya nada yang TIDAK memakai tokennya sendiri mentah-mentah: `--primary` sekarang biru pekat (rgb(79,86,242)), dan sebagai teks 11px di atas #101014 kontrasnya hanya ~3.5:1 — gagal untuk teks kecil. Bidangnya tetap biru pekat itu, tapi teksnya diangkat ke nada yang lebih terang. */
   --chip-fg-primary: #9095ff;
   --chip-fg-success: var(--success);
   --chip-fg-destructive: var(--destructive);
   --chip-fg-premium: var(--premium);
   --thread-line: var(--border);
-  /* Medali podium. Sengaja TIDAK memakai --premium untuk emas: premium sudah
-     memakai emas di cincin avatar dan mahkota, dan dua hal berbeda dengan warna
-     yang sama membuat baris papan tidak bisa dibaca. Ketiganya adalah bidang
-     padat berisi teks 11px, jadi pasangan latar/teks dipilih agar kontrasnya
-     lolos AA teks kecil: ketiganya dinaikkan terangnya supaya tetap terbaca di
-     atas #101014, dan teksnya gelap untuk semuanya. */
+  /* Medali podium. Sengaja TIDAK memakai --premium untuk emas: premium sudah memakai emas di cincin avatar dan mahkota, dan dua hal berbeda dengan warna yang sama membuat baris papan tidak bisa dibaca. Ketiganya adalah bidang padat berisi teks 11px, jadi pasangan latar/teks dipilih agar kontrasnya lolos AA teks kecil: ketiganya dinaikkan terangnya supaya tetap terbaca di atas #101014, dan teksnya gelap untuk semuanya. */
   --medal-gold: #f0c040;
   --medal-gold-fg: #101014;
   --medal-silver: #c6cad2;
   --medal-silver-fg: #101014;
   --medal-bronze: #c47b46;
   --medal-bronze-fg: #101014;
-  /* Pelat di belakang kode QRIS. Nilainya putih, dan itu bukan kelalaian:
-     pemindai QR menuntut modul gelap di atas latar terang, jadi warnanya
-     kebutuhan fungsional — bukan warna tema yang boleh ikut gelap. Ia tetap
-     jadi token supaya alasan itu tertulis satu kali di sini alih-alih jadi
-     `bg-white` mentah yang terlihat seperti kelolosan audit. */
+  /* Pelat di belakang kode QRIS. Nilainya putih, dan itu bukan kelalaian: pemindai QR menuntut modul gelap di atas latar terang, jadi warnanya kebutuhan fungsional — bukan warna tema yang boleh ikut gelap. Ia tetap jadi token supaya alasan itu tertulis satu kali di sini alih-alih jadi `bg-white` mentah yang terlihat seperti kelolosan audit. */
   --qr-plate: #ffffff;
   --duration-ui: 150ms;
   --control-h: 3.25rem;
-  /* Tombol yang berada di bawah tombol lain dalam hirarki. Yang mengecil
-     KOTAKNYA, bukan labelnya — lihat `--btn-label`. */
+  /* Tombol yang berada di bawah tombol lain dalam hirarki. Yang mengecil KOTAKNYA, bukan labelnya — lihat `--btn-label`. */
   --control-h-sm: 2.5rem;
   --cta-h: var(--control-h);
-  /* Satu ukuran label untuk SEMUA tombol, kiblatnya "Mulai" di karcis beranda.
-     Sebelum ini `ActionButton` memakai 17px sementara `TapAction` 15px, jadi dua
-     tombol yang berdampingan di kartu yang sama terbaca beda tanpa alasan yang
-     bisa dijelaskan ke user. Hirarki antar tombol dinyatakan lewat bidang dan
-     tinggi kotaknya (`--control-h-sm`), bukan lewat ukuran hurufnya: label yang
-     mengecil membuat tombol lebih SULIT dibaca, padahal yang dimaksud cuma
-     "yang ini bukan aksi utama". */
+  /* Satu ukuran label untuk SEMUA tombol, kiblatnya "Mulai" di karcis beranda. Sebelum ini `ActionButton` memakai 17px sementara `TapAction` 15px, jadi dua tombol yang berdampingan di kartu yang sama terbaca beda tanpa alasan yang bisa dijelaskan ke user. Hirarki antar tombol dinyatakan lewat bidang dan tinggi kotaknya (`--control-h-sm`), bukan lewat ukuran hurufnya: label yang mengecil membuat tombol lebih SULIT dibaca, padahal yang dimaksud cuma "yang ini bukan aksi utama". */
   --btn-label: 0.9375rem;
   --meter-h: 0.1875rem;
   --panel-gap: 0.75rem;
@@ -301,8 +235,7 @@
     -webkit-user-select: text;
     user-select: text;
   }
-  /* Teks bisa diseleksi & dicopy, tapi kontrol tap tetap terasa native:
-     long-press pada tombol tidak memunculkan seleksi. */
+  /* Teks bisa diseleksi & dicopy, tapi kontrol tap tetap terasa native: long-press pada tombol tidak memunculkan seleksi. */
   button,
   [role='button'],
   [role='tab'],
@@ -312,11 +245,7 @@
   }
 }
 
-/* Sengaja di `components`, BUKAN `utilities`: ::after milik bevel butuh induk
-   yang ter-posisi, tapi lencana avatar di profil memakai utility `absolute` di
-   elemen yang sama. Karena `components` diurai sebelum `utilities`, `absolute`
-   tetap menang di sana — dan `absolute` juga ikut jadi induk posisi, jadi
-   bevelnya tetap benar di kedua kasus. */
+/* Sengaja di `components`, BUKAN `utilities`: ::after milik bevel butuh induk yang ter-posisi, tapi lencana avatar di profil memakai utility `absolute` di elemen yang sama. Karena `components` diurai sebelum `utilities`, `absolute` tetap menang di sana — dan `absolute` juga ikut jadi induk posisi, jadi bevelnya tetap benar di kedua kasus. */
 @layer components {
   .btn-glass,
   .btn-glass-quiet {
@@ -353,12 +282,7 @@
   .cta-h {
     height: var(--cta-h);
   }
-  /* Label tombol. Dipakai oleh SETIAP tombol berlabel di app — `ActionButton`,
-     `TapAction`, dan anchor yang berperan sebagai tombol — supaya ukurannya tak
-     bisa lagi menyimpang satu per satu di className pemakainya.
-     Hanya UKURAN: berat huruf dibiarkan milik masing-masing varian (`primary`
-     lebih tebal dari `ghost`), jadi tak ada dua aturan yang berebut satu
-     properti di layer yang sama. */
+  /* Label tombol. Dipakai oleh SETIAP tombol berlabel di app — `ActionButton`, `TapAction`, dan anchor yang berperan sebagai tombol — supaya ukurannya tak bisa lagi menyimpang satu per satu di className pemakainya. Hanya UKURAN: berat huruf dibiarkan milik masing-masing varian (`primary` lebih tebal dari `ghost`), jadi tak ada dua aturan yang berebut satu properti di layer yang sama. */
   .btn-label {
     font-size: var(--btn-label);
   }
@@ -372,29 +296,10 @@
     border-radius: var(--cta-radius);
   }
   /* --- Fondasi gaya fomo (Langkah 1) ------------------------------------- */
-  /* Tombol fomo: bidang warna solid dengan kilau tipis di setengah atas tepinya
-     — efek "gelas", bukan pelat neobrutal. Saat ditekan tombol hanya mengecil
-     halus dan kilaunya meredup; tidak ada bayangan offset yang turun. */
-  /* Sengaja TIDAK menyetel background maupun transform: `.btn-glass` hanya
-     perlakuan permukaan, jadi bisa ditumpuk di atas bg apa pun (bg-primary,
-     bg-muted, dst.) dan gerak tekannya tetap milik `.press-scale*`. */
-  /* SATU lapis saja: hairline 1px di dalam tepi (`--bevel-sheen`) yang hanya
-     hidup di SETENGAH ATAS tombol — paling terang di sisi atas, meluruh
-     linear, dan habis tepat di tinggi 50%. Setengah bawahnya kosong, jadi
-     tidak ada garis yang mengelilingi tombol.
-
-     Tidak ada lapis cincin luar: cincin yang rata di keempat sisi itulah yang
-     dulu terbaca sebagai halo hitam di tema gelap. Tepi bawah memang dibiarkan
-     menyatu dengan latar — itu justru yang membuat permukaannya terbaca
-     seperti kaca yang kena cahaya dari atas.
-
-     Karena tidak rata, hairline-nya tak bisa dibuat dari `inset box-shadow`
-     (selalu satu warna solid). Jadi dipakai ::after ber-`padding: 1px` + `mask`
-     yang menyisakan cincin 1px saja, diisi gradien vertikal. */
-  /* Tiap bidang menyetel `--sheen` miliknya sendiri, lalu SEMUA aturan di bawah
-     memakai `var(--sheen)`. Dengan begitu geometri hairline-nya (posisi, mask,
-     titik habis 50%, perilaku saat ditekan) tetap satu sumber untuk kedua
-     tombol — yang berbeda hanya kekuatan kilaunya, sesuai terang bidangnya. */
+  /* Tombol fomo: bidang warna solid dengan kilau tipis di setengah atas tepinya — efek "gelas", bukan pelat neobrutal. Saat ditekan tombol hanya mengecil halus dan kilaunya meredup; tidak ada bayangan offset yang turun. */
+  /* Sengaja TIDAK menyetel background maupun transform: `.btn-glass` hanya perlakuan permukaan, jadi bisa ditumpuk di atas bg apa pun (bg-primary, bg-muted, dst.) dan gerak tekannya tetap milik `.press-scale*`. */
+  /* SATU lapis saja: hairline 1px di dalam tepi (`--bevel-sheen`) yang hanya hidup di SETENGAH ATAS tombol — paling terang di sisi atas, meluruh linear, dan habis tepat di tinggi 50%. Setengah bawahnya kosong, jadi tidak ada garis yang mengelilingi tombol. Tidak ada lapis cincin luar: cincin yang rata di keempat sisi itulah yang dulu terbaca sebagai halo hitam di tema gelap. Tepi bawah memang dibiarkan menyatu dengan latar — itu justru yang membuat permukaannya terbaca seperti kaca yang kena cahaya dari atas. Karena tidak rata, hairline-nya tak bisa dibuat dari `inset box-shadow` (selalu satu warna solid). Jadi dipakai ::after ber-`padding: 1px` + `mask` yang menyisakan cincin 1px saja, diisi gradien vertikal. */
+  /* Tiap bidang menyetel `--sheen` miliknya sendiri, lalu SEMUA aturan di bawah memakai `var(--sheen)`. Dengan begitu geometri hairline-nya (posisi, mask, titik habis 50%, perilaku saat ditekan) tetap satu sumber untuk kedua tombol — yang berbeda hanya kekuatan kilaunya, sesuai terang bidangnya. */
   .btn-glass {
     --sheen: var(--bevel-sheen-accent);
   }
@@ -421,8 +326,7 @@
     mask-composite: exclude;
     pointer-events: none;
   }
-  /* Ditekan: kilaunya meredup — seolah permukaannya menjauh dari sumber cahaya.
-     Titik habisnya tetap di 50% supaya panjang hairline-nya tidak ikut berubah. */
+  /* Ditekan: kilaunya meredup — seolah permukaannya menjauh dari sumber cahaya. Titik habisnya tetap di 50% supaya panjang hairline-nya tidak ikut berubah. */
   .btn-glass:active:not(:disabled)::after,
   .btn-glass-quiet:active:not(:disabled)::after {
     background: linear-gradient(
@@ -454,12 +358,7 @@
     letter-spacing: -0.01em;
     white-space: nowrap;
   }
-  /* Satu-satunya nada yang dulu memakai warna SOLID (`--muted`) dan karena itu
-     melanggar janji di `--chip-tint`: chip harus aman di atas latar apa pun.
-     `--muted` sama nilainya dengan `--btn-quiet-surface`, jadi chip ini hilang
-     total begitu dipakai di dalam tombol tenang — persis yang terjadi pada pill
-     jatah di tombol "Iklan". Sekarang ikut pola nada lain: tint transparan, jadi
-     ia selalu selangkah lebih terang dari apa pun yang ada di belakangnya. */
+  /* Satu-satunya nada yang dulu memakai warna SOLID (`--muted`) dan karena itu melanggar janji di `--chip-tint`: chip harus aman di atas latar apa pun. `--muted` sama nilainya dengan `--btn-quiet-surface`, jadi chip ini hilang total begitu dipakai di dalam tombol tenang — persis yang terjadi pada pill jatah di tombol "Iklan". Sekarang ikut pola nada lain: tint transparan, jadi ia selalu selangkah lebih terang dari apa pun yang ada di belakangnya. */
   .chip-muted {
     background-color: color-mix(in oklab, var(--foreground) 9%, transparent);
     color: var(--chip-fg-muted);
@@ -484,8 +383,7 @@
     background-color: color-mix(in oklab, var(--chip-fg-premium) var(--chip-tint), transparent);
     color: var(--chip-fg-premium);
   }
-  /* Nada netral-kuat: dipakai chip "Perintis" di papan peringkat yang harus
-     terbaca sebagai teks biasa, bukan warna nada. */
+  /* Nada netral-kuat: dipakai chip "Perintis" di papan peringkat yang harus terbaca sebagai teks biasa, bukan warna nada. */
   .chip-neutral {
     background-color: color-mix(in oklab, var(--foreground) 10%, transparent);
     color: var(--foreground);
@@ -498,26 +396,11 @@
     scroll-snap-type: x mandatory;
     scroll-padding-inline-start: var(--content-px);
     -webkit-overflow-scrolling: touch;
-    /* Lihat `--rail-py`: padding ini menjauhkan tepi pemotongan dari kartu.
-       Jaraknya lalu dibayar balik agar tata letak tidak bergeser:
-       sisi bawah lewat margin negatif di sini, sisi atas lewat `--label-trim` /
-       `--region-trim` pada pemakainya — margin-top rail selalu datang dari kelas
-       jarak (`.label-gap-t` dan kawan-kawan) yang menang di cascade, jadi margin
-       negatif di sisi itu tidak akan pernah terpakai. */
+    /* Lihat `--rail-py`: padding ini menjauhkan tepi pemotongan dari kartu. Jaraknya lalu dibayar balik agar tata letak tidak bergeser: sisi bawah lewat margin negatif di sini, sisi atas lewat `--label-trim` / `--region-trim` pada pemakainya — margin-top rail selalu datang dari kelas jarak (`.label-gap-t` dan kawan-kawan) yang menang di cascade, jadi margin negatif di sisi itu tidak akan pernah terpakai. */
     padding-block: var(--rail-py);
     margin-block-end: calc(var(--rail-py) * -1);
   }
-  /* Tepi kanan rail dilembutkan, bukan dipotong tegak. Pakai `mask-image`, bukan
-     elemen gradien menumpuk: rail ini digulir, jadi overlay harus dipaku ke tepi
-     kotak gulir (butuh wadah `position: relative` tambahan) sementara mask sudah
-     mengikuti kotak padding elemennya sendiri. Mask juga tidak menutupi apa pun,
-     jadi kartu di bawah fade tetap bisa disentuh dan digulir.
-
-     Fade hanya di sisi kanan (arah lanjutan gulir); sisi kiri sengaja tegak
-     supaya kartu pertama berbaris lurus dengan label "Podium" di atasnya.
-
-     Tinggi mask dibiarkan penuh — pemudaran vertikal akan memakan `--rail-py`
-     yang justru ada untuk melindungi bayangan dan cincin fokus kartu. */
+  /* Tepi kanan rail dilembutkan, bukan dipotong tegak. Pakai `mask-image`, bukan elemen gradien menumpuk: rail ini digulir, jadi overlay harus dipaku ke tepi kotak gulir (butuh wadah `position: relative` tambahan) sementara mask sudah mengikuti kotak padding elemennya sendiri. Mask juga tidak menutupi apa pun, jadi kartu di bawah fade tetap bisa disentuh dan digulir. Fade hanya di sisi kanan (arah lanjutan gulir); sisi kiri sengaja tegak supaya kartu pertama berbaris lurus dengan label "Podium" di atasnya. Tinggi mask dibiarkan penuh — pemudaran vertikal akan memakan `--rail-py` yang justru ada untuk melindungi bayangan dan cincin fokus kartu. */
   .rail-fade-e {
     mask-image: linear-gradient(
       to right,
@@ -580,9 +463,7 @@
   .cta-gap {
     margin-top: var(--cta-gap);
   }
-  /* Slot tombol iklan di kerangka pemuatan. Lihat `shell/ads-hint.ts`: atributnya
-     dipasang script di <head> dari tontonan terakhir user, jadi HTML server selalu
-     memuat kedua tombol dan hanya CSS yang menyembunyikan satu. */
+  /* Slot tombol iklan di kerangka pemuatan. Lihat `shell/ads-hint.ts`: atributnya dipasang script di <head> dari tontonan terakhir user, jadi HTML server selalu memuat kedua tombol dan hanya CSS yang menyembunyikan satu. */
   [data-ads-hint='off'] .skeleton-ad-slot {
     display: none;
   }
@@ -629,9 +510,7 @@
     left: 0;
     right: 0;
     height: calc(var(--brand-band-top) + var(--brand-band-h) + 0.75rem);
-    /* Views that open with the hero band raise --brand-band-tint to the hero
-    colour, so the fade dissolves into the surface right below it instead of
-    leaving a lighter strip. */
+    /* Views that open with the hero band raise --brand-band-tint to the hero colour, so the fade dissolves into the surface right below it instead of leaving a lighter strip. */
     background-color: color-mix(
       in oklab,
       var(--brand-band-tint, var(--background)) 72%,
@@ -834,9 +713,7 @@
   .region-under-brand {
   margin-top: var(--region-gap);
   }
-  /* The hero sits on a slightly darker band that runs to the top of the screen
-  and closes with a downward arc, so the list section below reads as a separate
-  lighter surface without needing a divider rule. */
+  /* The hero sits on a slightly darker band that runs to the top of the screen and closes with a downward arc, so the list section below reads as a separate lighter surface without needing a divider rule. */
   .hero-band {
   position: relative;
   isolation: isolate;
@@ -1049,17 +926,7 @@
     background-color: var(--foreground);
     color: var(--background);
   }
-  /**
-   * Toast naik dari bawah, duduk di atas nav pill kalau nav-nya ada.
-   *
-   * `--toast-lift` diisi lewat `[data-app-nav]` yang dipasang `AppFrame`, bukan
-   * lewat props: layer ini dirender `ToastProvider` di luar pohon `AppFrame`,
-   * jadi variabelnya harus dititipkan di `:root` supaya bisa diwarisi. Tanpa nav
-   * (captcha, sesi gagal) toast langsung menempel ke inset bawah.
-   *
-   * z-index-nya di atas dialog premium (50) — error yang muncul dari aksi di
-   * dalam dialog tidak boleh tertutup dialog yang memicunya.
-   */
+  /** Toast naik dari bawah, duduk di atas nav pill kalau nav-nya ada. `--toast-lift` diisi lewat `[data-app-nav]` yang dipasang `AppFrame`, bukan lewat props: layer ini dirender `ToastProvider` di luar pohon `AppFrame`, jadi variabelnya harus dititipkan di `:root` supaya bisa diwarisi. Tanpa nav (captcha, sesi gagal) toast langsung menempel ke inset bawah. z-index-nya di atas dialog premium (50) — error yang muncul dari aksi di dalam dialog tidak boleh tertutup dialog yang memicunya. */
   .toast-layer {
     position: fixed;
     left: 0;
@@ -1477,41 +1344,23 @@
   }
 }
 
-/* ============================================================================
-   Kulit beranda: "tiket setoran"
-   ============================================================================
-   Semuanya di-scope ke `.home-skin`, dan itu bukan kehati-hatian berlebihan:
-   `.task-card`, `.stat-tile`, dan `.hero-band` dipakai juga di luar beranda,
-   jadi kulit ini menumpang di atasnya tanpa memindahkan definisi aslinya. Blok
-   ini SENGAJA tak berlayer — di Tailwind v4 aturan tanpa layer selalu menang
-   atas `@layer utilities`, jadi tak ada satu pun `!important` di bawah sini.
-
-   Bentuknya diambil dari benda yang memang jadi rujukan app ini: struk dan
-   tiket. Satu elemen saja yang berani — kartu task, digunting sudutnya seperti
-   karcis dan dipisah garis perforasi — dan sisanya diturunkan jadi tenang:
-   tile statistik kehilangan kotaknya, baris transaksi memakai garis putus-putus
-   alih-alih pelat. Pita brand di paling atas tidak disentuh sama sekali.
-   ========================================================================== */
+/* ============================================================================ Kulit beranda: "tiket setoran" ============================================================================ Semuanya di-scope ke `.home-skin`, dan itu bukan kehati-hatian berlebihan: `.task-card`, `.stat-tile`, dan `.hero-band` dipakai juga di luar beranda, jadi kulit ini menumpang di atasnya tanpa memindahkan definisi aslinya. Blok ini SENGAJA tak berlayer — di Tailwind v4 aturan tanpa layer selalu menang atas `@layer utilities`, jadi tak ada satu pun `!important` di bawah sini. Bentuknya diambil dari benda yang memang jadi rujukan app ini: struk dan tiket. Satu elemen saja yang berani — kartu task, digunting sudutnya seperti karcis dan dipisah garis perforasi — dan sisanya diturunkan jadi tenang: tile statistik kehilangan kotaknya, baris transaksi memakai garis putus-putus alih-alih pelat. Pita brand di paling atas tidak disentuh sama sekali. ========================================================================== */
 .home-skin {
   /* Lengkung bawah pita hero dibuang; gantinya perforasi di tepi bawahnya. */
   --hero-curve: 0rem;
   --hero-band: #08080c;
   --ticket-notch: 0.8rem;
-  /* Radius lubang sobek di ujung perforasi. Lubangnya dilubangi tepat di tepi
-     kartu, jadi yang terlihat separuhnya — sama seperti karcis sungguhan. */
+  /* Radius lubang sobek di ujung perforasi. Lubangnya dilubangi tepat di tepi kartu, jadi yang terlihat separuhnya — sama seperti karcis sungguhan. */
   --ticket-hole: 0.3125rem;
   /* Ukuran gerigi robekan. Hanya terpakai saat karcisnya disobek. */
   --tear-tooth: 0.6875rem;
   --tear-depth: 0.28rem;
   --ticket-edge: color-mix(in oklab, var(--primary) 42%, var(--border));
   --perf: color-mix(in oklab, var(--foreground) 26%, transparent);
-  /* `--cta-radius` dan `--radius` dulu ditimpa di sini. Keduanya sudah pindah ke
-     `:root`: bentuk yang lahir di beranda ini sekarang bentuk seluruh app, jadi
-     menuliskannya lagi di sini hanya menyisakan dua sumber untuk satu nilai. */
+  /* `--cta-radius` dan `--radius` dulu ditimpa di sini. Keduanya sudah pindah ke `:root`: bentuk yang lahir di beranda ini sekarang bentuk seluruh app, jadi menuliskannya lagi di sini hanya menyisakan dua sumber untuk satu nilai. */
 }
 
-/* Label kecil huruf besar berjarak — nada "cetakan mesin", dipakai untuk
-   eyebrow saldo dan nomor seri tiket. */
+/* Label kecil huruf besar berjarak — nada "cetakan mesin", dipakai untuk eyebrow saldo dan nomor seri tiket. */
 .home-tag {
   font-family: var(--font-display);
   font-size: 0.625rem;
@@ -1522,55 +1371,19 @@
   color: color-mix(in oklab, var(--muted-foreground) 82%, transparent);
 }
 
-/* Tepi bawah pita hero: lurus, bukan busur — dan tanpa garis sendiri.
-   Perforasi di sini dulu berhenti setengah `--region-gap` di atas garis pembatas
-   `.region-t`, jadi batas antara karcis dan kartu di bawahnya ditandai DUA kali
-   oleh dua garis sejajar yang berbeda gaya. Yang bertahan garis `.region-t` di
-   bawah ini, karena dialah yang benar-benar memisahkan kedua region; pita hero
-   cukup diselesaikan oleh perubahan warna bidangnya.
-
-   Karena garisnya yang jadi pembatas, bidang gelapnya harus BERHENTI di garis
-   itu — bukan lewat setengah `--region-gap` melewatinya seperti default
-   `.hero-band`. Overshoot itu membuat warna hero menyeberang ke region kartu:
-   pangkal kupon kebagian bidang gelap sementara sisanya tidak, jadi garis
-   putus-putusnya berdiri di tengah warna alih-alih di batasnya. `.region-t`
-   berjarak `--region-gap` dari kotak isi pita, jadi persis segitu offsetnya. */
+/* Tepi bawah pita hero: lurus, bukan busur — dan tanpa garis sendiri. Perforasi di sini dulu berhenti setengah `--region-gap` di atas garis pembatas `.region-t`, jadi batas antara karcis dan kartu di bawahnya ditandai DUA kali oleh dua garis sejajar yang berbeda gaya. Yang bertahan garis `.region-t` di bawah ini, karena dialah yang benar-benar memisahkan kedua region; pita hero cukup diselesaikan oleh perubahan warna bidangnya. Karena garisnya yang jadi pembatas, bidang gelapnya harus BERHENTI di garis itu — bukan lewat setengah `--region-gap` melewatinya seperti default `.hero-band`. Overshoot itu membuat warna hero menyeberang ke region kartu: pangkal kupon kebagian bidang gelap sementara sisanya tidak, jadi garis putus-putusnya berdiri di tengah warna alih-alih di batasnya. `.region-t` berjarak `--region-gap` dari kotak isi pita, jadi persis segitu offsetnya. */
 .home-skin .hero-band::before {
   bottom: calc(var(--region-gap) * -1);
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
 
-/* Pembatas full-bleed antara karcis task dan kartu di bawahnya. Garis penuh di
-   sini adalah satu-satunya garis lurus yang tersisa di beranda, dan ia berdiri
-   persis di atas kartu kupon yang sobekannya putus-putus — dua bahasa garis
-   bertabrakan di jarak paling dekat. Yang dipakai bahasa yang sudah dipilih
-   halaman ini: putus-putus, senada dengan pemisah kolom struk dan sobekan kupon.
-   Warnanya tetap `--border` dan bukan `--perf` yang lebih terang, karena garis
-   ini membentang selebar layar — pada lebar itu `--perf` berhenti jadi pembatas
-   dan mulai jadi elemen yang menarik perhatian sendiri. */
+/* Pembatas full-bleed antara karcis task dan kartu di bawahnya. Garis penuh di sini adalah satu-satunya garis lurus yang tersisa di beranda, dan ia berdiri persis di atas kartu kupon yang sobekannya putus-putus — dua bahasa garis bertabrakan di jarak paling dekat. Yang dipakai bahasa yang sudah dipilih halaman ini: putus-putus, senada dengan pemisah kolom struk dan sobekan kupon. Warnanya tetap `--border` dan bukan `--perf` yang lebih terang, karena garis ini membentang selebar layar — pada lebar itu `--perf` berhenti jadi pembatas dan mulai jadi elemen yang menarik perhatian sendiri. */
 .home-skin .region-t {
   border-top-style: dashed;
 }
 
-/* --- Kartu task jadi karcis ------------------------------------------------
-   Karcisnya bukan satu bidang lagi, melainkan DUA lembar yang berhimpit di
-   garis perforasi: pangkal (nomor seri + judul) dan sobekan (harga + tombol).
-   Pemecahan ini bukan struktur demi struktur — saat "Mulai" ditekan karcisnya
-   benar-benar disobek, dan sobekan hanya bisa nyata kalau kertasnya memang dua
-   bagian yang bisa berjalan ke arah berlawanan.
-
-   Sudutnya digunting (`clip-path`), jadi border biasa ikut terpotong dan tak
-   bisa dipakai. Tepinya dibuat dengan cara lama: elemen berisi warna garis,
-   lapisan `::before` sejauh 1px di dalamnya berisi bidang kartu. Insetnya HANYA
-   di sisi luar; di garis pertemuan kedua bagian insetnya nol, supaya seam-nya
-   tidak menyisakan pita warna tepi selebar 2px di tengah karcis. `isolation` di
-   tiap bagian yang membuat `z-index: -1` berhenti di situ.
-
-   Dua lubang sobek di ujung perforasi dilubangi dengan `mask` (dua radial yang
-   di-`intersect`), bukan lagi titik yang ditempel dengan warna latar halaman.
-   Bedanya baru terasa saat disobek: lubang yang dilubangi tetap jadi lubang
-   ketika kedua bagian berpisah, sementara titik tempel akan ikut terbang. */
+/* --- Kartu task jadi karcis ------------------------------------------------ Karcisnya bukan satu bidang lagi, melainkan DUA lembar yang berhimpit di garis perforasi: pangkal (nomor seri + judul) dan sobekan (harga + tombol). Pemecahan ini bukan struktur demi struktur — saat "Mulai" ditekan karcisnya benar-benar disobek, dan sobekan hanya bisa nyata kalau kertasnya memang dua bagian yang bisa berjalan ke arah berlawanan. Sudutnya digunting (`clip-path`), jadi border biasa ikut terpotong dan tak bisa dipakai. Tepinya dibuat dengan cara lama: elemen berisi warna garis, lapisan `::before` sejauh 1px di dalamnya berisi bidang kartu. Insetnya HANYA di sisi luar; di garis pertemuan kedua bagian insetnya nol, supaya seam-nya tidak menyisakan pita warna tepi selebar 2px di tengah karcis. `isolation` di tiap bagian yang membuat `z-index: -1` berhenti di situ. Dua lubang sobek di ujung perforasi dilubangi dengan `mask` (dua radial yang di-`intersect`), bukan lagi titik yang ditempel dengan warna latar halaman. Bedanya baru terasa saat disobek: lubang yang dilubangi tetap jadi lubang ketika kedua bagian berpisah, sementara titik tempel akan ikut terbang. */
 .home-skin .task-card {
   position: relative;
   isolation: isolate;
@@ -1613,9 +1426,7 @@
 .home-skin .ticket-part-top::before {
   top: 1px;
   bottom: 0;
-  /* Dua lapis: serat diagonal tipis gaya kertas berpengaman, lalu bidang
-     kartunya. Seratnya tinggal di pangkal karcis saja supaya angka dan tombol
-     di bagian bawah tetap duduk di bidang rata. */
+  /* Dua lapis: serat diagonal tipis gaya kertas berpengaman, lalu bidang kartunya. Seratnya tinggal di pangkal karcis saja supaya angka dan tombol di bagian bawah tetap duduk di bidang rata. */
   background-image:
     repeating-linear-gradient(
       45deg,
@@ -1638,10 +1449,7 @@
 }
 
 .home-skin .ticket-part-bottom {
-  /* Jarak 0.75rem di bawah perforasi ada di PADDING bagian ini, bukan di
-     `margin-top` isinya. Sebagai margin ia akan runtuh ke luar (bagian ini
-     tidak punya padding atas) dan menyeret sobekannya turun 12px, jadi kedua
-     bagian karcis berhenti berhimpit dan seam-nya kelihatan menganga. */
+  /* Jarak 0.75rem di bawah perforasi ada di PADDING bagian ini, bukan di `margin-top` isinya. Sebagai margin ia akan runtuh ke luar (bagian ini tidak punya padding atas) dan menyeret sobekannya turun 12px, jadi kedua bagian karcis berhenti berhimpit dan seam-nya kelihatan menganga. */
   padding: 0.75rem 1rem 1rem;
   clip-path: polygon(
     0 0,
@@ -1669,8 +1477,7 @@
   );
 }
 
-/* Garis perforasi: titik-titik yang duduk persis di tepi bawah pangkal karcis,
-   jadi ia berhimpit dengan lubang sobek di kedua ujungnya. */
+/* Garis perforasi: titik-titik yang duduk persis di tepi bawah pangkal karcis, jadi ia berhimpit dengan lubang sobek di kedua ujungnya. */
 .home-skin .ticket-perf {
   position: relative;
   height: 1px;
@@ -1681,44 +1488,12 @@
   );
 }
 
-/* --- Sobekan ---------------------------------------------------------------
-   Yang membuat sobekan terbaca sebagai sobekan bukan gerakannya, tapi TEPINYA:
-   selama tak disobek kedua bagian bertemu lurus, dan begitu `data-tearing`
-   menyala tepi pertemuannya berganti jadi gerigi (`mask` gigi segitiga yang
-   ditumpuk di atas badan kertas). Gerigi hanya ada saat menyobek — kalau ia
-   selalu ada, di keadaan diam ia cuma jadi celah bergerigi yang tak masuk akal.
-
-   Lubang sobek dilepas di sini justru karena itu titik pangkal robekan: setelah
-   kertasnya terbelah, lubangnya sudah jadi bagian dari gerigi. Durasinya datang
-   dari `--tear-ms` yang dipasang komponen, supaya angka di JS (yang menahan
-   perpindahan halaman) dan angka di CSS tidak bisa berbeda. */
+/* --- Sobekan --------------------------------------------------------------- Yang membuat sobekan terbaca sebagai sobekan bukan gerakannya, tapi TEPINYA: selama tak disobek kedua bagian bertemu lurus, dan begitu `data-tearing` menyala tepi pertemuannya berganti jadi gerigi (`mask` gigi segitiga yang ditumpuk di atas badan kertas). Gerigi hanya ada saat menyobek — kalau ia selalu ada, di keadaan diam ia cuma jadi celah bergerigi yang tak masuk akal. Lubang sobek dilepas di sini justru karena itu titik pangkal robekan: setelah kertasnya terbelah, lubangnya sudah jadi bagian dari gerigi. Durasinya datang dari `--tear-ms` yang dipasang komponen, supaya angka di JS (yang menahan perpindahan halaman) dan angka di CSS tidak bisa berbeda. */
 .home-skin .task-card[data-tearing='true'] {
   pointer-events: none;
 }
 
-/* Ceruk di belakang karcis: yang membuat gerigi punya arti.
-   Kedua bagian karcis dipindahkan dengan `translate`, jadi kartunya TETAP
-   memegang tingginya sampai halaman berganti. Tanpa apa pun di belakangnya,
-   ruang itu membuka ke bidang beranda yang warnanya sama — dan sobekan yang
-   membuka ke warna yang sama terbaca sebagai "kartunya hilang", bukan
-   "kartunya diangkat". Yang hilang bukan tempatnya, cuma kertasnya.
-
-   Gelapnya hanya seluas slot karcis. Scrim se-halaman akan menggelapkan
-   beranda sesaat sebelum halaman task yang terang muncul — terang, gelap,
-   terang lagi dalam setengah detik.
-
-   Yang menanggung beban justru TEPINYA, bukan gelapnya. Di tema gelap app ini
-   `--hero-band` (#08080c) cuma sepuluh derajat lebih gelap dari latar beranda
-   (#101014); kalau cerukannya hanya bidang gelap, ia tetap terbaca sebagai
-   lubang. Garis rambut yang mengikuti siluet karcis-lah yang mengubahnya jadi
-   tempat yang jelas-jelas menunggu diisi.
-
-   Dua lapisannya memakai cara yang sama dengan `.ticket-part`: elemen luar
-   berisi warna garis, lapisan di atasnya sejauh 1px di dalamnya berisi dasar
-   ceruk. Border biasa tak bisa dipakai karena `clip-path` memotongnya ikut
-   terpotong di guntingan sudut. Keduanya `z-index: -1` di dalam `isolation`
-   milik kartu, jadi berhenti di belakang kertasnya dan tidak menembus ke
-   bawah beranda; `::after` menimpa `::before` karena urutan cetaknya. */
+/* Ceruk di belakang karcis: yang membuat gerigi punya arti. Kedua bagian karcis dipindahkan dengan `translate`, jadi kartunya TETAP memegang tingginya sampai halaman berganti. Tanpa apa pun di belakangnya, ruang itu membuka ke bidang beranda yang warnanya sama — dan sobekan yang membuka ke warna yang sama terbaca sebagai "kartunya hilang", bukan "kartunya diangkat". Yang hilang bukan tempatnya, cuma kertasnya. Gelapnya hanya seluas slot karcis. Scrim se-halaman akan menggelapkan beranda sesaat sebelum halaman task yang terang muncul — terang, gelap, terang lagi dalam setengah detik. Yang menanggung beban justru TEPINYA, bukan gelapnya. Di tema gelap app ini `--hero-band` (#08080c) cuma sepuluh derajat lebih gelap dari latar beranda (#101014); kalau cerukannya hanya bidang gelap, ia tetap terbaca sebagai lubang. Garis rambut yang mengikuti siluet karcis-lah yang mengubahnya jadi tempat yang jelas-jelas menunggu diisi. Dua lapisannya memakai cara yang sama dengan `.ticket-part`: elemen luar berisi warna garis, lapisan di atasnya sejauh 1px di dalamnya berisi dasar ceruk. Border biasa tak bisa dipakai karena `clip-path` memotongnya ikut terpotong di guntingan sudut. Keduanya `z-index: -1` di dalam `isolation` milik kartu, jadi berhenti di belakang kertasnya dan tidak menembus ke bawah beranda; `::after` menimpa `::before` karena urutan cetaknya. */
 .home-skin .task-card::before,
 .home-skin .task-card::after {
   content: '';
@@ -1726,8 +1501,7 @@
   z-index: -1;
   opacity: 0;
 }
-/* Garis rambutnya: siluet karcis utuh — sudut digunting di keempat penjuru,
-   gabungan `clip-path` pangkal dan sobekannya. */
+/* Garis rambutnya: siluet karcis utuh — sudut digunting di keempat penjuru, gabungan `clip-path` pangkal dan sobekannya. */
 .home-skin .task-card::before {
   inset: 0;
   background-color: color-mix(in oklab, var(--foreground) 13%, transparent);
@@ -1742,8 +1516,7 @@
     0 var(--ticket-notch)
   );
 }
-/* Dasar cerukan: tepi lebih gelap, tengahnya sedikit terangkat — cahaya yang
-   jatuh ke dasar. Itu yang memberi kedalaman; bidang gelap rata cuma lubang. */
+/* Dasar cerukan: tepi lebih gelap, tengahnya sedikit terangkat — cahaya yang jatuh ke dasar. Itu yang memberi kedalaman; bidang gelap rata cuma lubang. */
 .home-skin .task-card::after {
   inset: 1px;
   background-color: color-mix(in oklab, var(--hero-band) 88%, #000);
@@ -1763,9 +1536,7 @@
     0 calc(var(--ticket-notch) - 1px)
   );
 }
-/* Cerukannya menyala tepat saat kertasnya putus, bukan saat tombol ditekan:
-   selama karcisnya masih ditarik dan menahan (0–16% di keyframe sobekan) belum
-   ada yang terbelah, jadi belum ada yang boleh terlihat di belakangnya. */
+/* Cerukannya menyala tepat saat kertasnya putus, bukan saat tombol ditekan: selama karcisnya masih ditarik dan menahan (0–16% di keyframe sobekan) belum ada yang terbelah, jadi belum ada yang boleh terlihat di belakangnya. */
 .home-skin .task-card[data-tearing='true']::before,
 .home-skin .task-card[data-tearing='true']::after {
   animation: ticket-well-open var(--tear-ms, 520ms) linear forwards;
@@ -1800,8 +1571,7 @@
   mask-image:
     conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg),
     linear-gradient(#000, #000);
-  /* Gigi bawah sengaja sedikit lebih rapat dan digeser setengah gigi: dua tepi
-     yang berpola identik terbaca sebagai guntingan mesin, bukan robekan. */
+  /* Gigi bawah sengaja sedikit lebih rapat dan digeser setengah gigi: dua tepi yang berpola identik terbaca sebagai guntingan mesin, bukan robekan. */
   mask-size:
     calc(var(--tear-tooth) * 0.82) var(--tear-depth),
     100% calc(100% - var(--tear-depth));
@@ -1813,8 +1583,7 @@
   animation: ticket-tear-bottom var(--tear-ms, 520ms) cubic-bezier(0.22, 0.68, 0.24, 1) forwards;
   will-change: translate, rotate, opacity;
 }
-/* Perforasinya hilang lebih dulu: begitu kertasnya putus, panduan sobeknya
-   sudah tidak menandai apa pun. */
+/* Perforasinya hilang lebih dulu: begitu kertasnya putus, panduan sobeknya sudah tidak menandai apa pun. */
 .home-skin .task-card[data-tearing='true'] .ticket-perf {
   animation: tear-perf-snap 140ms linear forwards;
 }
@@ -1824,8 +1593,7 @@
     translate: 0 0;
     rotate: 0deg;
   }
-  /* Kertas ditarik dan menahan sebentar sebelum putus — tanpa jeda ini kedua
-     bagian cuma bergeser, tidak terasa ada yang disobek. */
+  /* Kertas ditarik dan menahan sebentar sebelum putus — tanpa jeda ini kedua bagian cuma bergeser, tidak terasa ada yang disobek. */
   16% {
     translate: 0 2px;
     rotate: -0.5deg;
@@ -1851,8 +1619,7 @@
     opacity: 0;
   }
 }
-/* Dipakai dua kali: karcis di atas dan kupon bonus di bawahnya. Namanya netral
-   justru karena itu — panduan sobek yang putus berlaku sama untuk keduanya. */
+/* Dipakai dua kali: karcis di atas dan kupon bonus di bawahnya. Namanya netral justru karena itu — panduan sobek yang putus berlaku sama untuk keduanya. */
 @keyframes tear-perf-snap {
   to {
     opacity: 0;
@@ -1865,9 +1632,7 @@
     animation: none;
     mask-image: none;
   }
-  /* Tanpa sobekan tak ada yang perlu dibuka. Komponen memang sudah melewati
-     animasinya di mode ini, tapi aturannya ditulis di sini juga supaya CSS-nya
-     berdiri sendiri kalau kelak `data-tearing` dipasang di jalan lain. */
+  /* Tanpa sobekan tak ada yang perlu dibuka. Komponen memang sudah melewati animasinya di mode ini, tapi aturannya ditulis di sini juga supaya CSS-nya berdiri sendiri kalau kelak `data-tearing` dipasang di jalan lain. */
   .home-skin .task-card[data-tearing='true']::before,
   .home-skin .task-card[data-tearing='true']::after {
     animation: none;
@@ -1875,17 +1640,12 @@
   }
 }
 
-/* --- Statistik: kolom struk, bukan tiga kotak -----------------------------
-   Tiga pelat sederajat membuat angkanya terbaca sebagai tiga tombol. Bidangnya
-   dilepas dan yang memisahkan tinggal garis rambut — sekaligus memangkas tinggi
-   beranda, yang memang dijaga muat satu layar. */
+/* --- Statistik: kolom struk, bukan tiga kotak ----------------------------- Tiga pelat sederajat membuat angkanya terbaca sebagai tiga tombol. Bidangnya dilepas dan yang memisahkan tinggal garis rambut — sekaligus memangkas tinggi beranda, yang memang dijaga muat satu layar. */
 .home-skin .stat-tile {
   border-radius: 0;
   background-color: transparent;
   padding: 0 0 0 0.75rem;
-  /* Garis pemisahnya putus-putus, senada dengan perforasi di atasnya — bukan
-     garis penuh, supaya kolomnya terbaca sebagai kolom struk dan bukan sebagai
-     sisa dari kotak yang bidangnya baru saja dilepas. */
+  /* Garis pemisahnya putus-putus, senada dengan perforasi di atasnya — bukan garis penuh, supaya kolomnya terbaca sebagai kolom struk dan bukan sebagai sisa dari kotak yang bidangnya baru saja dilepas. */
   border-left: 1px dashed color-mix(in oklab, var(--foreground) 18%, transparent);
 }
 .home-skin .stat-tile:first-child {
@@ -1893,47 +1653,18 @@
   border-left: 0;
 }
 
-/* ============================================================================
-   Kartu bonus channel: "kupon sobek", versi rapat
-   ============================================================================
-   Kartu ini sebelumnya pelat `--muted` rata — bentuk yang sama dengan kerangka
-   memuat dan dengan daftar misi, jadi satu-satunya hal di beranda yang bisa
-   HILANG kalau tidak diklaim justru yang paling tidak menuntut dilihat.
-
-   Bentuknya diambil dari benda yang persis begitu cara kerjanya: kupon dengan
-   stub yang disobek. Sobekannya nyata — garis putus-putus vertikal dengan dua
-   lubang yang menembus tepi kartu — dan stub-nya berisi satu kata dicetak
-   tegak. Itu satu-satunya elemen yang berani di sini.
-
-   Percobaan "entri channel Telegram" dibuang: avatar + gelembung + dua tombol
-   menumpuk empat baris untuk satu penawaran satu angka, dan di layar 384px ia
-   makan tinggi yang seharusnya milik daftar misi. Kupon dipulihkan, tapi kali
-   ini dirapatkan: stub lebih tipis, padding sendiri (`--coupon-p`) yang lebih
-   kecil dari `--surface-p`, dan nominal + kalimat + tombol muat dalam tiga
-   baris tanpa satu pun ruang kosong yang tidak menandai apa pun.
-
-   Tidak di-scope ke `.home-skin`: yang dibentuk adalah kartunya sendiri, bukan
-   kulit halaman yang menumpanginya.
-   ========================================================================== */
+/* ============================================================================ Kartu bonus channel: "kupon sobek", versi rapat ============================================================================ Kartu ini sebelumnya pelat `--muted` rata — bentuk yang sama dengan kerangka memuat dan dengan daftar misi, jadi satu-satunya hal di beranda yang bisa HILANG kalau tidak diklaim justru yang paling tidak menuntut dilihat. Bentuknya diambil dari benda yang persis begitu cara kerjanya: kupon dengan stub yang disobek. Sobekannya nyata — garis putus-putus vertikal dengan dua lubang yang menembus tepi kartu — dan stub-nya berisi satu kata dicetak tegak. Itu satu-satunya elemen yang berani di sini. Percobaan "entri channel Telegram" dibuang: avatar + gelembung + dua tombol menumpuk empat baris untuk satu penawaran satu angka, dan di layar 384px ia makan tinggi yang seharusnya milik daftar misi. Kupon dipulihkan, tapi kali ini dirapatkan: stub lebih tipis, padding sendiri (`--coupon-p`) yang lebih kecil dari `--surface-p`, dan nominal + kalimat + tombol muat dalam tiga baris tanpa satu pun ruang kosong yang tidak menandai apa pun. Tidak di-scope ke `.home-skin`: yang dibentuk adalah kartunya sendiri, bukan kulit halaman yang menumpanginya. ========================================================================== */
 .bonus-coupon {
   --coupon-stub-w: 1.875rem;
   --coupon-p: 0.75rem;
-  /* Tepi dan perforasinya BUKAN nada sendiri lagi: keduanya membaca token yang
-     dipakai karcis task (`--ticket-edge`, `--perf`) dengan nilai karcis sebagai
-     fallback kalau kupon ini dipakai di luar `.home-skin`. Dua kertas yang
-     berdiri berdampingan di beranda dulu memakai dua warna tepi dan dua warna
-     panduan sobek yang berbeda — dan yang lebih terang justru kartu kecil di
-     bawah, jadi ia menuntut dibaca lebih dulu daripada karcisnya. */
+  /* Tepi dan perforasinya BUKAN nada sendiri lagi: keduanya membaca token yang dipakai karcis task (`--ticket-edge`, `--perf`) dengan nilai karcis sebagai fallback kalau kupon ini dipakai di luar `.home-skin`. Dua kertas yang berdiri berdampingan di beranda dulu memakai dua warna tepi dan dua warna panduan sobek yang berbeda — dan yang lebih terang justru kartu kecil di bawah, jadi ia menuntut dibaca lebih dulu daripada karcisnya. */
   --coupon-edge: var(--ticket-edge, color-mix(in oklab, var(--primary) 42%, var(--border)));
   --coupon-perf: var(--perf, color-mix(in oklab, var(--foreground) 26%, transparent));
-  /* Sudut digunting, bukan dibulatkan — ukuran guntingannya sama dengan karcis,
-     karena keduanya keluar dari mesin yang sama. */
+  /* Sudut digunting, bukan dibulatkan — ukuran guntingannya sama dengan karcis, karena keduanya keluar dari mesin yang sama. */
   --coupon-notch: var(--ticket-notch, 0.8rem);
-  /* Sekarang RADIUS lubang, bukan diameternya: lubangnya dilubangi dengan
-     `mask` seperti di karcis, jadi angkanya masuk ke `radial-gradient()`. */
+  /* Sekarang RADIUS lubang, bukan diameternya: lubangnya dilubangi dengan `mask` seperti di karcis, jadi angkanya masuk ke `radial-gradient()`. */
   --coupon-hole: 0.3125rem;
-  /* Ukuran gerigi robekan — angka yang sama dengan karcis, karena sobekannya
-     memang sobekan yang sama. Hanya terpakai saat kuponnya disobek. */
+  /* Ukuran gerigi robekan — angka yang sama dengan karcis, karena sobekannya memang sobekan yang sama. Hanya terpakai saat kuponnya disobek. */
   --tear-tooth: 0.6875rem;
   --tear-depth: 0.28rem;
   position: relative;
@@ -1942,12 +1673,7 @@
   align-items: stretch;
 }
 
-/* Kuponnya DUA lembar yang berhimpit, bukan satu bidang dengan garis di
-   dalamnya — persis alasan yang sama seperti karcis di atasnya: sobekan hanya
-   bisa nyata kalau kertasnya memang dua bagian yang bisa berjalan ke arah
-   berlawanan. Tiap bagian membawa tepinya sendiri (elemen berisi warna garis,
-   `::before` sejauh 1px di dalamnya berisi bidangnya), dan insetnya nol di
-   garis pertemuan supaya seam-nya tidak menyisakan pita 2px di tengah kupon. */
+/* Kuponnya DUA lembar yang berhimpit, bukan satu bidang dengan garis di dalamnya — persis alasan yang sama seperti karcis di atasnya: sobekan hanya bisa nyata kalau kertasnya memang dua bagian yang bisa berjalan ke arah berlawanan. Tiap bagian membawa tepinya sendiri (elemen berisi warna garis, `::before` sejauh 1px di dalamnya berisi bidangnya), dan insetnya nol di garis pertemuan supaya seam-nya tidak menyisakan pita 2px di tengah kupon. */
 .bonus-coupon-part {
   position: relative;
   isolation: isolate;
@@ -1968,10 +1694,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Guntingan sudut kiri, cerminan `--ticket-notch` di karcis yang menggunting
-     sudut atas. Karena `clip-path` memotong border, tepinya tetap dibuat dengan
-     cara lama: elemen berisi warna garis, `::before` sejauh 1px di dalamnya
-     berisi bidangnya. */
+  /* Guntingan sudut kiri, cerminan `--ticket-notch` di karcis yang menggunting sudut atas. Karena `clip-path` memotong border, tepinya tetap dibuat dengan cara lama: elemen berisi warna garis, `::before` sejauh 1px di dalamnya berisi bidangnya. */
   clip-path: polygon(
     var(--coupon-notch) 0,
     100% 0,
@@ -1980,9 +1703,7 @@
     0 calc(100% - var(--coupon-notch)),
     0 var(--coupon-notch)
   );
-  /* Lubang sobek atas dan bawah, dilubangi tepat di tepi kartu sehingga yang
-     terlihat separuhnya. Separuh sisanya milik badan kupon di sebelahnya, jadi
-     berdua mereka membentuk satu lubang utuh di garis perforasi. */
+  /* Lubang sobek atas dan bawah, dilubangi tepat di tepi kartu sehingga yang terlihat separuhnya. Separuh sisanya milik badan kupon di sebelahnya, jadi berdua mereka membentuk satu lubang utuh di garis perforasi. */
   mask-image:
     radial-gradient(var(--coupon-hole) at 100% 0, #0000 98%, #000),
     radial-gradient(var(--coupon-hole) at 100% 100%, #0000 98%, #000);
@@ -2004,21 +1725,18 @@
 .bonus-coupon-stub-label {
   writing-mode: vertical-rl;
   rotate: 180deg;
-  /* Ukuran dan jarak hurufnya disamakan dengan `.home-tag` — nada "cetakan
-     mesin" yang sama dengan nomor seri karcis, cuma dicetak tegak. */
+  /* Ukuran dan jarak hurufnya disamakan dengan `.home-tag` — nada "cetakan mesin" yang sama dengan nomor seri karcis, cuma dicetak tegak. */
   font-family: var(--font-display);
   font-size: 0.625rem;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  /* `--primary` sebagai teks sekecil ini di atas bidang gelap tidak lolos
-     kontras; nada terangnya sudah ada tokennya sejak chip. */
+  /* `--primary` sebagai teks sekecil ini di atas bidang gelap tidak lolos kontras; nada terangnya sudah ada tokennya sejak chip. */
   color: var(--chip-fg-primary);
 }
 
-/* Isi kanan. Padding sendiri, bukan `--surface-p`: kartu ini satu penawaran
-   satu angka, jadi ia tidak perlu ruang seluas kartu yang memuat daftar. */
+/* Isi kanan. Padding sendiri, bukan `--surface-p`: kartu ini satu penawaran satu angka, jadi ia tidak perlu ruang seluas kartu yang memuat daftar. */
 .bonus-coupon-body {
   min-width: 0;
   flex: 1;
@@ -2047,11 +1765,7 @@
     calc(100% - var(--coupon-notch) + 1px) 100%,
     0 100%
   );
-  /* Kertasnya kertas yang sama dengan pangkal karcis: serat diagonal tipis gaya
-     kertas berpengaman, lalu bidang kartunya. Sapuan radial `--primary` yang
-     dulu ada di sini dibuang — ia satu-satunya cahaya bertint di beranda, jadi
-     kartu kecil ini bercahaya sementara karcis di atasnya rata. Cahaya di sudut
-     kanan atas tempat pesawat kertasnya lewat sekarang cuma dari glyph-nya. */
+  /* Kertasnya kertas yang sama dengan pangkal karcis: serat diagonal tipis gaya kertas berpengaman, lalu bidang kartunya. Sapuan radial `--primary` yang dulu ada di sini dibuang — ia satu-satunya cahaya bertint di beranda, jadi kartu kecil ini bercahaya sementara karcis di atasnya rata. Cahaya di sudut kanan atas tempat pesawat kertasnya lewat sekarang cuma dari glyph-nya. */
   background-image:
     repeating-linear-gradient(
       45deg,
@@ -2065,10 +1779,7 @@
     );
 }
 
-/* Garis perforasi: elemen sendiri, bukan `border-right` milik stub. Bedanya
-   baru terasa saat disobek — sebagai garis milik stub ia ikut terbang, padahal
-   panduan sobek harus PUTUS lebih dulu, sama seperti `.ticket-perf` di karcis.
-   Ditaruh paling akhir di DOM supaya ia berdiri di atas kedua bagian. */
+/* Garis perforasi: elemen sendiri, bukan `border-right` milik stub. Bedanya baru terasa saat disobek — sebagai garis milik stub ia ikut terbang, padahal panduan sobek harus PUTUS lebih dulu, sama seperti `.ticket-perf` di karcis. Ditaruh paling akhir di DOM supaya ia berdiri di atas kedua bagian. */
 .bonus-coupon-perf {
   position: absolute;
   top: 0;
@@ -2082,11 +1793,7 @@
   );
 }
 
-/* Pesawat kertas Telegram di sudut kanan atas. Motif, bukan bentuk hias: ia
-   benda yang sama dengan yang ada di tombol "Join" di bawahnya. Ukurannya
-   dipatok setinggi baris nominal supaya pucuk bawahnya berhenti sebelum baris
-   kalimat — kalimat dan tombolnya tetap penuh kiri-kanan, tanpa wilayah yang
-   perlu dihindari. */
+/* Pesawat kertas Telegram di sudut kanan atas. Motif, bukan bentuk hias: ia benda yang sama dengan yang ada di tombol "Join" di bawahnya. Ukurannya dipatok setinggi baris nominal supaya pucuk bawahnya berhenti sebelum baris kalimat — kalimat dan tombolnya tetap penuh kiri-kanan, tanpa wilayah yang perlu dihindari. */
 .bonus-coupon-plane {
   position: absolute;
   top: calc(var(--coupon-p) - 0.125rem);
@@ -2098,34 +1805,13 @@
   pointer-events: none;
 }
 
-/* Sobekannya dipasang HANYA di klaim, bukan di "Join". Membuka channel di tab
-   lain tidak menghabiskan apa pun — tabnya bisa ditutup dan kuponnya masih utuh
-   — sedangkan klaim satu-satunya langkah yang tidak bisa diulang. Kupon cuma
-   bisa sobek sekali, jadi sobekan itu milik langkah yang benar-benar memakainya.
-
-   Mekanikanya sekarang sama dengan karcis di atasnya: yang membuat sobekan
-   terbaca sebagai sobekan bukan gerakannya, tapi TEPINYA — kedua bagian bertemu
-   lurus selama diam, dan begitu `data-tearing` menyala tepi pertemuannya
-   berganti jadi gerigi lalu keduanya berjalan ke arah berlawanan. Versi lama
-   hanya menerbangkan stub dan memudarkan sisanya, jadi dua kartu yang berdiri
-   berdampingan di Beranda memakai dua bahasa sobekan yang berbeda.
-
-   Durasinya datang dari `--tear-ms` yang dipasang komponen, seperti karcis:
-   penyegaran sesi ditahan selama itu, karena data barulah yang melepas kartu
-   ini dari Beranda. Kalau tidak ditahan, sobekannya terpotong di frame
-   pertama — dan dengan satu variabel, angka di JS dan CSS tak bisa berbeda. */
+/* Sobekannya dipasang HANYA di klaim, bukan di "Join". Membuka channel di tab lain tidak menghabiskan apa pun — tabnya bisa ditutup dan kuponnya masih utuh — sedangkan klaim satu-satunya langkah yang tidak bisa diulang. Kupon cuma bisa sobek sekali, jadi sobekan itu milik langkah yang benar-benar memakainya. Mekanikanya sekarang sama dengan karcis di atasnya: yang membuat sobekan terbaca sebagai sobekan bukan gerakannya, tapi TEPINYA — kedua bagian bertemu lurus selama diam, dan begitu `data-tearing` menyala tepi pertemuannya berganti jadi gerigi lalu keduanya berjalan ke arah berlawanan. Versi lama hanya menerbangkan stub dan memudarkan sisanya, jadi dua kartu yang berdiri berdampingan di Beranda memakai dua bahasa sobekan yang berbeda. Durasinya datang dari `--tear-ms` yang dipasang komponen, seperti karcis: penyegaran sesi ditahan selama itu, karena data barulah yang melepas kartu ini dari Beranda. Kalau tidak ditahan, sobekannya terpotong di frame pertama — dan dengan satu variabel, angka di JS dan CSS tak bisa berbeda. */
 .bonus-coupon[data-tearing='true'] {
-  /* Kartu sedang pergi: tombol "Join" dan "Klaim" tidak boleh bisa ditekan
-     lagi di tengah sobekan. */
+  /* Kartu sedang pergi: tombol "Join" dan "Klaim" tidak boleh bisa ditekan lagi di tengah sobekan. */
   pointer-events: none;
 }
 .bonus-coupon[data-tearing='true'] .bonus-coupon-stub {
-  /* Gerigi ditumpuk di atas badan kertas dan HANYA ada saat menyobek — kalau
-     ia selalu ada, di keadaan diam ia cuma celah bergerigi yang tak masuk akal.
-     Bentuknya sama dengan karcis, cuma diputar: giginya tumbuh ke kanan, jadi
-     tilenya berulang ke bawah (`repeat-y`) alih-alih ke samping. Lubang sobek
-     dilepas di sini justru karena itu titik pangkal robekan — setelah kertasnya
-     terbelah, lubangnya sudah jadi bagian dari geriginya. */
+  /* Gerigi ditumpuk di atas badan kertas dan HANYA ada saat menyobek — kalau ia selalu ada, di keadaan diam ia cuma celah bergerigi yang tak masuk akal. Bentuknya sama dengan karcis, cuma diputar: giginya tumbuh ke kanan, jadi tilenya berulang ke bawah (`repeat-y`) alih-alih ke samping. Lubang sobek dilepas di sini justru karena itu titik pangkal robekan — setelah kertasnya terbelah, lubangnya sudah jadi bagian dari geriginya. */
   mask-image:
     conic-gradient(from -135deg at right, #0000, #000 1deg 89deg, #0000 90deg),
     linear-gradient(#000, #000);
@@ -2144,8 +1830,7 @@
   mask-image:
     conic-gradient(from 45deg at left, #0000, #000 1deg 89deg, #0000 90deg),
     linear-gradient(#000, #000);
-  /* Gigi badan sengaja sedikit lebih rapat dan digeser setengah gigi: dua tepi
-     yang berpola identik terbaca sebagai guntingan mesin, bukan robekan. */
+  /* Gigi badan sengaja sedikit lebih rapat dan digeser setengah gigi: dua tepi yang berpola identik terbaca sebagai guntingan mesin, bukan robekan. */
   mask-size:
     var(--tear-depth) calc(var(--tear-tooth) * 0.82),
     calc(100% - var(--tear-depth)) 100%;
@@ -2157,8 +1842,7 @@
   animation: coupon-tear-body var(--tear-ms, 520ms) cubic-bezier(0.22, 0.68, 0.24, 1) forwards;
   will-change: translate, rotate, opacity;
 }
-/* Perforasinya hilang lebih dulu: begitu kertasnya putus, panduan sobeknya
-   sudah tidak menandai apa pun. */
+/* Perforasinya hilang lebih dulu: begitu kertasnya putus, panduan sobeknya sudah tidak menandai apa pun. */
 .bonus-coupon[data-tearing='true'] .bonus-coupon-perf {
   animation: tear-perf-snap 140ms linear forwards;
 }
@@ -2168,15 +1852,12 @@
     translate: 0 0;
     rotate: 0deg;
   }
-  /* Kertas ditarik dan menahan sebentar sebelum putus — tanpa jeda ini kedua
-     bagian cuma bergeser, tidak terasa ada yang disobek. */
+  /* Kertas ditarik dan menahan sebentar sebelum putus — tanpa jeda ini kedua bagian cuma bergeser, tidak terasa ada yang disobek. */
   16% {
     translate: 2px 0;
     rotate: -0.5deg;
   }
-  /* Jarak dan putarannya diambil dari `ticket-tear-top`, cuma diputar 90°:
-     sobekan kupon dulu berputar -14deg — tiga kali lipat karcisnya — jadi dua
-     kertas yang sobek di halaman yang sama terasa dari dua tangan berbeda. */
+  /* Jarak dan putarannya diambil dari `ticket-tear-top`, cuma diputar 90°: sobekan kupon dulu berputar -14deg — tiga kali lipat karcisnya — jadi dua kertas yang sobek di halaman yang sama terasa dari dua tangan berbeda. */
   100% {
     translate: -3.5rem -0.75rem;
     rotate: -4deg;
@@ -2200,8 +1881,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Tanpa gerak, yang tersisa cuma kepergiannya. `TEAR_MS` juga dipangkas di
-     sisi JS lewat media query yang sama, jadi jedanya tidak ikut tertinggal. */
+  /* Tanpa gerak, yang tersisa cuma kepergiannya. `TEAR_MS` juga dipangkas di sisi JS lewat media query yang sama, jadi jedanya tidak ikut tertinggal. */
   .bonus-coupon[data-tearing='true'] {
     animation: fade-in 200ms ease-out reverse both;
   }
@@ -2222,33 +1902,9 @@
   background-color: transparent;
 }
 
-/* ============================================================================
-   Kartu premium: "perangko emas"
-   ============================================================================
-   Kartu ini satu-satunya bidang di beranda yang bukan kertas: pelat gradien
-   emas bersudut bulat, berdiri persis di antara karcis yang digunting dan
-   kupon yang disobek. Emas yang dipudarkan bukan penanda apa pun — kartu mana
-   saja bisa memakainya — jadi yang menyatakan "ini premium" tinggal warnanya.
-
-   Perangko dipilih karena benda kertas inilah yang cara kerjanya persis sama
-   dengan premium: DIBELI pada nominal yang tercetak di sudutnya, lalu
-   DITEMPEL supaya dilihat orang lain. Jadi harganya jatuh ke tempat nominal
-   perangko, mahkotanya menempati posisi potret, dan gigi perforasi di keempat
-   tepi jadi satu-satunya bentuk di halaman ini yang tidak bisa tertukar
-   dengan karcis (sudut digunting) atau kupon (satu sisi disobek).
-
-   Saat premiumnya aktif, perangkonya DICAP: sisa hari duduk di dalam cap pos
-   bundar yang miring. Dua keadaan, satu bentuk — yang membedakan bukan warna
-   melainkan apakah perangkonya sudah terpakai.
-
-   Tidak di-scope ke `.home-skin`, sama alasannya dengan `.bonus-coupon`: yang
-   dibentuk kartunya sendiri, bukan kulit halaman yang menumpanginya.
-   ========================================================================== */
+/* ============================================================================ Kartu premium: "perangko emas" ============================================================================ Kartu ini satu-satunya bidang di beranda yang bukan kertas: pelat gradien emas bersudut bulat, berdiri persis di antara karcis yang digunting dan kupon yang disobek. Emas yang dipudarkan bukan penanda apa pun — kartu mana saja bisa memakainya — jadi yang menyatakan "ini premium" tinggal warnanya. Perangko dipilih karena benda kertas inilah yang cara kerjanya persis sama dengan premium: DIBELI pada nominal yang tercetak di sudutnya, lalu DITEMPEL supaya dilihat orang lain. Jadi harganya jatuh ke tempat nominal perangko, mahkotanya menempati posisi potret, dan gigi perforasi di keempat tepi jadi satu-satunya bentuk di halaman ini yang tidak bisa tertukar dengan karcis (sudut digunting) atau kupon (satu sisi disobek). Saat premiumnya aktif, perangkonya DICAP: sisa hari duduk di dalam cap pos bundar yang miring. Dua keadaan, satu bentuk — yang membedakan bukan warna melainkan apakah perangkonya sudah terpakai. Tidak di-scope ke `.home-skin`, sama alasannya dengan `.bonus-coupon`: yang dibentuk kartunya sendiri, bukan kulit halaman yang menumpanginya. ========================================================================== */
 .premium-stamp {
-  /* Radius lubang gigi, sengaja jauh lebih kecil dari lubang sobek karcis
-     (`--ticket-hole`, 0.3125rem): gigi perangko adalah deret lubang RAPAT, dan
-     pada ukuran lubang karcis ia berhenti terbaca sebagai gigi lalu mulai
-     terbaca sebagai kartu yang tepinya rusak. */
+  /* Radius lubang gigi, sengaja jauh lebih kecil dari lubang sobek karcis (`--ticket-hole`, 0.3125rem): gigi perangko adalah deret lubang RAPAT, dan pada ukuran lubang karcis ia berhenti terbaca sebagai gigi lalu mulai terbaca sebagai kartu yang tepinya rusak. */
   --stamp-tooth: 0.28rem;
   --stamp-step: 1rem;
   --stamp-p: 0.9375rem;
@@ -2257,11 +1913,7 @@
   isolation: isolate;
   display: block;
   padding: var(--stamp-p);
-  /* Dua lapis: serat kertas diagonal — angka yang sama dengan pangkal karcis,
-     karena kertasnya keluar dari mesin yang sama — di atas bidang emas yang
-     DICAMPUR ke `--card`. Emasnya bukan lapisan transparan seperti versi lama:
-     perangko itu kertas yang dicetak, jadi warnanya harus bidang, bukan kabut
-     yang menumpang di atas latar halaman. */
+  /* Dua lapis: serat kertas diagonal — angka yang sama dengan pangkal karcis, karena kertasnya keluar dari mesin yang sama — di atas bidang emas yang DICAMPUR ke `--card`. Emasnya bukan lapisan transparan seperti versi lama: perangko itu kertas yang dicetak, jadi warnanya harus bidang, bukan kabut yang menumpang di atas latar halaman. */
   background-image:
     repeating-linear-gradient(
       45deg,
@@ -2274,13 +1926,7 @@
       color-mix(in oklab, var(--premium) 10%, var(--card)) 60%,
       var(--card)
     );
-  /* Giginya dilubangi, bukan digambar: empat lapis mask, satu per tepi, tiap
-     lapis satu lubang yang diulang sepanjang tepinya. `round` yang membuat
-     jumlah lubangnya bulat — dengan `repeat` biasa, gigi terakhir terpotong
-     separuh di sudut dan tepi kanan tidak lagi seirama tepi kiri.
-     Kalau `mask-composite` tidak didukung, hasilnya hanya persegi tanpa gigi
-     (semua lapis di-`add`), jadi kartunya tetap terbaca — tidak pernah jadi
-     bidang berlubang di mana-mana. */
+  /* Giginya dilubangi, bukan digambar: empat lapis mask, satu per tepi, tiap lapis satu lubang yang diulang sepanjang tepinya. `round` yang membuat jumlah lubangnya bulat — dengan `repeat` biasa, gigi terakhir terpotong separuh di sudut dan tepi kanan tidak lagi seirama tepi kiri. Kalau `mask-composite` tidak didukung, hasilnya hanya persegi tanpa gigi (semua lapis di-`add`), jadi kartunya tetap terbaca — tidak pernah jadi bidang berlubang di mana-mana. */
   mask-image:
     radial-gradient(var(--stamp-tooth) at 50% 0, #0000 98%, #000),
     radial-gradient(var(--stamp-tooth) at 50% 100%, #0000 98%, #000),
@@ -2295,11 +1941,7 @@
   mask-composite: intersect;
 }
 
-/* Bingkai cetak. Di perangko sungguhan garis inilah yang membatasi area cetak
-   — bukan tepi kertasnya — jadi ia berdiri DI DALAM gigi, bukan menempel di
-   lubangnya. `z-index: -1` menaruhnya di atas bidang emas tapi di bawah teks;
-   `isolation` di induknya yang menahan nilai negatif itu agar tidak jatuh ke
-   belakang halaman. */
+/* Bingkai cetak. Di perangko sungguhan garis inilah yang membatasi area cetak — bukan tepi kertasnya — jadi ia berdiri DI DALAM gigi, bukan menempel di lubangnya. `z-index: -1` menaruhnya di atas bidang emas tapi di bawah teks; `isolation` di induknya yang menahan nilai negatif itu agar tidak jatuh ke belakang halaman. */
 .premium-stamp::before {
   content: '';
   position: absolute;
@@ -2309,21 +1951,12 @@
   pointer-events: none;
 }
 
-/* Label kecil nada emas. Kelas sendiri, BUKAN utility `text-premium` yang
-   ditempel di elemen yang sama: `.home-tag` hidup di luar layer, jadi ia
-   mengalahkan utility warna apa pun. Kelas ini berdiri setelahnya di berkas
-   yang sama dengan kekhususan yang setara, jadi urutannya yang menentukan —
-   dan itu tertulis di sini supaya tidak terbaca sebagai kebetulan. */
+/* Label kecil nada emas. Kelas sendiri, BUKAN utility `text-premium` yang ditempel di elemen yang sama: `.home-tag` hidup di luar layer, jadi ia mengalahkan utility warna apa pun. Kelas ini berdiri setelahnya di berkas yang sama dengan kekhususan yang setara, jadi urutannya yang menentukan — dan itu tertulis di sini supaya tidak terbaca sebagai kebetulan. */
 .premium-stamp-tag {
   color: color-mix(in oklab, var(--premium) 90%, transparent);
 }
 
-/* Cap pos: dua cincin sepusat berisi sisa hari. Miringnya yang penting — cap
-   tegak terbaca sebagai lencana yang dirancang, sementara cap miring terbaca
-   sebagai sesuatu yang ditekankan ke kertas SETELAH perangkonya ditempel.
-   Angkanya duduk di dalam cap karena sisa hari memang satu-satunya hal yang
-   diminta dibaca dari perangko yang sudah terpakai; cap yang cuma berisi
-   tulisan hiasan tidak akan berhak menempati ruang sebesar ini. */
+/* Cap pos: dua cincin sepusat berisi sisa hari. Miringnya yang penting — cap tegak terbaca sebagai lencana yang dirancang, sementara cap miring terbaca sebagai sesuatu yang ditekankan ke kertas SETELAH perangkonya ditempel. Angkanya duduk di dalam cap karena sisa hari memang satu-satunya hal yang diminta dibaca dari perangko yang sudah terpakai; cap yang cuma berisi tulisan hiasan tidak akan berhak menempati ruang sebesar ini. */
 .premium-postmark {
   position: relative;
   flex: none;
@@ -2344,10 +1977,7 @@
   border-radius: inherit;
   border: 1px dashed color-mix(in oklab, var(--premium) 34%, transparent);
 }
-/* `.home-tag` memberi jarak huruf 0.2em yang menempel di SISI KANAN huruf
-   terakhir, jadi teks yang di-`center` di dalam cap tampak bergeser ke kiri
-   sebanyak itu. `text-indent` membayarnya balik alih-alih mengurangi jarak
-   hurufnya, supaya nada "cetakan mesin"-nya tidak ikut hilang. */
+/* `.home-tag` memberi jarak huruf 0.2em yang menempel di SISI KANAN huruf terakhir, jadi teks yang di-`center` di dalam cap tampak bergeser ke kiri sebanyak itu. `text-indent` membayarnya balik alih-alih mengurangi jarak hurufnya, supaya nada "cetakan mesin"-nya tidak ikut hilang. */
 .premium-postmark .home-tag {
   text-indent: 0.2em;
 }

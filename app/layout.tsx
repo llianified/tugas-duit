@@ -33,8 +33,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  // Gelap-saja: tidak ada toggle dan tidak ada varian terang, jadi `colorScheme`
-  // dikunci supaya kontrol bawaan browser (scrollbar, form) ikut gelap.
+  // Gelap-saja: tidak ada toggle dan tidak ada varian terang, jadi `colorScheme` | dikunci supaya kontrol bawaan browser (scrollbar, form) ikut gelap.
   colorScheme: 'dark',
   themeColor: '#101014',
   width: 'device-width',
@@ -47,8 +46,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const nonce = (await headers()).get('x-nonce') ?? undefined
-  // Cerminan `resolveAdProvider()`: zone yang sama harus dipakai di script tag dan di
-  // `useAdPass`, karena nama fungsi global SDK-nya diturunkan dari zone itu.
+  // Cerminan `resolveAdProvider()`: zone yang sama harus dipakai di script tag dan di | `useAdPass`, karena nama fungsi global SDK-nya diturunkan dari zone itu.
   const monetagZoneId = process.env.NEXT_PUBLIC_MONETAG_ZONE_ID?.trim() || MONETAG_DEFAULT_ZONE_ID
 
   return (
@@ -68,9 +66,7 @@ export default async function RootLayout({
         />
         <Script
           src="https://libtl.com/sdk.js"
-          // `lazyOnload` menunda SDK sampai window `load`; di jaringan seluler dalam
-          // WebView Telegram itu sering lewat dari jendela tunggu 8s di `useAdPass`,
-          // jadi fungsi `show_<zone>` belum ada saat tombol ditekan.
+          // `lazyOnload` menunda SDK sampai window `load`; di jaringan seluler dalam | WebView Telegram itu sering lewat dari jendela tunggu 8s di `useAdPass`, | jadi fungsi `show_<zone>` belum ada saat tombol ditekan.
           strategy="afterInteractive"
           nonce={nonce}
           data-zone={monetagZoneId}

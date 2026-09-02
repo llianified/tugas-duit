@@ -31,18 +31,7 @@ function AppShellInner() {
   const session = useRewardSession({ onError: showError })
   const [liveTaskReward, setLiveTaskReward] = useState<number | null>(null)
 
-  /**
-   * Interstitial otomatis punya saklarnya sendiri, `ads.inAppEnabled`, terpisah dari
-   * `ads.enabled` milik iklan berhadiah. Keduanya sama-sama mati saat `adsMaxViewsPerDay`
-   * diisi 0 di panel ekonomi, tapi premium hanya mematikan yang ini — tiket berhadiah
-   * tetap dirender karena sifatnya opt-in. Dipasang di sini, bukan di `app/layout.tsx`,
-   * karena saklarnya baru diketahui setelah sesi termuat.
-   *
-   * Jadwalnya dibaca dari config ekonomi yang dikirim `/api/session`, lalu di-memo per
-   * nilai agar effect tidak dijalankan ulang hanya karena identitas objek berubah. Hook
-   * mengirim konfigurasi `type: 'inApp'` satu kali per dokumen; timeout, interval,
-   * frequency, dan capping setelah itu dikelola langsung oleh SDK Monetag.
-   */
+  /** Interstitial otomatis punya saklarnya sendiri, `ads.inAppEnabled`, terpisah dari `ads.enabled` milik iklan berhadiah. Keduanya sama-sama mati saat `adsMaxViewsPerDay` diisi 0 di panel ekonomi, tapi premium hanya mematikan yang ini — tiket berhadiah tetap dirender karena sifatnya opt-in. Dipasang di sini, bukan di `app/layout.tsx`, karena saklarnya baru diketahui setelah sesi termuat. Jadwalnya dibaca dari config ekonomi yang dikirim `/api/session`, lalu di-memo per nilai agar effect tidak dijalankan ulang hanya karena identitas objek berubah. Hook mengirim konfigurasi `type: 'inApp'` satu kali per dokumen; timeout, interval, frequency, dan capping setelah itu dikelola langsung oleh SDK Monetag. */
   const {
     inAppAdsFrequency,
     inAppAdsCappingMinutes,

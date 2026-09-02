@@ -172,12 +172,7 @@ export async function loadSession(): Promise<SessionResponse> {
   const initData = telegram?.initData
   if (!initData) {
     if (process.env.NODE_ENV === 'production') return session
-    /**
-     * Token yang dikembalikan dipasang sebagai pembawa sesi cadangan. Cookie tetap
-     * jalur utamanya; ini hanya menolong saat browser membuang cookie pihak ketiga
-     * di dalam iframe preview. Route ini 404 di luar preview, jadi `token` null
-     * di sana dan pemasangannya jadi no-op.
-     */
+    /** Token yang dikembalikan dipasang sebagai pembawa sesi cadangan. Cookie tetap jalur utamanya; ini hanya menolong saat browser membuang cookie pihak ketiga di dalam iframe preview. Route ini 404 di luar preview, jadi `token` null di sana dan pemasangannya jadi no-op. */
     const dev = await sendJson<{ token: string | null }>('/api/dev/login', 'POST')
     setPreviewSessionToken(dev?.token ?? null)
     return fetchSession()

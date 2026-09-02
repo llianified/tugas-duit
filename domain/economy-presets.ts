@@ -14,24 +14,7 @@ export interface EconomyPreset {
 
 const KEYS = new Set<string>(ECONOMY_FIELDS.map((field) => field.key))
 
-/**
- * Preset adalah PATCH SEBAGIAN, bukan config utuh — kecuali `defaults`.
- *
- * Yang ditulis hanya key yang memang digeser oleh arah tersebut, supaya setelan yang
- * sudah diatur admin (harga premium, ambang rank, tingkat kesulitan soal) tidak
- * diam-diam dikembalikan ke bawaan repo saat ia hanya ingin mengubah arah ekonominya.
- *
- * Karena patch digabung ke config yang SEDANG berlaku, setiap key yang punya pasangan
- * lintas-field ikut ditulis walau nilainya sama dengan bawaan. `maxEnergy` tanpa
- * `premiumMaxEnergy`, misalnya, bisa jatuh ke aturan "kapasitas premium tidak boleh di
- * bawah kapasitas biasa" hanya karena config berjalan sudah pernah diubah — kegagalan
- * yang muncul di form sebagai error yang tidak jelas asalnya.
- *
- * Angka rupiah wajib kelipatan `creditValueIdr` (100 pada bawaan). Preset ini tidak
- * menggeser `creditValueIdr`: mengubah kurs akan mengubah nilai rupiah dari SELURUH
- * saldo yang sudah ada di database, dan itu keputusan yang harus diambil sendiri,
- * bukan menumpang preset.
- */
+/** Preset adalah PATCH SEBAGIAN, bukan config utuh — kecuali `defaults`. Yang ditulis hanya key yang memang digeser oleh arah tersebut, supaya setelan yang sudah diatur admin (harga premium, ambang rank, tingkat kesulitan soal) tidak diam-diam dikembalikan ke bawaan repo saat ia hanya ingin mengubah arah ekonominya. Karena patch digabung ke config yang SEDANG berlaku, setiap key yang punya pasangan lintas-field ikut ditulis walau nilainya sama dengan bawaan. `maxEnergy` tanpa `premiumMaxEnergy`, misalnya, bisa jatuh ke aturan "kapasitas premium tidak boleh di bawah kapasitas biasa" hanya karena config berjalan sudah pernah diubah — kegagalan yang muncul di form sebagai error yang tidak jelas asalnya. Angka rupiah wajib kelipatan `creditValueIdr` (100 pada bawaan). Preset ini tidak menggeser `creditValueIdr`: mengubah kurs akan mengubah nilai rupiah dari SELURUH saldo yang sudah ada di database, dan itu keputusan yang harus diambil sendiri, bukan menumpang preset. */
 export const ECONOMY_PRESETS: readonly EconomyPreset[] = [
   {
     id: 'retention',
@@ -39,9 +22,7 @@ export const ECONOMY_PRESETS: readonly EconomyPreset[] = [
     summary:
       'Kolam ±32 credit/hari (≈Rp3.200), energi 8 dengan regen 40 menit, interstitial ditekan jadi 1 per 8 menit. Gerbang tarik dinaikkan ke Rp30.000 supaya biayanya tertahan tanpa mengurangi yang bisa dikerjakan hari ini.',
     values: {
-      // Kolam mengikat payout, bukan batas task harian. Cap 50 credit menampung
-      // sekitar satu setengah hari isi ulang, jadi user yang absen sehari masih punya
-      // stok saat kembali — itu justru bentuk retensinya.
+      // Kolam mengikat payout, bukan batas task harian. Cap 50 credit menampung | sekitar satu setengah hari isi ulang, jadi user yang absen sehari masih punya | stok saat kembali — itu justru bentuk retensinya.
       rewardPoolCapIdr: 5_000,
       rewardPoolRegenMinutes: 45,
       rewardPoolRegenCredits: 1,
@@ -49,17 +30,14 @@ export const ECONOMY_PRESETS: readonly EconomyPreset[] = [
       streakCapStepDays: 5,
       maxStreakCapBonus: 8,
 
-      // Energi longgar: yang dibatasi tetap kolam, jadi menambah energi hanya
-      // mempercepat user sampai ke plafonnya, tidak menambah rupiah yang dibayar.
+      // Energi longgar: yang dibatasi tetap kolam, jadi menambah energi hanya | mempercepat user sampai ke plafonnya, tidak menambah rupiah yang dibayar.
       maxEnergy: 8,
       energyRegenMinutes: 40,
       energyCostPerTask: 1,
       premiumMaxEnergy: 10,
       premiumEnergyRegenMinutes: 20,
 
-      // Tiket iklan berhadiah diperbanyak (ia membayar ongkos masuk task, bukan
-      // credit), sementara interstitial otomatis dijarangkan — iklan yang menyela
-      // sendiri adalah alasan paling sering user menutup app.
+      // Tiket iklan berhadiah diperbanyak (ia membayar ongkos masuk task, bukan | credit), sementara interstitial otomatis dijarangkan — iklan yang menyela | sendiri adalah alasan paling sering user menutup app.
       adsMaxViewsPerDay: 15,
       adsCooldownSeconds: 90,
       inAppAdsFrequency: 1,
@@ -67,13 +45,11 @@ export const ECONOMY_PRESETS: readonly EconomyPreset[] = [
       inAppAdsIntervalSeconds: 60,
       inAppAdsTimeoutSeconds: 20,
 
-      // Yang diketatkan hanya pintu keluarnya: ±10 hari mengumpulkan sebelum payout
-      // pertama, dengan biaya transfer yang tertahan di nominal per pengajuan.
+      // Yang diketatkan hanya pintu keluarnya: ±10 hari mengumpulkan sebelum payout | pertama, dengan biaya transfer yang tertahan di nominal per pengajuan.
       withdrawalMinimumIdr: 30_000,
       withdrawalMinActiveReferrals: 5,
 
-      // Gerbang channel dibuka: memblok app untuk user yang belum join membuang
-      // sesi pertama, sesi yang paling menentukan apakah ia kembali.
+      // Gerbang channel dibuka: memblok app untuk user yang belum join membuang | sesi pertama, sesi yang paling menentukan apakah ia kembali.
       channelJoinBonusCredits: 50,
       channelGateEnabled: 0,
     },
@@ -97,9 +73,7 @@ export const ECONOMY_PRESETS: readonly EconomyPreset[] = [
       premiumMaxEnergy: 10,
       premiumEnergyRegenMinutes: 25,
 
-      // Impresi dinaikkan dari dua sisi: tiket lebih banyak dan interstitial lebih
-      // rapat. Jadwalnya tetap muat di jendelanya — 10s tunda + 2 × 45s jeda = 100s
-      // dalam jendela 6 menit.
+      // Impresi dinaikkan dari dua sisi: tiket lebih banyak dan interstitial lebih | rapat. Jadwalnya tetap muat di jendelanya — 10s tunda + 2 × 45s jeda = 100s | dalam jendela 6 menit.
       adsMaxViewsPerDay: 20,
       adsCooldownSeconds: 60,
       inAppAdsFrequency: 3,

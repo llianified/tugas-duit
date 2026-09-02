@@ -346,11 +346,7 @@ function Profile({
   )
 }
 
-/**
- * Premium yang diberikan admin memakai satuan HARI dan menumpuk dari tanggal berakhir yang
- * masih berlaku — bentuk yang sama dengan pembelian, jadi memberi bonus di tengah langganan
- * berbayar tidak memotong hari yang sudah dibayar user.
- */
+/** Premium yang diberikan admin memakai satuan HARI dan menumpuk dari tanggal berakhir yang masih berlaku — bentuk yang sama dengan pembelian, jadi memberi bonus di tengah langganan berbayar tidak memotong hari yang sudah dibayar user. */
 function Premium({
   publicId,
   firstName,
@@ -360,11 +356,7 @@ function Premium({
   publicId: string
   firstName: string
   premiumUntil: number | null
-  /**
-   * Datang dari server, dihitung dengan `now()` milik database. Menghitungnya di sini akan
-   * memanggil `Date.now()` saat render — hasil yang bisa berubah tiap render, dan jam yang
-   * berbeda dari yang dipakai server saat menerima aksinya.
-   */
+  /** Datang dari server, dihitung dengan `now()` milik database. Menghitungnya di sini akan memanggil `Date.now()` saat render — hasil yang bisa berubah tiap render, dan jam yang berbeda dari yang dipakai server saat menerima aksinya. */
   active: boolean
 }) {
   const router = useRouter()
@@ -442,12 +434,7 @@ function Premium({
   )
 }
 
-/**
- * Energi dan stok reward mengembalikan KESEMPATAN menghasilkan, bukan mencetak credit.
- * Itu bedanya dengan koreksi saldo, dan alasan keduanya ada di kartu terpisah: user yang
- * dirugikan gangguan sebaiknya dipulihkan lewat sini, bukan lewat saldo yang menambah
- * liabilitas di luar kolam.
- */
+/** Energi dan stok reward mengembalikan KESEMPATAN menghasilkan, bukan mencetak credit. Itu bedanya dengan koreksi saldo, dan alasan keduanya ada di kartu terpisah: user yang dirugikan gangguan sebaiknya dipulihkan lewat sini, bukan lewat saldo yang menambah liabilitas di luar kolam. */
 function TopUp({ publicId }: { publicId: string }) {
   const router = useRouter()
   const [energy, setEnergy] = useState('5')

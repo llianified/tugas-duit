@@ -46,16 +46,7 @@ export interface PrestigeInput {
   premium: boolean
 }
 
-/**
- * Urutannya urutan KELANGKAAN, bukan urutan cerita, karena pemanggil yang sempit
- * ruangnya memotong dari belakang — baris papan peringkat hanya memberi dua slot.
- *
- * Presisi lebih dulu karena ia satu-satunya yang tidak bisa didapat dengan waktu:
- * rata-rata segitu menuntut Sulit bintang tiga berulang kali. Perintis justru
- * paling belakang meski paling langka pada akhirnya — selama pengguna masih di
- * bawah `FOUNDER_MAX_USER_ID`, SEMUA orang memilikinya, dan lencana yang dipunyai
- * semua orang adalah yang paling tidak layak memakai slot terakhir.
- */
+/** Urutannya urutan KELANGKAAN, bukan urutan cerita, karena pemanggil yang sempit ruangnya memotong dari belakang — baris papan peringkat hanya memberi dua slot. Presisi lebih dulu karena ia satu-satunya yang tidak bisa didapat dengan waktu: rata-rata segitu menuntut Sulit bintang tiga berulang kali. Perintis justru paling belakang meski paling langka pada akhirnya — selama pengguna masih di bawah `FOUNDER_MAX_USER_ID`, SEMUA orang memilikinya, dan lencana yang dipunyai semua orang adalah yang paling tidak layak memakai slot terakhir. */
 export function prestigeBadges({
   taskCount,
   credits,

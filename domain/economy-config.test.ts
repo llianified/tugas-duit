@@ -23,14 +23,11 @@ const HISTORIC: EconomyConfig = {
   maxEnergy: 5, energyRegenMinutes: 60, energyCostPerTask: 1,
   adsMaxViewsPerDay: 10, adsCooldownSeconds: 120,
   adsTicketTtlSeconds: 300, adsPassTtlMinutes: 30,
-  // Sama dengan DEFAULT_IN_APP_ADS_SETTINGS yang lama, jadi pemindahan jadwal
-  // interstitial ke config tidak mengubah perilaku bawaan.
+  // Sama dengan DEFAULT_IN_APP_ADS_SETTINGS yang lama, jadi pemindahan jadwal | interstitial ke config tidak mengubah perilaku bawaan.
   inAppAdsFrequency: 2, inAppAdsCappingMinutes: 6,
   inAppAdsIntervalSeconds: 30, inAppAdsTimeoutSeconds: 5,
   withdrawalMinimumIdr: 10_000, withdrawalMinActiveReferrals: 5,
-  // Dulu konstanta kode: REQUIRED_ACTIVE_DAYS di payout-rules.ts dan
-  // WITHDRAWAL_COOLDOWN_DAYS di domain/premium.ts. Angkanya sama persis, jadi
-  // memindahkannya ke panel tidak menggeser satu pun gerbang yang berjalan.
+  // Dulu konstanta kode: REQUIRED_ACTIVE_DAYS di payout-rules.ts dan | WITHDRAWAL_COOLDOWN_DAYS di domain/premium.ts. Angkanya sama persis, jadi | memindahkannya ke panel tidak menggeser satu pun gerbang yang berjalan.
   withdrawalMinActiveDays: 7, withdrawalCooldownDays: 7,
   // Dulu LEADERBOARD_ENABLED = true di features/leaderboard/availability.ts.
   leaderboardEnabled: 1,
@@ -97,8 +94,7 @@ describe('validation — nilai absurd ditolak', () => {
   it('regen nol detik', () => rejects({ energyRegenMinutes: 0 }, 'energyRegenMinutes'))
   it('komisi di atas 100%', () => rejects({ referralCommissionPercent: 150 }, 'referralCommissionPercent'))
   it('komisi negatif', () => rejects({ referralCommissionPercent: -5 }, 'referralCommissionPercent'))
-  // 0% menghentikan penulisan referral_commissions, sedangkan syarat penarikan menghitung
-  // downline dari baris itu — jadi 0% mengunci penarikan tanpa pesan yang menjelaskan.
+  // 0% menghentikan penulisan referral_commissions, sedangkan syarat penarikan menghitung | downline dari baris itu — jadi 0% mengunci penarikan tanpa pesan yang menjelaskan.
   it('komisi nol mengunci syarat penarikan', () =>
     rejects({ referralCommissionPercent: 0 }, 'referralCommissionPercent'))
   it('minimum penarikan nol', () => rejects({ withdrawalMinimumIdr: 0 }, 'withdrawalMinimumIdr'))
@@ -188,11 +184,7 @@ describe('konfigurasi aktif', () => {
 })
 
 describe('invarian setelan panel yang baru dipindah dari kode', () => {
-  /**
-   * Hadiah misi yang tidak muat di kapasitas energi membuat misinya tidak pernah bisa
-   * diklaim siapa pun: `claimMission` menolak klaim yang hadiahnya terpotong. Gagalnya
-   * diam — yang terlihat cuma tombol klaim yang selalu menolak — jadi ditangkap di validasi.
-   */
+  /** Hadiah misi yang tidak muat di kapasitas energi membuat misinya tidak pernah bisa diklaim siapa pun: `claimMission` menolak klaim yang hadiahnya terpotong. Gagalnya diam — yang terlihat cuma tombol klaim yang selalu menolak — jadi ditangkap di validasi. */
   it('menolak hadiah misi yang melewati kapasitas energi', () => {
     const result = validateEconomyConfig(withField({ maxEnergy: 5, missionAdsReward: 6 }))
     expect(result.ok).toBe(false)
@@ -203,11 +195,7 @@ describe('invarian setelan panel yang baru dipindah dari kode', () => {
     expect(validateEconomyConfig(withField({ maxEnergy: 5, missionAdsReward: 5 })).ok).toBe(true)
   })
 
-  /**
-   * Jeda premium yang lebih panjang daripada jeda biasa membuat premium jadi kerugian:
-   * pembeli menunggu lebih lama daripada yang tidak membayar. Sebelum `withdrawalCooldownDays`
-   * bisa disetel, ini mustahil karena jeda biasa terpaku 7 di kode.
-   */
+  /** Jeda premium yang lebih panjang daripada jeda biasa membuat premium jadi kerugian: pembeli menunggu lebih lama daripada yang tidak membayar. Sebelum `withdrawalCooldownDays` bisa disetel, ini mustahil karena jeda biasa terpaku 7 di kode. */
   it('menolak jeda penarikan premium yang lebih panjang daripada jeda biasa', () => {
     const result = validateEconomyConfig(
       withField({ withdrawalCooldownDays: 3, premiumWithdrawalCooldownDays: 7 }),

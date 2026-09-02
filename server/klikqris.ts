@@ -71,11 +71,7 @@ export interface CreatedInvoice {
   expiresAt: Date
 }
 
-/**
- * `expired_at` dari gateway datang tanpa zona waktu, jadi tidak dipakai sebagai jam
- * dinding. Yang dipakai `expired_menit` dihitung dari sekarang — sedikit lebih pendek
- * kalau jam kedua server bergeser, dan itu arah yang aman.
- */
+/** `expired_at` dari gateway datang tanpa zona waktu, jadi tidak dipakai sebagai jam dinding. Yang dipakai `expired_menit` dihitung dari sekarang — sedikit lebih pendek kalau jam kedua server bergeser, dan itu arah yang aman. */
 export async function createInvoice(input: {
   orderId: string
   amountIdr: number

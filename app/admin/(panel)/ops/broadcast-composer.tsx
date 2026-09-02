@@ -13,24 +13,7 @@ type Stage = 'tulis' | 'konfirmasi' | 'kirim'
 
 type RunResult = { id: string; sent: number; failed: number; remaining: number; done: boolean }
 
-/**
- * Siaran ditulis di sini, tapi tidak pernah berangkat dalam satu ketukan.
- *
- * Alurnya sengaja tiga langkah: tulis, lihat berapa orang yang akan menerimanya, lalu
- * ketik ulang kata "KIRIM" untuk menjalankan. Ini satu-satunya aksi di panel yang tidak bisa
- * dibatalkan setelah jalan — bot yang dilaporkan spam bisa dibekukan Telegram, dan bot yang
- * beku ikut mematikan notifikasi penarikan.
- *
- * Pengiriman jalan per putaran karena route punya batas waktu. Menekan "Lanjutkan kirim"
- * MELANJUTKAN dari yang belum menerima, bukan mengulang dari awal — penandanya di
- * `bot_notifications` yang menjamin itu.
- *
- * TIDAK ada `router.refresh()` di sini, dan itu disengaja. Halaman Operasi adalah komponen
- * server yang menjalankan empat query saat dirender, jadi menyegarkannya di tengah
- * pengiriman membuat seluruh tab memuat ulang tepat ketika admin sedang menunggu hitungan
- * berjalan. Angka yang hidup sudah datang dari balasan tiap putaran; daftar "Siaran terakhir"
- * di bawah cukup menyusul saat halamannya dibuka lagi.
- */
+/** Siaran ditulis di sini, tapi tidak pernah berangkat dalam satu ketukan. Alurnya sengaja tiga langkah: tulis, lihat berapa orang yang akan menerimanya, lalu ketik ulang kata "KIRIM" untuk menjalankan. Ini satu-satunya aksi di panel yang tidak bisa dibatalkan setelah jalan — bot yang dilaporkan spam bisa dibekukan Telegram, dan bot yang beku ikut mematikan notifikasi penarikan. Pengiriman jalan per putaran karena route punya batas waktu. Menekan "Lanjutkan kirim" MELANJUTKAN dari yang belum menerima, bukan mengulang dari awal — penandanya di `bot_notifications` yang menjamin itu. TIDAK ada `router.refresh()` di sini, dan itu disengaja. Halaman Operasi adalah komponen server yang menjalankan empat query saat dirender, jadi menyegarkannya di tengah pengiriman membuat seluruh tab memuat ulang tepat ketika admin sedang menunggu hitungan berjalan. Angka yang hidup sudah datang dari balasan tiap putaran; daftar "Siaran terakhir" di bawah cukup menyusul saat halamannya dibuka lagi. */
 export function BroadcastComposer() {
   const [stage, setStage] = useState<Stage>('tulis')
   const [segment, setSegment] = useState<BroadcastSegment>('semua')

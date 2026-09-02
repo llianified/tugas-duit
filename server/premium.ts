@@ -32,11 +32,7 @@ export async function isPremium(userId: number, tx?: PoolClient): Promise<boolea
   return (await readPremium(userId, tx)).active
 }
 
-/**
- * Perpanjangan menumpuk dari tanggal berakhir yang masih berlaku, bukan dari sekarang:
- * user yang membeli lagi sebelum langganannya habis tidak kehilangan sisa harinya.
- * `interval '1 month'` dipakai supaya "1 bulan" mengikuti kalender, bukan 30 hari mati.
- */
+/** Perpanjangan menumpuk dari tanggal berakhir yang masih berlaku, bukan dari sekarang: user yang membeli lagi sebelum langganannya habis tidak kehilangan sisa harinya. `interval '1 month'` dipakai supaya "1 bulan" mengikuti kalender, bukan 30 hari mati. */
 export async function grantPremium(
   tx: PoolClient,
   userId: number,

@@ -17,10 +17,7 @@ import {
 } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 
-/**
- * Lama sobekan karcis. Angkanya dipasang sebagai `--tear-ms` di elemen kartu,
- * jadi CSS dan penahan perpindahan halaman membaca satu sumber yang sama.
- */
+/** Lama sobekan karcis. Angkanya dipasang sebagai `--tear-ms` di elemen kartu, jadi CSS dan penahan perpindahan halaman membaca satu sumber yang sama. */
 const TEAR_MS = 520
 
 function reducedMotion() {
@@ -56,14 +53,7 @@ export function ActiveTask({
   adCooldownSecondsLeft: number
   adPassReady: boolean
   watchingAd: boolean
-  /**
-   * `hold` adalah janji yang menahan perpindahan ke halaman task sampai
-   * animasi sobekan selesai. Ia dikirim ke atas, bukan dijalankan di sini,
-   * karena yang tahu kapan halaman boleh berganti adalah alur task — dan
-   * permintaan `/api/task/start` tetap jalan berbarengan dengan animasinya.
-   * Nilai kembaliannya `false` kalau task gagal dimulai, supaya karcisnya
-   * bisa dipulihkan dan user tidak melihat kartu yang hilang tanpa sebab.
-   */
+  /** `hold` adalah janji yang menahan perpindahan ke halaman task sampai animasi sobekan selesai. Ia dikirim ke atas, bukan dijalankan di sini, karena yang tahu kapan halaman boleh berganti adalah alur task — dan permintaan `/api/task/start` tetap jalan berbarengan dengan animasinya. Nilai kembaliannya `false` kalau task gagal dimulai, supaya karcisnya bisa dipulihkan dan user tidak melihat kartu yang hilang tanpa sebab. */
   onStart: (hold?: Promise<unknown>) => Promise<boolean>
   onStartWithAd: () => void
   onOpenMissions: () => void
@@ -75,14 +65,7 @@ export function ActiveTask({
   const energyEmpty = energy < energyCostPerTask()
   const waiting = poolEmpty || energyEmpty
 
-  /**
-   * Sobek dulu, pindah halaman setelah keduanya siap.
-   *
-   * Animasinya TIDAK menunda permintaan ke server: keduanya mulai di ketukan
-   * yang sama dan halaman berganti setelah dua-duanya beres. Kalau animasinya
-   * dijalankan lebih dulu lalu request menyusul, setiap ketukan jadi
-   * `TEAR_MS` lebih lambat tanpa menambah apa pun.
-   */
+  /** Sobek dulu, pindah halaman setelah keduanya siap. Animasinya TIDAK menunda permintaan ke server: keduanya mulai di ketukan yang sama dan halaman berganti setelah dua-duanya beres. Kalau animasinya dijalankan lebih dulu lalu request menyusul, setiap ketukan jadi `TEAR_MS` lebih lambat tanpa menambah apa pun. */
   const tearAndStart = useCallback(() => {
     if (tearing) return
     if (reducedMotion()) {
@@ -100,10 +83,7 @@ export function ActiveTask({
 
   return (
     <section aria-label="Task yang tersedia">
-      {/* Karcisnya dua bagian yang berhimpit di perforasi, bukan satu kotak
-          dengan garis di tengahnya. Pemisahan ini yang membuat sobekannya nyata:
-          saat "Mulai" ditekan, pangkal dan sobekannya berjalan ke arah
-          berlawanan dengan tepi bergerigi. Lihat `--tear-*` di `globals.css`. */}
+      {/* Karcisnya dua bagian yang berhimpit di perforasi, bukan satu kotak dengan garis di tengahnya. Pemisahan ini yang membuat sobekannya nyata: saat "Mulai" ditekan, pangkal dan sobekannya berjalan ke arah berlawanan dengan tepi bergerigi. Lihat `--tear-*` di `globals.css`. */}
       <div
         className="task-card"
         data-tearing={tearing ? 'true' : undefined}
@@ -164,16 +144,7 @@ export function ActiveTask({
   )
 }
 
-/**
- * Kepala karcis: baris cetakan di atas, judul di bawahnya.
- *
- * Tingkat kesulitan pindah ke baris kecil bersama nomor seri, bukan lagi
- * berimbang di samping judul. Alasannya bukan estetika semata — judul dan
- * lencana yang sebaris membuat keduanya sama-sama menuntut dibaca lebih dulu,
- * padahal yang perlu dikenali sekejap cuma tasknya apa. Nomor serinya diambil
- * dari `task.id` yang datang dari server, jadi ia sama di HTML server dan
- * klien; tidak ada nilai acak yang dibuat saat render.
- */
+/** Kepala karcis: baris cetakan di atas, judul di bawahnya. Tingkat kesulitan pindah ke baris kecil bersama nomor seri, bukan lagi berimbang di samping judul. Alasannya bukan estetika semata — judul dan lencana yang sebaris membuat keduanya sama-sama menuntut dibaca lebih dulu, padahal yang perlu dikenali sekejap cuma tasknya apa. Nomor serinya diambil dari `task.id` yang datang dari server, jadi ia sama di HTML server dan klien; tidak ada nilai acak yang dibuat saat render. */
 function TaskHeading({
   title,
   serial,
@@ -270,15 +241,7 @@ function Stat({
   )
 }
 
-/**
- * Energi habis membuka jalan keluar, stok habis tetap menunggu.
- *
- * Bedanya bukan kosmetik: energi punya jalan keluar yang dimiliki user sendiri
- * (tiket iklan, misi, premium), sedangkan stok reward diisi oleh sistem dan
- * tidak ada tombol yang bisa mempercepatnya. Jadi hanya energi yang jadi tombol
- * — menawarkan aksi untuk hal yang tidak bisa dia ubah cuma memindahkan
- * kekecewaan satu ketukan lebih jauh.
- */
+/** Energi habis membuka jalan keluar, stok habis tetap menunggu. Bedanya bukan kosmetik: energi punya jalan keluar yang dimiliki user sendiri (tiket iklan, misi, premium), sedangkan stok reward diisi oleh sistem dan tidak ada tombol yang bisa mempercepatnya. Jadi hanya energi yang jadi tombol — menawarkan aksi untuk hal yang tidak bisa dia ubah cuma memindahkan kekecewaan satu ketukan lebih jauh. */
 function StartAction({
   waiting,
   poolEmpty,

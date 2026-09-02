@@ -6,16 +6,7 @@ export function isPreviewDb(): boolean {
   return process.env.NODE_ENV !== 'production' && !process.env.DATABASE_URL
 }
 
-/**
- * "Sedang dijalankan sebagai preview yang dilihat manusia", BUKAN sekadar "memakai
- * PGlite". Bedanya penting: `isPreviewDb()` juga true selama `pnpm test`, jadi kalau
- * kelonggaran khusus preview (gerbang channel dilewati, interstitial dimatikan)
- * digantungkan padanya, seluruh suite ikut kehilangan perilaku yang justru sedang
- * diuji — dan tesnya gagal dengan benar.
- *
- * `VITEST` diset runner-nya sendiri, jadi pemisahan ini tidak perlu disetel siapa pun.
- * Sama seperti alasan `preview-db.ts` memisahkan direktori datanya.
- */
+/** "Sedang dijalankan sebagai preview yang dilihat manusia", BUKAN sekadar "memakai PGlite". Bedanya penting: `isPreviewDb()` juga true selama `pnpm test`, jadi kalau kelonggaran khusus preview (gerbang channel dilewati, interstitial dimatikan) digantungkan padanya, seluruh suite ikut kehilangan perilaku yang justru sedang diuji — dan tesnya gagal dengan benar. `VITEST` diset runner-nya sendiri, jadi pemisahan ini tidak perlu disetel siapa pun. Sama seperti alasan `preview-db.ts` memisahkan direktori datanya. */
 export function isPreviewShell(): boolean {
   return isPreviewDb() && !process.env.VITEST
 }
@@ -32,28 +23,11 @@ function sslConfig() {
   return { rejectUnauthorized: true }
 }
 
-/**
- * Di server yang hidup terus, satu proses melayani semua request sehingga pool besar
- * terbayar. Di serverless tiap instance punya pool sendiri dan jumlah instance yang
- * hidup bersamaan tidak kita kendalikan, jadi pool besar mengalikan koneksi menganggur
- * sampai batas Neon habis. Kecilkan di sana, dan sandarkan penggabungannya pada
- * connection pooler Neon (host ber-`-pooler`), bukan pada pool di dalam proses ini.
- */
+/** Di server yang hidup terus, satu proses melayani semua request sehingga pool besar terbayar. Di serverless tiap instance punya pool sendiri dan jumlah instance yang hidup bersamaan tidak kita kendalikan, jadi pool besar mengalikan koneksi menganggur sampai batas Neon habis. Kecilkan di sana, dan sandarkan penggabungannya pada connection pooler Neon (host ber-`-pooler`), bukan pada pool di dalam proses ini. */
 const SERVERLESS_MAX_CLIENTS = 3
 const LONG_LIVED_MAX_CLIENTS = 10
 
-/**
- * Connection pooler Neon memakai transaction pooling: satu koneksi backend dipakai
- * ulang oleh banyak klien. Akibatnya `set` tingkat sesi yang tertinggal dari klien
- * lain — sesi psql/agen yang lupa `reset`, misalnya — ikut terbawa ke request kita.
- * Yang paling mematikan `default_transaction_read_only = on`: seluruh write gagal
- * dengan 25006 tanpa satu baris kode pun berubah, dan `select` tetap jalan sehingga
- * health check ikut menipu.
- *
- * Menaruhnya di startup packet (`options: '-c ...'`) ditolak pooler-nya, jadi satu-
- * satunya jalan adalah menegaskan ulang lewat `set` tiap koneksi baru terbentuk.
- * Murah: sekali per koneksi fisik, bukan per query.
- */
+/** Connection pooler Neon memakai transaction pooling: satu koneksi backend dipakai ulang oleh banyak klien. Akibatnya `set` tingkat sesi yang tertinggal dari klien lain — sesi psql/agen yang lupa `reset`, misalnya — ikut terbawa ke request kita. Yang paling mematikan `default_transaction_read_only = on`: seluruh write gagal dengan 25006 tanpa satu baris kode pun berubah, dan `select` tetap jalan sehingga health check ikut menipu. Menaruhnya di startup packet (`options: '-c ...'`) ditolak pooler-nya, jadi satu- satunya jalan adalah menegaskan ulang lewat `set` tiap koneksi baru terbentuk. Murah: sekali per koneksi fisik, bukan per query. */
 export function createPool(connectionString: string, max: number): Pool {
   const created = new Pool({ connectionString, max, idleTimeoutMillis: 30_000, ssl: sslConfig() })
   created.on('connect', (client) => {
@@ -101,12 +75,7 @@ export async function query<T>(sql: string, params: unknown[] = []): Promise<T[]
   return (await getPool().query(sql, params)).rows as T[]
 }
 
-/**
- * Untuk pernyataan yang jawabannya jumlah baris terpengaruh, bukan isinya — `delete`
- * pembersihan retensi, misalnya. `query()` hanya mengembalikan baris, dan tidak semua
- * tabel punya kolom yang bisa di-`returning` (`rate_limits` dan `used_init_data`
- * berkunci gabungan, tanpa `id`).
- */
+/** Untuk pernyataan yang jawabannya jumlah baris terpengaruh, bukan isinya — `delete` pembersihan retensi, misalnya. `query()` hanya mengembalikan baris, dan tidak semua tabel punya kolom yang bisa di-`returning` (`rate_limits` dan `used_init_data` berkunci gabungan, tanpa `id`). */
 export async function execute(sql: string, params: unknown[] = []): Promise<number> {
   if (isPreviewDb()) return (await previewQuery(sql, params)).rowCount
   return (await getPool().query(sql, params)).rowCount ?? 0
@@ -131,12 +100,7 @@ export async function transaction<T>(fn: (tx: PoolClient) => Promise<T>): Promis
   let failure: unknown
   try {
     await client.query('begin')
-    /**
-     * Hook `connect` di atas menutup mayoritas kasus, tapi di transaction pooling
-     * koneksi yang kita pegang sekarang belum tentu backend yang tadi kita `set`.
-     * Di dalam `begin` backend-nya pasti terpaku pada satu sesi, jadi di sinilah
-     * jaminannya benar-benar bisa ditegakkan — dan otomatis lepas saat commit.
-     */
+    /** Hook `connect` di atas menutup mayoritas kasus, tapi di transaction pooling koneksi yang kita pegang sekarang belum tentu backend yang tadi kita `set`. Di dalam `begin` backend-nya pasti terpaku pada satu sesi, jadi di sinilah jaminannya benar-benar bisa ditegakkan — dan otomatis lepas saat commit. */
     await client.query('set transaction read write')
     const value = await fn(client)
     await client.query('commit')

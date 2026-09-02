@@ -1,16 +1,7 @@
 import { query } from './db'
 import { requireAdmin } from './session'
 
-/**
- * Pembacaan operasional yang tidak muat di halaman lain: tagihan premium, akun bersinyal,
- * dan riwayat penarikan yang sudah selesai.
- *
- * Ketiganya jawaban atas pertanyaan yang sebelumnya hanya bisa dijawab lewat SQL manual.
- * Antrean payout hanya menampilkan `processing`, jadi begitu satu pengajuan diputuskan ia
- * hilang dari pandangan; dashboard menghitung akun bersinyal tanpa menyebut siapa; dan
- * pembayaran premium tidak punya permukaan sama sekali walau ia satu-satunya pemasukan
- * langsung dari user.
- */
+/** Pembacaan operasional yang tidak muat di halaman lain: tagihan premium, akun bersinyal, dan riwayat penarikan yang sudah selesai. Ketiganya jawaban atas pertanyaan yang sebelumnya hanya bisa dijawab lewat SQL manual. Antrean payout hanya menampilkan `processing`, jadi begitu satu pengajuan diputuskan ia hilang dari pandangan; dashboard menghitung akun bersinyal tanpa menyebut siapa; dan pembayaran premium tidak punya permukaan sama sekali walau ia satu-satunya pemasukan langsung dari user. */
 
 export interface AdminPremiumInvoice {
   orderId: string
@@ -72,13 +63,7 @@ export interface AdminFlaggedUser {
   hasPendingPayout: boolean
 }
 
-/**
- * Akun bersinyal tujuh hari terakhir, diurutkan dari skor tertinggi.
- *
- * `hasPendingPayout` ikut dibaca karena itu yang menentukan mendesak atau tidak: akun
- * bersinyal yang tidak sedang menarik apa-apa bisa ditinjau kapan saja, sementara yang
- * antre payout menuntut keputusan sebelum uangnya keluar.
- */
+/** Akun bersinyal tujuh hari terakhir, diurutkan dari skor tertinggi. `hasPendingPayout` ikut dibaca karena itu yang menentukan mendesak atau tidak: akun bersinyal yang tidak sedang menarik apa-apa bisa ditinjau kapan saja, sementara yang antre payout menuntut keputusan sebelum uangnya keluar. */
 export async function readFlaggedUsers(limit = 50): Promise<AdminFlaggedUser[]> {
   await requireAdmin()
   const rows = await query<{
@@ -140,13 +125,7 @@ export interface AdminPayoutHistoryEntry {
 
 export const PAYOUT_HISTORY_PAGE_SIZE = 50
 
-/**
- * Riwayat penarikan yang bisa dicari, termasuk yang sudah diputuskan.
- *
- * Nomor rekening TIDAK dimask di sini, berbeda dengan yang dikirim ke user lewat
- * `server/payout.ts`. Halaman ini yang dipakai mencocokkan bukti transfer dengan pengajuan
- * saat ada sengketa, dan nomor yang setengah tertutup tidak bisa dicocokkan dengan apa pun.
- */
+/** Riwayat penarikan yang bisa dicari, termasuk yang sudah diputuskan. Nomor rekening TIDAK dimask di sini, berbeda dengan yang dikirim ke user lewat `server/payout.ts`. Halaman ini yang dipakai mencocokkan bukti transfer dengan pengajuan saat ada sengketa, dan nomor yang setengah tertutup tidak bisa dicocokkan dengan apa pun. */
 export async function readPayoutHistory(input: {
   state: PayoutHistoryState
   term: string

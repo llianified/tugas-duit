@@ -4,14 +4,7 @@ import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react'
 import { cn } from '@/shared/lib/utils'
 
 type ActionButtonVariant = 'primary' | 'quiet' | 'ghost'
-/**
- * Ukuran KOTAK, bukan ukuran label.
- *
- * Labelnya selalu `--btn-label` (15px, kiblatnya "Mulai" di karcis beranda).
- * Tombol yang berada di bawah aksi utama menyusut tingginya lewat `sm`, dan itu
- * satu-satunya cara menurunkan derajatnya — mengecilkan hurufnya cuma membuat
- * tombolnya lebih sulit dibaca tanpa membuatnya terbaca lebih rendah.
- */
+/** Ukuran KOTAK, bukan ukuran label. Labelnya selalu `--btn-label` (15px, kiblatnya "Mulai" di karcis beranda). Tombol yang berada di bawah aksi utama menyusut tingginya lewat `sm`, dan itu satu-satunya cara menurunkan derajatnya — mengecilkan hurufnya cuma membuat tombolnya lebih sulit dibaca tanpa membuatnya terbaca lebih rendah. */
 type ActionButtonSize = 'md' | 'sm'
 
 const SIZE_CLASS: Record<ActionButtonSize, string> = {

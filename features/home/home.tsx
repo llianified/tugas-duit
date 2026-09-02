@@ -78,19 +78,7 @@ export function HomeView({
   const [withdrawOpen, setWithdrawOpen] = useState(false)
   const [premiumOpen, setPremiumOpen] = useState(false)
 
-  /**
-   * Tab beranda dilepas begitu Misi pindah ke nav.
-   *
-   * Tiga tab menyisakan dua tanpa Misi, dan dua-duanya sudah bermasalah sebelum itu:
-   * "Aktivitas" dan view "Riwayat" adalah data yang sama dengan dua nama berbeda —
-   * user tidak punya cara menduga bedanya — sementara "Bonus" cuma ada selama
-   * bonusnya belum diklaim, jadi jumlah tabnya berubah di tempat yang sama. Sisanya
-   * sekarang berderet, dan barisnya memakai nama aslinya, "Transaksi terakhir",
-   * sehingga tidak lagi bersaing dengan Riwayat.
-   *
-   * Bonus diletakkan di atas transaksi karena ia satu-satunya yang menuntut aksi dan
-   * bisa hilang; transaksi hanya catatan yang tidak ke mana-mana.
-   */
+  /** Tab beranda dilepas begitu Misi pindah ke nav. Tiga tab menyisakan dua tanpa Misi, dan dua-duanya sudah bermasalah sebelum itu: "Aktivitas" dan view "Riwayat" adalah data yang sama dengan dua nama berbeda — user tidak punya cara menduga bedanya — sementara "Bonus" cuma ada selama bonusnya belum diklaim, jadi jumlah tabnya berubah di tempat yang sama. Sisanya sekarang berderet, dan barisnya memakai nama aslinya, "Transaksi terakhir", sehingga tidak lagi bersaing dengan Riwayat. Bonus diletakkan di atas transaksi karena ia satu-satunya yang menuntut aksi dan bisa hilang; transaksi hanya catatan yang tidak ke mana-mana. */
   const premiumReachable = Boolean(premium && (premium.active || premium.paymentEnabled))
   const bonusReachable = channelBonusReachable(channelBonus)
 

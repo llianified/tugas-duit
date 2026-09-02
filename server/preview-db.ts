@@ -2,16 +2,7 @@ import { readdir, readFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
-/**
- * Direktori data dipisah per pemakai.
- *
- * Uji juga jatuh ke PGlite (mereka menghapus `DATABASE_URL` lalu mengimpor `./db`), dan
- * selama direktorinya sama dengan yang dipakai `pnpm dev`, satu kali `pnpm test` menulis
- * ratusan user uji ke database preview yang sedang dipakai mengembangkan — saldo, task,
- * dan penarikan yang terlihat di layar dev jadi campuran keduanya.
- *
- * `VITEST` diset runner-nya sendiri, jadi pemisahannya tidak perlu disetel siapa pun.
- */
+/** Direktori data dipisah per pemakai. Uji juga jatuh ke PGlite (mereka menghapus `DATABASE_URL` lalu mengimpor `./db`), dan selama direktorinya sama dengan yang dipakai `pnpm dev`, satu kali `pnpm test` menulis ratusan user uji ke database preview yang sedang dipakai mengembangkan — saldo, task, dan penarikan yang terlihat di layar dev jadi campuran keduanya. `VITEST` diset runner-nya sendiri, jadi pemisahannya tidak perlu disetel siapa pun. */
 const DATA_DIR = path.join(
   os.tmpdir(),
   process.env.VITEST ? 'tugas-duit-test-db' : 'tugas-duit-preview-db',

@@ -29,17 +29,7 @@ function cachedMembership(user: ChannelGateUser, now: number): boolean | null {
   return now - user.channelCheckedAt.getTime() < ttl ? user.channelMember : null
 }
 
-/**
- * Gerbangnya diloloskan saat keanggotaan tidak bisa dipastikan, dan itu bukan kelalaian:
- * `readChannelMembership` mengembalikan `null` untuk Telegram down, token salah, atau bot
- * yang bukan admin channel — tiga hal yang sama sekali bukan salah user. Menutup gerbang
- * di situ berarti satu gangguan di pihak kami mengunci seluruh basis user sekaligus.
- *
- * `outageUntil` menahan panggilan berikutnya selama gangguan itu berlangsung. Tanpa itu
- * setiap muat sesi dan setiap mulai task menunggu timeout 10 detik yang sudah dipastikan
- * gagal. Umurnya sengaja pendek dan hanya di memori proses: ia meredam badai, bukan
- * menyimpan keputusan.
- */
+/** Gerbangnya diloloskan saat keanggotaan tidak bisa dipastikan, dan itu bukan kelalaian: `readChannelMembership` mengembalikan `null` untuk Telegram down, token salah, atau bot yang bukan admin channel — tiga hal yang sama sekali bukan salah user. Menutup gerbang di situ berarti satu gangguan di pihak kami mengunci seluruh basis user sekaligus. `outageUntil` menahan panggilan berikutnya selama gangguan itu berlangsung. Tanpa itu setiap muat sesi dan setiap mulai task menunggu timeout 10 detik yang sudah dipastikan gagal. Umurnya sengaja pendek dan hanya di memori proses: ia meredam badai, bukan menyimpan keputusan. */
 export async function readChannelGateState(
   user: ChannelGateUser,
   options: { force?: boolean } = {},
@@ -47,14 +37,7 @@ export async function readChannelGateState(
   const url = env.telegramChannelUrl
   if (!channelGateRequired()) return { required: false, member: true, url }
 
-  /**
-   * Di preview gerbangnya selalu dilewatkan. Bukan kelonggaran keamanan: gerbang ini
-   * hanya bisa dijawab benar oleh bot Telegram yang jadi admin channel, dan di preview
-   * `TELEGRAM_BOT_TOKEN` tidak ada — jadi `readChannelMembership` selalu `null` dan
-   * satu-satunya hasil yang mungkin adalah user terjebak di layar "join channel dulu"
-   * tanpa cara keluar. Produksi tidak tersentuh, dan `isPreviewShell()` sengaja
-   * mengecualikan `pnpm test` supaya perilaku gerbang yang asli tetap teruji di bawah.
-   */
+  /** Di preview gerbangnya selalu dilewatkan. Bukan kelonggaran keamanan: gerbang ini hanya bisa dijawab benar oleh bot Telegram yang jadi admin channel, dan di preview `TELEGRAM_BOT_TOKEN` tidak ada — jadi `readChannelMembership` selalu `null` dan satu-satunya hasil yang mungkin adalah user terjebak di layar "join channel dulu" tanpa cara keluar. Produksi tidak tersentuh, dan `isPreviewShell()` sengaja mengecualikan `pnpm test` supaya perilaku gerbang yang asli tetap teruji di bawah. */
   if (isPreviewShell()) return { required: false, member: true, url }
 
   const now = Date.now()
@@ -107,14 +90,7 @@ export type ChannelClaimResult =
   | { ok: true; credits: number; balance: number }
   | { ok: false; reason: 'disabled' | 'already_claimed' | 'not_member' | 'unverifiable' }
 
-/**
- * Keanggotaan diperiksa ke Telegram lebih dulu, di luar transaksi, karena panggilan
- * jaringan tidak boleh memegang `for update` pada baris `users` — aturan yang sama
- * dengan alasan pesan bot dikirim dari cron, bukan dari alur yang memicunya.
- *
- * Yang menjamin bonus tidak turun dua kali bukan kolom penanda, melainkan
- * `credit_ledger.idempotency_key`: penandanya bisa saja kalah balapan, kuncinya tidak.
- */
+/** Keanggotaan diperiksa ke Telegram lebih dulu, di luar transaksi, karena panggilan jaringan tidak boleh memegang `for update` pada baris `users` — aturan yang sama dengan alasan pesan bot dikirim dari cron, bukan dari alur yang memicunya. Yang menjamin bonus tidak turun dua kali bukan kolom penanda, melainkan `credit_ledger.idempotency_key`: penandanya bisa saja kalah balapan, kuncinya tidak. */
 export async function claimChannelBonus(
   userId: number,
   telegramId: string,

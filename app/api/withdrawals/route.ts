@@ -33,11 +33,7 @@ const MESSAGE: Record<string, string> = {
   ACCOUNT_NUMBER_IN_USE: 'Nomor ini udah dipakai akun lain. Pakai nomor punya kamu sendiri ya.',
 }
 
-/**
- * Angka syarat dan jeda tidak ditulis di dalam kalimat: keduanya aturan yang bisa berbeda
- * per user — jeda premium 3 hari, biasa 7 — dan salinan di teks pernah membuat pembeli
- * premium diberi tahu angka yang salah. Yang dipakai nilai yang ikut dikirim `PayoutError`.
- */
+/** Angka syarat dan jeda tidak ditulis di dalam kalimat: keduanya aturan yang bisa berbeda per user — jeda premium 3 hari, biasa 7 — dan salinan di teks pernah membuat pembeli premium diberi tahu angka yang salah. Yang dipakai nilai yang ikut dikirim `PayoutError`. */
 function messageFor(error: PayoutError): string {
   if (error.code === 'ACTIVE_DAYS_REQUIRED') {
     const required = Number(error.fields?.requiredActiveDays)

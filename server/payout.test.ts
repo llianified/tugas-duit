@@ -98,21 +98,12 @@ describe('WD-6 — setiap channel di PAYOUT_CHANNELS diterima database', () => {
   )
 })
 
-/**
- * Kebalikan WD-6: yang dijaga di sini bukan "channel di kode diterima database", melainkan
- * "channel di database tidak berbohong di layar". Keduanya perlu karena keduanya pernah
- * berselisih ke arah yang berbeda.
- */
+/** Kebalikan WD-6: yang dijaga di sini bukan "channel di kode diterima database", melainkan "channel di database tidak berbohong di layar". Keduanya perlu karena keduanya pernah berselisih ke arah yang berbeda. */
 describe('WD-6b — channel di luar daftar tidak pernah menyamar jadi channel lain', () => {
   it('AUDIT-H2 — memakai id-nya sendiri sebagai nama, bukan channel pertama', async () => {
     const { getPayoutChannel, PAYOUT_CHANNELS } = await import('@/features/withdraw/domain')
 
-    /**
-     * `withdrawals_known_channel` masih menerima `bri` dan `mandiri` dari masa keduanya
-     * ditawarkan. Bentuk lama `getPayoutChannel` jatuh ke `PAYOUT_CHANNELS[0]`, jadi baris
-     * lama itu terbaca sebagai DANA di antrean payout — label yang dibaca admin tepat
-     * sebelum mentransfer — dan di pesan Telegram ke user.
-     */
+    /** `withdrawals_known_channel` masih menerima `bri` dan `mandiri` dari masa keduanya ditawarkan. Bentuk lama `getPayoutChannel` jatuh ke `PAYOUT_CHANNELS[0]`, jadi baris lama itu terbaca sebagai DANA di antrean payout — label yang dibaca admin tepat sebelum mentransfer — dan di pesan Telegram ke user. */
     for (const legacy of ['bri', 'mandiri']) {
       const channel = getPayoutChannel(legacy)
       expect(channel.id).toBe(legacy)
@@ -219,13 +210,7 @@ describe('WD-8 — premium memakai jeda penarikan yang lebih pendek', () => {
 })
 
 describe('WD-9 — kelayakan yang dibaca UI sama dengan yang diterima server', () => {
-  /**
-   * Jalur baca (`getPayouts`, yang menggerbang dialog penarikan) dan jalur tulis
-   * (`createPayout`) pernah punya SQL kembar. Saat premium menambah jeda 3 hari, hanya
-   * jalur tulis yang ikut berubah — UI menahan pembeli premium sampai hari ketujuh
-   * padahal server sudah menerimanya sejak hari ketiga. Yang diuji di sini kesepakatan
-   * keduanya, bukan salah satunya.
-   */
+  /** Jalur baca (`getPayouts`, yang menggerbang dialog penarikan) dan jalur tulis (`createPayout`) pernah punya SQL kembar. Saat premium menambah jeda 3 hari, hanya jalur tulis yang ikut berubah — UI menahan pembeli premium sampai hari ketujuh padahal server sudah menerimanya sejak hari ketiga. Yang diuji di sini kesepakatan keduanya, bukan salah satunya. */
   it('menutup dan membuka gerbang pada hari yang sama di kedua jalur', async () => {
     const { createPayout, getPayouts } = await import('./payout')
     const { DEFAULT_ECONOMY_CONFIG } = await import('@/domain/economy-config')
@@ -336,11 +321,7 @@ describe('WD-11 — syarat hari aktif sebelum penarikan pertama', () => {
     await expect(createPayout(userId, input())).resolves.toHaveProperty('withdrawal')
   })
 
-  /**
-   * Yang dipilih pemilik repo hari aktif berbeda, bukan streak: bolong sehari tidak boleh
-   * mengulang dari nol. Fixture di sini sengaja berjarak dua hari supaya tidak ada satu pun
-   * rentetan berturut-turut yang panjangnya tujuh.
-   */
+  /** Yang dipilih pemilik repo hari aktif berbeda, bukan streak: bolong sehari tidak boleh mengulang dari nol. Fixture di sini sengaja berjarak dua hari supaya tidak ada satu pun rentetan berturut-turut yang panjangnya tujuh. */
   it('menghitung hari yang tidak berturut-turut', async () => {
     const { query } = await import('./db')
     const { createPayout, getPayouts, requiredActiveDays } = await import('./payout')

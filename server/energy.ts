@@ -93,11 +93,7 @@ export async function refundEntry(
   return { refunded: (await grantEnergy(tx, userId)).granted }
 }
 
-/**
- * Diekspor untuk panel admin: mengisi energi user tanpa menyentuh saldo maupun kolam.
- * Tetap lewat `applyEnergyGrant` supaya `users_energy_range` dan jangkar regen dihormati
- * sama persis seperti pengembalian ongkos masuk.
- */
+/** Diekspor untuk panel admin: mengisi energi user tanpa menyentuh saldo maupun kolam. Tetap lewat `applyEnergyGrant` supaya `users_energy_range` dan jangkar regen dihormati sama persis seperti pengembalian ongkos masuk. */
 export async function grantEnergy(
   tx: PoolClient,
   userId: number,

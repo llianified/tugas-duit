@@ -48,13 +48,7 @@ export function premiumWithdrawalCooldownMs(): number {
   return economyConfig().premiumWithdrawalCooldownDays * 86_400_000
 }
 
-/**
- * Jeda antar penarikan. Keduanya sekarang setelan panel: yang biasa dulu konstanta
- * `WITHDRAWAL_COOLDOWN_DAYS = 7`, sementara versi premium-nya sudah bisa disetel sejak
- * migrasi 0027 — selisih yang membuat panel bisa memperpendek jeda premium sampai di bawah
- * jeda biasa tanpa ada yang bisa menaikkan jeda biasanya. `validateEconomyConfig` sekarang
- * menuntut jeda premium tidak pernah lebih panjang daripada jeda biasa.
- */
+/** Jeda antar penarikan. Keduanya sekarang setelan panel: yang biasa dulu konstanta `WITHDRAWAL_COOLDOWN_DAYS = 7`, sementara versi premium-nya sudah bisa disetel sejak migrasi 0027 — selisih yang membuat panel bisa memperpendek jeda premium sampai di bawah jeda biasa tanpa ada yang bisa menaikkan jeda biasanya. `validateEconomyConfig` sekarang menuntut jeda premium tidak pernah lebih panjang daripada jeda biasa. */
 export function baseWithdrawalCooldownDays(): number {
   return economyConfig().withdrawalCooldownDays
 }

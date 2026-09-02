@@ -4,26 +4,7 @@ import { ProfileAvatar } from '@/features/home/profile-avatar'
 import { formatCredits } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 
-/**
- * Avatar bertumpuk ala fomo: beberapa avatar saling menindih, lalu sisanya
- * diringkas jadi satu lingkaran `65+`. Dipakai untuk memadatkan daftar panjang
- * (lencana, anggota) ke dalam ruang selebar satu nilai di baris daftar 384px.
- *
- * Ring-nya berwarna `background` — itu yang memisahkan avatar yang saling
- * menindih. Karena warnanya diambil dari token, komponen ini akan salah kalau
- * dipasang di atas permukaan lain; prop `ringTone` menyediakan `card` untuk
- * pemakaian di dalam kartu.
- *
- * Aksesibilitas: tumpukan ini adalah **satu** informasi ringkas, bukan daftar
- * yang perlu ditelusuri satu-satu. Jadi wadahnya `role="img"` + `aria-label`
- * yang bermakna, yang membuat seluruh isinya presentasional — termasuk
- * penghitung sisa, yang kalau dibacakan hanya berbunyi "65 tambah" tanpa
- * konteks. Avatarnya sendiri tidak perlu `aria-hidden` tambahan: `role="img"`
- * sudah memangkas subtree-nya, dan `ProfileAvatar` merender `alt=""`.
- *
- * `ProfileAvatar` dipakai apa adanya supaya penanganan gambar gagal muat
- * (`onError` → glyph pengganti) tidak ditulis dua kali.
- */
+/** Avatar bertumpuk ala fomo: beberapa avatar saling menindih, lalu sisanya diringkas jadi satu lingkaran `65+`. Dipakai untuk memadatkan daftar panjang (lencana, anggota) ke dalam ruang selebar satu nilai di baris daftar 384px. Ring-nya berwarna `background` — itu yang memisahkan avatar yang saling menindih. Karena warnanya diambil dari token, komponen ini akan salah kalau dipasang di atas permukaan lain; prop `ringTone` menyediakan `card` untuk pemakaian di dalam kartu. Aksesibilitas: tumpukan ini adalah **satu** informasi ringkas, bukan daftar yang perlu ditelusuri satu-satu. Jadi wadahnya `role="img"` + `aria-label` yang bermakna, yang membuat seluruh isinya presentasional — termasuk penghitung sisa, yang kalau dibacakan hanya berbunyi "65 tambah" tanpa konteks. Avatarnya sendiri tidak perlu `aria-hidden` tambahan: `role="img"` sudah memangkas subtree-nya, dan `ProfileAvatar` merender `alt=""`. `ProfileAvatar` dipakai apa adanya supaya penanganan gambar gagal muat (`onError` → glyph pengganti) tidak ditulis dua kali. */
 export type AvatarStackItem = {
   id: string
   photoUrl: string | null
@@ -46,9 +27,7 @@ const COUNTER_TEXT: Record<AvatarStackSize, string> = {
   md: 'text-[10px]',
 }
 
-/** Tumpang-tindihnya negatif margin, bukan `translate`: ia ikut mengecilkan
- * lebar total sehingga baris di sebelahnya tidak perlu tahu berapa avatar yang
- * tampil. */
+/** Tumpang-tindihnya negatif margin, bukan `translate`: ia ikut mengecilkan lebar total sehingga baris di sebelahnya tidak perlu tahu berapa avatar yang tampil. */
 const OVERLAP: Record<AvatarStackSize, string> = {
   sm: '-ml-1.5',
   md: '-ml-2',
@@ -70,8 +49,7 @@ export function AvatarStack({
   ringTone?: 'background' | 'card'
   className?: string
 }) {
-  // Daftar kosong tidak menyisakan apa pun untuk dibaca, jadi jangan tinggalkan
-  // wadah ber-`aria-label` yang mengumumkan tumpukan tak berisi.
+  // Daftar kosong tidak menyisakan apa pun untuk dibaca, jadi jangan tinggalkan | wadah ber-`aria-label` yang mengumumkan tumpukan tak berisi.
   if (items.length === 0) return null
 
   const shown = items.slice(0, Math.max(1, limit))

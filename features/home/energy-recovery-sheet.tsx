@@ -11,15 +11,7 @@ import type { EnergyFill } from '@/domain/energy'
 import { formatCredits, formatLongCountdown } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 
-/**
- * Layar energi habis tidak boleh jadi jalan buntu.
- *
- * Sebelumnya user hanya diberi tulisan "Energi habis" dan sebuah hitungan
- * mundur — tidak ada satu pun hal yang bisa dia lakukan dari titik itu, dan di
- * aplikasi penghasilan jalan buntu berujung uninstall. Semua jalan keluar yang
- * sudah dimiliki aplikasi ini dikumpulkan di sini: tiket iklan, misi harian,
- * dan premium untuk yang ingin regennya lebih cepat.
- */
+/** Layar energi habis tidak boleh jadi jalan buntu. Sebelumnya user hanya diberi tulisan "Energi habis" dan sebuah hitungan mundur — tidak ada satu pun hal yang bisa dia lakukan dari titik itu, dan di aplikasi penghasilan jalan buntu berujung uninstall. Semua jalan keluar yang sudah dimiliki aplikasi ini dikumpulkan di sini: tiket iklan, misi harian, dan premium untuk yang ingin regennya lebih cepat. */
 export function EnergyRecoverySheet({
   open,
   onOpenChange,

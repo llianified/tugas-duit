@@ -1,13 +1,20 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import type { ArcadeGame } from '@/domain/arcade/arcade'
 import { CardMatch } from '@/features/arcade/card-match'
 import { LuckyBoxes, PrizeSummary } from '@/features/arcade/lucky-boxes'
 import { prizeChancePercent, prizeLabel } from '@/features/arcade/prize'
-import { useArcade } from '@/features/arcade/use-arcade'
 import type { ArcadeStateResponse } from '@/features/arcade/types'
+import { useArcade } from '@/features/arcade/use-arcade'
 import { EmptyState } from '@/shared/components/empty-state'
-import { GlyphBolt, GlyphPlay, GlyphSpinner } from '@/shared/components/glyph'
+import {
+  GlyphBolt,
+  GlyphHelp,
+  GlyphPlay,
+  GlyphSpinner,
+  GlyphTrophy,
+} from '@/shared/components/glyph'
 import { MetaBadge } from '@/shared/components/meta-badge'
 import { PageHeader } from '@/shared/components/page-header'
 import { PageRegion } from '@/shared/components/page-region'
@@ -22,8 +29,8 @@ const GAME_TITLE: Record<ArcadeGame, string> = {
 }
 
 const GAME_BLURB: Record<ArcadeGame, string> = {
-  boxes: 'Pilih satu dari tiga kotak. Isinya diundi server, jadi murni untung-untungan.',
-  match: 'Temukan semua pasangan sebelum waktunya habis. Kalah berarti nggak dapat apa-apa.',
+  boxes: 'Pilih satu kotak dan buka hadiahnya.',
+  match: 'Temukan tiga pasang sebelum waktu habis.',
 }
 
 /** Arena hidup sebagai view sendiri, bukan tab di Beranda, karena satu rondenya menahan layar selama puluhan detik — dan sesuatu yang menahan layar selama itu tidak boleh berbagi ruang dengan kartu task yang sedang berjalan. Slot nav pill sengaja TIDAK ditambah: barisnya dipatok lima dan geometri indikatornya dihitung dari jumlah itu. Pintu masuknya dari kartu di Beranda, persis seperti Riwayat dan Statistik. */
@@ -41,14 +48,6 @@ export function ArcadeView({
   return (
     <div className="view-min-h flex flex-col">
       <PageHeader title={VIEW_TITLE.arcade} />
-
-      <section aria-label="Cara kerja Arena" className="region-under-brand">
-        <h2 className="text-base font-semibold tracking-tight">Cara kerjanya</h2>
-        <p className="stack-gap-t text-sm leading-relaxed text-muted-foreground text-pretty">
-          Hadiahnya energi atau isi stok reward, bukan credit langsung. Stok yang terisi berarti
-          ada lagi yang bisa kamu kerjakan hari ini.
-        </p>
-      </section>
 
       <ArcadeBody
         state={state}
@@ -87,9 +86,10 @@ function ArcadeBody({
 }) {
   if (!state) {
     return (
-      <PageRegion>
-        <div className={SURFACE_CARD_CLASS}>
-          <div className="h-24 animate-pulse rounded-lg bg-muted" />
+      <PageRegion className="region-under-brand">
+        <div className={`${SURFACE_CARD_CLASS} flex flex-col gap-3`} aria-label="Memuat Arena">
+          <div className="h-20 animate-pulse rounded-lg bg-background/50 motion-reduce:animate-none" />
+          <div className="h-12 animate-pulse rounded-lg bg-background/50 motion-reduce:animate-none" />
         </div>
       </PageRegion>
     )
@@ -97,7 +97,7 @@ function ArcadeBody({
 
   if (!state.enabled) {
     return (
-      <PageRegion>
+      <PageRegion className="region-under-brand">
         <EmptyState
           icon={<GlyphPlay className="glyph-md text-muted-foreground" />}
           title="Arena lagi ditutup"
@@ -111,8 +111,12 @@ function ArcadeBody({
 
   if (phase === 'playing' || phase === 'settling' || phase === 'result') {
     return (
-      <PageRegion label={game ? GAME_TITLE[game] : 'Ronde'}>
-        <div className={SURFACE_CARD_CLASS}>
+      <PageRegion
+        label={game ? GAME_TITLE[game] : 'Ronde Arena'}
+        badge={phase === 'result' ? 'Selesai' : phase === 'settling' ? 'Menghitung' : 'Berlangsung'}
+        className="region-under-brand"
+      >
+        <div className={`${SURFACE_CARD_CLASS} flex flex-col gap-4`}>
           {game === 'match' && phase === 'playing' ? (
             <CardMatch
               seconds={state.matchSeconds}
@@ -121,8 +125,13 @@ function ArcadeBody({
             />
           ) : null}
 
-          {game === 'boxes' || result ? (
-            <div className="flex flex-col gap-3">
+          {game === 'boxes' ? (
+            <>
+              {phase === 'playing' ? (
+                <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
+                  Hadiahnya sudah diacak. Pilih satu kotak untuk membukanya.
+                </p>
+              ) : null}
               <LuckyBoxes
                 boxCount={state.boxCount}
                 revealed={result?.boxes ?? null}
@@ -130,25 +139,30 @@ function ArcadeBody({
                 busy={busy}
                 onPick={(pick) => onSettle({ pick })}
               />
-              {result ? <PrizeSummary prize={result.prize} /> : null}
-            </div>
+            </>
           ) : null}
 
           {phase === 'settling' ? (
-            <div className="stack-gap-t">
-              <TapActionWaiting
-                compact
-                tone="neutral"
-                icon={<GlyphSpinner className="size-4 animate-spin text-muted-foreground" />}
-                label="Menghitung"
-              />
+            <div className="flex flex-col items-center gap-3 py-5 text-center" role="status">
+              <span className="flex size-11 items-center justify-center rounded-full bg-background/55 ring-border">
+                <GlyphSpinner className="size-5 animate-spin text-primary motion-reduce:animate-none" />
+              </span>
+              <span>
+                <span className="block text-base font-bold tracking-tight text-foreground">
+                  Menghitung hasil
+                </span>
+                <span className="mt-1 block text-sm text-muted-foreground">
+                  Hadiahmu sedang dikonfirmasi.
+                </span>
+              </span>
             </div>
           ) : null}
 
-          {phase === 'result' ? (
-            <div className="stack-gap-t">
+          {phase === 'result' && result ? (
+            <>
+              <PrizeSummary prize={result.prize} />
               <TapAction compact label="Selesai" onClick={onReset} />
-            </div>
+            </>
           ) : null}
         </div>
       </PageRegion>
@@ -157,47 +171,137 @@ function ArcadeBody({
 
   return (
     <>
-      <PageRegion label="Jatah kamu" badge={`${formatCredits(state.playsLeft)} main`}>
-        <ArcadeStatus state={state} />
-      </PageRegion>
+      <ArcadeHero state={state} />
 
-      <PageRegion label="Pilih permainan">
-        <ul className="flex flex-col gap-3">
+      <PageRegion label="Pilih permainan" badge={`${formatCredits(state.playsLeft)} main tersisa`}>
+        <ul className="grid grid-cols-2 gap-3">
           {(['boxes', 'match'] as const).map((key) => (
-            <li key={key} className={SURFACE_CARD_CLASS}>
-              <h3 className="text-[15px] font-bold tracking-tight text-foreground">
-                {GAME_TITLE[key]}
-              </h3>
-              <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground text-pretty">
-                {GAME_BLURB[key]}
-              </p>
-              <div className="stack-gap-t">
-                <StartButton
-                  state={state}
-                  busy={busy}
-                  watchingAd={watchingAd}
-                  onStart={() => onStart(key)}
-                />
-              </div>
-            </li>
+            <GameCard
+              key={key}
+              game={key}
+              state={state}
+              busy={busy}
+              watchingAd={watchingAd}
+              onStart={() => onStart(key)}
+            />
           ))}
         </ul>
       </PageRegion>
 
-      <PageRegion label="Isi hadiahnya">
+      <PageRegion label="Peluang hadiah" badge="Transparan">
         <PrizeTable state={state} />
       </PageRegion>
     </>
   )
 }
 
-/** Urutan cabang di sini sengaja sama persis dengan `arcadeOpenRefusal` di `domain/arcade/arcade.ts`. Kalau berbeda, tombolnya menawarkan sesuatu yang server tolak dengan alasan lain — dan user yang membaca dua penjelasan berbeda untuk satu ketukan berhenti mempercayai keduanya. Pelajaran yang sama sudah dibayar sekali di `WatchAdToPlay`. */
-function StartButton({
+function ArcadeHero({ state }: { state: ArcadeStateResponse }) {
+  return (
+    <section aria-label="Ringkasan Arena" className="region-under-brand">
+      <div className="rounded-lg bg-primary p-[var(--surface-p)] text-primary-foreground">
+        <div className="flex items-start justify-between gap-4">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-foreground/10">
+            <GlyphTrophy className="size-5" />
+          </span>
+          <MetaBadge className="bg-primary-foreground/10 text-primary-foreground ring-primary-foreground/15">
+            2 permainan
+          </MetaBadge>
+        </div>
+
+        <div className="mt-5">
+          <h2 className="font-display text-xl font-bold tracking-tight text-balance">
+            Main sebentar, lanjut cari cuan.
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-primary-foreground/75 text-pretty">
+            Menangkan energi atau isi stok reward. Bukan credit instan, tapi kesempatan buat
+            lanjut ngerjain task hari ini.
+          </p>
+        </div>
+
+        <dl className="mt-5 grid grid-cols-2 divide-x divide-primary-foreground/15 rounded-lg bg-primary-foreground/[0.08] py-3">
+          <div className="px-3">
+            <dt className="text-xs font-medium text-primary-foreground/65">Sisa main</dt>
+            <dd className="mt-1 text-lg font-bold tabular-nums">
+              {formatCredits(state.playsLeft)}x
+            </dd>
+          </div>
+          <div className="px-3">
+            <dt className="text-xs font-medium text-primary-foreground/65">Bisa main</dt>
+            <dd className="mt-1 text-lg font-bold tabular-nums">
+              {state.cooldownSecondsLeft > 0 ? formatCountdown(state.cooldownSecondsLeft) : 'Sekarang'}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+  )
+}
+
+function GameCard({
+  game,
   state,
   busy,
   watchingAd,
   onStart,
 }: {
+  game: ArcadeGame
+  state: ArcadeStateResponse
+  busy: boolean
+  watchingAd: boolean
+  onStart: () => void
+}) {
+  return (
+    <li className={`${SURFACE_CARD_CLASS} flex min-w-0 flex-col gap-3`}>
+      <GameMark game={game} />
+      <span className="flex flex-1 flex-col gap-1.5">
+        <h3 className="text-sm font-bold leading-snug tracking-tight text-foreground text-balance">
+          {GAME_TITLE[game]}
+        </h3>
+        <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
+          {GAME_BLURB[game]}
+        </p>
+      </span>
+      <StartButton
+        game={game}
+        state={state}
+        busy={busy}
+        watchingAd={watchingAd}
+        onStart={onStart}
+      />
+    </li>
+  )
+}
+
+function GameMark({ game }: { game: ArcadeGame }) {
+  if (game === 'boxes') {
+    return (
+      <span className="flex size-10 items-center justify-center rounded-lg bg-background/55 text-primary ring-border">
+        <GlyphHelp className="size-5" />
+      </span>
+    )
+  }
+
+  return (
+    <span
+      aria-hidden
+      className="flex h-10 w-fit items-center gap-1 rounded-lg bg-background/55 px-2 text-xs font-black text-primary ring-border"
+    >
+      <span>◆</span>
+      <span>●</span>
+      <span>▲</span>
+    </span>
+  )
+}
+
+/** Urutan cabang di sini sengaja sama persis dengan `arcadeOpenRefusal` di `domain/arcade/arcade.ts`. Kalau berbeda, tombolnya menawarkan sesuatu yang server tolak dengan alasan lain — dan user yang membaca dua penjelasan berbeda untuk satu ketukan berhenti mempercayai keduanya. Pelajaran yang sama sudah dibayar sekali di `WatchAdToPlay`. */
+function StartButton({
+  game,
+  state,
+  busy,
+  watchingAd,
+  onStart,
+}: {
+  game: ArcadeGame
   state: ArcadeStateResponse
   busy: boolean
   watchingAd: boolean
@@ -208,7 +312,7 @@ function StartButton({
       <TapActionWaiting
         compact
         tone="neutral"
-        icon={<GlyphSpinner className="size-4 animate-spin text-muted-foreground" />}
+        icon={<GlyphSpinner className="size-4 animate-spin text-muted-foreground motion-reduce:animate-none" />}
         label={watchingAd ? 'Memuat iklan' : 'Menyiapkan'}
       />
     )
@@ -223,7 +327,7 @@ function StartButton({
       <TapActionWaiting
         compact
         tone="neutral"
-        label="Jeda main"
+        label="Jeda"
         meta={formatCountdown(state.cooldownSecondsLeft)}
       />
     )
@@ -231,7 +335,7 @@ function StartButton({
 
   /** Stok dan energi sama-sama penuh: tidak ada satu pun hadiah yang muat, jadi rondenya pasti zonk. Ditahan di sini supaya tidak ada iklan yang ditonton untuk hasil yang sudah pasti kosong — penjagaan yang sama berdiri lagi di server sebagai `nothing_to_win`. */
   if (state.winnable.every((entry) => entry.kind === 'blank')) {
-    return <TapActionWaiting compact tone="neutral" label="Stok penuh" meta="pakai dulu" />
+    return <TapActionWaiting compact tone="neutral" label="Stok penuh" />
   }
 
   const needsAd = state.adGated && !state.hasAdPass
@@ -241,37 +345,14 @@ function StartButton({
       compact
       tone={needsAd ? 'neutral' : 'primary'}
       icon={needsAd ? <GlyphPlay className="size-4 text-muted-foreground" /> : undefined}
-      label={needsAd ? 'Tonton iklan' : 'Main'}
+      label={needsAd ? 'Buka' : 'Main'}
       aria-label={
         needsAd
-          ? 'Tonton satu iklan untuk membuka satu kali main'
-          : 'Mulai satu kali main di Arena'
+          ? `Tonton satu iklan untuk membuka ${GAME_TITLE[game]}`
+          : `Mulai ${GAME_TITLE[game]}`
       }
       onClick={onStart}
     />
-  )
-}
-
-function ArcadeStatus({ state }: { state: ArcadeStateResponse }) {
-  return (
-    <dl className={`${SURFACE_CARD_CLASS} grid grid-cols-2 gap-3`}>
-      <div>
-        <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          Sisa main
-        </dt>
-        <dd className="mt-1 text-lg font-bold tabular-nums text-foreground">
-          {formatCredits(state.playsLeft)}
-        </dd>
-      </div>
-      <div>
-        <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          Jeda
-        </dt>
-        <dd className="mt-1 text-lg font-bold tabular-nums text-foreground">
-          {state.cooldownSecondsLeft > 0 ? formatCountdown(state.cooldownSecondsLeft) : 'Siap'}
-        </dd>
-      </div>
-    </dl>
   )
 }
 
@@ -283,14 +364,12 @@ function PrizeTable({ state }: { state: ArcadeStateResponse }) {
   if (listed.length === 0) return null
 
   return (
-    <ul className={`${SURFACE_CARD_CLASS} flex flex-col gap-2.5`}>
+    <ul className={`${SURFACE_CARD_CLASS} flex flex-col gap-3`}>
       {listed.map((entry) => (
         <li key={entry.kind} className="flex items-center justify-between gap-3">
-          <span className="flex min-w-0 items-center gap-2">
-            {entry.kind === 'energy' ? (
-              <GlyphBolt className="size-4 shrink-0 text-muted-foreground" />
-            ) : null}
-            <span className="truncate text-[13px] font-medium text-foreground">
+          <span className="flex min-w-0 items-center gap-2.5">
+            <PrizeIcon kind={entry.kind} />
+            <span className="truncate text-sm font-medium text-foreground">
               {prizeLabel({ kind: entry.kind, amount: entry.amount })}
             </span>
           </span>
@@ -298,6 +377,19 @@ function PrizeTable({ state }: { state: ArcadeStateResponse }) {
         </li>
       ))}
     </ul>
+  )
+}
+
+function PrizeIcon({ kind }: { kind: ArcadeStateResponse['prizes'][number]['kind'] }) {
+  let icon: ReactNode
+  if (kind === 'energy') icon = <GlyphBolt className="size-4" />
+  else if (kind === 'pool') icon = <GlyphTrophy className="size-4" />
+  else icon = <span className="text-xs font-black">—</span>
+
+  return (
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-background/55 text-muted-foreground ring-border">
+      {icon}
+    </span>
   )
 }
 

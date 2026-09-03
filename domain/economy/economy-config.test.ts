@@ -42,9 +42,8 @@ const HISTORIC: EconomyConfig = {
   premiumMaxEnergy: 10, premiumEnergyRegenMinutes: 25, premiumPoolCapBonus: 15,
   premiumMaxTasksPerDay: 1_000, premiumWithdrawalCooldownDays: 3,
   turboRewardEnabled: 1,
-  // Arena masuk dalam keadaan mati. Snapshot ini yang menjaga supaya menyalakannya
-  // tetap keputusan panel, bukan sesuatu yang ikut terbawa deploy berikutnya.
-  arcadeEnabled: 0, arcadeAdGated: 1, arcadeMaxPlaysPerDay: 3, arcadeCooldownSeconds: 300,
+  // Arena aktif setelah konfigurasi biaya, jatah, dan gerbang iklannya ditinjau.
+  arcadeEnabled: 1, arcadeAdGated: 1, arcadeMaxPlaysPerDay: 3, arcadeCooldownSeconds: 300,
   arcadeMatchSeconds: 30, arcadePoolPrizeCredits: 5, arcadePoolPrizeWeight: 1,
   arcadeEnergyPrizeAmount: 1, arcadeEnergyPrizeWeight: 2, arcadeBlankWeight: 1,
 }

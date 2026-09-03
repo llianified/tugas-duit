@@ -128,9 +128,9 @@ export function CaptchaView({
 
       {attempt.attemptsExhausted ? (
         <>
-          <ActionButton onClick={onNext}>Muat soal baru</ActionButton>
+          <ActionButton onClick={onNext}>Soal baru</ActionButton>
           <ActionButton variant="quiet" onClick={onExit}>
-            Kembali ke beranda
+            Beranda
           </ActionButton>
         </>
       ) : (
@@ -181,10 +181,10 @@ function VerifyButton({
       {verifying ? (
         <>
           <GlyphSpinner className="size-4 animate-spin" />
-          Memverifikasi
+          Mengecek…
         </>
       ) : (
-        'Verifikasi'
+        'Cek'
       )}
     </ActionButton>
   )

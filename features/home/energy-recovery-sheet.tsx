@@ -72,8 +72,8 @@ export function EnergyRecoverySheet({
                 <EnergyPips energy={energy} max={energyMax} fraction={fill.fraction} />
               </div>
               <p className="mt-2 text-xs leading-relaxed text-muted-foreground text-pretty">
-                Energi terisi sendiri, jadi stok {formatCredits(energyMax)} kamu balik utuh tanpa
-                perlu buka aplikasi. Kalau mau lanjut sekarang, ini pilihannya.
+                Energi terisi sendiri sampai {formatCredits(energyMax)}, meski app ditutup. Mau lanjut
+                sekarang? Pilih cara di bawah.
               </p>
             </Surface>
 
@@ -81,8 +81,8 @@ export function EnergyRecoverySheet({
               {adAvailable ? (
                 <RecoveryOption
                   icon={<GlyphPlay className="size-4 text-primary" />}
-                  label="Nonton iklan"
-                  note={`Dapat 1 tiket buat 1 task, sisa ${formatCredits(adViewsLeft)} kali hari ini`}
+                  label="Tonton iklan"
+                  note={`1 tiket buat 1 task · sisa ${formatCredits(adViewsLeft)} hari ini`}
                   onClick={() => {
                     close()
                     onWatchAd()

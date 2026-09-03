@@ -14,20 +14,20 @@ export function buildShareCaption(stats: ShareStats): string {
 
   if (stats.earnedCredits > 0) {
     return [
-      `Gue udah ngumpulin ${rupiah} dari Tugas Duit — cuma modal jawab soal di Telegram.`,
-      'Gabung pakai tautan gue, kita dua-duanya dapet bonus 👇',
+      `Aku sudah ngumpulin ${rupiah} dari Tugas Duit lewat soal singkat di Telegram.`,
+      'Gabung lewat link ini, kita sama-sama dapat bonus.',
     ].join(' ')
   }
 
   if (stats.friends > 0) {
     return [
-      `${formatCredits(stats.friends)} teman gue udah gabung Tugas Duit.`,
-      'Jawab soal, kumpulin credit, tarik jadi Rupiah. Ikut lewat tautan gue 👇',
+      `${formatCredits(stats.friends)} teman sudah gabung Tugas Duit lewat link aku.`,
+      'Jawab soal, kumpulin credit, lalu tarik jadi Rupiah.',
     ].join(' ')
   }
 
   return [
-    'Tugas Duit: jawab soal singkat di Telegram, kumpulin credit, tarik jadi Rupiah.',
-    'Gabung pakai tautan gue, kita dua-duanya dapet bonus 👇',
+    'Tugas Duit: jawab soal singkat di Telegram, kumpulin credit, lalu tarik jadi Rupiah.',
+    'Gabung lewat link ini, kita sama-sama dapat bonus.',
   ].join(' ')
 }

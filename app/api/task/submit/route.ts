@@ -31,14 +31,14 @@ export async function POST(request: Request) {
     if (result.reason === 'daily_task_cap') {
       return apiError(
         'DAILY_TASK_LIMIT',
-        'Jatah task kamu hari ini udah abis. Ongkos masuknya dibalikin, balik lagi besok ya.',
+        'Jatah task hari ini habis. Biayanya dikembalikan. Coba lagi besok.',
         429,
       )
     }
     if (result.reason === 'pool_empty') {
       return apiError(
         'REWARD_POOL_EMPTY',
-        'Stok reward kamu lagi kosong. Ongkos masuknya dibalikin, tunggu stoknya keisi lagi ya.',
+        'Stok reward kosong. Biayanya dikembalikan. Tunggu stok terisi.',
         429,
       )
     }

@@ -173,8 +173,7 @@ function PremiumSheetBody({
               )}
             </ActionButton>
             <p className="mt-2 text-center text-[11px] leading-snug text-muted-foreground">
-              QRIS dari e-wallet atau m-banking apa pun. Premium nyala otomatis begitu
-              pembayarannya masuk.
+              Bayar lewat QRIS. Premium aktif otomatis saat pembayaran masuk.
             </p>
           </>
         ) : null}
@@ -320,7 +319,7 @@ function PaymentPanel({ invoice }: { invoice: PremiumInvoice }) {
         </div>
       ) : (
         <p className="text-sm text-destructive">
-          QR-nya gagal dimuat. Tutup dulu, terus coba lagi ya.
+          QR gagal dimuat. Tutup, lalu coba lagi.
         </p>
       )}
 
@@ -335,9 +334,8 @@ function PaymentPanel({ invoice }: { invoice: PremiumInvoice }) {
       </dl>
 
       <p className="stack-gap-t text-[11px] leading-relaxed text-muted-foreground text-pretty">
-        Nominalnya harus <span className="font-semibold text-foreground">persis</span> segitu —
-        angka belakangnya kode unik yang dipakai buat mencocokkan pembayaran kamu. Lembar ini
-        ngecek sendiri tiap beberapa detik.
+        Bayar <span className="font-semibold text-foreground">persis</span> sesuai nominal. Angka
+        belakangnya kode unik. Status dicek otomatis.
       </p>
     </>
   )
@@ -366,7 +364,7 @@ function PaymentFoot({
   return (
     <div className="flex gap-2">
       <ActionButton variant="ghost" className="flex-1" onClick={onBack}>
-        Ganti paket
+        Ganti
       </ActionButton>
       <ActionButton className="flex-1" onClick={check} disabled={checking}>
         {checking ? 'Mengecek…' : 'Sudah bayar'}
@@ -394,8 +392,7 @@ function ActivatedPanel({ premium }: { premium: PremiumState }) {
             </p>
             {premium.until === null ? null : (
               <p className="stack-gap-t text-xs leading-relaxed text-muted-foreground text-pretty">
-                Berlaku sampai {formatShortDate(premium.until)}. Perpanjangan nambah dari tanggal
-                ini, bukan dari hari kamu bayar.
+                Aktif sampai {formatShortDate(premium.until)}. Perpanjangan dihitung dari tanggal ini.
               </p>
             )}
           </div>

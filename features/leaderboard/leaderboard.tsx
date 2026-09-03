@@ -82,7 +82,7 @@ export function LeaderboardView({
             <EmptyState
               icon={<GlyphTrophy className="glyph-md text-muted-foreground" />}
               title="Papan masih kosong"
-              description="Belum ada task yang diselesaikan. Task pertama yang tuntas langsung menempati puncak papan."
+              description="Selesaikan task pertama buat masuk ke puncak papan."
             />
           ) : (
             <>
@@ -112,7 +112,7 @@ export function LeaderboardComingSoon() {
       <EmptyState
         icon={<GlyphTrophy className="glyph-md text-muted-foreground" />}
         title="Segera hadir"
-        description="Papan peringkat sedang disiapkan. Perolehan kamu tetap tercatat, jadi posisimu langsung terisi saat papannya dibuka."
+        description="Papan sedang disiapkan. Perolehan kamu tetap tercatat."
       />
     </div>
   )
@@ -216,8 +216,7 @@ function YourPosition({
           Belum masuk papan
         </p>
         <p className="stack-gap-t text-sm leading-relaxed text-muted-foreground text-pretty">
-          Selesaikan satu task untuk mulai diperingkat bersama {formatCredits(participants)}{' '}
-          peserta lain.
+          Selesaikan 1 task buat masuk bersama {formatCredits(participants)} peserta lain.
         </p>
       </section>
     )
@@ -231,8 +230,8 @@ function YourPosition({
         <SectionLabel>
           Posisi kamu
           <InfoHint label="Posisi kamu">
-            Urutan kamu di antara seluruh peserta, diurutkan dari total perolehan credit — bukan dari
-            jumlah task. Papannya ikut bergerak saat peserta lain menyelesaikan task.
+            Urutan berdasarkan total credit, bukan jumlah task. Posisi berubah saat peserta lain
+            menyelesaikan task.
           </InfoHint>
         </SectionLabel>
       </div>
@@ -330,7 +329,7 @@ function BoardPanel({
           <EmptyState
             icon={<GlyphCrown className="glyph-md text-premium" />}
             title="Belum ada VIP di papan"
-            description="Barisan ini khusus anggota premium. Begitu ada yang bergabung, mahkotanya tampil di sini."
+            description="Khusus anggota premium. Mahkota muncul saat ada yang bergabung."
           />
         ) : (
           <>

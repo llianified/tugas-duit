@@ -8,9 +8,9 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const REFUSAL_MESSAGE: Record<string, string> = {
-  no_ticket: 'Tiket iklannya tidak ketemu. Coba nonton lagi ya.',
-  ticket_expired: 'Tiket iklannya sudah kedaluwarsa. Coba nonton lagi ya.',
-  pass_ready: 'Kamu sudah punya tiket iklan yang siap dipakai.',
+  no_ticket: 'Tiket iklan tidak ketemu. Tonton lagi.',
+  ticket_expired: 'Tiket iklan kedaluwarsa. Tonton lagi.',
+  pass_ready: 'Tiket iklan kamu sudah siap dipakai.',
 }
 
 export async function POST(request: Request) {

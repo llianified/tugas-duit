@@ -23,8 +23,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: 'Tugas Duit',
-  description:
-    'Kerjakan soal singkat berhadiah credit, kumpulkan, lalu tukar jadi Rupiah. Lengkap dengan riwayat task, statistik, dan program referral.',
+  description: 'Kerjakan soal, kumpulkan credit, lalu tarik jadi Rupiah.',
   generator: 'v0.app',
   icons: {
     icon: [{ url: '/icon.png', sizes: '512x512', type: 'image/png' }],

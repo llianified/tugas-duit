@@ -26,7 +26,7 @@ export function ActivityFeed({ entries }: { entries: ActivityEntry[] | null }) {
       <EmptyState
         icon={<GlyphBolt className="size-5" />}
         title="Belum ada aktivitas"
-        description="Task bintang tiga dan penarikan yang sudah dibayar bakal muncul di sini."
+        description="Task bintang tiga dan penarikan cair bakal muncul di sini."
       />
     )
   }

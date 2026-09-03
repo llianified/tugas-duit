@@ -250,7 +250,7 @@ export function ProfileView({
               key={row.difficulty}
               showDivider={index < stats.byDifficulty.length - 1}
               title={row.label}
-              meta={`${formatCredits(row.credits)} credit terkumpul`}
+              meta={`${formatCredits(row.credits)} credit`}
               amount={
                 <span className="text-[15px] font-bold tabular-nums text-foreground">
                   {formatCredits(row.count)}

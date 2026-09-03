@@ -13,36 +13,33 @@ export function premiumBenefitList(perks: PremiumPerks): PremiumBenefit[] {
     {
       key: 'badge',
       title: 'Mahkota emas di papan peringkat',
-      detail:
-        'Kelihatan semua orang yang buka papan peringkat, bukan cuma kamu sendiri. Di header dan panel profil kamu juga muncul.',
+      detail: 'Mahkota terlihat di papan peringkat, header, dan profil.',
     },
     {
       key: 'energy',
-      title: `Energi ${formatCredits(perks.maxEnergy)}, ngisi tiap ${formatCredits(perks.energyRegenMinutes)} menit`,
-      detail: `Biasanya ${formatCredits(perks.baseMaxEnergy)} energi tiap ${formatCredits(perks.baseEnergyRegenMinutes)} menit. Task bisa digas berturut-turut, nggak nunggu lama.`,
+      title: `Energi ${formatCredits(perks.maxEnergy)}, isi tiap ${formatCredits(perks.energyRegenMinutes)} menit`,
+      detail: `Biasanya ${formatCredits(perks.baseMaxEnergy)} energi tiap ${formatCredits(perks.baseEnergyRegenMinutes)} menit. Jadi lebih cepat lanjut task.`,
     },
     {
       key: 'pool',
       title: `Stok reward +${formatCredits(perks.poolCapBonus)} credit`,
-      detail:
-        'Daya tampungnya lebih gede, jadi sekali duduk bisa ngumpulin lebih banyak sebelum stoknya habis.',
+      detail: 'Stok lebih besar, jadi kamu bisa kumpulin lebih banyak sebelum habis.',
     },
     /** Judulnya sengaja tidak berbunyi "bebas iklan". Premium hanya mematikan interstitial otomatis; tiket berhadiah tetap hidup karena impresinya yang membayari fitur ini. Menjanjikan nol iklan lalu tetap merender tombol iklan adalah bentuk kebohongan yang paling mahal — user membayar, melihat tombolnya, dan menyimpulkan seluruh daftar ini tidak bisa dipercaya. Kalimat terakhir menutup celah itu di depan, bukan di ulasan. */
     {
       key: 'ads',
-      title: 'Iklan yang muncul sendiri dimatikan',
-      detail:
-        'Iklan yang nongol sendiri tiap beberapa menit berhenti total. Yang masih ada cuma tombol nonton iklan buat nambah jatah task — nggak pernah muncul sendiri, cuma jalan kalau kamu yang menekan. Jadi premium bukan berarti nol iklan.',
+      title: 'Iklan otomatis dimatikan',
+      detail: 'Iklan otomatis berhenti. Tombol iklan buat tambah jatah task tetap ada dan cuma jalan saat kamu tekan.',
     },
     {
       key: 'withdraw',
       title: `Cair tiap ${formatCredits(perks.withdrawalCooldownDays)} hari`,
-      detail: `User biasa nunggu ${formatCredits(perks.baseWithdrawalCooldownDays)} hari antar penarikan. Punya kamu lebih cepat.`,
+      detail: `User biasa menunggu ${formatCredits(perks.baseWithdrawalCooldownDays)} hari. Punya kamu lebih cepat.`,
     },
     {
       key: 'tasks',
       title: `Batas task harian ${formatCredits(perks.maxTasksPerDay)}`,
-      detail: `Naik dari ${formatCredits(perks.baseMaxTasksPerDay)}, jadi nggak kepentok pas lagi rajin-rajinnya.`,
+      detail: `Naik dari ${formatCredits(perks.baseMaxTasksPerDay)} task per hari.`,
     },
   ]
 }

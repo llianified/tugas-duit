@@ -75,14 +75,14 @@ function WithdrawDialogBody({
   }
 
   const description = receipt
-    ? 'Permintaanmu sudah masuk'
+    ? 'Permintaan sudah masuk'
     : gatingReason
-      ? 'Lihat status dan syarat penarikan'
+      ? 'Cek status dan syarat'
       : step === 'amount'
         ? 'Pilih nominal dan tujuan'
         : step === 'account'
-          ? 'Lengkapi akun penerima'
-          : 'Periksa sebelum diajukan'
+          ? 'Isi akun penerima'
+          : 'Cek sebelum ditarik'
 
   return (
     <>

@@ -36,7 +36,7 @@ export function RecentTransactions({
     >
       {isEmpty ? (
         <li className="py-[var(--list-row-py)] text-sm leading-relaxed text-muted-foreground text-pretty">
-          Belum ada task selesai. Reward task pertama kamu bakal muncul di sini.
+          Belum ada transaksi. Reward task pertama muncul di sini.
         </li>
       ) : null}
 

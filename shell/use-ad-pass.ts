@@ -6,8 +6,8 @@ import { sendJson, userFacingMessage } from '@/shell/api-client'
 import { gigaPubFailureReason, waitForGigaPubShow } from '@/shell/gigapub-sdk'
 import type { AdClaimResponse, AdsState, AdTicketResponse } from '@/shell/session-api'
 
-const SHOW_FAILED_MESSAGE = 'Iklannya belum selesai ditonton, jadi tiketnya belum bisa dipakai.'
-const SDK_MISSING_MESSAGE = 'Iklannya gagal dimuat. Coba lagi sebentar lagi ya.'
+const SHOW_FAILED_MESSAGE = 'Iklannya belum selesai. Tiket belum masuk.'
+const SDK_MISSING_MESSAGE = 'Iklan gagal dimuat. Coba lagi nanti.'
 
 /** `showGiga()` dapat ditolak saat penonton menutup iklan atau kreatif gagal dimuat. Ringkas alasan tanpa membocorkan objek mentah ke UI. */
 function showFailureMessage(error: unknown): string {

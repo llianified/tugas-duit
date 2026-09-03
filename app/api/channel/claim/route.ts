@@ -11,11 +11,11 @@ const REFUSAL: Record<string, { message: string; status: number }> = {
   disabled: { message: 'Bonus join channel lagi tidak tersedia.', status: 409 },
   already_claimed: { message: 'Bonus channel-nya udah pernah kamu ambil.', status: 409 },
   not_member: {
-    message: 'Kamu belum kelihatan join channel-nya. Join dulu, terus tekan lagi ya.',
+    message: 'Kamu belum terdeteksi join. Join dulu, lalu cek lagi.',
     status: 409,
   },
   unverifiable: {
-    message: 'Keanggotaan kamu belum bisa dicek sekarang. Coba lagi sebentar lagi ya.',
+    message: 'Keanggotaan belum bisa dicek. Coba lagi nanti.',
     status: 503,
   },
 }

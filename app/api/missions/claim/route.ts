@@ -18,7 +18,7 @@ const REFUSAL: Record<string, { message: string; status: number }> = {
   not_done: { message: 'Misinya belum kelar. Lanjut dulu ya.', status: 409 },
   already_claimed: { message: 'Hadiah misi ini udah kamu ambil hari ini.', status: 409 },
   energy_full: {
-    message: 'Energi kamu bakal kelebihan, jadi sebagian hadiahnya kebuang. Pakai dulu, baru klaim.',
+    message: 'Energi bakal kelebihan. Pakai dulu, lalu klaim.',
     status: 409,
   },
 }

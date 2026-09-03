@@ -25,12 +25,12 @@ export async function GET() {
 }
 
 const MESSAGE: Record<string, string> = {
-  WITHDRAWAL_ALREADY_PENDING: 'Penarikan kamu yang sebelumnya masih diproses.',
-  BELOW_MINIMUM: 'Jumlahnya masih kurang dari batas minimal.',
+  WITHDRAWAL_ALREADY_PENDING: 'Penarikan sebelumnya masih diproses.',
+  BELOW_MINIMUM: 'Jumlahnya di bawah batas minimum.',
   INSUFFICIENT_BALANCE: 'Saldo kamu nggak cukup.',
-  INVALID_CHANNEL: 'Tujuan transfernya nggak dikenal.',
-  ABOVE_MAXIMUM: 'Jumlahnya kelewat besar dari batas maksimal.',
-  ACCOUNT_NUMBER_IN_USE: 'Nomor ini udah dipakai akun lain. Pakai nomor punya kamu sendiri ya.',
+  INVALID_CHANNEL: 'Tujuan transfer nggak dikenal.',
+  ABOVE_MAXIMUM: 'Jumlahnya melewati batas maksimum.',
+  ACCOUNT_NUMBER_IN_USE: 'Nomor ini dipakai akun lain. Pakai nomor kamu sendiri.',
 }
 
 /** Angka syarat dan jeda tidak ditulis di dalam kalimat: keduanya aturan yang bisa berbeda per user — jeda premium 3 hari, biasa 7 — dan salinan di teks pernah membuat pembeli premium diberi tahu angka yang salah. Yang dipakai nilai yang ikut dikirim `PayoutError`. */
@@ -38,14 +38,14 @@ function messageFor(error: PayoutError): string {
   if (error.code === 'ACTIVE_DAYS_REQUIRED') {
     const required = Number(error.fields?.requiredActiveDays)
     return Number.isFinite(required) && required > 0
-      ? `Kamu perlu ${formatCredits(required)} hari aktif sebelum bisa tarik dana. Satu hari kehitung aktif kalau ada minimal 1 task yang kelar.`
-      : 'Kamu perlu beberapa hari aktif dulu sebelum bisa tarik dana.'
+      ? `Butuh ${formatCredits(required)} hari aktif buat tarik dana. Selesaikan minimal 1 task per hari aktif.`
+      : 'Butuh beberapa hari aktif buat tarik dana.'
   }
   if (error.code === 'ACTIVE_REFERRALS_REQUIRED') {
     const required = Number(error.fields?.requiredActiveReferrals)
     return Number.isFinite(required) && required > 0
-      ? `Kamu perlu ${formatCredits(required)} referral aktif sebelum bisa tarik dana.`
-      : 'Kamu perlu beberapa referral aktif sebelum bisa tarik dana.'
+      ? `Butuh ${formatCredits(required)} referral aktif buat tarik dana.`
+      : 'Butuh beberapa referral aktif buat tarik dana.'
   }
   if (error.code === 'WITHDRAWAL_COOLDOWN') {
     return 'Kamu masih dalam masa jeda sejak penarikan terakhir.'

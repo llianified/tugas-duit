@@ -71,13 +71,13 @@ function AppShellInner() {
   useEffect(() => {
     if (!session.sessionFailed) return
     showError(
-      session.error ?? 'Koneksinya putus. Cek internet kamu terus muat ulang ya.',
+      session.error ?? 'Koneksi putus. Cek internet, lalu muat ulang.',
     )
   }, [session.sessionFailed, session.error, showError])
 
   useEffect(() => {
     if (!session.unauthenticated) return
-    showError('Kami belum kenal sesi kamu. Buka Tugas Duit dari Telegram dulu ya.')
+    showError('Sesi tidak dikenal. Buka Tugas Duit lewat Telegram.')
   }, [session.unauthenticated, showError])
 
   const activeChallenge = session.view === 'captcha' ? session.activeChallenge : null

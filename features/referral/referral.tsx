@@ -72,7 +72,7 @@ export function ReferralView({
           <EmptyState
             icon={<GlyphUsers className="glyph-md text-muted-foreground" />}
             title="Belum ada teman gabung"
-            description="Teman yang daftar pakai kode undangan kamu bakal muncul di sini."
+            description="Teman yang pakai kode kamu bakal muncul di sini."
           />
         )}
       </PageRegion>
@@ -109,7 +109,7 @@ function CommissionSummary({
     <TotalSummary
       label="Total komisi referral"
       credits={summary.credits}
-      hint="Semua komisi dari task yang dikerjain teman-teman undangan kamu, sejak awal. Komisinya langsung masuk saldo begitu genap 1 credit."
+      hint="Komisi dari semua task teman undangan. Masuk ke saldo tiap terkumpul 1 credit."
       note={note}
     />
   )
@@ -121,8 +121,8 @@ function CommissionEmpty({ hasReferrals }: { hasReferrals: boolean }) {
       <p className="text-base font-semibold tracking-tight">Belum ada komisi</p>
       <p className="stack-gap-t text-sm leading-relaxed text-muted-foreground text-pretty">
         {hasReferrals
-          ? 'Teman kamu belum ngerjain task. Komisinya masuk saldo otomatis begitu mereka mulai.'
-          : 'Bagi kode undangan di bawah. Komisi dari task teman kamu masuk saldo otomatis.'}
+          ? 'Teman kamu belum ngerjain task. Komisi masuk otomatis saat mereka mulai.'
+          : 'Bagikan kode di bawah. Komisi task teman masuk otomatis.'}
       </p>
     </section>
   )
@@ -205,7 +205,7 @@ function InviteCard({
 
       <ActionButton onClick={handleShare} disabled={sharing} className="cta-gap">
         <GlyphShare className="size-4" />
-        Bagikan ke teman
+        Bagikan
       </ActionButton>
 
       <ActionButton variant="ghost" onClick={handleCopy} className="label-gap-t">
@@ -217,7 +217,7 @@ function InviteCard({
         ) : (
           <>
             <GlyphCopy className="size-4" />
-            Salin tautan undangan
+            Salin link
           </>
         )}
       </ActionButton>
@@ -233,8 +233,8 @@ function RuleNote() {
       <SectionLabel as="h2">Cara kerjanya</SectionLabel>
 
       <ol className="label-gap-t flex flex-col gap-2">
-        <RuleStep step={1}>Bagi kode undangan kamu ke teman.</RuleStep>
-        <RuleStep step={2}>Teman daftar pakai kode itu, terus ngerjain task.</RuleStep>
+        <RuleStep step={1}>Bagikan kode ke teman.</RuleStep>
+        <RuleStep step={2}>Teman daftar pakai kode itu, lalu kerjakan task.</RuleStep>
         <RuleStep step={3}>
           Kamu dapat <span className="font-medium text-foreground">{percent}%</span> dari setiap
           reward task mereka.
@@ -300,7 +300,7 @@ function ReferralListItem({
       meta={
         isActive
           ? `${referral.tasksCompleted} task · ${formatHistoryTime(lastTaskAt)}`
-          : 'Belum mulai mengerjakan task'
+          : 'Belum mulai'
       }
       amount={
         isActive ? <DataListAmount value={`+${formatCreditsPrecise(credits)}`} /> : undefined

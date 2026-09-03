@@ -42,14 +42,14 @@ export async function POST(request: Request) {
       return apiError(
         error.code,
         error.code === 'PAYMENT_DISABLED'
-          ? 'Pembayaran lagi tidak tersedia. Coba lagi nanti ya.'
-          : 'Pembayarannya belum bisa diproses. Coba lagi sebentar lagi ya.',
+          ? 'Pembayaran lagi tidak tersedia. Coba nanti.'
+          : 'Pembayaran belum bisa diproses. Coba lagi nanti.',
         error.status,
       )
     }
     if (error instanceof KlikqrisError) {
       console.error('[premium] gateway gagal (%s): %s', error.code, error.message)
-      return apiError('PAYMENT_GATEWAY_ERROR', 'Gagal bikin QRIS-nya. Coba lagi sebentar lagi ya.', 502)
+      return apiError('PAYMENT_GATEWAY_ERROR', 'QRIS gagal dibuat. Coba lagi nanti.', 502)
     }
     return handleRouteError(error)
   }

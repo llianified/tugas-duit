@@ -32,8 +32,8 @@ export function MissionCard({
     return (
       <EmptyState
         icon={<GlyphCheck className="glyph-md text-muted-foreground" />}
-        title="Belum ada misi hari ini"
-        description="Misi baru terbit setiap hari. Selesaikan task dulu, misinya bakal muncul di sini."
+        title="Belum ada misi"
+        description="Mulai kerjakan task. Misinya bakal muncul di sini."
       />
     )
   }

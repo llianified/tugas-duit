@@ -7,8 +7,6 @@ import {
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
-  // Monetag adalah satu-satunya provider. `unitId` di sini menempati kolom | `ad_views.block_id` yang sama seperti blockId Adsgram dan project ID GigaPub dulu.
-  process.env.NEXT_PUBLIC_MONETAG_ZONE_ID = 'uji-block'
   const { query } = await import('../platform/db')
   await query('select 1')
 }, 120_000)
@@ -49,10 +47,11 @@ async function readAdView(id: string) {
   const { query } = await import('../platform/db')
   const rows = await query<{
     state: string
+    block_id: string
     consumed_at: Date | null
     ready_at: Date | null
     expires_at: Date
-  }>('select state, consumed_at, ready_at, expires_at from ad_views where id=$1', [id])
+  }>('select state, block_id, consumed_at, ready_at, expires_at from ad_views where id=$1', [id])
   return rows[0]
 }
 
@@ -85,7 +84,7 @@ describe('ADS-DB-1 — pass membayar ongkos masuk, energi tidak tersentuh', () =
     const row = await readChallengeEntry(challenge.id)
     expect(row.ad_view_id).toBe(ticketId)
     expect(row.energy_spent_at).toBeNull()
-    expect((await readAdView(ticketId)).state).toBe('consumed')
+    expect(await readAdView(ticketId)).toMatchObject({ state: 'consumed', block_id: '7799' })
   })
 
   it('tetap memotong energi saat task dibayar energi', async () => {

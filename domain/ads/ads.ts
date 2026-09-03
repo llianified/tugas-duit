@@ -12,10 +12,11 @@ export function adsConfigured(): boolean {
   return adsMaxViewsPerDay() > 0
 }
 
-/** Jaringan iklan yang dipakai. Sejak migrasi ke Monetag hanya ada satu, dan sengaja tetap ditulis sebagai union bernilai satu: nilainya ikut terkirim di `/api/session` dan `/api/ads/ticket`, jadi kalau nanti ada jaringan kedua yang perlu dicoba, penambahannya cukup di sini dan compiler yang menunjuk semua tempat yang harus ikut berubah (lihat `server/ad-provider.ts`). */
-export type AdProvider = 'monetag'
+/** Provider ikut terkirim di `/api/session` dan `/api/ads/ticket`, sehingga klien dapat memilih SDK yang benar untuk setiap jenis tayangan. */
+export type AdProvider = 'monetag' | 'gigapub'
 
-/** Nilai aslinya ada di `domain/monetag-zone.ts` — modul daun tanpa import, supaya `server/env.ts` bisa memakainya tanpa menyeret alias `@/...` ke script CLI di `scripts/`. Di-re-export di sini supaya pemakai lama tetap bisa mengimpornya dari `@/domain/ads`. */
+/** Konstanta jaringan disimpan di modul daun tanpa import agar aman dipakai dari runtime server maupun layout. */
+export { GIGAPUB_PROJECT_ID } from './gigapub-project'
 export { MONETAG_DEFAULT_ZONE_ID } from './monetag-zone'
 
 /** Nama fungsi global yang disuntikkan SDK Monetag untuk satu zone. */

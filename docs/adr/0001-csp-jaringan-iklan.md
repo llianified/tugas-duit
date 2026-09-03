@@ -1,11 +1,11 @@
 # ADR 0001: CSP untuk jaringan iklan
 
 - Status: diterima
-- Cakupan: `proxy.ts`, `/api/csp-report`, Monetag
+- Cakupan: `proxy.ts`, `/api/csp-report`, Monetag, Giga.pub
 
 ## Konteks
 
-Aplikasi berjalan sebagai Telegram Mini App dan juga di dalam iframe preview. Dokumen utama harus tetap terlindungi oleh Content Security Policy (CSP), sementara rewarded interstitial Monetag membuka iframe serta mengambil gambar, video, dan beacon dari host kreatif pihak ketiga yang dapat berubah.
+Aplikasi berjalan sebagai Telegram Mini App dan juga di dalam iframe preview. Dokumen utama harus tetap terlindungi oleh Content Security Policy (CSP). Monetag dipertahankan khusus interstitial otomatis in-app, sedangkan rewarded ad yang menghasilkan tiket task memakai Giga.pub project `7799`. Kedua SDK dapat membuka iframe serta mengambil gambar, video, dan beacon dari host kreatif pihak ketiga yang dapat berubah.
 
 Panen pelanggaran selama integrasi Adsgram sebelumnya menunjukkan tidak ada kebutuhan menambah host pada `img-src`, `frame-src`, `media-src`, atau `connect-src`. SDK saat itu mengambil kreatif dari satu endpoint lalu merender `blob:`/`data:`. Pelanggaran yang nyata justru berasal dari style inline milik SDK dan atribut style aplikasi.
 
@@ -13,7 +13,7 @@ Monetag berbeda: SDK berasal dari keluarga domain `libtl.com`, tetapi iframe kre
 
 ## Keputusan
 
-1. `script-src` produksi tetap sempit: script aplikasi, Telegram, dan keluarga `libtl.com`, dengan nonce dan `'strict-dynamic'`.
+1. `script-src` produksi tetap sempit: script aplikasi, Telegram, keluarga `libtl.com`, dan loader `ad.gigapub.tech`, dengan nonce dan `'strict-dynamic'`.
 2. `frame-src`, `img-src`, `media-src`, dan `connect-src` menerima `https:` untuk kebutuhan render kreatif Monetag.
 3. `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, dan `frame-ancestors` tetap ketat. Pelonggaran render tidak memberi izin eksekusi script pada dokumen utama.
 4. `style-src` dan `style-src-attr` mempertahankan `'unsafe-inline'`. Nonce pada `style-src` akan membuat browser mengabaikan `'unsafe-inline'`, sedangkan SDK menyuntikkan `<style>` tanpa nonce dan aplikasi memakai atribut style untuk offset animasi.
@@ -32,4 +32,4 @@ Jangan menebak domain kreatif baru. Jika iklan kosong, hitam, diam, atau Promise
 
 ## Konsekuensi
 
-Dokumen utama tetap memiliki pengamanan script yang kuat, tetapi resource render HTTPS pihak ketiga dapat dimuat oleh jaringan iklan. Kebijakan ini sengaja memilih kompatibilitas kreatif Monetag tanpa memperluas `script-src`. Perubahan provider iklan wajib mengulang audit report-only karena hasil Adsgram tidak membuktikan kebutuhan provider berikutnya.
+Dokumen utama tetap memiliki pengamanan script yang kuat, tetapi resource render HTTPS pihak ketiga dapat dimuat oleh jaringan iklan. Hanya dua origin loader yang diizinkan: Monetag untuk in-app dan Giga.pub untuk rewarded/tiket. Perubahan provider iklan wajib mengulang audit report-only karena hasil satu jaringan tidak membuktikan kebutuhan jaringan lain.

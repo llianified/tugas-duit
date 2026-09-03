@@ -174,7 +174,7 @@ function ArcadeBody({
       <ArcadeHero state={state} />
 
       <PageRegion label="Pilih permainan" badge={`${formatCredits(state.playsLeft)} main tersisa`}>
-        <ul className="grid grid-cols-2 gap-3">
+        <ul className="label-gap-t grid grid-cols-2 gap-3">
           {(['boxes', 'match'] as const).map((key) => (
             <GameCard
               key={key}
@@ -364,7 +364,7 @@ function PrizeTable({ state }: { state: ArcadeStateResponse }) {
   if (listed.length === 0) return null
 
   return (
-    <ul className={`${SURFACE_CARD_CLASS} flex flex-col gap-3`}>
+    <ul className={`${SURFACE_CARD_CLASS} label-gap-t flex flex-col gap-3`}>
       {listed.map((entry) => (
         <li key={entry.kind} className="flex items-center justify-between gap-3">
           <span className="flex min-w-0 items-center gap-2.5">

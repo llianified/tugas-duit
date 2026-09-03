@@ -96,6 +96,33 @@ export function HomeView({
   /** Tab beranda dilepas begitu Misi pindah ke nav. Tiga tab menyisakan dua tanpa Misi, dan dua-duanya sudah bermasalah sebelum itu: "Aktivitas" dan view "Riwayat" adalah data yang sama dengan dua nama berbeda — user tidak punya cara menduga bedanya — sementara "Bonus" cuma ada selama bonusnya belum diklaim, jadi jumlah tabnya berubah di tempat yang sama. Sisanya sekarang berderet, dan barisnya memakai nama aslinya, "Transaksi terakhir", sehingga tidak lagi bersaing dengan Riwayat. Bonus diletakkan di atas transaksi karena ia satu-satunya yang menuntut aksi dan bisa hilang; transaksi hanya catatan yang tidak ke mana-mana. */
   const premiumReachable = Boolean(premium && (premium.active || premium.paymentEnabled))
   const bonusReachable = channelBonusReachable(channelBonus)
+  const arenaReachable = arcadeEnabled()
+
+  /** Banner event berbagi satu slot tepat di bawah saldo. Perpindahannya sengaja manual: angka stok dan pesan Arena perlu dibaca tanpa kartu bergerak sendiri, jadi pengguna memilih lewat swipe atau indikator. Kalau hanya satu event aktif, `CardCarousel` mengembalikan kartunya langsung tanpa trek dan indikator. */
+  const eventBanners = [
+    economy.turboRewardEnabled === 1
+      ? {
+          key: 'turbo-reward',
+          label: 'Tampilkan Event Turbo Reward',
+          node: (
+            <TurboRewardCard
+              config={economy}
+              rewardPoolCredits={rewardPoolCredits}
+              rewardPoolMax={rewardPoolMax}
+              rewardPoolRegenCredits={rewardPoolRegenCredits}
+              rewardPoolSecondsToNext={rewardPoolSecondsToNext}
+            />
+          ),
+        }
+      : null,
+    arenaReachable
+      ? {
+          key: 'arcade',
+          label: 'Tampilkan Arena',
+          node: <ArcadeCard poolEmpty={rewardPoolCredits === 0} onOpen={onOpenArcade} />,
+        }
+      : null,
+  ].filter((item): item is NonNullable<typeof item> => item !== null)
 
   /** Dua perangko berbagi SATU tempat dan bergantian tiap lima detik. Sebelumnya keduanya berdiri bertumpuk, dan itu memberi beranda dua ajakan sederajat yang saling menekan tepat sebelum daftar transaksi — yang di bawah hampir selalu terlewat. Daftarnya disaring di sini, bukan di dalam carousel: kartu yang tidak tersedia TIDAK BOLEH masuk sebagai `null`, karena `null` tetap terhitung satu slide dan carousel-nya akan berputar ke halaman kosong. Konsekuensinya juga yang diinginkan — kalau tinggal satu yang tersedia (bonus sudah diklaim, atau pembayaran premium dimatikan), `CardCarousel` mengembalikannya sebagai kartu tunggal tanpa trek dan tanpa titik. Kalau tidak ada satu pun, tidak ada apa-apa, dan `region-gap-t` di atas daftar transaksi ikut hilang bersamanya. */
   const stamps = [
@@ -126,16 +153,13 @@ export function HomeView({
           onWithdraw={() => setWithdrawOpen(true)}
         />
 
-        {economy.turboRewardEnabled === 1 ? (
-          <div className={`animate-view-in region-gap-t ${ENTER_STEP_CLASS[1]}`}>
-            <TurboRewardCard
-              config={economy}
-              rewardPoolCredits={rewardPoolCredits}
-              rewardPoolMax={rewardPoolMax}
-              rewardPoolRegenCredits={rewardPoolRegenCredits}
-              rewardPoolSecondsToNext={rewardPoolSecondsToNext}
-            />
-          </div>
+        {eventBanners.length > 0 ? (
+          <CardCarousel
+            ariaLabel="Event aktif"
+            items={eventBanners}
+            autoAdvance={false}
+            className={`animate-view-in region-gap-t ${ENTER_STEP_CLASS[1]}`}
+          />
         ) : null}
 
         <div className={`animate-view-in region-gap-t ${ENTER_STEP_CLASS[1]}`}>
@@ -161,12 +185,6 @@ export function HomeView({
           />
         </div>
 
-        {/* Ditempatkan tepat di bawah kartu task, bukan di antara kartu penawaran: saat stok habis, tombol "Stok habis" berada di ujung bawah kartu task, dan tujuan yang ditawarkan sebagai gantinya harus berdiri di baris berikutnya — bukan tiga region di bawah, di antara promosi. */}
-        {arcadeEnabled() ? (
-          <div className={`animate-view-in region-gap-t ${ENTER_STEP_CLASS[1]}`}>
-            <ArcadeCard poolEmpty={rewardPoolCredits === 0} onOpen={onOpenArcade} />
-          </div>
-        ) : null}
       </div>
 
       <div className={`animate-view-in region-t ${ENTER_STEP_CLASS[2]}`}>

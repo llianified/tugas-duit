@@ -45,12 +45,14 @@ function DataRowSkeleton({
   marker,
   markerClass,
   stars,
+  amountWidth,
 }: {
   showDivider: boolean
   titleWidth: string
   marker?: boolean
   markerClass: string
   stars?: boolean
+  amountWidth: string
 }) {
   return (
     <div
@@ -76,7 +78,11 @@ function DataRowSkeleton({
 
       {/* `StarRating` size sm: tiga ikon `size-3.5` dengan `gap-0.5` = 46px × 14px. */}
       <span className="flex shrink-0 flex-col items-end gap-1">
-        <Line sample="+120 credit" className="text-[15px] font-bold" bar="h-3.5 w-16" />
+        <Line
+          sample="+120 credit"
+          className="text-[15px] font-bold"
+          bar={cn('h-3.5', amountWidth)}
+        />
         {stars ? <Bar className="h-3.5 w-[2.875rem]" /> : null}
       </span>
     </div>
@@ -91,6 +97,7 @@ export function DataListSkeleton({
   badge = false,
   action = false,
   stars = false,
+  amountWidth = 'w-16',
 }: {
   rows?: number
   marker?: boolean
@@ -98,10 +105,12 @@ export function DataListSkeleton({
   markerClass?: string
   /** `MetaBadge` di sisi kanan label. Sejak chip padat gaya fomo: teks 0.6875rem/1.25 + padding 0.1875rem ≈ 20px, radius `--chip-radius`. */
   badge?: boolean
-  /** Tautan aksi di kepala daftar (mis. "Riwayat" di `RecentTransactions`). Ia berdiri SETELAH badge, sesuai urutan di `DataList`. */
+  /** Tautan aksi di kepala daftar (mis. "Lihat semua" di `RecentTransactions`). Ia berdiri SETELAH badge, sesuai urutan di `DataList`. */
   action?: boolean
   /** Kolom nilai bertumpuk dengan bintang di bawah nominal. */
   stars?: boolean
+  /** Lebar nilai kanan; profil hanya menampilkan jumlah, sedangkan riwayat menampilkan nominal credit. */
+  amountWidth?: string
 }) {
   return (
     <div className="animate-fade-in view-trim-b [--view-trim-b:var(--list-row-py)]" aria-hidden>
@@ -114,7 +123,7 @@ export function DataListSkeleton({
         <span className="flex shrink-0 items-center gap-2">
           {badge ? <Bar className="h-5 w-20 rounded-[var(--chip-radius)]" /> : null}
           {action ? (
-            <Line sample="Riwayat" className="text-[13px] font-semibold" bar="h-3 w-12" />
+            <Line sample="Lihat semua" className="text-[13px] font-semibold" bar="h-3 w-16" />
           ) : null}
         </span>
       </div>
@@ -128,10 +137,48 @@ export function DataListSkeleton({
             marker={marker}
             markerClass={markerClass}
             stars={stars}
+            amountWidth={amountWidth}
           />
         ))}
       </div>
     </div>
+  )
+}
+
+const ACTIVITY_NAME_W = ['w-28', 'w-36', 'w-24', 'w-32', 'w-40', 'w-28'] as const
+const ACTIVITY_MESSAGE_W = ['w-44', 'w-48', 'w-40', 'w-52', 'w-44', 'w-48'] as const
+
+/** Kerangka khusus umpan Aktivitas. Kepala daftar sengaja tidak digambar karena `ActivityFeed` memakai `DataList hideLabel`; setiap baris mengikuti avatar 40px, chip, waktu, lalu cabang `.thread-line` yang membawa nominal di bawahnya. */
+export function ActivityFeedSkeleton({ rows = 6 }: { rows?: number }) {
+  return (
+    <ul aria-hidden className="animate-fade-in flex flex-col">
+      {Array.from({ length: rows }, (_, index) => (
+        <li
+          key={index}
+          className={cn(
+            'bleed-x flex flex-col py-[var(--list-row-py)]',
+            index !== rows - 1 && 'border-b border-border/60',
+          )}
+        >
+          <div className="flex items-center gap-2.5">
+            <Bar className="size-10 shrink-0 rounded-full" />
+            <div className="min-w-0 flex-1">
+              <Bar className={cn('h-3.5 max-w-full', ACTIVITY_NAME_W[index % ACTIVITY_NAME_W.length])} />
+            </div>
+            <Bar className="h-5 w-14 shrink-0 rounded-[var(--chip-radius)]" />
+            <Bar className="h-3 w-10 shrink-0" />
+          </div>
+
+          <div className="thread-line ml-5 pt-2 pl-5">
+            <Line
+              sample="+120 credit · task bintang tiga"
+              className="text-[13px] leading-relaxed"
+              bar={cn('h-3 max-w-full', ACTIVITY_MESSAGE_W[index % ACTIVITY_MESSAGE_W.length])}
+            />
+          </div>
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -192,12 +239,19 @@ export function MissionListSkeleton({ surface = true }: { surface?: boolean }) {
 
       <div className={cn('label-gap-t flex flex-col', surface ? 'gap-2.5' : 'gap-3')}>
         {MISSION_TITLE_W.map((titleWidth) => (
-          <div key={titleWidth} className="flex h-7 items-center gap-2.5">
+          <div key={titleWidth} className="flex h-8 items-center gap-2.5">
             <div className="min-w-0 flex-1">
-              <Bar className={cn('h-3.5 max-w-full', titleWidth)} tone={tone} />
+              <Bar className={cn('h-3 max-w-full', titleWidth)} tone={tone} />
             </div>
-            <span className="meter-h w-14 shrink-0 rounded-full bg-muted-foreground/20" />
-            <Bar className="h-3.5 w-[3.25rem] shrink-0" tone={tone} />
+            <span className="flex w-14 shrink-0 items-center gap-1">
+              {Array.from({ length: 4 }, (_, index) => (
+                <Bar key={index} className="meter-h flex-1 rounded-full" tone={tone} />
+              ))}
+            </span>
+            <Bar
+              className="h-8 w-[3.75rem] shrink-0 rounded-md"
+              tone={tone}
+            />
           </div>
         ))}
       </div>
@@ -215,9 +269,9 @@ export function AppViewSkeleton() {
             {/* `CreditAmount` size `display`: `heroFontSize()` memuncak di 3rem dengan line-height 1, jadi 48px pada lebar penuh. */}
             <Bar className="h-12 w-28" />
             <Line
-              sample="Rp 1.234.567"
+              sample="Rp 1.234.567 · +120 hari ini"
               className="stack-gap-t text-sm leading-none"
-              bar="h-3.5 w-24"
+              bar="h-3.5 w-40"
             />
           </div>
           <Bar className="control-h w-28 shrink-0 rounded-cta" />
@@ -275,9 +329,9 @@ export function AppViewSkeleton() {
         </div>
       </div>
 
-      {/* Yang tersisa di bawah hero adalah "Transaksi terakhir" — tiga baris, sebanyak yang dipotong `RecentTransactions`, dengan badge jumlah task dan tautan "Riwayat" di kepalanya serta bintang di kolom nilai. Kartu premium dan bonus channel sengaja tidak digambar; keduanya bersyarat, dan kerangka yang menjanjikan kartu yang tidak datang menyentak lebih keras daripada kerangka yang kekurangan satu. */}
+      {/* Yang tersisa di bawah hero adalah "Transaksi terakhir" — tiga baris, sebanyak yang dipotong `RecentTransactions`, dengan tautan "Lihat semua" dan tanpa badge jumlah task, persis seperti kepala daftar aktual. Kartu premium dan bonus channel sengaja tidak digambar; keduanya bersyarat, dan kerangka yang menjanjikan kartu yang tidak datang menyentak lebih keras daripada kerangka yang kekurangan satu. */}
       <div className="region-t home-ledger flex flex-1 flex-col">
-        <DataListSkeleton rows={3} badge action stars />
+        <DataListSkeleton rows={3} action stars />
       </div>
 
       {/* Sama seperti `Home`: pengganjal biasa. Pemangkasan jarak ke nav sudah dibawa `DataListSkeleton` sendiri lewat `view-trim-b`. */}
@@ -400,8 +454,115 @@ export function LeaderboardSkeleton() {
   )
 }
 
+const PROFILE_FACT_LABEL_W = ['w-20', 'w-24', 'w-16', 'w-20', 'w-24', 'w-20', 'w-16', 'w-20'] as const
+const PROFILE_FACT_VALUE_W = ['w-12', 'w-10', 'w-16', 'w-14', 'w-12', 'w-16', 'w-10', 'w-20'] as const
+
+/** Profil punya anatomi sendiri: identitas, kontrol periode, angka perolehan, grafik, petak fakta, lalu daftar kesulitan. Menggambar hero saldo dan karcis task milik Beranda di state ini membuat hampir seluruh layar berganti bentuk saat profil siap. */
+export function ProfileSkeleton() {
+  return (
+    <div className="animate-fade-in flex flex-col" aria-hidden>
+      <section className="region-under-brand flex items-center gap-3">
+        <div className="relative flex shrink-0">
+          <Bar className="size-[4.5rem] rounded-full" />
+          <Bar className="absolute -right-0.5 -bottom-0.5 size-6 rounded-full" />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <Line
+            sample="Nama pengguna"
+            className="text-[22px] font-bold leading-tight tracking-[-0.02em]"
+            bar="h-4 w-40"
+          />
+          <Line
+            sample="@namapengguna"
+            className="text-[15px] leading-snug"
+            bar="h-3.5 w-28"
+          />
+          <div className="mt-1.5 flex gap-1">
+            <Bar className="h-5 w-16 rounded-md" />
+            <Bar className="h-5 w-20 rounded-md" />
+          </div>
+        </div>
+      </section>
+
+      <section className="region-t">
+        <div className="flex items-center justify-between gap-3">
+          <Line
+            sample="Perolehan"
+            className="font-display text-[13px] font-bold tracking-tight"
+            bar="h-3 w-20"
+          />
+          <div className="flex shrink-0 gap-1 rounded-full bg-muted p-1">
+            {['7h', '30h', 'Semua'].map((label, index) => (
+              <div
+                key={label}
+                className={cn(
+                  'relative flex items-center justify-center rounded-full px-2.5 py-1 text-[12px] font-bold',
+                  index === 0 && 'bg-card',
+                )}
+              >
+                <span className="invisible">{label}</span>
+                <Bar
+                  className="absolute h-2.5 w-6"
+                  tone={index === 0 ? 'default' : 'on-muted'}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="label-gap-t flex items-end justify-between gap-3">
+          <Line
+            sample="12.340 credit"
+            className="text-4xl font-bold leading-none tracking-[-0.035em]"
+            bar="h-7 w-40"
+          />
+          <Line
+            sample="Rp 123.400"
+            className="shrink-0 text-[15px] font-semibold leading-none"
+            bar="h-3.5 w-20"
+          />
+        </div>
+        <Line
+          sample="+1.240 periode ini"
+          className="stack-gap-t text-[13px] font-semibold"
+          bar="h-3 w-32"
+        />
+        <Bar className="label-gap-t h-24 w-full rounded-md" />
+      </section>
+
+      <section className="region-t">
+        <dl className="grid grid-cols-2 gap-2">
+          {PROFILE_FACT_LABEL_W.map((labelWidth, index) => (
+            <div key={index} className="stat-tile">
+              <Line
+                sample="Task selesai"
+                className="home-tag"
+                bar={cn('h-2.5', labelWidth)}
+                tone="on-muted"
+              />
+              <Line
+                sample="1.284"
+                className="mt-0.5 text-lg font-bold tracking-tight"
+                bar={cn('h-4', PROFILE_FACT_VALUE_W[index])}
+                tone="on-muted"
+              />
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <div className="region-t">
+        <DataListSkeleton rows={3} amountWidth="w-8" />
+      </div>
+    </div>
+  )
+}
+
 const STATS_TAB_LABEL = ['Progres', 'Task', 'Saldo', 'Tarik'] as const
-const STAT_ROW_LABEL_W = ['w-28', 'w-36', 'w-24', 'w-32', 'w-28'] as const
+const STAT_ROW_LABEL_W = ['w-36', 'w-32', 'w-28'] as const
+const DIFFICULTY_LABEL_W = ['w-16', 'w-20', 'w-16'] as const
+const DIFFICULTY_NOTE_W = ['w-32', 'w-36', 'w-28'] as const
 
 /** Baris `StatRow`: label dan nilai sejajar baseline dalam line box `text-sm`, dipisah divider dengan padding `--list-row-py` seperti `DataList`. */
 function StatRowsSkeleton({ rows }: { rows: number }) {
@@ -431,6 +592,41 @@ function StatRowsSkeleton({ rows }: { rows: number }) {
   )
 }
 
+function DifficultyRowsSkeleton() {
+  return (
+    <div className="label-gap-t [--label-trim:var(--list-row-py)] flex flex-col">
+      {DIFFICULTY_LABEL_W.map((labelWidth, index) => (
+        <div
+          key={index}
+          className={cn(
+            'bleed-x flex flex-wrap items-baseline justify-between gap-x-3 pt-[var(--list-row-py)]',
+            index !== DIFFICULTY_LABEL_W.length - 1
+              ? 'border-b border-border/60 pb-[var(--list-row-py)]'
+              : 'pb-0',
+          )}
+        >
+          <Line
+            sample="Sedang"
+            className="min-w-0 text-sm"
+            bar={cn('h-3', labelWidth)}
+          />
+          <Line
+            sample="12 task"
+            className="shrink-0 text-sm font-semibold"
+            bar="h-3 w-16"
+          />
+          <Line
+            sample="40% · 1.240 credit"
+            className="mt-0.5 w-full text-xs leading-relaxed"
+            bar={cn('h-2.5', DIFFICULTY_NOTE_W[index])}
+          />
+          <Bar className="label-gap-t meter-h w-full rounded-full" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function StatsSkeleton() {
   return (
     <div className="animate-fade-in view-min-h flex flex-col" aria-hidden>
@@ -438,15 +634,38 @@ export function StatsSkeleton() {
 
       <PanelTabsSkeleton labels={STATS_TAB_LABEL} className="region-gap-t" />
 
-      <div className="region-t flex flex-1 flex-col">
+      <section className="region-t">
         <Line
           sample="Progres"
           className="font-display text-[13px] font-bold tracking-tight"
-          bar="h-3 w-24"
+          bar="h-3 w-20"
         />
-        <StatRowsSkeleton rows={5} />
-        <div className="view-trim-b flex-1 [--view-trim-b:var(--list-row-py)]" />
-      </div>
+
+        <div className="label-gap-t flex items-center gap-2 text-sm font-medium">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <Bar className="size-5 shrink-0 rounded-full" />
+            <Bar className="h-3 w-16" />
+          </span>
+          <span className="h-px min-w-3 flex-1 bg-border/60" />
+          <span className="flex min-w-0 items-center gap-1.5">
+            <Bar className="size-5 shrink-0 rounded-full" />
+            <Bar className="h-3 w-20" />
+          </span>
+        </div>
+        <Bar className="label-gap-t meter-h w-full rounded-full" />
+        <StatRowsSkeleton rows={3} />
+      </section>
+
+      <section className="region-t">
+        <Line
+          sample="Sebaran kesulitan"
+          className="font-display text-[13px] font-bold tracking-tight"
+          bar="h-3 w-32"
+        />
+        <DifficultyRowsSkeleton />
+      </section>
+
+      <div className="view-trim-b flex-1 [--view-trim-b:var(--list-row-py)]" />
     </div>
   )
 }

@@ -3,7 +3,7 @@
 import type { ActivityEntry } from '@/domain/progression/activity'
 import { ProfileAvatar } from '@/shared/components/profile-avatar'
 import { DIFFICULTY_LABEL, type Difficulty } from '@/domain/task/challenge'
-import { DataListSkeleton } from '@/shared/components/app-skeleton'
+import { ActivityFeedSkeleton } from '@/shared/components/app-skeleton'
 import { DataList } from '@/shared/components/data-list'
 import { EmptyState } from '@/shared/components/empty-state'
 import { GlyphBolt } from '@/shared/components/glyph'
@@ -16,7 +16,7 @@ export function ActivityFeed({ entries }: { entries: ActivityEntry[] | null }) {
   if (entries === null) {
     return (
       <div className="region-under-brand">
-        <DataListSkeleton marker />
+        <ActivityFeedSkeleton />
       </div>
     )
   }

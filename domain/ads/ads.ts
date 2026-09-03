@@ -55,6 +55,11 @@ export function adCooldownUntil(lastOpenedAt: number | null): number | null {
   return lastOpenedAt + adsCooldownMs()
 }
 
+/** Tiket yang ADA di potret sesi belum tentu masih hidup: potretnya diambil sekali, tenggatnya terus berjalan. Setiap keputusan klien yang berdasar tiket harus lewat bentuk ini, bukan sekadar "ada tiket di potret" — `consumeAdPass` di server menuntut `expires_at > now()`, jadi keputusan yang lebih longgar berakhir sebagai permintaan yang pasti ditolak. `now` sudah dikoreksi ke jam server oleh pemanggilnya. */
+export function adPassUsable(pass: { expiresAt: number } | null | undefined, now: number): boolean {
+  return pass !== null && pass !== undefined && pass.expiresAt > now
+}
+
 export function adOpenRefusal(state: AdOpenState, now: number): AdRefusal | null {
   if (!adsConfigured()) return 'ads_disabled'
   if (state.hasReady) return 'pass_ready'

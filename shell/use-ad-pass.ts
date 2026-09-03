@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
-import { monetagSdkName, type AdProvider } from '@/domain/ads/ads'
+import { adPassUsable, monetagSdkName, type AdProvider } from '@/domain/ads/ads'
 import {
   adFailureMessage,
   watchAdToFinish,
@@ -45,6 +45,12 @@ export function useAdPass({
 
   const hasPass = Boolean(ads?.pass)
 
+  /** Tiket yang masih BISA DIPAKAI, bukan cuma yang ada di potret. Potret sesi tetap menyebut tiketnya ada sampai muat ulang berikutnya, jadi `hasPass` sendirian membuat `watchAd` menjawab "sudah punya" untuk tiket yang tenggatnya lewat — dan pemanggilnya lalu mengirim permintaan yang dijamin ditolak `consumeAdPass`, tanpa satu iklan pun ditonton. Jamnya dikoreksi ke jam server lewat `now - receivedAt`, sama seperti `useAdsProjection`. */
+  const passUsable = useCallback(
+    () => adPassUsable(ads?.pass, Date.now() + (ads ? ads.now - ads.receivedAt : 0)),
+    [ads],
+  )
+
   /** SDK yang melewati backstop ternyata mengonfirmasi tayangan belakangan. Tiketnya masih pending di server, jadi klaimnya sah — membuang hasil terlambat akan membuat user yang sudah menonton penuh tidak mendapat task. */
   const claimWhenLate = useCallback(
     async (late: Promise<AdWatchSettled>, ticketId: string, generation: number) => {
@@ -65,7 +71,7 @@ export function useAdPass({
 
   const watchAd = useCallback(async (): Promise<boolean> => {
     if (watchingAd) return false
-    if (hasPass) return true
+    if (passUsable()) return true
     const generation = (watchGeneration.current += 1)
     setWatchingAd(true)
     try {
@@ -96,7 +102,7 @@ export function useAdPass({
       setWatchingAd(false)
       await refreshSession()
     }
-  }, [claimWhenLate, getPlayer, hasPass, notifyError, refreshSession, watchingAd])
+  }, [claimWhenLate, getPlayer, notifyError, passUsable, refreshSession, watchingAd])
 
   return { watchAd, watchingAd, hasPass }
 }

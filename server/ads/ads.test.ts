@@ -411,3 +411,71 @@ describe('ADS-DB-11 — ronde Arena menahan tiket berikutnya, sama seperti task'
     expect(await openAdTicket(userId)).toMatchObject({ ok: true })
   })
 })
+
+describe('ADS-DB-12 — pass mati tidak boleh ikut menghanguskan pass yang sedang dikembalikan', () => {
+  /** Slot `ad_views_one_ready` bisa ditempati tiket yang tenggatnya sudah lewat: sapuannya
+   *  hanya jalan di `readState`, bukan di jalur pengembalian. Sebelum perbaikan ini
+   *  `restoreAdPass` membaca slot itu sebagai "user sudah pegang pass lain" lalu menolak —
+   *  padahal pass di slot itu tidak bisa dipakai apa pun lagi. Yang hilang bukan angka:
+   *  satu iklan yang benar-benar ditonton hangus permanen, dan tidak ada satu baris pun
+   *  yang bisa dipakai user untuk membuktikannya. */
+  it('menyapu pass yang sudah lewat tenggat lalu mengembalikan pass ronde yang ditinggal', async () => {
+    withConfig({ arcadeEnabled: 1, arcadeAdGated: 1, arcadeCooldownSeconds: 0 })
+    const { query } = await import('../platform/db')
+    const { claimAdTicket, openAdTicket } = await import('./ads')
+    const { openArcadePlay, readArcadeState } = await import('../arcade/arcade')
+    const userId = await makeUser(0)
+
+    const burned = await grantPass(userId)
+    const opened = await openArcadePlay(userId, 'boxes')
+    if (!opened.ok) throw new Error(`pembukaan ronde ditolak: ${opened.reason}`)
+    expect((await readAdView(burned)).state).toBe('consumed')
+
+    /** Ronde yang ditinggal melepas kuncian `entry_open` (ADS-DB-11), jadi tiket kedua
+     *  memang boleh dibuka — dan tiket kedua itulah yang lalu menempati slotnya. */
+    await query("update arcade_plays set opened_at = now() - interval '1 hour' where id=$1", [
+      opened.play.id,
+    ])
+    const second = await openAdTicket(userId)
+    if (!second.ok) throw new Error(`tiket kedua ditolak: ${second.reason}`)
+    expect((await claimAdTicket(userId, second.ticketId)).ok).toBe(true)
+
+    // Tiket kedua ikut mati tanpa pernah dipakai, tapi barisnya masih 'ready'.
+    await query(
+      "update ad_views set expires_at = now() - interval '1 minute' where id=$1",
+      [second.ticketId],
+    )
+
+    await readArcadeState(userId)
+
+    expect((await readAdView(second.ticketId)).state).toBe('expired')
+    expect((await readAdView(burned)).state).toBe('ready')
+  })
+
+  /** Penjagaannya sendiri tidak ikut dilonggarkan: pass yang MASIH hidup tetap menolak
+   *  pengembalian, supaya stok pass tidak bisa ditumpuk lewat ronde yang sengaja ditinggal. */
+  it('tetap menolak kalau pass lain masih benar-benar bisa dipakai', async () => {
+    withConfig({ arcadeEnabled: 1, arcadeAdGated: 1, arcadeCooldownSeconds: 0 })
+    const { query } = await import('../platform/db')
+    const { claimAdTicket, openAdTicket } = await import('./ads')
+    const { openArcadePlay, readArcadeState } = await import('../arcade/arcade')
+    const userId = await makeUser(0)
+
+    const burned = await grantPass(userId)
+    const opened = await openArcadePlay(userId, 'boxes')
+    if (!opened.ok) throw new Error(`pembukaan ronde ditolak: ${opened.reason}`)
+
+    await query("update arcade_plays set opened_at = now() - interval '1 hour' where id=$1", [
+      opened.play.id,
+    ])
+    const second = await openAdTicket(userId)
+    if (!second.ok) throw new Error(`tiket kedua ditolak: ${second.reason}`)
+    expect((await claimAdTicket(userId, second.ticketId)).ok).toBe(true)
+
+    await readArcadeState(userId)
+
+    expect((await readAdView(second.ticketId)).state).toBe('ready')
+    expect((await readAdView(burned)).state).toBe('consumed')
+  })
+})
+

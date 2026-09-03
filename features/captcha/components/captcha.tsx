@@ -45,7 +45,7 @@ export function CaptchaView({
   turboRewardEnabled,
 }: CaptchaViewProps) {
   const attempt = useCaptchaAttempt(challenge, onSuccess, onError, elapsedMs)
-  const inputLocked = attempt.verifying || attempt.attemptsExhausted
+  const inputLocked = attempt.verifying || attempt.finished
 
   const verifyButtonRef = useRef<HTMLButtonElement>(null)
 
@@ -134,7 +134,11 @@ export function CaptchaView({
         )}
       </div>
 
-      {attempt.attemptsExhausted ? (
+      {/* Jalan keluar untuk SETIAP cara soal ini berakhir tanpa dibayar: percobaan habis,
+          waktunya lewat, stok reward kosong, atau plafon harian tercapai. Tanpa cabang ini,
+          tiga yang terakhir cuma memunculkan toast lalu meninggalkan tombol "Cek" yang
+          dijamin gagal setiap kali ditekan — dan di view task nav pill sedang disembunyikan. */}
+      {attempt.finished ? (
         <>
           <ActionButton onClick={onNext}>Soal baru</ActionButton>
           <ActionButton variant="quiet" onClick={onExit}>

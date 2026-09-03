@@ -282,6 +282,8 @@ export async function restoreAdPass(
   userId: number,
   adViewId: string,
 ): Promise<boolean> {
+  /** Slot `ad_views_one_ready` bisa ditempati pass yang tenggatnya sudah lewat: sapuan `EXPIRE_STALE_SQL` hanya jalan di `readState` (`/api/session`, `/api/ads/ticket`), tidak di jalur pengembalian ini. Tanpa disapu lebih dulu, pass mati itu tetap memblokir `not exists` di bawah dan iklan yang benar-benar ditonton hangus permanen — persis kerugian yang penjagaan itu justru dibuat untuk dihindari. Disapu, bukan sekadar diabaikan di klausanya: indeks uniknya tidak menerima dua baris 'ready' sekaligus. */
+  await tx.query(EXPIRE_STALE_SQL, [userId])
   const restored = await tx.query<{ id: string }>(
     `update ad_views
         set state='ready', consumed_at=null,

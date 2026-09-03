@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import {
   MONETAG_DEFAULT_ZONE_ID,
   adCooldownSecondsLeft,
+  adPassUsable,
   adOpenRefusal,
   adViewsLeft,
   adsConfigured,
@@ -83,5 +84,23 @@ describe('ADS-3 — stok tidak boleh menumpuk', () => {
 
   it('mendahulukan task berjalan daripada tiket menganggur', () => {
     expect(adOpenRefusal(state({ hasEntryOpen: true, hasPending: true }), NOW)).toBe('entry_open')
+  })
+})
+
+describe('ADS-6 — tiket di potret sesi belum tentu masih hidup', () => {
+  /** Potret `/api/session` menyebut tiketnya ada sampai muat ulang berikutnya, sementara
+   *  tenggatnya terus berjalan. `watchAd` yang memakai "ada tiket di potret" akan menjawab
+   *  "sudah punya" untuk tiket yang sudah mati — lalu pemanggilnya mengirim permintaan yang
+   *  dijamin ditolak `consumeAdPass` (`state='ready' and expires_at>now()`), tanpa satu
+   *  iklan pun ditonton dan tanpa jalan keluar sampai sesinya disegarkan. */
+  it('menolak tiket yang tenggatnya sudah lewat', () => {
+    expect(adPassUsable({ expiresAt: NOW + 1 }, NOW)).toBe(true)
+    expect(adPassUsable({ expiresAt: NOW }, NOW)).toBe(false)
+    expect(adPassUsable({ expiresAt: NOW - 1 }, NOW)).toBe(false)
+  })
+
+  it('menjawab false saat memang tidak ada tiket', () => {
+    expect(adPassUsable(null, NOW)).toBe(false)
+    expect(adPassUsable(undefined, NOW)).toBe(false)
   })
 })

@@ -2,10 +2,25 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Challenge, TaskOutcome, TaskSubmission } from '@/domain/task/challenge'
-import { userFacingMessage } from '@/shell/api-client'
+import { ApiError, userFacingMessage } from '@/shell/api-client'
 import { hapticError, hapticSuccess, hapticWarning } from '@/shared/lib/haptic'
 
 export type CaptchaAttemptStatus = 'idle' | 'error' | 'success'
+
+/** Kode `/api/task/submit` yang berarti soalnya sudah TUTUP, bukan jawabannya yang salah. Semuanya dijawab dengan status 4xx, jadi `sendJson` melemparnya sebagai `ApiError` dan tidak pernah sampai ke cabang `attemptsLeft`. Tanpa daftar ini layar task cuma memunculkan toast lalu menyisakan tombol "Cek" yang dijamin gagal setiap kali ditekan: waktunya sudah habis, atau ongkosnya sudah dikembalikan dan yang dibutuhkan soal baru. `RATE_LIMITED` dan `INTERNAL` sengaja TIDAK di sini — keduanya alasan untuk mencoba lagi, bukan untuk menutup soal. */
+const ENDED_CODES: readonly string[] = [
+  'CHALLENGE_EXPIRED',
+  'CHALLENGE_NOT_FOUND',
+  'CHALLENGE_NOT_STARTED',
+  'CHALLENGE_ALREADY_SUBMITTED',
+  'TOO_MANY_ATTEMPTS',
+  'REWARD_POOL_EMPTY',
+  'DAILY_TASK_LIMIT',
+]
+
+export function isChallengeEndedError(error: unknown): boolean {
+  return error instanceof ApiError && ENDED_CODES.includes(error.code)
+}
 
 export function useCaptchaAttempt(
   challenge: Challenge,
@@ -18,6 +33,7 @@ export function useCaptchaAttempt(
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [rejectedAnswer, setRejectedAnswer] = useState<string | null>(null)
   const [attemptsExhausted, setAttemptsExhausted] = useState(false)
+  const [challengeEnded, setChallengeEnded] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const [outcome, setOutcome] = useState<TaskOutcome | null>(null)
   const startedAt = useRef<number | null>(null)
@@ -56,10 +72,13 @@ export function useCaptchaAttempt(
   const answerComplete =
     expectedLength === null ? answer.trim().length > 0 : answer.trim().length === expectedLength
 
+  /** Soal yang sudah tutup — waktunya habis, ongkosnya dikembalikan, atau sudah dikirim — tidak lagi menyediakan jalan mencoba. Layar task memakai ini untuk menawarkan soal baru alih-alih tombol "Cek" yang pasti ditolak. */
+  const finished = attemptsExhausted || challengeEnded
+
   const canVerify =
     answerComplete &&
     status !== 'success' &&
-    !attemptsExhausted &&
+    !finished &&
     answer !== rejectedAnswer
 
   const clearError = useCallback(() => {
@@ -116,6 +135,7 @@ export function useCaptchaAttempt(
     } catch (cause) {
       hapticError()
       notifyError(userFacingMessage(cause))
+      if (isChallengeEndedError(cause)) setChallengeEnded(true)
       setStatus('error')
     } finally {
       setVerifying(false)
@@ -130,6 +150,7 @@ export function useCaptchaAttempt(
     selectedOption,
     verifying,
     attemptsExhausted,
+    finished,
     canVerify,
     updateAnswer,
     selectOption,

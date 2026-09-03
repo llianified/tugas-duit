@@ -4,6 +4,7 @@ import { ActionButton } from '@/shared/components/action-button'
 import {
   AppViewSkeleton,
   LeaderboardSkeleton,
+  ProfileSkeleton,
   StatsSkeleton,
 } from '@/shared/components/app-skeleton'
 import { CaptchaView } from '@/features/captcha/components/captcha'
@@ -127,7 +128,7 @@ export function AppViewRouter({
   }
 
   if (effectiveView === 'profile') {
-    if (!session.stats || !session.user) return <AppViewSkeleton />
+    if (!session.stats || !session.user) return <ProfileSkeleton />
     return (
       <ProfileView
         key="profile"

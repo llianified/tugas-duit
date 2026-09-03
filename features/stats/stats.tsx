@@ -32,7 +32,7 @@ export function StatsView({ stats }: StatsViewProps) {
       <TotalSummary
         label="Total penghasilan"
         credits={stats.earnedCredits}
-        hint="Seluruh credit yang pernah masuk ke akun kamu — dari task sendiri dan komisi referral, dihitung sejak hari pertama. Angka ini nggak berkurang waktu kamu tarik dana, jadi ini bukan saldo yang bisa dicairkan sekarang."
+        hint="Semua credit dari task dan referral sejak awal. Tidak berkurang saat ditarik, jadi ini bukan saldo sekarang."
         ariaLabel="Total penghasilan sejak awal"
         className="region-under-brand"
       />

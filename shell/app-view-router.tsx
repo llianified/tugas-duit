@@ -137,7 +137,7 @@ export function AppViewRouter({
         premium={session.premium}
         founder={session.founder}
         onOpenPhotoNote={() =>
-          showError('Foto dan nama diambil dari Telegram. Ubah di Telegram, lalu buka ulang app-nya.')
+          showError('Foto dan nama ikut Telegram. Ubah di sana, lalu buka ulang app.')
         }
       />
     )

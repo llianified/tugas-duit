@@ -57,7 +57,7 @@ export function prestigeBadges({
     badges.push({
       key: 'precision',
       label: 'Presisi',
-      detail: `Rata-rata ${PRECISION_MIN_AVERAGE} credit ke atas per task sepanjang ${PRECISION_MIN_TASKS}+ task.`,
+      detail: `Rata-rata minimal ${PRECISION_MIN_AVERAGE} credit selama ${PRECISION_MIN_TASKS}+ task.`,
     })
   }
 

@@ -48,13 +48,12 @@ export function ChannelBonusCard({
           <GlyphTelegram className="stamp-ink-fg size-4" />
         </span>
         <span className="text-sm font-semibold leading-snug text-foreground">
-          Cair {formatRupiah(creditsToRupiah(bonus.credits))} ke saldo begitu kamu join
-          channel.
+          Join channel, dapat {formatRupiah(creditsToRupiah(bonus.credits))} ke saldo.
         </span>
       </div>
 
       <p className="stack-gap-t text-xs leading-snug text-muted-foreground">
-        Sekali seumur akun — sesudah diklaim, kartunya tidak kembali.
+        Sekali per akun. Setelah diklaim, bonus ini tidak muncul lagi.
       </p>
 
       {/* Dua tombol berbagi satu baris, dan keduanya memakai `--btn-label` seperti

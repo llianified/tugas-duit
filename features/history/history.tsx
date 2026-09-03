@@ -27,12 +27,12 @@ const SUMMARY = {
   task: {
     label: 'Total didapat',
     ariaLabel: 'Total credit dari task',
-    hint: 'Semua credit dari task yang udah kamu selesaikan, dihitung dari awal — bukan cuma yang tampil di layar, dan bukan sisa saldo kamu sekarang.',
+    hint: 'Semua credit dari task sejak awal. Ini bukan sisa saldo kamu.',
   },
   withdrawal: {
     label: 'Total ditarik',
     ariaLabel: 'Total credit yang sudah ditarik',
-    hint: 'Total credit dari penarikan yang sudah terkirim ke rekening atau e-wallet kamu. Permintaan yang masih diproses belum dihitung di sini.',
+    hint: 'Credit yang sudah terkirim ke rekening atau e-wallet. Yang diproses belum dihitung.',
   },
 } as const
 
@@ -125,8 +125,8 @@ function TaskHistoryPanel({
     return (
       <EmptyState
         icon={<GlyphHistory className="glyph-md text-muted-foreground" />}
-        title="Belum ada transaksi task"
-        description="Selesaikan task pertama untuk melihat transaksi task di sini."
+        title="Belum ada transaksi"
+        description="Selesaikan task pertama. Transaksinya muncul di sini."
       />
     )
   }
@@ -142,7 +142,7 @@ function TaskHistoryPanel({
             disabled={loadingMore}
             className="label-gap-t"
           >
-            {loadingMore ? 'Memuat…' : 'Muat lebih banyak'}
+            {loadingMore ? 'Memuat…' : 'Muat lagi'}
           </ActionButton>
         ) : null}
       </PageRegion>
@@ -158,7 +158,7 @@ function WithdrawalHistoryPanel({ withdrawals }: { withdrawals: Withdrawal[] }) 
       <EmptyState
         icon={<GlyphWallet className="glyph-md text-muted-foreground" />}
         title="Belum ada penarikan"
-        description="Setiap permintaan tarik dana bakal tercatat di sini beserta statusnya."
+        description="Penarikan bakal muncul di sini beserta statusnya."
       />
     )
   }

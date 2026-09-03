@@ -59,11 +59,11 @@ export function CaptchaSuccessPanel({
 
       <div className="animate-rise-in stagger-2 flex flex-col gap-3">
         <ActionButton onClick={onNext}>
-          Task berikutnya
+          Lanjut
           <GlyphChevron className="size-4 transition-transform duration-150 ease-out group-hover:translate-x-0.5 group-active:translate-x-1" />
         </ActionButton>
         <ActionButton variant="quiet" onClick={onExit}>
-          Kembali ke beranda
+          Beranda
         </ActionButton>
       </div>
     </div>

@@ -68,7 +68,7 @@ function PremiumUpsellStamp({
         <span className="stack-gap-t flex items-start gap-2">
           <CrownPortrait />
           <span className="text-sm font-semibold leading-snug text-foreground">
-            Mahkota emas di sebelah nama kamu, kelihatan semua orang di papan peringkat.
+            Mahkota emas di samping nama, terlihat di papan peringkat.
           </span>
         </span>
 
@@ -113,8 +113,7 @@ function PremiumActiveStamp({ premium }: { premium: PremiumState }) {
           </p>
           {premium.until === null ? null : (
             <p className="stack-gap-t text-xs leading-snug text-muted-foreground">
-              Berlaku sampai {formatShortDate(premium.until)}. Perpanjangan nambah dari tanggal
-              ini, bukan dari hari kamu bayar.
+              Aktif sampai {formatShortDate(premium.until)}. Perpanjangan dihitung dari tanggal ini.
             </p>
           )}
         </div>

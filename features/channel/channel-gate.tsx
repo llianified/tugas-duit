@@ -26,7 +26,7 @@ export function ChannelGate({
     try {
       const next = await verifyChannelMembership()
       if (next.required && !next.member) {
-        showError('Kamu masih belum kelihatan jadi anggota channel. Join dulu, baru tekan lagi ya.')
+        showError('Kamu belum terdeteksi join. Join dulu, lalu cek lagi.')
         return
       }
       await onVerified()
@@ -50,9 +50,8 @@ export function ChannelGate({
         Join channel dulu ya
       </h1>
       <p className="stack-gap-t max-w-[17rem] text-sm leading-relaxed text-pretty text-muted-foreground">
-        Tugas Duit cuma bisa dipakai anggota channel Telegram kami. Semua pengumuman
-        pembayaran dan perubahan aturan diumumkan di sana.
-        {onWithdraw ? ' Saldo yang udah kamu kumpulin tetap bisa ditarik dari sini.' : ''}
+        Tugas Duit khusus anggota channel. Info pembayaran dan perubahan aturan ada di sana.
+        {onWithdraw ? ' Saldo yang sudah terkumpul tetap bisa ditarik.' : ''}
       </p>
 
       <div className="stack-gap-t flex w-full max-w-xs flex-col gap-2">

@@ -24,7 +24,7 @@ export function ConfirmStep({
 
   return (
     <div className="flex flex-1 flex-col gap-4">
-      <p className="text-sm font-semibold tracking-tight">Yakin tarik dana?</p>
+      <p className="text-sm font-semibold tracking-tight">Tarik saldo sekarang?</p>
 
       <Surface as="section" aria-label="Ringkasan penarikan">
         <p className="text-base font-semibold tabular-nums text-foreground">
@@ -37,24 +37,24 @@ export function ConfirmStep({
       </Surface>
 
       <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
-        {PAYOUT_ETA_TEXT} Kami kabarin lagi di bot begitu dananya kami kirim.
+        {PAYOUT_ETA_TEXT} Kami kabari lewat bot setelah dikirim.
       </p>
 
       <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
         {cooldownDays === null
-          ? 'Sekali diajukan, penarikan berikutnya baru kebuka setelah cooldown-nya kelar.'
-          : `Sekali diajukan, penarikan berikutnya baru kebuka ${formatCredits(cooldownDays)} hari lagi.`}{' '}
-        Cooldown-nya tetap jalan walau pengajuan ini nanti ditolak.
+          ? 'Penarikan berikutnya tersedia setelah cooldown selesai.'
+          : `Penarikan berikutnya tersedia ${formatCredits(cooldownDays)} hari lagi.`}{' '}
+        Cooldown tetap jalan meski pengajuan ditolak.
       </p>
 
       <div className="flex-1" />
 
       <div className="flex flex-col gap-1">
         <ActionButton onClick={onConfirm} disabled={isSubmitting}>
-          {isSubmitting ? 'Mengajukan…' : 'Ya, ajukan penarikan'}
+          {isSubmitting ? 'Mengirim…' : 'Tarik'}
         </ActionButton>
         <ActionButton variant="ghost" onClick={onBack} disabled={isSubmitting}>
-          Periksa lagi
+          Kembali
         </ActionButton>
       </div>
     </div>

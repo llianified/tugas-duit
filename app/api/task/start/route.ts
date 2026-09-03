@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     if (await channelGateBlocks(user)) {
       return apiError(
         'CHANNEL_REQUIRED',
-        'Join channel Telegram kami dulu ya sebelum mulai ngerjain task.',
+        'Join channel Telegram dulu sebelum mulai task.',
         403,
       )
     }
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
           {
             error: {
               code: 'ENERGY_EMPTY',
-              message: 'Energi kamu habis. Tunggu energi berikutnya ya.',
+              message: 'Energi habis. Tunggu isi berikutnya.',
             },
             energy: started.energy,
           },
@@ -47,16 +47,16 @@ export async function POST(request: Request) {
       if (started.reason === 'ad_pass_missing')
         return apiError(
           'AD_PASS_MISSING',
-          'Tiket iklan kamu udah kedaluwarsa. Nonton iklannya sekali lagi ya.',
+          'Tiket iklan kedaluwarsa. Tonton lagi.',
           409,
         )
       if (started.reason === 'pool_empty')
         return apiError(
           'REWARD_POOL_EMPTY',
-          'Stok reward kamu lagi kosong. Tunggu keisi lagi ya, energi kamu nggak kepakai.',
+          'Stok reward kosong. Energi tetap aman.',
           409,
         )
-      return apiError('CHALLENGE_NOT_STARTABLE', 'Soalnya nggak bisa dimulai. Ambil soal baru ya.', 409)
+      return apiError('CHALLENGE_NOT_STARTABLE', 'Soal gagal dimulai. Ambil soal baru.', 409)
     }
     return Response.json(
       {

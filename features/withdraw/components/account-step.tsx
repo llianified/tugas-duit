@@ -74,7 +74,7 @@ export function AccountStep({
       <div className="flex-1" />
 
       <ActionButton type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Mengajukan…' : 'Ajukan penarikan'}
+        {isSubmitting ? 'Mengirim…' : 'Ajukan'}
       </ActionButton>
     </form>
   )

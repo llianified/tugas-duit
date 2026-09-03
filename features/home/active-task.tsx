@@ -194,7 +194,7 @@ function TaskStats({
         label="Maks"
         value={`+${formatCredits(maxReward)}`}
         note={formatRupiah(creditsToRupiah(maxReward))}
-        hint="Reward tertinggi untuk task ini. Nilainya turun kalau pengerjaannya lebih lama, dan dibatasi sisa stok reward kamu."
+        hint="Reward maksimal task ini. Nilainya turun seiring waktu dan dibatasi stok reward."
       />
       <Stat
         label="Biaya"

@@ -30,13 +30,13 @@ export function NotEligibleNote({
 }) {
   const title =
     reason === 'processing'
-      ? 'Penarikan kamu masih diproses'
+      ? 'Masih diproses'
       : reason === 'balance'
         ? 'Belum bisa ditarik'
         : reason === 'loading'
-          ? 'Lagi ngecek syaratnya'
+          ? 'Lagi cek syarat'
           : reason === 'days'
-            ? 'Hari aktifnya belum cukup'
+            ? 'Hari aktif belum cukup'
             : reason === 'referrals'
               ? 'Referral belum cukup'
               : 'Masih cooldown'
@@ -53,37 +53,34 @@ export function NotEligibleNote({
       <p className="stack-gap-t text-xs leading-relaxed text-muted-foreground text-pretty">
         {reason === 'processing' ? (
           <>
-            Pengajuan kamu yang sebelumnya belum kami putuskan, jadi pengajuan baru belum bisa
-            masuk. Saldonya lagi ditahan buat penarikan itu dan bakal balik utuh kalau
-            pengajuannya ditolak. Kami kabarin lewat bot begitu ada hasilnya.
+            Pengajuan sebelumnya masih diproses. Saldo ditahan dan dikembalikan kalau ditolak.
+            Hasilnya kami kirim lewat bot.
           </>
         ) : reason === 'balance' ? (
           <>
-            Nabung dulu sampai {formatRupiah(creditsToRupiah(withdrawalMinimumCredits()))} ya, baru
-            penarikannya kebuka. Dengan laju isi ulang stok reward sekarang, penarikan pertama
-            biasanya kekejar sekitar {firstWithdrawalEstimateDays()} hari aktif — bonus rank sama
-            streak bisa mempercepat.
+            Kumpulkan saldo sampai {formatRupiah(creditsToRupiah(withdrawalMinimumCredits()))}.
+            Biasanya butuh sekitar {firstWithdrawalEstimateDays()} hari aktif; bonus rank dan streak
+            bisa mempercepat.
           </>
         ) : reason === 'loading' ? (
-          <>Bentar ya, kami lagi ngecek syarat penarikan kamu.</>
+          <>Lagi cek syarat penarikan.</>
         ) : reason === 'days' ? (
           <>
             Kamu punya {formatCredits(activeDays)} dari {formatCredits(requiredActiveDays)} hari
-            aktif. Satu hari kehitung aktif kalau ada minimal 1 task yang kelar — nggak harus
-            berturut-turut, jadi bolong sehari nggak ngulang dari nol.
+            aktif. Satu hari dihitung kalau minimal 1 task selesai. Tidak harus beruntun.
           </>
         ) : reason === 'referrals' ? (
           <>
             Kamu punya {formatCredits(activeReferralCount)} dari {formatCredits(requiredActiveReferrals)}{' '}
-            referral aktif. Teman kamu baru kehitung aktif setelah dia ngerjain minimal 1 task.
+            referral aktif. Teman dihitung aktif setelah menyelesaikan 1 task.
           </>
         ) : (
           <>
-            Kamu bisa tarik dana lagi {cooldownEndsAt ? formatHistoryTime(cooldownEndsAt) : 'setelah cooldown-nya kelar'}.{' '}
+            Bisa tarik lagi {cooldownEndsAt ? formatHistoryTime(cooldownEndsAt) : 'setelah cooldown selesai'}.{' '}
             {cooldownDays === null
-              ? 'Cooldown-nya dihitung dari pengajuan terakhir'
-              : `Cooldown-nya ${formatCredits(cooldownDays)} hari dihitung dari pengajuan terakhir`}{' '}
-            — tetap jalan walau pengajuannya ditolak.
+              ? 'Dihitung sejak pengajuan terakhir'
+              : `${formatCredits(cooldownDays)} hari sejak pengajuan terakhir`}{' '}
+            dan tetap jalan meski ditolak.
           </>
         )}
       </p>

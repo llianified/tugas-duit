@@ -9,11 +9,11 @@ export const dynamic = 'force-dynamic'
 
 const REFUSAL_MESSAGE: Record<string, string> = {
   ads_disabled: 'Iklan lagi tidak tersedia.',
-  daily_limit: 'Jatah nonton iklan kamu hari ini sudah habis. Balik lagi besok ya.',
-  cooling_down: 'Tunggu sebentar sebelum nonton iklan berikutnya ya.',
-  ticket_open: 'Masih ada iklan yang belum selesai ditonton.',
-  pass_ready: 'Kamu sudah punya tiket iklan yang siap dipakai.',
-  entry_open: 'Selesaikan dulu task yang dibayar tiket iklan sebelumnya ya.',
+  daily_limit: 'Jatah iklan hari ini habis. Coba lagi besok.',
+  cooling_down: 'Iklan belum siap. Tunggu sebentar.',
+  ticket_open: 'Iklan sebelumnya belum selesai.',
+  pass_ready: 'Tiket iklan kamu sudah siap dipakai.',
+  entry_open: 'Selesaikan dulu task dari tiket sebelumnya.',
 }
 
 export async function POST(request: Request) {

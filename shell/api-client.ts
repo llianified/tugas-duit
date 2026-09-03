@@ -11,7 +11,7 @@ export class ApiError extends Error {
 
 type ErrorPayload = { error?: { code?: string; message?: string } }
 
-export const NETWORK_ERROR_MESSAGE = 'Koneksinya putus. Cek internet kamu terus coba lagi ya.'
+export const NETWORK_ERROR_MESSAGE = 'Koneksi putus. Cek internet, lalu coba lagi.'
 
 export function userFacingMessage(error: unknown, fallback = NETWORK_ERROR_MESSAGE): string {
   return error instanceof ApiError ? error.message : fallback

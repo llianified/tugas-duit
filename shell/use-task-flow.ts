@@ -83,16 +83,16 @@ export function useTaskFlow({
       if (payWith === 'energy' && energy < energyCostPerTask()) {
         notifyError(
           energySecondsToNext === null
-            ? 'Energi kamu belum cukup. Tunggu energi berikutnya ya.'
-            : `Energi belum cukup. Energi berikutnya dalam ${formatCountdown(energySecondsToNext)}.`,
+            ? 'Energi belum cukup. Tunggu isi berikutnya.'
+            : `Energi belum cukup. Isi lagi dalam ${formatCountdown(energySecondsToNext)}.`,
         )
         return false
       }
       if (rewardPoolCredits === 0) {
         notifyError(
           rewardPoolSecondsToNext === null
-            ? 'Stok reward kamu lagi kosong. Tunggu keisi lagi ya, tiket dan energi kamu nggak kepakai.'
-            : `Stok reward kamu lagi kosong. Nambah lagi dalam ${formatCountdown(rewardPoolSecondsToNext)}, tiket dan energi kamu nggak kepakai.`,
+            ? 'Stok reward kosong. Tunggu terisi lagi. Tiket dan energi tetap aman.'
+            : `Stok reward kosong. Terisi lagi dalam ${formatCountdown(rewardPoolSecondsToNext)}. Tiket dan energi tetap aman.`,
         )
         return false
       }

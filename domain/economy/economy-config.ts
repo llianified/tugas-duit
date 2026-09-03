@@ -1,4 +1,5 @@
 
+import { minInAppWindowSeconds } from '@/domain/ads/in-app-ads'
 import type { Difficulty } from '@/domain/task/challenge'
 import type { StarCount } from '@/domain/progression/stars'
 
@@ -372,13 +373,13 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
   },
   {
     key: 'inAppAdsCappingMinutes', group: 'ads', label: 'Panjang jendela interstitial', unit: 'menit',
-    description: 'Lama satu jendela penayangan. Setelah jendela ini lewat, hitungannya mulai dari nol lagi.',
+    description: 'Lama satu jendela penayangan. Setelah jendela ini lewat, hitungan iklan mulai dari nol lagi dan tunda iklan pertama berjalan ulang. Karena jeda antar iklan hanya berlaku di dalam satu jendela, jendela inilah yang menentukan tempo saat plafonnya kecil: pada 1 iklan per jendela, jarak antar iklan sama dengan panjang jendela, bukan jeda yang diisi di bawah.',
     impact: 'Menurunkannya membuat jendela lebih cepat bergulir, sehingga plafon per jendela berlaku lebih sering.',
     min: 1, max: 1_440, riskyWhen: 'lower',
   },
   {
     key: 'inAppAdsIntervalSeconds', group: 'ads', label: 'Jeda antar interstitial', unit: 'detik',
-    description: 'Jarak minimum antara dua interstitial di jendela yang sama.',
+    description: 'Jarak minimum antara dua interstitial di jendela yang sama. Tidak berlaku melintasi pergantian jendela — itu dijaga oleh panjang jendela, yang karenanya tidak boleh lebih pendek daripada jeda ini dikali plafon per jendela.',
     impact: 'Menurunkannya membuat iklan datang beruntun, yang paling sering jadi alasan user menutup app.',
     min: 0, max: 3_600, riskyWhen: 'lower',
   },
@@ -617,15 +618,17 @@ export function validateEconomyConfig(
     }
   }
 
-  /** Jadwal interstitial harus muat di jendelanya sendiri. Kalau tunda iklan pertama plus jeda antar iklan melampaui panjang jendela, jendela sudah bergulir sebelum iklan terakhir sempat tayang — plafon `inAppAdsFrequency` jadi angka yang tidak pernah tercapai, dan admin tidak punya cara melihat bahwa impresinya hilang di situ. */
+  /** Jadwal interstitial harus muat di jendelanya sendiri DAN tidak boleh bergulir lebih rapat daripada jeda antar iklannya. Syarat pertama menjaga plafon `inAppAdsFrequency` tetap bisa tercapai; syarat kedua menjaga `inAppAdsIntervalSeconds` tetap berarti, karena SDK Monetag menghitung jeda itu hanya di dalam satu jendela dan memulai `timeout` dari nol setiap jendela baru. Tanpa syarat kedua, jendela pendek diam-diam menggantikan jeda: `frequency: 1` dengan jendela 1 menit menayangkan iklan tiap menit berapa pun jeda yang diisi admin. */
   if (config.inAppAdsFrequency > 0) {
-    const needed =
-      config.inAppAdsTimeoutSeconds +
-      (config.inAppAdsFrequency - 1) * config.inAppAdsIntervalSeconds
+    const needed = minInAppWindowSeconds({
+      frequency: config.inAppAdsFrequency,
+      intervalSeconds: config.inAppAdsIntervalSeconds,
+      timeoutSeconds: config.inAppAdsTimeoutSeconds,
+    })
     const window = config.inAppAdsCappingMinutes * 60
     if (needed > window) {
       errors.inAppAdsCappingMinutes =
-        `Jendela ${config.inAppAdsCappingMinutes} menit terlalu pendek untuk ${config.inAppAdsFrequency} iklan: butuh minimal ${Math.ceil(needed / 60)} menit dengan tunda dan jeda sekarang.`
+        `Jendela ${config.inAppAdsCappingMinutes} menit terlalu pendek untuk ${config.inAppAdsFrequency} iklan dengan tunda ${config.inAppAdsTimeoutSeconds} detik dan jeda ${config.inAppAdsIntervalSeconds} detik: butuh minimal ${Math.ceil(needed / 60)} menit. Jendela yang lebih pendek bergulir sebelum jedanya lewat, jadi iklan pertama jendela berikutnya datang lebih cepat daripada jeda yang disetel.`
     }
   }
 

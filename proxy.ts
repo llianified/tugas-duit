@@ -23,16 +23,16 @@ function buildCsp(nonce: string, isDev: boolean) {
   ].join(' ')
 
   // Script tetap dibatasi ke origin loader kedua SDK; host kreatif tidak ditebak di sini.
-  // Giga.pub adalah layer mediasi: loader `ad.gigapub.tech` menyuntikkan SDK jaringan
-  // lain (mis. Monetag zone 11612237 dari `munqu.com` dan bidder `bid-net.gigapub.tech`).
-  // Di produksi `'strict-dynamic'` sudah mengizinkannya, tetapi di dev allowlist inilah
-  // yang berlaku. Host di bawah dibuktikan dari isi loader project 7799.
+  // OnClicka memuat `tma.js` dari `js.onclckvd.com` lalu dapat menarik modul lanjutan dari
+  // subdomain `onclckvd.com` lain. Di produksi `'strict-dynamic'` sudah mengizinkannya,
+  // tetapi di dev allowlist inilah yang berlaku. Anggota chain OnClicka belum diaudit
+  // report-only, jadi kalau rewarded gagal HANYA di dev, baca `/api/csp-report` dulu dan
+  // tambahkan host yang dilaporkan — jangan melonggarkan `script-src` secara umum.
   const adHosts = [
     'https://libtl.com',
     'https://*.libtl.com',
-    'https://ad.gigapub.tech',
-    'https://*.gigapub.tech',
-    'https://munqu.com',
+    'https://js.onclckvd.com',
+    'https://*.onclckvd.com',
   ].join(' ')
 
   const scriptSrc = isDev

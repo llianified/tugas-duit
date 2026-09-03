@@ -1,6 +1,6 @@
 'use client'
 
-import { gigaPubFailureReason, type GigaPubShow } from '@/shell/gigapub-sdk'
+import { adFailureReason, type AdShow } from '@/shell/onclicka-sdk'
 
 /** Jeda setelah dokumen terlihat lagi sebelum tayangan dinyatakan ditinggal. Sebagian format berhadiah baru me-resolve promise-nya persis saat penonton kembali; tanpa jeda ini kepulangan yang sah ikut terbaca sebagai batal. */
 const RETURN_GRACE_MS = 2_500
@@ -15,10 +15,10 @@ export type AdWatchOutcome =
   /** Penonton mengetuk kreatifnya lalu menekan back: iklannya hilang dari layar tanpa promise-nya pernah selesai. `late` adalah promise yang sama yang masih berjalan — ia menolak menyerah pada tayangan yang ternyata tuntas belakangan. */
   | { status: 'abandoned'; late: Promise<AdWatchSettled> }
 
-/** `showGiga()` hanya resolve kalau tayangannya benar-benar tuntas, tapi ia juga tidak pernah reject saat penonton kabur ke halaman pengiklan — jadi tombolnya bisa menggantung di "Memuat" selamanya. Perginya dokumen lalu kembali dipakai sebagai tanda batal supaya UI selalu punya jawaban.
+/** Fungsi show rewarded hanya resolve kalau tayangannya benar-benar tuntas, tapi ia juga tidak pernah reject saat penonton kabur ke halaman pengiklan — jadi tombolnya bisa menggantung di "Memuat" selamanya. Perginya dokumen lalu kembali dipakai sebagai tanda batal supaya UI selalu punya jawaban.
  *
  * Tanda itu cuma tebakan, dan tebakan yang salah di sini berarti user menonton iklan penuh lalu tidak dapat apa-apa: dokumen juga tersembunyi saat ada notifikasi masuk, layar terkunci, atau user pindah chat sebentar di tengah tayangan. Karena itu jawaban `abandoned` TIDAK menutup pintu — `play()` dibiarkan hidup di `late`, dan tayangan yang tuntas belakangan tetap berhak atas tiketnya. Yang dikorbankan hanya urutan pesannya, bukan hadiahnya. */
-export function watchAdToFinish(play: GigaPubShow): Promise<AdWatchOutcome> {
+export function watchAdToFinish(play: AdShow): Promise<AdWatchOutcome> {
   let resolveSettled: ((value: AdWatchSettled) => void) | undefined
   const settled = new Promise<AdWatchSettled>((resolve) => {
     resolveSettled = resolve
@@ -79,10 +79,10 @@ export function watchAdToFinish(play: GigaPubShow): Promise<AdWatchOutcome> {
     try {
       void play().then(
         () => finish({ status: 'finished' }),
-        (error: unknown) => finish({ status: 'failed', reason: gigaPubFailureReason(error) }),
+        (error: unknown) => finish({ status: 'failed', reason: adFailureReason(error) }),
       )
     } catch (error) {
-      finish({ status: 'failed', reason: gigaPubFailureReason(error) })
+      finish({ status: 'failed', reason: adFailureReason(error) })
     }
   })
 }

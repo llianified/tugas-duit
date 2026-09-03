@@ -1,3 +1,5 @@
+import { readdir, readFile } from 'node:fs/promises'
+import path from 'node:path'
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { DEFAULT_ECONOMY_CONFIG, type EconomyConfig } from '@/domain/economy/economy-config'
 
@@ -234,5 +236,30 @@ describe('konsumen membaca dari satu sumber kebenaran', () => {
         credits: 100,
       }),
     ).rejects.toMatchObject({ code: 'VALIDATION_FAILED' })
+  })
+})
+
+describe('ECON-6 — route yang menghitung dengan config wajib memuatnya dulu', () => {
+  /** `economyConfig()` adalah state global proses yang baru terpasang setelah `loadEconomyConfig()` (lihat `docs/keputusan-desain.md`). Route yang melewatkannya tetap jalan — dan itu masalahnya: di instance yang dingin ia diam-diam memakai `DEFAULT_ECONOMY_CONFIG`, bukan yang tersimpan. `PATCH /api/admin/users/[publicId]` sempat begitu, jadi hibah energi dijepit `maxEnergy()` bawaan dan isi ulang kolam dijepit kapasitas bawaan, sementara baris audit `admin_actions` ikut mencatat kapasitas yang salah. Kesalahannya tidak deterministik — tergantung apakah instance-nya sudah pernah melayani route lain — jadi ia tidak akan pernah muncul di satu jalan uji manual. */
+  it('tidak menyisakan route hibah tanpa loadEconomyConfig', async () => {
+    const root = path.join(process.cwd(), 'app/api')
+    const entries = await readdir(root, { recursive: true })
+    const routes = entries.filter((entry) => entry.endsWith('route.ts')).sort()
+
+    expect(routes.length).toBeGreaterThan(20)
+
+    const tanpaConfig: string[] = []
+    for (const relative of routes) {
+      const source = await readFile(path.join(root, relative), 'utf8')
+      const menghitungDenganConfig =
+        source.includes('admin-grants') ||
+        source.includes('grantUserEnergy') ||
+        source.includes('refillUserRewardPool')
+      if (menghitungDenganConfig && !source.includes('loadEconomyConfig')) {
+        tanpaConfig.push(relative)
+      }
+    }
+
+    expect(tanpaConfig).toEqual([])
   })
 })

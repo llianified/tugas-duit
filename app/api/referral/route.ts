@@ -42,19 +42,22 @@ export async function GET() {
       'select coalesce((select pending_units from referral_wallets where user_id=$1),0) pending',
       [user.id],
     )
-    return Response.json({
-      code: user.referralCode,
-      shareUrl: referralShareUrl(user.referralCode),
-      pendingUnits: Number(totals[0].pending),
-      downlines: rows.map((row) => ({
-        id: row.id,
-        displayName: row.display_name || 'Pengguna',
-        joinedAt: row.joined_at.getTime(),
-        taskCount: Number(row.task_count),
-        commissionUnits: Number(row.commission_units),
-        lastActiveAt: row.last_active_at?.getTime() ?? null,
-      })),
-    })
+    return Response.json(
+      {
+        code: user.referralCode,
+        shareUrl: referralShareUrl(user.referralCode),
+        pendingUnits: Number(totals[0].pending),
+        downlines: rows.map((row) => ({
+          id: row.id,
+          displayName: row.display_name || 'Pengguna',
+          joinedAt: row.joined_at.getTime(),
+          taskCount: Number(row.task_count),
+          commissionUnits: Number(row.commission_units),
+          lastActiveAt: row.last_active_at?.getTime() ?? null,
+        })),
+      },
+      { headers: { 'Cache-Control': 'no-store' } },
+    )
   } catch (error) {
     return handleRouteError(error)
   }

@@ -15,6 +15,7 @@ import {
   setUserSuspension,
   updateAdminUserProfile,
 } from '@/server/admin/admin-users'
+import { loadEconomyConfig } from '@/server/economy/economy-config'
 import { apiError, assertSameOrigin, handleRouteError, rateLimited } from '@/server/platform/http'
 import { checkRateLimit } from '@/server/platform/ratelimit'
 import { requireUser } from '@/server/auth/session'
@@ -60,6 +61,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ pu
   const origin = assertSameOrigin(request)
   if (origin) return origin
   try {
+    /** `energy-grant` dan `pool-refill` menjepit hibahnya di `maxEnergy()` dan `rewardPoolCapacity()`, dan keduanya membaca `economyConfig()` — state global proses yang baru terpasang setelah `loadEconomyConfig()`. Tanpa baris ini, PATCH yang mendarat di instance dingin memakai nilai BAWAAN, bukan yang tersimpan: kompensasi terpotong di angka yang salah dan `admin_actions.detail.kapasitas` ikut mencatat angka yang salah. */
+    await loadEconomyConfig()
     const admin = await requireUser()
     if (!admin.isAdmin) return new Response(null, { status: 404 })
     const limit = await checkRateLimit(`admin:user-write:${admin.id}`, 60, 3_600)

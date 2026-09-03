@@ -1,4 +1,9 @@
-import { creditsToRupiah, maxPayoutCredits, withdrawalMinimumCredits } from '@/domain/economy/economy'
+import {
+  creditsToRupiah,
+  getWithdrawalStatus,
+  maxPayoutCredits,
+  withdrawalMinimumCredits,
+} from '@/domain/economy/economy'
 
 function formatCreditsForMessage(value: number): string {
   return value.toLocaleString('id-ID')
@@ -229,4 +234,33 @@ export function validateWithdrawalDraft(
 
 export function isDraftValid(errors: WithdrawalDraftErrors): boolean {
   return !errors.accountNumber && !errors.accountName && !errors.amount
+}
+
+export type WithdrawalGatingReason =
+  | 'processing'
+  | 'balance'
+  | 'loading'
+  | 'days'
+  | 'referrals'
+  | 'cooldown'
+
+/** Alasan penarikan belum bisa diajukan, atau `null` kalau formulirnya boleh dibuka. Aturan, bukan penyajian, jadi ia tinggal di sini bersama `validateWithdrawalDraft` — dan bisa diuji tanpa merender apa pun.
+ *
+ * `processing` diperiksa PALING DULU dan itu yang memperbaiki bug-nya. Sebelumnya keadaan ini tidak punya cabang sama sekali; yang menutupinya cuma `cooldown`, karena `cooldownEndsAt` dihitung dari `max(requested_at)` sehingga pengajuan yang baru masuk otomatis menggerbang dirinya sendiri. Begitu cooldown-nya habis sementara pengajuannya MASIH `processing` — admin belum memutuskan — gerbangnya lepas, formulirnya terbuka penuh, dan `createPayout` baru menolak di langkah paling akhir dengan `WITHDRAWAL_ALREADY_PENDING`. User mengisi nominal, nomor rekening, dan nama pemilik untuk ditolak di ujung.
+ *
+ * Ia juga harus di atas `balance`: saldo pengajuan yang sedang diproses sudah ditahan `withdrawal_hold`, jadi saldo tersisa hampir selalu di bawah minimum dan user akan dibacakan "nabung dulu" untuk uang yang sebenarnya sedang dalam perjalanan. */
+export function withdrawalGatingReason(input: {
+  balance: number
+  hasProcessingWithdrawal: boolean
+  eligibility: WithdrawalEligibility | null
+}): WithdrawalGatingReason | null {
+  if (input.hasProcessingWithdrawal) return 'processing'
+  if (!getWithdrawalStatus(input.balance).eligible) return 'balance'
+
+  const eligibility = input.eligibility
+  if (!eligibility) return 'loading'
+  if (eligibility.activeDays < eligibility.requiredActiveDays) return 'days'
+  if (eligibility.activeReferralCount < eligibility.requiredActiveReferrals) return 'referrals'
+  if (eligibility.cooldownEndsAt) return 'cooldown'
+  return null
 }

@@ -33,11 +33,14 @@ export async function GET(request: Request) {
     if (!limit.allowed) return rateLimited(limit.retryAfter)
     if (!user) {
       const bot = env.botUsernameOrNull
-      return Response.json({
-        user: null,
-        economy: economyConfig(),
-        botAppUrl: bot ? `https://t.me/${bot}/app` : null,
-      })
+      return Response.json(
+        {
+          user: null,
+          economy: economyConfig(),
+          botAppUrl: bot ? `https://t.me/${bot}/app` : null,
+        },
+        { headers: { 'Cache-Control': 'no-store' } },
+      )
     }
 
     const [breakdown, energy, rewardPool, ads, invoice, channelGate] = await Promise.all([
@@ -56,44 +59,48 @@ export async function GET(request: Request) {
     const premiumUntil = user.premiumUntil ? user.premiumUntil.getTime() : null
     const now = Date.now()
 
-    return Response.json({
-      user: {
-        id: user.publicId,
-        firstName: user.firstName,
-        username: user.username,
-        photoUrl: user.photoUrl,
-        balance: user.balanceCredits,
-        referralCode: user.referralCode,
-        banned: Boolean(user.bannedAt),
-        founder: user.id <= FOUNDER_MAX_USER_ID,
+    return Response.json(
+      {
+        user: {
+          id: user.publicId,
+          firstName: user.firstName,
+          username: user.username,
+          photoUrl: user.photoUrl,
+          balance: user.balanceCredits,
+          referralCode: user.referralCode,
+          banned: Boolean(user.bannedAt),
+          founder: user.id <= FOUNDER_MAX_USER_ID,
+        },
+        economy: economyConfig(),
+        breakdown: {
+          taskCredits: Number(breakdown[0].task_credits),
+          referralCredits: Number(breakdown[0].referral_credits),
+          withdrawnCredits: Number(breakdown[0].withdrawn_credits),
+        },
+        energy,
+        rewardPool,
+        ads,
+        premium: {
+          active: isPremiumActive(premiumUntil, now),
+          until: premiumUntil,
+          daysLeft: premiumDaysLeft(premiumUntil, now),
+          /** Di preview, gerbang ini dibuka tanpa gateway. `paymentEnabled` adalah satu-satunya hal yang menentukan kartu premium dirender atau tidak (`PremiumCard` mengembalikan null tanpanya), dan preview tidak punya KLIKQRIS_API_KEY — jadi seluruh permukaan premium tidak pernah muncul di sana, termasuk untuk dilihat. Yang menjaga uangnya bukan flag ini melainkan `startPremiumCheckout`, yang tetap membaca `klikqrisConfigured()` sendiri dan menjawab PAYMENT_DISABLED: di preview kartunya bisa dibuka dan dibaca, tapi checkout-nya berhenti dengan pesan yang sopan. */
+          paymentEnabled: klikqrisConfigured() || isPreviewShell(),
+          plans: premiumPlans(),
+          perks: premiumPerks(),
+          invoice,
+        },
+        channelBonus: {
+          enabled: channelBonusEnabled(),
+          url: env.telegramChannelUrl,
+          credits: channelJoinBonusCredits(),
+          claimed: Boolean(user.channelBonusClaimedAt),
+        },
+        channelGate,
       },
-      economy: economyConfig(),
-      breakdown: {
-        taskCredits: Number(breakdown[0].task_credits),
-        referralCredits: Number(breakdown[0].referral_credits),
-        withdrawnCredits: Number(breakdown[0].withdrawn_credits),
-      },
-      energy,
-      rewardPool,
-      ads,
-      premium: {
-        active: isPremiumActive(premiumUntil, now),
-        until: premiumUntil,
-        daysLeft: premiumDaysLeft(premiumUntil, now),
-        /** Di preview, gerbang ini dibuka tanpa gateway. `paymentEnabled` adalah satu-satunya hal yang menentukan kartu premium dirender atau tidak (`PremiumCard` mengembalikan null tanpanya), dan preview tidak punya KLIKQRIS_API_KEY — jadi seluruh permukaan premium tidak pernah muncul di sana, termasuk untuk dilihat. Yang menjaga uangnya bukan flag ini melainkan `startPremiumCheckout`, yang tetap membaca `klikqrisConfigured()` sendiri dan menjawab PAYMENT_DISABLED: di preview kartunya bisa dibuka dan dibaca, tapi checkout-nya berhenti dengan pesan yang sopan. */
-        paymentEnabled: klikqrisConfigured() || isPreviewShell(),
-        plans: premiumPlans(),
-        perks: premiumPerks(),
-        invoice,
-      },
-      channelBonus: {
-        enabled: channelBonusEnabled(),
-        url: env.telegramChannelUrl,
-        credits: channelJoinBonusCredits(),
-        claimed: Boolean(user.channelBonusClaimedAt),
-      },
-      channelGate,
-    })
+      /** Muatan paling pribadi di seluruh API — saldo, kode referral, `publicId`, dan tagihan premium yang sedang berjalan — dan satu-satunya baca bersesi yang sempat tidak menyatakan ini. Setiap saudaranya (`/api/stats`, `/api/history`, `/api/withdrawals`, `/api/task`, …) sudah menyetelnya eksplisit; `dynamic = 'force-dynamic'` mengatur rendering, bukan header cache di hilir. */
+      { headers: { 'Cache-Control': 'no-store' } },
+    )
   } catch (error) {
     return handleRouteError(error)
   }

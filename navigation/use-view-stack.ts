@@ -131,14 +131,17 @@ export function useViewStack() {
     window.history.back()
   }, [])
 
-  /** Nav pill adalah perpindahan menyamping, jadi ia MENGGANTI tumpukan — tidak menyusurinya mundur. Bentuk lamanya memanggil `back()` untuk Beranda, yang cuma melepas satu tingkat: dari beranda → profil → statistik, menekan "Beranda" mendarat di Profil. Menghitung berapa langkah yang harus dilepas juga tidak bisa dipakai, karena cabang di bawah sudah memakai `replaceState` sehingga panjang tumpukan tidak lagi sama dengan kedalaman riwayat browser. Satu `replaceState` menjawab keduanya, dan memperlakukan Beranda persis seperti tujuan nav yang lain. */
+  /** Nav pill adalah perpindahan menyamping: TUMPUKANNYA diganti — `[Beranda]` atau `[Beranda, tujuan]` — sehingga kedalaman, tombol back Telegram, dan `goBack()` memperlakukan Beranda sebagai satu-satunya induk. Yang diganti hanya tumpukannya; entri riwayatnya tetap DITAMBAH.
+   *
+   * Bentuk lamanya memakai `replaceState` saat kedalaman > 1, dan itu menimpa entri yang sedang ditempati user. Dari Beranda → Riwayat → Profil lalu menekan "Peringkat", entri Profil hilang tertimpa sehingga tombol Back mendarat di Riwayat — melompati view yang barusan ditinggalkan, dan menyisakan satu tekan tambahan sebelum sampai ke Beranda. `pushState` mengembalikan arti Back yang benar: satu tekan sama dengan satu view mundur, persis jalur yang dilalui user.
+   *
+   * Beranda ikut jalur yang sama, bukan dikecualikan: entri barunya membawa `[Beranda]`, jadi Back darinya mundur ke view sebelumnya alih-alih menabrak entri Beranda kedua yang membuat satu tekan tidak melakukan apa pun. */
   const select = useCallback(
     (view: AppView) => {
       const current = stackRef.current
       if (current[current.length - 1] === view) return
       const next: AppView[] = view === ROOT_VIEW ? [ROOT_VIEW] : [ROOT_VIEW, view]
-      if (current.length <= 1) window.history.pushState(writeState(next), '')
-      else window.history.replaceState(writeState(next), '')
+      window.history.pushState(writeState(next), '')
       commit(next)
     },
     [commit],

@@ -142,7 +142,8 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 async function loadConfig(): Promise<boolean> {
   const rows = await query<{ config: unknown }>('select config from economy_config where id=1')
-  const parsed = validateEconomyConfig(rows[0]?.config)
+  /** `fillMissing` menyamakan kebijakannya dengan `loadEconomyConfig` (`parseRow` di `server/economy/economy-config.ts`). Tanpa itu keduanya berselisih tepat di jendela paling rapuh: kode baru sudah live, migrasinya belum jalan. Jalur request tetap melayani dengan nilai bawaan plus peringatan, sementara pengiriman pesan di sini berhenti total — dan berhentinya diam, karena `runMaintenance` menerima `{}` sebagai hasil yang sah, bukan sebagai error. */
+  const parsed = validateEconomyConfig(rows[0]?.config, { fillMissing: true })
   if (!parsed.ok) {
     console.error('[engagement] economy_config tidak lolos validasi, pengiriman dibatalkan:', parsed.errors)
     return false

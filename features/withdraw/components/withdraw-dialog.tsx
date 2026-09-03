@@ -12,7 +12,7 @@ import {
 } from '@/features/withdraw/components/withdraw-form'
 import { WithdrawReceipt } from '@/features/withdraw/components/withdraw-receipt'
 import { WithdrawalList } from '@/features/withdraw/components/withdrawal-list'
-import { getWithdrawalStatus } from '@/domain/economy/economy'
+import { withdrawalGatingReason } from '@/domain/economy/withdrawal'
 import type { Withdrawal, WithdrawalEligibility } from '@/domain/economy/withdrawal'
 
 export function WithdrawDialog({
@@ -61,18 +61,12 @@ function WithdrawDialogBody({
 }) {
   const [receipt, setReceipt] = useState<Withdrawal | null>(null)
   const [step, setStep] = useState<WithdrawStep>('amount')
-  const status = getWithdrawalStatus(balance)
-  const gatingReason = !status.eligible
-    ? 'balance'
-    : !eligibility
-      ? 'loading'
-      : eligibility.activeDays < eligibility.requiredActiveDays
-        ? 'days'
-        : eligibility.activeReferralCount < eligibility.requiredActiveReferrals
-          ? 'referrals'
-          : eligibility.cooldownEndsAt
-            ? 'cooldown'
-            : null
+  const gatingReason = withdrawalGatingReason({
+    balance,
+    /** Sumbernya daftar yang sama dengan yang dirender di bawah, dan keduanya datang dari satu jawaban `/api/withdrawals` — jadi gerbang dan daftarnya tidak bisa berselisih. `getPayouts` mengurutkan dari yang terbaru, dan `withdrawals_one_active_per_user` memastikan paling banyak ada satu yang `processing`, jadi ia selalu masuk halaman pertama. */
+    hasProcessingWithdrawal: withdrawals.some((item) => item.state === 'processing'),
+    eligibility,
+  })
 
   async function handleSubmit(input: WithdrawalSubmitInput) {
     const created = await onSubmit(input)

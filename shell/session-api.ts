@@ -8,6 +8,7 @@ import type { RewardPoolState } from '@/domain/economy/reward-pool'
 import type { Challenge, HistoryEntry } from '@/domain/task/challenge'
 import type { ActivityEntry } from '@/domain/progression/activity'
 import type { LeaderboardBoard } from '@/domain/progression/leaderboard'
+import type { MissionProgress } from '@/domain/progression/missions'
 import type { UserStats } from '@/domain/progression/stats'
 import type { Withdrawal, WithdrawalEligibility } from '@/domain/economy/withdrawal'
 import { fetchJson, sendJson, setPreviewSessionToken } from '@/shell/api-client'
@@ -125,6 +126,7 @@ export type SessionRewardPool = NonNullable<SessionResponse['rewardPool']>
 export type TaskResponse = { challenge: Challenge }
 export type HistoryResponse = { entries: HistoryEntry[]; nextCursor: string | null }
 export type StatsResponse = { stats: UserStats }
+export type MissionsResponse = { missions: MissionProgress[] }
 export type LeaderboardResponse = { board: LeaderboardBoard }
 export type ActivityResponse = { entries: ActivityEntry[] }
 export type ReferralResponse = {

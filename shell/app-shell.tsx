@@ -162,6 +162,7 @@ function AppShellInner() {
           <NavPill
             activeView={effectiveView}
             photoUrl={session.user?.photoUrl ?? null}
+            missionsNeedAttention={session.missionsNeedAttention}
             onSelect={session.selectView}
           />
         ) : null

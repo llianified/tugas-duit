@@ -26,10 +26,12 @@ const NAV_SLOTS: readonly NavSlot[] = [
 export function NavPill({
   activeView,
   photoUrl,
+  missionsNeedAttention,
   onSelect,
 }: {
   activeView: AppView
   photoUrl: string | null
+  missionsNeedAttention: boolean
   onSelect: (view: AppView) => void
 }) {
   const directActiveIndex = NAV_SLOTS.findIndex((slot) => slot.view === activeView)
@@ -52,6 +54,7 @@ export function NavPill({
             slot={slot}
             activeView={visualActiveView}
             photoUrl={photoUrl}
+            missionsNeedAttention={missionsNeedAttention}
             onSelect={onSelect}
           />
         ))}
@@ -80,14 +83,17 @@ function NavPillItem({
   slot,
   activeView,
   photoUrl,
+  missionsNeedAttention,
   onSelect,
 }: {
   slot: NavSlot
   activeView: AppView
   photoUrl: string | null
+  missionsNeedAttention: boolean
   onSelect: (view: AppView) => void
 }) {
   const active = slot.view === activeView
+  const showStatus = slot.view === 'missions' && missionsNeedAttention
 
   function handleClick() {
     hapticSelect()
@@ -102,7 +108,12 @@ function NavPillItem({
       className={cn('focus-ring nav-pill-item')}
     >
       <span className="nav-pill-slot">
-        {slot.icon ?? (
+        {slot.icon ? (
+          <span className="nav-pill-icon-anchor">
+            {slot.icon}
+            {showStatus ? <span aria-hidden className="nav-pill-status-dot" /> : null}
+          </span>
+        ) : (
           <ProfileAvatar
             photoUrl={photoUrl}
             className="nav-pill-avatar"
@@ -110,7 +121,10 @@ function NavPillItem({
           />
         )}
       </span>
-      <span className="sr-only">{slot.label}</span>
+      <span className="sr-only">
+        {slot.label}
+        {showStatus ? ', ada misi belum diklaim' : null}
+      </span>
     </button>
   )
 }

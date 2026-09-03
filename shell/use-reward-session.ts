@@ -5,6 +5,7 @@ import { economyConfig } from '@/domain/economy/economy-config'
 import { maxEnergy } from '@/domain/economy/energy'
 import type { Referral, ReferralSummary } from '@/domain/economy/referral'
 import type { Withdrawal, WithdrawalDraft } from '@/domain/economy/withdrawal'
+import { hasUnclaimedMissions } from '@/domain/progression/missions'
 import { useViewStack } from '@/navigation/use-view-stack'
 import { rememberAdsHint } from '@/shell/ads-hint'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
@@ -52,6 +53,8 @@ export function useRewardSession({
     mutateHistory,
     statsData,
     mutateStats,
+    missionsData,
+    missionsError,
     leaderboardData,
     activityData,
     referralData,
@@ -238,6 +241,8 @@ export function useRewardSession({
     loadingMoreHistory,
     loadMoreHistory,
     stats: statsData?.stats ?? null,
+    missionsNeedAttention:
+      !missionsError && Boolean(missionsData && hasUnclaimedMissions(missionsData.missions)),
     leaderboard: leaderboardData?.board ?? null,
     activity: activityData?.entries ?? null,
     completedCount: statsData?.stats.completedCount ?? 0,

@@ -1,8 +1,6 @@
 'use client'
 
-import { useState } from 'react'
 import { adsMaxViewsPerDay } from '@/domain/ads/ads'
-import { AdConfirmDialog } from '@/features/ads/ad-confirm-dialog'
 import { GlyphPlay, GlyphSpinner } from '@/shared/components/glyph'
 import { MetaBadge } from '@/shared/components/meta-badge'
 import { TapAction, TapActionWaiting } from '@/shared/components/tap-action'
@@ -26,8 +24,6 @@ export function WatchAdToPlay({
   poolEmpty: boolean
   onWatch: () => void
 }) {
-  const [confirmOpen, setConfirmOpen] = useState(false)
-
   if (!enabled || poolEmpty) return null
 
   if (watching)
@@ -77,30 +73,21 @@ export function WatchAdToPlay({
     )
 
   return (
-    <>
-      <TapAction
-        compact
-        tone="neutral"
-        label="Iklan"
-        meta={
-          <MetaBadge className="gap-1">
-            <GlyphPlay className="size-3 shrink-0" aria-hidden="true" />
-            {formatCredits(viewsLeft)}/{formatCredits(adsMaxViewsPerDay())}
-          </MetaBadge>
-        }
-        aria-label={`Nonton iklan untuk memulai task tanpa energi, sisa ${formatCredits(viewsLeft)} dari ${formatCredits(adsMaxViewsPerDay())} kali hari ini`}
-        onClick={() => {
-          hapticTap()
-          setConfirmOpen(true)
-        }}
-      />
-
-      <AdConfirmDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        viewsLeft={viewsLeft}
-        onConfirm={onWatch}
-      />
-    </>
+    <TapAction
+      compact
+      tone="neutral"
+      label="Tonton iklan"
+      meta={
+        <MetaBadge className="gap-1">
+          <GlyphPlay className="size-3 shrink-0" aria-hidden="true" />
+          {formatCredits(viewsLeft)}/{formatCredits(adsMaxViewsPerDay())}
+        </MetaBadge>
+      }
+      aria-label={`Tonton iklan untuk memulai task tanpa energi, sisa ${formatCredits(viewsLeft)} dari ${formatCredits(adsMaxViewsPerDay())} kali hari ini`}
+      onClick={() => {
+        hapticTap()
+        onWatch()
+      }}
+    />
   )
 }

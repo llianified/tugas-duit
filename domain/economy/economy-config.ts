@@ -738,6 +738,12 @@ export function validateEconomyConfig(
       `Regen energi premium tidak boleh lebih lambat daripada regen biasa (${config.energyRegenMinutes} menit).`
   }
 
+  /** Target misi iklan tidak boleh melewati plafon tayangan hariannya: misi yang menuntut 15 tayangan sementara plafonnya 10 tidak pernah bisa diselesaikan siapa pun, dan gagalnya diam — yang terlihat user cuma progres yang berhenti di 10/15 tiap hari. Bentuk kesalahan yang sama dengan hadiah misi yang tidak muat di kapasitas energi, jadi ditangkap di tempat yang sama. | Diperiksa hanya saat plafonnya di atas nol. `adsMaxViewsPerDay = 0` adalah tombol mati iklan, dan tombol itu harus tetap satu field: yang menangani misinya di situ `missions()`, yang berhenti menerbitkan misi iklan selama iklannya mati. */
+  if (config.adsMaxViewsPerDay > 0 && config.missionAdsTarget > config.adsMaxViewsPerDay) {
+    errors.missionAdsTarget =
+      `Target misi "Tonton iklan" tidak boleh melebihi plafon tayangan harian (${config.adsMaxViewsPerDay}), karena misi yang menuntut lebih banyak tayangan daripada yang boleh ditonton tidak pernah bisa diselesaikan.`
+  }
+
   /** Hadiah misi harus muat di kapasitas energi biasa, bukan premium: `claimMission` menolak klaim yang hadiahnya terpotong, jadi hadiah yang lebih besar dari kapasitas membuat misinya tidak pernah bisa diambil user non-premium — gagal diam-diam, karena yang terlihat cuma tombol klaim yang selalu menolak. */
   const missionRewards: [EconomyConfigKey, string][] = [
     ['missionTasksReward', 'Selesaikan task'],

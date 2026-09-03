@@ -75,27 +75,33 @@ export function useTaskFlow({
     [mutateSession],
   )
 
+  /** Ongkos masuk yang pasti ditolak server, dijawab di klien supaya alasannya terbaca di tempat. `null` berarti boleh jalan. Task yang sudah pernah dimulai tidak menagih apa pun lagi — `startChallenge` memungut ongkosnya hanya di dalam cabang `fresh` — jadi melanjutkan selalu lolos. Dipakai dua pemanggil: "Mulai" di beranda dan "Lanjut" di layar hasil. */
+  const entryRefusal = useCallback(
+    (candidate: Challenge, payWith: TaskPayment): string | null => {
+      if (candidate.startedAt !== null) return null
+      /** Ambangnya `energyCostPerTask()`, bukan 1: biaya energi per task bisa disetel dari panel admin, dan `< 1` membuat klien meloloskan permintaan yang pasti ditolak server begitu biayanya dinaikkan. Bentuknya sama dengan `energyEmpty` di `active-task.tsx`. */
+      if (payWith === 'energy' && energy < energyCostPerTask()) {
+        return energySecondsToNext === null
+          ? 'Energi belum cukup. Tunggu isi berikutnya.'
+          : `Energi belum cukup. Isi lagi dalam ${formatCountdown(energySecondsToNext)}.`
+      }
+      if (rewardPoolCredits === 0) {
+        return rewardPoolSecondsToNext === null
+          ? 'Stok reward kosong. Tunggu terisi lagi. Tiket dan energi tetap aman.'
+          : `Stok reward kosong. Terisi lagi dalam ${formatCountdown(rewardPoolSecondsToNext)}. Tiket dan energi tetap aman.`
+      }
+      return null
+    },
+    [energy, energySecondsToNext, rewardPoolCredits, rewardPoolSecondsToNext],
+  )
+
   /** `hold` datang dari animasi sobekan karcis di beranda (`ActiveTask`). Permintaan ke server dan animasinya jalan BERBARENGAN; yang ditunggu di sini hanya sisa waktu animasi setelah server menjawab, jadi ketukan tidak pernah jadi lebih lambat dari salah satu di antaranya. Kembaliannya dipakai pemanggil untuk memulihkan karcis kalau task gagal dimulai. */
   const startTask = useCallback(
     async (payWith: TaskPayment = 'energy', hold?: Promise<unknown>): Promise<boolean> => {
       if (!task || startingTask) return false
-      /** Task yang sudah pernah dimulai tidak menagih apa pun lagi — `startChallenge` memungut ongkosnya hanya di dalam cabang `fresh`. Kedua penjaga di bawah karena itu dilewati saat melanjutkan: menahannya di klien akan mengunci user dari task yang ongkosnya sudah dia bayar, padahal server justru meloloskannya. */
-      const resuming = task.startedAt !== null
-      /** Ambangnya `energyCostPerTask()`, bukan 1: biaya energi per task bisa disetel dari panel admin, dan `< 1` membuat klien meloloskan permintaan yang pasti ditolak server begitu biayanya dinaikkan. Bentuknya sama dengan `energyEmpty` di `active-task.tsx`. */
-      if (!resuming && payWith === 'energy' && energy < energyCostPerTask()) {
-        notifyError(
-          energySecondsToNext === null
-            ? 'Energi belum cukup. Tunggu isi berikutnya.'
-            : `Energi belum cukup. Isi lagi dalam ${formatCountdown(energySecondsToNext)}.`,
-        )
-        return false
-      }
-      if (!resuming && rewardPoolCredits === 0) {
-        notifyError(
-          rewardPoolSecondsToNext === null
-            ? 'Stok reward kosong. Tunggu terisi lagi. Tiket dan energi tetap aman.'
-            : `Stok reward kosong. Terisi lagi dalam ${formatCountdown(rewardPoolSecondsToNext)}. Tiket dan energi tetap aman.`,
-        )
+      const refusal = entryRefusal(task, payWith)
+      if (refusal) {
+        notifyError(refusal)
         return false
       }
       setStartingTask(true)
@@ -128,10 +134,7 @@ export function useTaskFlow({
     },
     [
       beginChallenge,
-      rewardPoolCredits,
-      rewardPoolSecondsToNext,
-      energy,
-      energySecondsToNext,
+      entryRefusal,
       mutateSession,
       mutateTask,
       notifyError,
@@ -177,9 +180,16 @@ export function useTaskFlow({
     [activeChallenge, submitting, mutateHistory, mutateReferral, mutateSession, mutateStats, mutateTask],
   )
 
+  /** "Lanjut" di layar hasil membayar dengan energi, dan penjaganya dipakai ulang di sini bukan demi kerapian: user yang baru saja menyelesaikan task berbayar tiket justru sedang kehabisan energi, jadi tanpa pemeriksaan ini tombol utama layar kemenangan dijamin ditolak server lalu melempar mereka ke beranda dengan toast merah. Alasannya sekarang terbaca sebelum mereka pindah layar, dan tombol tiket di beranda tetap jalan keluarnya. */
   const nextTask = useCallback(async () => {
     const next = (await mutateTask())?.challenge ?? null
     if (!next) {
+      setActiveChallenge(null)
+      return
+    }
+    const refusal = entryRefusal(next, 'energy')
+    if (refusal) {
+      notifyError(refusal)
       setActiveChallenge(null)
       return
     }
@@ -189,7 +199,7 @@ export function useTaskFlow({
       notifyError(userFacingMessage(cause))
       setActiveChallenge(null)
     }
-  }, [beginChallenge, mutateTask, notifyError])
+  }, [beginChallenge, entryRefusal, mutateTask, notifyError])
 
   const visitedCaptcha = useRef(false)
   useEffect(() => {

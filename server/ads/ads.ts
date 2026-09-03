@@ -9,6 +9,7 @@ import {
   type AdProvider,
   type AdRefusal,
 } from '@/domain/ads/ads'
+import { ARCADE_OPEN_PLAY_TTL_MINUTES } from '@/domain/arcade/arcade'
 import { economyConfig } from '@/domain/economy/economy-config'
 import { resolveAdProvider } from './ad-provider'
 import { isPreviewShell, query, transaction } from '../platform/db'
@@ -19,6 +20,7 @@ const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const PG_UNIQUE_VIOLATION = '23505'
 
+/** `entry_open_count` menjumlahkan DUA ongkos masuk yang sedang terbuka: challenge dan ronde Arena. Keduanya memotong pass lewat `consumeAdPass`, jadi keduanya sama-sama menahan tiket berikutnya — pass yang dipakai baru bisa dihidupkan lagi kalau slot `ad_views_one_ready` kosong, dan tiket baru yang keburu diklaim membuat pengembalian itu ditolak. Ronde Arena disaring umurnya karena sapuan `expireStalePlays` hanya jalan saat Arena dibuka; tanpa saringan itu satu ronde yang ditinggal akan mengunci tiket user selamanya. */
 const STATE_SQL = `select
     count(*) filter (
       where (created_at at time zone 'Asia/Jakarta')::date = ${TODAY} and ready_at is not null
@@ -27,8 +29,11 @@ const STATE_SQL = `select
     count(*) filter (where state='pending')::int as pending_count,
     count(*) filter (where state='ready')::int as ready_count,
     max(expires_at) filter (where state='ready') as pass_expires_at,
-    (select count(*) from challenges c
-      where c.user_id=$1 and c.submitted_at is null and c.ad_view_id is not null)::int
+    ((select count(*) from challenges c
+       where c.user_id=$1 and c.submitted_at is null and c.ad_view_id is not null)
+     + (select count(*) from arcade_plays p
+         where p.user_id=$1 and p.state='open' and p.ad_view_id is not null
+           and p.opened_at > now() - (${ARCADE_OPEN_PLAY_TTL_MINUTES}::int * interval '1 minute')))::int
       as entry_open_count,
     now() as now
   from ad_views where user_id=$1`
@@ -80,7 +85,7 @@ export interface AdsSessionState {
   /** Jam server saat potret diambil, dipakai klien untuk mengoreksi selisih jam perangkat. */
   now: number
   pass: { expiresAt: number } | null
-  /** Ada task yang dibayar tiket dan belum ditutup. `openAdTicket` menolak selama ini menyala (`entry_open`), jadi klien harus tahu sebelum menggambar tombol yang pasti gagal ditekan. */
+  /** Ada task ATAU ronde Arena yang dibayar tiket dan belum ditutup. `openAdTicket` menolak selama ini menyala (`entry_open`), jadi klien harus tahu sebelum menggambar tombol yang pasti gagal ditekan. */
   entryOpen: boolean
 }
 

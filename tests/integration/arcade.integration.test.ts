@@ -330,9 +330,16 @@ describe('ARCADE-DB-7 — ronde yang ditinggal', () => {
     expect(await openArcadePlay(userId, 'boxes')).toEqual({ ok: false, reason: 'daily_cap' })
   })
 
-  it('menolak penyetelan ronde yang sudah lewat umurnya', async () => {
+  /** Ronde basi bisa ditutup dari dua arah: sapuan saat Arena dibuka lagi, dan penyetelan yang
+   *  datang terlambat dari app yang sempat di-background. Keduanya HARUS mengembalikan passnya.
+   *  Dulu hanya sapuan yang melakukannya, dan karena barisnya keburu keluar dari state 'open'
+   *  sapuan berikutnya tidak akan pernah bisa menyusul — iklan yang sudah benar-benar ditonton
+   *  hangus permanen, tanpa jejak selain baris `arcade_plays` yang tidak berhadiah. */
+  it('menolak penyetelan ronde yang sudah lewat umurnya, dan tetap mengembalikan passnya', async () => {
     const { query } = await import('../../server/platform/db')
-    const { openArcadePlay, settleArcadePlay } = await import('../../server/arcade/arcade')
+    const { openArcadePlay, readArcadeState, settleArcadePlay } = await import(
+      '../../server/arcade/arcade'
+    )
     const userId = await makeUser()
     await giveAdPass(userId)
 
@@ -347,5 +354,10 @@ describe('ARCADE-DB-7 — ronde yang ditinggal', () => {
       reason: 'play_expired',
     })
     expect(await readUser(userId)).toEqual({ energy: 0, pool: 0 })
+    expect(await countPasses(userId, 'ready')).toBe(1)
+
+    // Dan pass itu benar-benar bisa dipakai lagi, bukan sekadar berganti state.
+    expect((await openArcadePlay(userId, 'boxes')).ok).toBe(true)
+    await readArcadeState(userId)
   })
 })

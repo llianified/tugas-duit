@@ -165,4 +165,31 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
       reason: 'unknown_mission',
     })
   })
+
+  /** Misi yang sudah tidak diterbitkan tidak boleh tetap bisa diklaim lewat API. Targetnya masih terbaca di katalog, jadi tanpa penjagaan ini user yang syaratnya kebetulan sudah terpenuhi kemarin bisa memanen energi dari misi yang layarnya sendiri sudah tidak menampilkannya. */
+  it('menolak klaim misi iklan setelah tombol mati iklan menyala', async () => {
+    const { claimMission } = await import('./missions')
+    const { missionDefinition } = await import('@/domain/progression/missions')
+    const { query } = await import('../platform/db')
+    const userId = await makeUser(0)
+
+    for (let index = 0; index < missionDefinition('ads').target; index += 1) {
+      await query(
+        `insert into ad_views(user_id,block_id,expires_at,state,ready_at,consumed_at)
+         values($1,'uji',now()+interval '1 hour','consumed',now(),now())`,
+        [userId],
+      )
+    }
+
+    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, adsMaxViewsPerDay: 0 })
+    try {
+      expect(await claimMission(userId, 'ads')).toEqual({
+        ok: false,
+        reason: 'unknown_mission',
+      })
+      expect(await readEnergyValue(userId)).toBe(0)
+    } finally {
+      setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
+    }
+  })
 })

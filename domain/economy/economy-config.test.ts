@@ -134,6 +134,28 @@ describe('validation — aturan antar-field', () => {
     expect(validateEconomyConfig(withField({ maxEnergy: 3, energyCostPerTask: 3 })).ok).toBe(true)
   })
 
+  /** Misi yang menuntut lebih banyak tayangan daripada plafon hariannya gagal diam: progresnya berhenti di plafon itu setiap hari, dan tidak ada satu pun layar yang menyebut kenapa. Bentuk kesalahan yang sama dengan hadiah misi yang tidak muat di kapasitas energi. */
+  it('menolak target misi iklan yang melewati plafon tayangan harian', () => {
+    const result = validateEconomyConfig(
+      withField({ adsMaxViewsPerDay: 10, missionAdsTarget: 11 }),
+    )
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.missionAdsTarget).toBeTruthy()
+  })
+
+  it('menerima target yang persis sebesar plafonnya', () => {
+    expect(
+      validateEconomyConfig(withField({ adsMaxViewsPerDay: 10, missionAdsTarget: 10 })).ok,
+    ).toBe(true)
+  })
+
+  /** Tombol mati iklan harus tetap satu field. Di plafon nol misinya tidak diterbitkan sama sekali (`missions()`), jadi targetnya tidak perlu ikut disetel — menuntutnya di sini akan membuat mematikan iklan butuh dua field disunting bersamaan. */
+  it('tidak menuntut apa pun saat plafon tayangannya nol', () => {
+    expect(
+      validateEconomyConfig(withField({ adsMaxViewsPerDay: 0, missionAdsTarget: 3 })).ok,
+    ).toBe(true)
+  })
+
   it('menolak nominal Rupiah yang tidak habis dibagi kurs', () => {
     const result = validateEconomyConfig(withField({ creditValueIdr: 700 }))
     expect(result.ok).toBe(false)

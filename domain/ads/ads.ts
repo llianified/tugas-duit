@@ -29,6 +29,7 @@ export interface AdOpenState {
   lastOpenedAt: number | null
   hasPending: boolean
   hasReady: boolean
+  /** Ongkos masuk yang sudah dibayar pass dan belum ditutup — challenge maupun ronde Arena. */
   hasEntryOpen: boolean
 }
 

@@ -1,3 +1,4 @@
+import { adsConfigured } from '../ads/ads'
 import { economyConfig } from '../economy/economy-config'
 
 /** Arena: dua permainan yang hadiahnya **energi atau isi stok reward**, tidak pernah credit. Bedanya dengan misi harian bukan kosmetik. Misi membayar energi saja, dan energi berbiaya nol karena kolam reward tetap mematok berapa credit yang bisa keluar. Arena boleh membayar isi stok, dan itu **menaikkan plafon payout** — satu-satunya hadiah yang benar-benar membuka layar "stok habis", dan satu-satunya yang berbiaya nyata. Biayanya dibatasi dari tiga arah sekaligus: jatah main harian, cooldown, dan bobot undian yang semuanya dari panel admin. Ongkos itu dibeli balik oleh iklan berhadiah yang mengunci tiap kali main (`arcadeAdGated`). */
@@ -12,6 +13,9 @@ export const BOX_COUNT = 3
 /** Tiga pasang, enam kartu. Angkanya terpaku pada grid kartu di `features/arcade/card-match.tsx`; yang bisa disetel dari panel adalah waktunya, karena itu yang menggeser peluang menang dan dengan begitu biayanya. */
 export const MATCH_PAIRS = 3
 
+/** Umur satu main yang dibuka tapi tidak pernah disetel. Operasional, bukan ekonomi: ia tidak menggeser satu rupiah pun, hanya membebaskan slot `arcade_plays_one_open` supaya app yang tertutup di tengah ronde tidak mengunci Arena user itu selamanya. Dipilih longgar karena ronde terpanjang yang bisa disetel panel adalah `arcadeMatchSeconds` maksimum 300 detik. | Tinggal di `domain/` supaya `server/ads/ads.ts` bisa ikut membacanya saat menghitung ongkos masuk yang masih terbuka, tanpa mengimpor `server/arcade/arcade.ts` yang justru mengimpor balik `consumeAdPass` dari sana. */
+export const ARCADE_OPEN_PLAY_TTL_MINUTES = 15
+
 export type ArcadePrizeKind = 'pool' | 'energy' | 'blank'
 
 export interface ArcadePrize {
@@ -25,8 +29,10 @@ export interface ArcadePrizeEntry extends ArcadePrize {
 
 export const BLANK_PRIZE: ArcadePrize = { kind: 'blank', amount: 0 }
 
+/** Arena yang dikunci iklan ikut tertutup saat `adsMaxViewsPerDay` diisi 0. Ongkos masuknya satu pass iklan, dan pass itu tidak akan pernah bisa dibuat selama tombol mati iklan menyala — tanpa penjagaan ini kartunya tetap terpampang dan tombolnya menjanjikan "tonton satu iklan" yang dijawab "iklan lagi tidak tersedia". Menutupnya memakai layar `ArcadeClosed` yang sudah ada: fitur yang dimatikan dari panel adalah keadaan normal di app ini. Ronde yang terlanjur terbuka tetap bisa disetel, karena `settleArcadePlay` sengaja tidak memeriksa saklar ini. */
 export function arcadeEnabled(): boolean {
-  return economyConfig().arcadeEnabled > 0
+  if (economyConfig().arcadeEnabled <= 0) return false
+  return !arcadeAdGated() || adsConfigured()
 }
 
 export function arcadeAdGated(): boolean {

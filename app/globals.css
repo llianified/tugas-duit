@@ -235,9 +235,8 @@
   --brand-pill-h: 1.875rem;
   /* Pitanya di sini setinggi minimal 2.75rem sementara pill-nya hanya berakhir di 2.375rem, jadi
      sudah ada 0.375rem ruang bersih di bawah pill sebelum panel dimulai. Menambah 0.75rem lagi
-     seperti mode biasa menyisakan pita kosong yang terlihat sebagai celah. Ekor blur
-     `.brand-band::before` ikut memendek ke nilai ini, jadi panel tetap mulai di titik mask nol
-     dan tepinya tidak masuk ke bawah selubung blur. */
+     seperti mode biasa menyisakan pita kosong yang terlihat sebagai celah; ekor blur
+     `.brand-band::before` sudah habis di dalam sisa itu. */
   --island-top-gap: 0.25rem;
 }
 
@@ -583,7 +582,7 @@
     top: 0;
     left: 0;
     right: 0;
-    height: calc(var(--brand-band-top) + var(--brand-band-h) + var(--island-top-gap));
+    height: calc(var(--brand-band-top) + var(--brand-band-h) + 0.75rem);
     /* Views that open with the hero band raise --brand-band-tint to the hero colour, so the fade dissolves into the surface right below it instead of leaving a lighter strip. */
     background-color: color-mix(
       in oklab,
@@ -594,7 +593,7 @@
     mask-image: linear-gradient(
       to bottom,
       #000 0,
-      #000 calc(100% - var(--island-top-gap)),
+      #000 calc(100% - 0.75rem),
       transparent 100%
     );
   }
@@ -602,12 +601,8 @@
     --island-duration: 500ms;
     --island-settle: calc(var(--island-duration) * 0.4);
     --island-open-w: calc(min(100vw, 28rem) - var(--content-px) * 2 - 2px);
-    /* Jaraknya HARUS sama dengan panjang ekor `.brand-band::before`: pita itu z-30 dengan
-       `backdrop-filter`, panel ini z-29, jadi tepi atas panel yang masuk ke dalam ekor akan duduk
-       di bawah selubung blur yang belum habis. Karena itu ekor, titik mask-nya, dan jarak ini
-       membaca satu token yang sama (`--island-top-gap`) — mengetatkan jaraknya di mode fullscreen
-       ikut memendekkan ekornya, jadi panel selalu mulai tepat di titik mask-nya nol. */
-    --island-open-top: calc(var(--brand-band-top) + var(--brand-band-h) + var(--island-top-gap));
+    /* Jaraknya 0.75rem, bukan 0.5rem, karena segitu persis panjang ekor `.brand-band::before`: pita itu z-30 dengan `backdrop-filter`, panel ini z-29, jadi 0.25rem tepi atas panel dulu duduk di bawah selubung blur yang belum habis. Panel sekarang mulai tepat di titik mask-nya nol. */
+    --island-open-top: calc(var(--brand-band-top) + var(--brand-band-h) + 0.75rem);
     --island-open-left: calc(50% - (var(--island-open-w) + 2px) / 2);
     --island-closed-top: var(--island-pill-top, var(--island-open-top));
     --island-closed-left: var(--island-pill-left, var(--island-open-left));

@@ -8,7 +8,7 @@ import { GlyphChevron, GlyphCross, GlyphCrown, GlyphPlay, GlyphTrophy } from '@/
 import { EYEBROW_CLASS } from '@/shared/components/section-label'
 import { Surface } from '@/shared/components/surface'
 import type { EnergyFill } from '@/domain/economy/energy'
-import { formatCredits, formatLongCountdown } from '@/shared/lib/format'
+import { formatCountdown, formatCredits, formatLongCountdown } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 
 /** Layar energi habis tidak boleh jadi jalan buntu. Sebelumnya user hanya diberi tulisan "Energi habis" dan sebuah hitungan mundur — tidak ada satu pun hal yang bisa dia lakukan dari titik itu, dan di aplikasi penghasilan jalan buntu berujung uninstall. Semua jalan keluar yang sudah dimiliki aplikasi ini dikumpulkan di sini: tiket iklan, misi harian, dan premium untuk yang ingin regennya lebih cepat. */
@@ -20,7 +20,10 @@ export function EnergyRecoverySheet({
   fill,
   adsEnabled,
   adViewsLeft,
-  adReady,
+  adPassReady,
+  adCooldownSecondsLeft,
+  adEntryOpen,
+  watchingAd,
   onWatchAd,
   onOpenMissions,
   onOpenPremium,
@@ -32,13 +35,25 @@ export function EnergyRecoverySheet({
   fill: EnergyFill
   adsEnabled: boolean
   adViewsLeft: number
-  adReady: boolean
+  adPassReady: boolean
+  adCooldownSecondsLeft: number
+  adEntryOpen: boolean
+  watchingAd: boolean
   onWatchAd: () => void
   onOpenMissions: () => void
   onOpenPremium: (() => void) | null
 }) {
   const close = () => onOpenChange(false)
-  const adAvailable = adsEnabled && adViewsLeft > 0 && adReady
+  /** Barisnya dulu HILANG total begitu cooldown jalan atau jatah habis, dan itu justru kebalikan dari guna panel ini: user yang tinggal menunggu 40 detik melihat layar yang tampak tidak menawarkan apa-apa lalu menyimpulkan iklan memang tidak ada. Sekarang barisnya selalu ada selama iklan menyala — yang berubah cuma bisa-tidaknya diketuk, dan alasannya ikut tertulis. */
+  const adBlockedNote = adEntryOpen
+    ? 'Selesaikan dulu task yang masih terbuka'
+    : watchingAd
+      ? 'Iklannya lagi tayang'
+      : adViewsLeft <= 0
+        ? 'Jatah hari ini habis, pulih besok'
+        : adCooldownSecondsLeft > 0
+          ? `Jeda antar iklan, bisa lagi ${formatCountdown(adCooldownSecondsLeft)}`
+          : null
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -78,11 +93,17 @@ export function EnergyRecoverySheet({
             </Surface>
 
             <div className="mt-[var(--region-gap)] flex flex-col gap-1.5">
-              {adAvailable ? (
+              {adsEnabled ? (
                 <RecoveryOption
                   icon={<GlyphPlay className="size-4 text-primary" />}
-                  label="Tonton iklan"
-                  note={`1 tiket buat 1 task · sisa ${formatCredits(adViewsLeft)} hari ini`}
+                  label={adPassReady ? 'Pakai tiket iklan' : 'Tonton iklan'}
+                  note={
+                    adPassReady
+                      ? 'Tiket kamu sudah siap dipakai sekarang'
+                      : (adBlockedNote ??
+                        `1 tiket buat 1 task · sisa ${formatCredits(adViewsLeft)} hari ini`)
+                  }
+                  disabled={!adPassReady && adBlockedNote !== null}
                   onClick={() => {
                     close()
                     onWatchAd()
@@ -127,20 +148,25 @@ function RecoveryOption({
   icon,
   label,
   note,
+  disabled = false,
   onClick,
 }: {
   icon: ReactNode
   label: string
   note: string
+  /** Barisnya tetap tergambar tapi tidak bisa diketuk. Menghapusnya akan menghilangkan keterangan yang justru sedang dibutuhkan. */
+  disabled?: boolean
   onClick: () => void
 }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={onClick}
       className={cn(
         'focus-ring transition-ui press-scale-soft group flex w-full items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-left',
         'hover:bg-foreground/[0.04] active:bg-foreground/[0.07]',
+        'disabled:pointer-events-none disabled:opacity-55',
       )}
     >
       <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/15">
@@ -154,10 +180,12 @@ function RecoveryOption({
           {note}
         </span>
       </span>
-      <GlyphChevron
-        aria-hidden="true"
-        className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 group-active:translate-x-0.5 motion-reduce:transition-none"
-      />
+      {disabled ? null : (
+        <GlyphChevron
+          aria-hidden="true"
+          className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 group-active:translate-x-0.5 motion-reduce:transition-none"
+        />
+      )}
     </button>
   )
 }

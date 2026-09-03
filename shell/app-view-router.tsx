@@ -186,6 +186,8 @@ export function AppViewRouter({
       adViewsLeft={session.adViewsLeft}
       adCooldownSecondsLeft={session.adCooldownSecondsLeft}
       adPassReady={session.adPassReady}
+      adPassSecondsLeft={session.adPassSecondsLeft}
+      adEntryOpen={session.adEntryOpen}
       watchingAd={session.watchingAd}
       onStart={(hold) => session.startTask('energy', hold)}
       onStartWithAd={session.startTaskWithAd}

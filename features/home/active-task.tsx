@@ -39,6 +39,8 @@ export function ActiveTask({
   adViewsLeft,
   adCooldownSecondsLeft,
   adPassReady,
+  adPassSecondsLeft,
+  adEntryOpen,
   watchingAd,
   onStart,
   onStartWithAd,
@@ -56,6 +58,8 @@ export function ActiveTask({
   adViewsLeft: number
   adCooldownSecondsLeft: number
   adPassReady: boolean
+  adPassSecondsLeft: number | null
+  adEntryOpen: boolean
   watchingAd: boolean
   /** `hold` adalah janji yang menahan perpindahan ke halaman task sampai animasi sobekan selesai. Ia dikirim ke atas, bukan dijalankan di sini, karena yang tahu kapan halaman boleh berganti adalah alur task — dan permintaan `/api/task/start` tetap jalan berbarengan dengan animasinya. Nilai kembaliannya `false` kalau task gagal dimulai, supaya karcisnya bisa dipulihkan dan user tidak melihat kartu yang hilang tanpa sebab. */
   onStart: (hold?: Promise<unknown>) => Promise<boolean>
@@ -67,7 +71,9 @@ export function ActiveTask({
   const [tearing, setTearing] = useState(false)
   const poolEmpty = rewardPoolCredits === 0
   const energyEmpty = energy < energyCostPerTask()
-  const waiting = poolEmpty || energyEmpty
+  /** Task yang sudah pernah dimulai tidak menagih apa pun lagi: `startChallenge` melakukan seluruh pemungutan ongkos di dalam cabang `fresh`, jadi melanjutkannya lolos tanpa energi maupun stok reward. Tanpa pembedaan ini, user yang menekan back lalu energinya habis terkunci dari task yang ongkosnya SUDAH dia bayar. */
+  const resuming = task.startedAt !== null
+  const waiting = !resuming && (poolEmpty || energyEmpty)
 
   /** Sobek dulu, pindah halaman setelah keduanya siap. Animasinya TIDAK menunda permintaan ke server: keduanya mulai di ketukan yang sama dan halaman berganti setelah dua-duanya beres. Kalau animasinya dijalankan lebih dulu lalu request menyusul, setiap ketukan jadi `TEAR_MS` lebih lambat tanpa menambah apa pun. */
   const tearAndStart = useCallback(() => {
@@ -116,6 +122,8 @@ export function ActiveTask({
             <StartAction
               waiting={waiting}
               poolEmpty={poolEmpty}
+              resuming={resuming}
+              watchingAd={watchingAd}
               energy={energy}
               energyMax={energyMax}
               energyFill={energyFill}
@@ -128,6 +136,8 @@ export function ActiveTask({
               viewsLeft={adViewsLeft}
               cooldownSecondsLeft={adCooldownSecondsLeft}
               passReady={adPassReady}
+              passSecondsLeft={adPassSecondsLeft}
+              entryOpen={adEntryOpen}
               watching={watchingAd}
               poolEmpty={poolEmpty}
               onWatch={onStartWithAd}
@@ -144,7 +154,10 @@ export function ActiveTask({
         fill={energyFill}
         adsEnabled={adsEnabled}
         adViewsLeft={adViewsLeft}
-        adReady={adPassReady || adCooldownSecondsLeft === 0}
+        adPassReady={adPassReady}
+        adCooldownSecondsLeft={adCooldownSecondsLeft}
+        adEntryOpen={adEntryOpen}
+        watchingAd={watchingAd}
         onWatchAd={onStartWithAd}
         onOpenMissions={onOpenMissions}
         onOpenPremium={onOpenPremium}
@@ -270,6 +283,8 @@ function Stat({
 function StartAction({
   waiting,
   poolEmpty,
+  resuming,
+  watchingAd,
   energy,
   energyMax,
   energyFill,
@@ -279,6 +294,8 @@ function StartAction({
 }: {
   waiting: boolean
   poolEmpty: boolean
+  resuming: boolean
+  watchingAd: boolean
   energy: number
   energyMax: number
   energyFill: EnergyFill
@@ -286,12 +303,21 @@ function StartAction({
   onStart: () => void
   onRecover: () => void
 }) {
+  /** Selagi iklan berhadiah tayang, tidak ada satu pun ongkos masuk yang boleh dibayar. Tanpa kunci ini user bisa menekan "Mulai", membayar energi, dan pindah ke captcha sementara tiket yang baru saja dia tonton menyusul masuk lalu hangus tanpa terpakai — dua ongkos untuk satu task. */
+  if (watchingAd) {
+    return <TapActionWaiting compact label="Tunggu iklan" />
+  }
+
   if (!waiting) {
     return (
       <TapAction
         compact
-        label="Mulai"
-        aria-label={`Mulai task dengan memakai ${formatCredits(energyCostPerTask())} energi, sisa ${formatCredits(energy)} dari ${formatCredits(energyMax)}`}
+        label={resuming ? 'Lanjutkan' : 'Mulai'}
+        aria-label={
+          resuming
+            ? 'Lanjutkan task yang sudah dimulai, tanpa ongkos tambahan'
+            : `Mulai task dengan memakai ${formatCredits(energyCostPerTask())} energi, sisa ${formatCredits(energy)} dari ${formatCredits(energyMax)}`
+        }
         onClick={() => {
           hapticTap()
           onStart()

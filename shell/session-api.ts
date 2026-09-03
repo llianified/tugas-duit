@@ -106,6 +106,8 @@ export type AdsState = {
   now: number
   receivedAt: number
   pass: { expiresAt: number } | null
+  /** Task berbayar tiket yang belum ditutup. Server menolak tiket baru selama ini menyala. */
+  entryOpen: boolean
 }
 
 export type AdTicketResponse = {

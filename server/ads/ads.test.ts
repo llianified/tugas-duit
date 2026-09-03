@@ -338,3 +338,33 @@ describe('ADS-DB-9 — pass yang dihidupkan ulang memakai tenggat aslinya', () =
     expect(await readEnergyValue(userId)).toBe(5)
   })
 })
+
+describe('ADS-DB-10 — potret sesi memberitahukan keadaan yang bikin tiket ditolak', () => {
+  it('menyalakan entryOpen persis saat openAdTicket menolak dengan entry_open', async () => {
+    withConfig({})
+    const { openAdTicket, readAdsState } = await import('./ads')
+    const { issueChallenge, startChallenge } = await import('../task/challenge')
+    const userId = await makeUser(5)
+
+    expect((await readAdsState(userId)).entryOpen).toBe(false)
+
+    await grantPass(userId)
+    const challenge = await issueChallenge(userId)
+    await startChallenge(userId, challenge.id, 'ad')
+
+    /** Keduanya dibaca dari hitungan yang sama. Kalau berselisih, tombol iklan akan tampak bisa diketuk padahal server sudah pasti menolaknya. */
+    expect((await readAdsState(userId)).entryOpen).toBe(true)
+    expect(await openAdTicket(userId)).toMatchObject({ ok: false, reason: 'entry_open' })
+  })
+
+  it('mengirim tenggat pass supaya klien bisa menghitung mundur umurnya', async () => {
+    withConfig({ adsPassTtlMinutes: 30 })
+    const { readAdsState } = await import('./ads')
+    const userId = await makeUser(5)
+    await grantPass(userId)
+
+    const state = await readAdsState(userId)
+    expect(state.pass).not.toBeNull()
+    expect(state.pass!.expiresAt).toBeGreaterThan(state.now)
+  })
+})

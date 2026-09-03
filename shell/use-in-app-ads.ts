@@ -15,11 +15,19 @@ const SDK_RETRY_MS = 30_000
 /** Zone yang sudah menerima konfigurasi native pada dokumen ini. React dapat menjalankan effect lagi saat state sesi berubah; memanggil payload `inApp` untuk kedua kalinya akan membuat penjadwal otomatis tambahan di SDK. */
 const initializedZones = new Set<string>()
 
+/** Menahan PENDAFTARAN jadwal selama task berjalan — dan hanya itu yang bisa dijanjikan.
+ *
+ * Monetag tidak menyediakan pause, cancel, atau resume resmi untuk penjadwal in-app: sekali `show_<zone>({ type: 'inApp' })` diterima, jadwalnya hidup sampai dokumennya mati (lihat `docs/keputusan-desain.md`). Jadi begitu terdaftar, interstitial TETAP bisa jatuh di tengah captcha, dan bayaran task memang ditentukan waktu (`getStars`) — kerugian itu belum hilang.
+ *
+ * Yang dipotong di sini cuma tabrakan yang paling sering dan paling murah dihindari: tayangan PERTAMA. Dengan `timeoutSeconds` bawaan 5 detik, jadwal yang didaftarkan begitu sesi termuat menembak persis saat user menekan "Mulai" di detik-detik pertama. Menunda pendaftaran sampai user tidak sedang mengerjakan task menggeser tayangan pertama itu ke luar task, tanpa membatalkan apa pun, tanpa menyentuh format, dan tanpa menambah penjadwal kedua. Impresinya tidak berkurang — hanya bergeser.
+ *
+ * Selebihnya butuh kontrol jadwal yang SDK ini tidak berikan; jangan mengarang kontrol itu dari luar. */
 export function useInAppAds({
   enabled,
   zoneId,
   settings = DEFAULT_IN_APP_ADS_SETTINGS,
 }: {
+  /** Sudah termasuk "tidak sedang mengerjakan task". Jadwal yang terlanjur terdaftar tidak terpengaruh nilai ini. */
   enabled: boolean
   zoneId: string
   settings?: InAppAdsSettings

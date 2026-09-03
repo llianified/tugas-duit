@@ -1163,6 +1163,12 @@
     text-wrap: pretty;
     touch-action: none;
   }
+  /* Nada sukses. Tiket iklan yang berhasil masuk tidak boleh memakai bidang merah yang sama dengan kegagalan — di alur berhadiah, warna itu satu-satunya yang dibaca user sebelum teksnya. */
+  .toast-item[data-tone='success'] {
+    background-color: color-mix(in oklab, var(--success) 8%, var(--card));
+    color: var(--success);
+    border-color: color-mix(in oklab, var(--success) 20%, var(--card));
+  }
   @keyframes view-in {
     from {
       opacity: 0;

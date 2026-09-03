@@ -98,12 +98,12 @@ export function HomeView({
   const bonusReachable = channelBonusReachable(channelBonus)
   const arenaReachable = arcadeEnabled()
 
-  /** Banner event berbagi satu slot tepat di bawah saldo. Perpindahannya sengaja manual: angka stok dan pesan Arena perlu dibaca tanpa kartu bergerak sendiri, jadi pengguna memilih lewat swipe atau indikator. Kalau hanya satu event aktif, `CardCarousel` mengembalikan kartunya langsung tanpa trek dan indikator. */
-  const eventBanners = [
+  /** Semua kartu promosi berbagi SATU tempat di bawah task dan bergantian otomatis tiap lima detik. Daftarnya disaring di sini, bukan di dalam carousel: kartu yang tidak tersedia TIDAK BOLEH masuk sebagai `null`, karena `null` tetap terhitung satu slide dan carousel-nya akan berputar ke halaman kosong. Kalau tinggal satu yang tersedia, `CardCarousel` mengembalikannya sebagai kartu tunggal tanpa trek dan tanpa titik. Kalau tidak ada satu pun, tidak ada apa-apa, dan `region-gap-t` di atas daftar transaksi ikut hilang bersamanya. */
+  const stamps = [
     economy.turboRewardEnabled === 1
       ? {
           key: 'turbo-reward',
-          label: 'Tampilkan Event Turbo Reward',
+          label: 'Lihat kartu Turbo Reward',
           node: (
             <TurboRewardCard
               config={economy}
@@ -118,14 +118,10 @@ export function HomeView({
     arenaReachable
       ? {
           key: 'arcade',
-          label: 'Tampilkan Arena',
+          label: 'Lihat kartu Arena',
           node: <ArcadeCard poolEmpty={rewardPoolCredits === 0} onOpen={onOpenArcade} />,
         }
       : null,
-  ].filter((item): item is NonNullable<typeof item> => item !== null)
-
-  /** Dua perangko berbagi SATU tempat dan bergantian tiap lima detik. Sebelumnya keduanya berdiri bertumpuk, dan itu memberi beranda dua ajakan sederajat yang saling menekan tepat sebelum daftar transaksi — yang di bawah hampir selalu terlewat. Daftarnya disaring di sini, bukan di dalam carousel: kartu yang tidak tersedia TIDAK BOLEH masuk sebagai `null`, karena `null` tetap terhitung satu slide dan carousel-nya akan berputar ke halaman kosong. Konsekuensinya juga yang diinginkan — kalau tinggal satu yang tersedia (bonus sudah diklaim, atau pembayaran premium dimatikan), `CardCarousel` mengembalikannya sebagai kartu tunggal tanpa trek dan tanpa titik. Kalau tidak ada satu pun, tidak ada apa-apa, dan `region-gap-t` di atas daftar transaksi ikut hilang bersamanya. */
-  const stamps = [
     premium && premiumReachable
       ? {
           key: 'premium',
@@ -152,15 +148,6 @@ export function HomeView({
           history={history}
           onWithdraw={() => setWithdrawOpen(true)}
         />
-
-        {eventBanners.length > 0 ? (
-          <CardCarousel
-            ariaLabel="Event aktif"
-            items={eventBanners}
-            autoAdvance={false}
-            className={`animate-view-in region-gap-t ${ENTER_STEP_CLASS[1]}`}
-          />
-        ) : null}
 
         <div className={`animate-view-in region-gap-t ${ENTER_STEP_CLASS[1]}`}>
           <ActiveTask

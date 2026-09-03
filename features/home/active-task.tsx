@@ -28,6 +28,7 @@ function reducedMotion() {
 
 export function ActiveTask({
   task,
+  turboRewardEnabled,
   energy,
   energyMax,
   energyFill,
@@ -44,6 +45,7 @@ export function ActiveTask({
   onOpenPremium,
 }: {
   task: Challenge
+  turboRewardEnabled: boolean
   energy: number
   energyMax: number
   energyFill: EnergyFill
@@ -91,7 +93,12 @@ export function ActiveTask({
         style={{ '--tear-ms': `${TEAR_MS}ms` } as CSSProperties}
       >
         <div className="ticket-part ticket-part-top">
-          <TaskHeading title={task.title} serial={task.id} difficulty={task.difficulty} />
+          <TaskHeading
+            title={task.title}
+            serial={task.id}
+            difficulty={task.difficulty}
+            turboRewardEnabled={turboRewardEnabled}
+          />
           {/* Perforasi memisahkan "apa tasknya" dari "berapa harganya" — sama
               seperti karcis: bagian atas keterangan, bawah yang disobek. */}
           <div className="block-gap-t ticket-perf" aria-hidden />
@@ -150,16 +157,23 @@ function TaskHeading({
   title,
   serial,
   difficulty,
+  turboRewardEnabled,
 }: {
   title: Challenge['title']
   serial: Challenge['id']
   difficulty: Challenge['difficulty']
+  turboRewardEnabled: boolean
 }) {
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <p className="home-tag truncate">
-          Tiket <span className="tabular-nums">{serialCode(serial)}</span>
+        <p className="home-tag flex min-w-0 items-center gap-1.5 truncate">
+          <span>Tiket <span className="tabular-nums">{serialCode(serial)}</span></span>
+          {turboRewardEnabled ? (
+            <span className="rounded-full bg-primary px-1.5 py-1 text-[9px] leading-none tracking-wider text-primary-foreground">
+              Turbo
+            </span>
+          ) : null}
         </p>
         <DifficultyBadge difficulty={difficulty} />
       </div>

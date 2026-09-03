@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { economyConfig } from '@/domain/economy/economy-config'
 import { maxEnergy } from '@/domain/economy/energy'
 import type { Referral, ReferralSummary } from '@/domain/economy/referral'
 import type { Withdrawal, WithdrawalDraft } from '@/domain/economy/withdrawal'
@@ -191,6 +192,7 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     retrySession,
     retryingSession: sessionValidating,
     botAppUrl: session?.botAppUrl ?? null,
+    economy: session?.economy ?? economyConfig(),
     error: sessionError || taskError ? userFacingMessage(sessionError ?? taskError) : null,
     user: session?.user ?? null,
     founder: session?.user?.founder ?? false,

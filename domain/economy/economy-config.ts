@@ -78,6 +78,7 @@ export interface EconomyConfig {
   premiumPoolCapBonus: number
   premiumMaxTasksPerDay: number
   premiumWithdrawalCooldownDays: number
+  turboRewardEnabled: number
 }
 
 export type EconomyConfigKey = keyof EconomyConfig
@@ -157,6 +158,7 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   premiumPoolCapBonus: 15,
   premiumMaxTasksPerDay: 1_000,
   premiumWithdrawalCooldownDays: 3,
+  turboRewardEnabled: 1,
 }
 
 export type EconomyGroup =
@@ -521,6 +523,12 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     key: 'leaderboardEnabled', group: 'feature', label: 'Papan peringkat', unit: '0/1',
     description: 'Isi 1 untuk menyalakan view Peringkat beserta umpan aktivitasnya, 0 untuk menggantinya dengan layar "segera hadir". Papan ini memajang nama depan, foto Telegram, dan status premium ke seluruh user — itu satu-satunya permukaan publik di aplikasi ini.',
     impact: 'Menyalakannya membuka data peringkat ke semua user; mematikannya menutup view-nya tanpa menghapus datanya.',
+    min: 0, max: 1, riskyWhen: 'never',
+  },
+  {
+    key: 'turboRewardEnabled', group: 'feature', label: 'Event Turbo Reward', unit: '0/1',
+    description: 'Isi 1 untuk menampilkan promosi Turbo Reward di beranda, tiket task, dan hasil task. Semua nominal event tetap mengikuti konfigurasi reward live.',
+    impact: 'Menyalakannya hanya mengubah komunikasi di UI; nilai reward tetap ditentukan oleh setelan reward dan kolam.',
     min: 0, max: 1, riskyWhen: 'never',
   },
   {

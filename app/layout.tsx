@@ -4,7 +4,7 @@ import type { Metadata, Viewport } from 'next'
 import { headers } from 'next/headers'
 import { Geist, Plus_Jakarta_Sans } from 'next/font/google'
 import Script from 'next/script'
-import { GIGAPUB_PROJECT_ID, MONETAG_DEFAULT_ZONE_ID, monetagSdkName } from '@/domain/ads/ads'
+import { MONETAG_DEFAULT_ZONE_ID, monetagSdkName } from '@/domain/ads/ads'
 import { ADS_HINT_INIT_SCRIPT } from '@/shell/ads-hint'
 import './globals.css'
 
@@ -45,7 +45,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const nonce = (await headers()).get('x-nonce') ?? undefined
-  // Zone Monetag hanya dipakai interstitial otomatis in-app. Rewarded/tiket memakai project Giga.pub yang dimuat terpisah di bawah.
+  // Zone Monetag hanya dipakai interstitial otomatis in-app. Rewarded/tiket memakai spot OnClicka yang dimuat terpisah di bawah.
   const monetagZoneId = process.env.NEXT_PUBLIC_MONETAG_ZONE_ID?.trim() || MONETAG_DEFAULT_ZONE_ID
 
   return (
@@ -70,8 +70,10 @@ export default async function RootLayout({
           data-zone={monetagZoneId}
           data-sdk={monetagSdkName(monetagZoneId)}
         />
+        {/* Rewarded/tiket — OnClicka. Loader-nya hanya memasang `initCdTma`; spot ID baru
+            diserahkan saat init dari klien, jadi tidak ada ID di URL script ini. */}
         <Script
-          src={`https://ad.gigapub.tech/script?id=${GIGAPUB_PROJECT_ID}`}
+          src="https://js.onclckvd.com/in-stream-ad-admanager/tma.js"
           strategy="afterInteractive"
           nonce={nonce}
         />

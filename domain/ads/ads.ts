@@ -13,10 +13,10 @@ export function adsConfigured(): boolean {
 }
 
 /** Provider ikut terkirim di `/api/session` dan `/api/ads/ticket`, sehingga klien dapat memilih SDK yang benar untuk setiap jenis tayangan. */
-export type AdProvider = 'monetag' | 'gigapub'
+export type AdProvider = 'monetag' | 'onclicka'
 
 /** Konstanta jaringan disimpan di modul daun tanpa import agar aman dipakai dari runtime server maupun layout. */
-export { GIGAPUB_PROJECT_ID } from './gigapub-project'
+export { ONCLICKA_SPOT_ID } from './onclicka-spot'
 export { MONETAG_DEFAULT_ZONE_ID } from './monetag-zone'
 
 /** Nama fungsi global yang disuntikkan SDK Monetag untuk satu zone. */

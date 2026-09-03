@@ -1,10 +1,10 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
-import type { AdProvider } from '@/domain/ads/ads'
+import { ONCLICKA_SPOT_ID, type AdProvider } from '@/domain/ads/ads'
 import { watchAdToFinish, type AdWatchSettled } from '@/shell/ad-watch'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
-import { waitForGigaPubShow } from '@/shell/gigapub-sdk'
+import { waitForOnclickaShow } from '@/shell/onclicka-sdk'
 import type { AdClaimResponse, AdsState, AdTicketResponse } from '@/shell/session-api'
 
 const SHOW_FAILED_MESSAGE = 'Iklannya belum selesai. Tiket belum masuk.'
@@ -37,10 +37,10 @@ export function useAdPass({
   /** Dinaikkan tiap kali tontonan baru dimulai. Klaim susulan memakainya untuk mundur: tiket yang sama sedang ditonton ulang, dan tontonan kedua itu yang berhak mengklaimnya. Tanpa penanda ini keduanya berlomba, yang kalah menerima `no_ticket`, dan user membaca "tiket tidak ketemu" untuk tiket yang justru baru saja masuk. */
   const watchGeneration = useRef(0)
 
-  /** Promise Giga.pub hanya resolve setelah rewarded ad selesai; tiket baru boleh diklaim sesudah itu. Monetag sengaja tidak menjadi fallback karena hanya dipakai untuk in-app. */
+  /** Promise OnClicka hanya resolve setelah rewarded ad selesai; tiket baru boleh diklaim sesudah itu. Monetag sengaja tidak menjadi fallback karena hanya dipakai untuk in-app. */
   const getPlayer = useCallback(async (provider: AdProvider) => {
-    if (provider !== 'gigapub') return null
-    return waitForGigaPubShow()
+    if (provider !== 'onclicka') return null
+    return waitForOnclickaShow(ONCLICKA_SPOT_ID)
   }, [])
 
   const hasPass = Boolean(ads?.pass)
@@ -83,7 +83,7 @@ export function useAdPass({
         return false
       }
       if (outcome.status === 'failed') {
-        console.warn('[ads] showGiga() reject', outcome.reason)
+        console.warn('[ads] OnClicka show() reject', outcome.reason)
         notifyError(showFailureMessage(outcome.reason))
         return false
       }

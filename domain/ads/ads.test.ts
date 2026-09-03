@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
-  GIGAPUB_PROJECT_ID,
+  ONCLICKA_SPOT_ID,
   adCooldownSecondsLeft,
   adOpenRefusal,
   adViewsLeft,
@@ -25,8 +25,8 @@ const state = (patch: Partial<Parameters<typeof adOpenRefusal>[0]> = {}) => ({
 })
 
 describe('ADS-0 — konfigurasi provider rewarded', () => {
-  it('memakai project Giga.pub yang disetujui', () => {
-    expect(GIGAPUB_PROJECT_ID).toBe('7799')
+  it('memakai spot OnClicka yang disetujui', () => {
+    expect(ONCLICKA_SPOT_ID).toBe('6145580')
   })
 })
 

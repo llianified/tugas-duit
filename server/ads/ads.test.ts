@@ -411,3 +411,327 @@ describe('ADS-DB-11 — ronde Arena menahan tiket berikutnya, sama seperti task'
     expect(await openAdTicket(userId)).toMatchObject({ ok: true })
   })
 })
+
+/** Gerbang postback: satu-satunya bagian dari alur iklan yang buktinya tidak lewat perangkat
+ *  user. Yang diuji di sini persis dua celah yang jadi alasannya — tayangan yang tidak dibayar
+ *  penyedia, dan klaim yang datang tanpa satu pun konfirmasi. */
+describe('ADS-DB-12 — tiket hanya terbit setelah Monetag mengonfirmasi tayangan berbayar', () => {
+  const postback = async (ticketId: string, query: string) => {
+    const { parseAdPostback } = await import('@/domain/ads/postback')
+    const { settleAdPostback } = await import('./postback')
+    return settleAdPostback(
+      parseAdPostback(new URLSearchParams(`ymid=${ticketId}&${query}`)),
+    )
+  }
+
+  const openTicket = async (userId: number) => {
+    const { openAdTicket } = await import('./ads')
+    const opened = await openAdTicket(userId)
+    if (!opened.ok) throw new Error(`tiket ditolak: ${opened.reason}`)
+    return opened.ticketId
+  }
+
+  it('menahan klaim klien sampai konfirmasinya datang, lalu menerbitkan passnya', async () => {
+    withConfig({ adsPostbackRequired: 1 })
+    const { claimAdTicket, readAdsState } = await import('./ads')
+    const userId = await makeUser(0)
+    const ticketId = await openTicket(userId)
+
+    expect(await claimAdTicket(userId, ticketId)).toEqual({
+      ok: false,
+      reason: 'awaiting_verification',
+    })
+    expect((await readAdsState(userId)).pass).toBeNull()
+
+    expect(await postback(ticketId, 'event_type=impression&reward_event_type=yes')).toBe('granted')
+
+    expect(await claimAdTicket(userId, ticketId)).toMatchObject({ ok: true })
+    expect((await readAdsState(userId)).pass).not.toBeNull()
+    expect((await readAdView(ticketId)).state).toBe('ready')
+  })
+
+  it('menolak tayangan yang tidak dibayar penyedia — celah "tap iklan lalu back"', async () => {
+    withConfig({ adsPostbackRequired: 1 })
+    const { claimAdTicket } = await import('./ads')
+    const userId = await makeUser(0)
+    const ticketId = await openTicket(userId)
+
+    for (const reward of ['no', 'not_valued', '{reward_event_type}']) {
+      expect(await postback(ticketId, `event_type=click&reward_event_type=${reward}`)).toBe(
+        'not_paid',
+      )
+    }
+
+    expect((await readAdView(ticketId)).state).toBe('pending')
+    expect(await claimAdTicket(userId, ticketId)).toEqual({
+      ok: false,
+      reason: 'awaiting_verification',
+    })
+  })
+
+  /** Monetag mengulang kirim sampai dijawab 200, jadi konfirmasi kedua untuk ymid yang sama
+   *  wajib tidak berbuat apa-apa — bukan menerbitkan pass kedua atau menggeser jejak yang
+   *  pertama. */
+  it('idempoten terhadap kiriman ulang', async () => {
+    withConfig({ adsPostbackRequired: 1 })
+    const { query } = await import('../platform/db')
+    const userId = await makeUser(0)
+    const ticketId = await openTicket(userId)
+
+    expect(await postback(ticketId, 'event_type=impression&reward_event_type=yes')).toBe('granted')
+    const first = await query<{ verified_at: Date; verify_event: string }>(
+      'select verified_at, verify_event from ad_views where id=$1',
+      [ticketId],
+    )
+
+    expect(await postback(ticketId, 'event_type=click&reward_event_type=yes')).toBe('noted')
+
+    const after = await query<{ verified_at: Date; verify_event: string; jumlah: number }>(
+      `select verified_at, verify_event,
+              (select count(*)::int from ad_views where user_id=$2 and state='ready') as jumlah
+         from ad_views where id=$1`,
+      [ticketId, userId],
+    )
+    expect(after[0].verified_at).toEqual(first[0].verified_at)
+    expect(after[0].verify_event).toBe(first[0].verify_event)
+    expect(Number(after[0].jumlah)).toBe(1)
+  })
+
+  it('mengabaikan ymid yang bukan tiket, termasuk makro yang gagal terisi', async () => {
+    withConfig({ adsPostbackRequired: 1 })
+    expect(await postback('{ymid}', 'reward_event_type=yes')).toBe('unknown_ticket')
+    expect(await postback('bukan-uuid', 'reward_event_type=yes')).toBe('unknown_ticket')
+    expect(
+      await postback('1f1c4a5e-0d1b-4c2a-9b7e-2f3a4b5c6d7e', 'reward_event_type=yes'),
+    ).toBe('unknown_ticket')
+  })
+
+  /** Tiket yang keburu hangus tidak dihidupkan lagi, tapi konfirmasinya tetap ditulis: itu
+   *  satu-satunya cara melihat bahwa postback datang lebih lambat daripada
+   *  `adsTicketTtlSeconds`. */
+  it('mencatat konfirmasi yang terlambat tanpa menerbitkan pass', async () => {
+    withConfig({ adsPostbackRequired: 1 })
+    const { query } = await import('../platform/db')
+    const { claimAdTicket } = await import('./ads')
+    const userId = await makeUser(0)
+    const ticketId = await openTicket(userId)
+    await query("update ad_views set expires_at = now() - interval '1 second' where id=$1", [
+      ticketId,
+    ])
+
+    expect(await postback(ticketId, 'event_type=impression&reward_event_type=yes')).toBe(
+      'ticket_expired',
+    )
+
+    const row = await query<{ state: string; verified_at: Date | null }>(
+      'select state, verified_at from ad_views where id=$1',
+      [ticketId],
+    )
+    expect(row[0].state).toBe('expired')
+    expect(row[0].verified_at).not.toBeNull()
+    expect(await claimAdTicket(userId, ticketId)).toEqual({ ok: false, reason: 'no_ticket' })
+  })
+
+  /** Jatah harian dihitung dari `ready_at`, jadi menyalakan gerbangnya diam-diam mengubah
+   *  artinya: dari "klaim yang dilaporkan klien" menjadi "impresi yang benar-benar dibayar". */
+  it('memotong jatah harian hanya untuk tayangan yang dikonfirmasi', async () => {
+    withConfig({ adsPostbackRequired: 1, adsMaxViewsPerDay: 2 })
+    const { claimAdTicket, readAdsState } = await import('./ads')
+    const userId = await makeUser(0)
+    const ticketId = await openTicket(userId)
+
+    await claimAdTicket(userId, ticketId)
+    expect((await readAdsState(userId)).viewsLeft).toBe(2)
+
+    await postback(ticketId, 'event_type=impression&reward_event_type=yes')
+    expect((await readAdsState(userId)).viewsLeft).toBe(1)
+  })
+
+  it('membiarkan jalur lama utuh saat gerbangnya mati', async () => {
+    withConfig({ adsPostbackRequired: 0 })
+    const { claimAdTicket } = await import('./ads')
+    const userId = await makeUser(0)
+    const ticketId = await openTicket(userId)
+
+    expect(await claimAdTicket(userId, ticketId)).toMatchObject({ ok: true })
+    expect((await readAdView(ticketId)).state).toBe('ready')
+
+    /** Postback yang menyusul tiket yang sudah diklaim jalur lama tidak menerbitkan apa pun
+     *  lagi, tapi tetap meninggalkan jejaknya — itulah yang dipakai membuktikan jalurnya hidup
+     *  sebelum saklarnya dinyalakan. */
+    expect(await postback(ticketId, 'event_type=impression&reward_event_type=yes')).toBe('noted')
+    const { query } = await import('../platform/db')
+    const row = await query<{ verified_at: Date | null }>(
+      'select verified_at from ad_views where id=$1',
+      [ticketId],
+    )
+    expect(row[0].verified_at).not.toBeNull()
+  })
+})
+
+describe('ADS-DB-13 — pass mati tidak boleh ikut menghanguskan pass yang sedang dikembalikan', () => {
+  /** Slot `ad_views_one_ready` bisa ditempati tiket yang tenggatnya sudah lewat: sapuannya
+   *  hanya jalan di `readState`, bukan di jalur pengembalian. Sebelum perbaikan ini
+   *  `restoreAdPass` membaca slot itu sebagai "user sudah pegang pass lain" lalu menolak —
+   *  padahal pass di slot itu tidak bisa dipakai apa pun lagi. Yang hilang bukan angka:
+   *  satu iklan yang benar-benar ditonton hangus permanen, dan tidak ada satu baris pun
+   *  yang bisa dipakai user untuk membuktikannya. */
+  it('menyapu pass yang sudah lewat tenggat lalu mengembalikan pass ronde yang ditinggal', async () => {
+    withConfig({ arcadeEnabled: 1, arcadeAdGated: 1, arcadeCooldownSeconds: 0 })
+    const { query } = await import('../platform/db')
+    const { claimAdTicket, openAdTicket } = await import('./ads')
+    const { openArcadePlay, readArcadeState } = await import('../arcade/arcade')
+    const userId = await makeUser(0)
+
+    const burned = await grantPass(userId)
+    const opened = await openArcadePlay(userId, 'boxes')
+    if (!opened.ok) throw new Error(`pembukaan ronde ditolak: ${opened.reason}`)
+    expect((await readAdView(burned)).state).toBe('consumed')
+
+    /** Ronde yang ditinggal melepas kuncian `entry_open` (ADS-DB-11), jadi tiket kedua
+     *  memang boleh dibuka — dan tiket kedua itulah yang lalu menempati slotnya. */
+    await query("update arcade_plays set opened_at = now() - interval '1 hour' where id=$1", [
+      opened.play.id,
+    ])
+    const second = await openAdTicket(userId)
+    if (!second.ok) throw new Error(`tiket kedua ditolak: ${second.reason}`)
+    expect((await claimAdTicket(userId, second.ticketId)).ok).toBe(true)
+
+    // Tiket kedua ikut mati tanpa pernah dipakai, tapi barisnya masih 'ready'.
+    await query(
+      "update ad_views set expires_at = now() - interval '1 minute' where id=$1",
+      [second.ticketId],
+    )
+
+    await readArcadeState(userId)
+
+    expect((await readAdView(second.ticketId)).state).toBe('expired')
+    expect((await readAdView(burned)).state).toBe('ready')
+  })
+
+  /** Penjagaannya sendiri tidak ikut dilonggarkan: pass yang MASIH hidup tetap menolak
+   *  pengembalian, supaya stok pass tidak bisa ditumpuk lewat ronde yang sengaja ditinggal. */
+  it('tetap menolak kalau pass lain masih benar-benar bisa dipakai', async () => {
+    withConfig({ arcadeEnabled: 1, arcadeAdGated: 1, arcadeCooldownSeconds: 0 })
+    const { query } = await import('../platform/db')
+    const { claimAdTicket, openAdTicket } = await import('./ads')
+    const { openArcadePlay, readArcadeState } = await import('../arcade/arcade')
+    const userId = await makeUser(0)
+
+    const burned = await grantPass(userId)
+    const opened = await openArcadePlay(userId, 'boxes')
+    if (!opened.ok) throw new Error(`pembukaan ronde ditolak: ${opened.reason}`)
+
+    await query("update arcade_plays set opened_at = now() - interval '1 hour' where id=$1", [
+      opened.play.id,
+    ])
+    const second = await openAdTicket(userId)
+    if (!second.ok) throw new Error(`tiket kedua ditolak: ${second.reason}`)
+    expect((await claimAdTicket(userId, second.ticketId)).ok).toBe(true)
+
+    await readArcadeState(userId)
+
+    expect((await readAdView(second.ticketId)).state).toBe('ready')
+    expect((await readAdView(burned)).state).toBe('consumed')
+  })
+})
+
+describe('ADS-DB-14 — dua penerbit pass tidak boleh saling menuduh', () => {
+  const postback = async (ticketId: string, query = 'event_type=impression&reward_event_type=yes') => {
+    const { parseAdPostback } = await import('@/domain/ads/postback')
+    const { settleAdPostback } = await import('./postback')
+    return settleAdPostback(parseAdPostback(new URLSearchParams(`ymid=${ticketId}&${query}`)))
+  }
+
+  /** Hanya sinyal "tiket karangan" yang diperiksa. `grantPass` sengaja membuka lalu langsung
+   *  mengklaim, jadi `ad_claim_too_fast` memang wajar muncul di sana dan bukan urusan test ini. */
+  const forgerySignals = async (userId: number) => {
+    const { query } = await import('../platform/db')
+    const rows = await query<{ signal: string }>(
+      "select signal from fraud_signals where user_id=$1 and signal='ad_claim_without_ticket'",
+      [userId],
+    )
+    return rows.map((row) => row.signal)
+  }
+
+  /** `settleAdPostback` menerbitkan pass TANPA memeriksa `adsPostbackRequired`, jadi begitu URL
+   *  postback tertempel di dashboard ia berlomba dengan klaim yang berangkat dari perangkat user
+   *  — keduanya dipicu momen yang sama. Selama gerbangnya masih mati (bawaan, dan justru keadaan
+   *  yang dipakai membuktikan postback bekerja sebelum dinyalakan), jalur klaim lama membaca
+   *  baris 'ready' sebagai tiket karangan: user membaca "tiket tidak ketemu" untuk tiket yang
+   *  baru saja masuk, dan namanya ikut tercatat di `fraud_signals` — skor yang dibaca admin
+   *  tepat sebelum mentransfer uang. */
+  it('menyerahkan passnya saat postback menang balapan, tanpa menuduh siapa pun', async () => {
+    withConfig({ adsPostbackRequired: 0 })
+    const { claimAdTicket, openAdTicket } = await import('./ads')
+    const userId = await makeUser(0)
+    const opened = await openAdTicket(userId)
+    if (!opened.ok) throw new Error(`tiket ditolak: ${opened.reason}`)
+
+    expect(await postback(opened.ticketId)).toBe('granted')
+
+    const claimed = await claimAdTicket(userId, opened.ticketId)
+    expect(claimed.ok).toBe(true)
+    if (claimed.ok) expect(claimed.pass.expiresAt).toBeGreaterThan(Date.now())
+    expect(await forgerySignals(userId)).toEqual([])
+  })
+
+  /** Tiket yang riwayatnya sudah lewat juga bukan tiket karangan. Jalur bergerbang sudah
+   *  membedakannya sejak awal; jalur lama yang tertinggal. */
+  it('tidak menuduh saat tiketnya memang sudah terpakai', async () => {
+    withConfig({ adsPostbackRequired: 0 })
+    const { claimAdTicket } = await import('./ads')
+    const { issueChallenge, startChallenge } = await import('../task/challenge')
+    const userId = await makeUser(5)
+    const ticketId = await grantPass(userId)
+    const challenge = await issueChallenge(userId)
+    expect((await startChallenge(userId, challenge.id, 'ad')).ok).toBe(true)
+
+    expect(await claimAdTicket(userId, ticketId)).toEqual({ ok: false, reason: 'no_ticket' })
+    expect(await forgerySignals(userId)).toEqual([])
+  })
+
+  /** Kembaran `ADS-DB-13` untuk jalur postback: penjagaan slot `ad_views_one_ready` di sana
+   *  disalin dari `restoreAdPass`, jadi ia menanggung cacat yang sama. Bedanya di sini lebih
+   *  mahal — route menjawab 200 sehingga Monetag berhenti mengulang, dan saat gerbangnya
+   *  menyala tidak ada jalur lain yang bisa menyusul menerbitkan passnya. */
+  /** Kembaran `ADS-DB-13` untuk jalur postback: penjagaan slot `ad_views_one_ready` di sana
+   *  disalin dari `restoreAdPass`, jadi ia menanggung cacat yang sama. Bedanya di sini lebih
+   *  mahal — route menjawab 200 sehingga Monetag berhenti mengulang, dan saat gerbangnya
+   *  menyala tidak ada jalur lain yang bisa menyusul menerbitkan passnya.
+   *
+   *  Pass mati itu lahir dari `restoreAdPass`, yang mengembalikan pass memakai tenggat ASLINYA
+   *  (`ADS-DB-9`). Jadi pass yang tinggal semenit bisa dihidupkan lagi, lalu mati, sementara
+   *  tiket yang baru dibuka masih menunggu konfirmasi — dan sapuan di `readState` tidak pernah
+   *  lewat lagi di antara keduanya. */
+  it('menyapu pass mati lebih dulu supaya konfirmasi Monetag tidak berakhir sebagai noted', async () => {
+    withConfig({ adsPostbackRequired: 0 })
+    const { query, transaction } = await import('../platform/db')
+    const { openAdTicket } = await import('./ads')
+    const { issueChallenge, startChallenge } = await import('../task/challenge')
+    const { refundEntry } = await import('../economy/energy')
+    const userId = await makeUser(5)
+
+    // Pass lama dipakai membayar satu task, lalu tasknya ditutup tanpa dikembalikan dulu.
+    const stale = await grantPass(userId)
+    const challenge = await issueChallenge(userId)
+    expect((await startChallenge(userId, challenge.id, 'ad')).ok).toBe(true)
+    await query('update challenges set submitted_at=now() where id=$1', [challenge.id])
+
+    // Tiket baru dibuka selagi pass lama masih 'consumed' — di sini sapuan terakhir lewat.
+    const opened = await openAdTicket(userId)
+    if (!opened.ok) throw new Error(`tiket ditolak: ${opened.reason}`)
+
+    // Pengembalian menghidupkan pass lama, lalu tenggat aslinya keburu lewat.
+    expect(await transaction((tx) => refundEntry(tx, userId, challenge.id))).toEqual({
+      refunded: true,
+    })
+    await query("update ad_views set expires_at = now() - interval '1 minute' where id=$1", [stale])
+    expect((await readAdView(stale)).state).toBe('ready')
+
+    withConfig({ adsPostbackRequired: 1 })
+    expect(await postback(opened.ticketId)).toBe('granted')
+    expect((await readAdView(stale)).state).toBe('expired')
+    expect((await readAdView(opened.ticketId)).state).toBe('ready')
+  })
+})

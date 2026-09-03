@@ -1,7 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import type { ArcadeGame, ArcadePrize } from '@/domain/arcade/arcade'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { arcadeCooldownLeft, type ArcadeGame, type ArcadePrize } from '@/domain/arcade/arcade'
 import type {
   ArcadeOpenResponse,
   ArcadeSettleResponse,
@@ -30,6 +30,7 @@ export function useArcade({
   refreshSession: () => Promise<unknown>
 }) {
   const [state, setState] = useState<ArcadeStateResponse | null>(null)
+  const [receivedAt, setReceivedAt] = useState(() => Date.now())
   const [phase, setPhase] = useState<ArcadePhase>('idle')
   const [game, setGame] = useState<ArcadeGame | null>(null)
   const [playId, setPlayId] = useState<string | null>(null)
@@ -38,7 +39,9 @@ export function useArcade({
 
   const load = useCallback(async () => {
     try {
-      setState(await fetchJson<ArcadeStateResponse>('/api/arcade'))
+      const next = await fetchJson<ArcadeStateResponse>('/api/arcade')
+      setState(next)
+      setReceivedAt(Date.now())
     } catch {
       setState(null)
     }
@@ -47,6 +50,27 @@ export function useArcade({
   useEffect(() => {
     void load()
   }, [load])
+
+  /** `/api/arcade` hanya dibaca ulang saat ronde dibuka atau disetel, jadi jedanya harus dimajukan sendiri di klien — kalau tidak, "Jeda 05:00" membeku di layar dan tombol Main tidak pernah hidup lagi sampai view-nya dipasang ulang. Pola dan alasannya sama dengan `useAdsProjection`, termasuk koreksi selisih jam perangkat lewat `state.now`. */
+  const [clientNow, setClientNow] = useState(() => Date.now())
+  const clockOffset = state === null ? 0 : state.now - receivedAt
+  const cooldownSecondsLeft =
+    state === null
+      ? 0
+      : arcadeCooldownLeft(state.cooldownUntil, clientNow + clockOffset, state.cooldownSecondsLeft)
+
+  const ticking = cooldownSecondsLeft > 0
+  useEffect(() => {
+    if (!ticking) return
+    const timer = setInterval(() => setClientNow(Date.now()), 1_000)
+    return () => clearInterval(timer)
+  }, [ticking])
+
+  /** Jeda yang habis membebaskan `refusal` dan `hasAdPass` juga, dan keduanya cuma diketahui server. Satu muat ulang saat hitungannya menyentuh nol, bukan polling berkala. */
+  const cooldownDrained = state !== null && state.cooldownSecondsLeft > 0 && cooldownSecondsLeft === 0
+  useEffect(() => {
+    if (cooldownDrained) void load()
+  }, [cooldownDrained, load])
 
   /** Ronde yang masih terbuka dari sesi sebelumnya diambil alih, bukan diabaikan. Tanpa ini user yang app-nya tertutup di tengah ronde melihat tombol "Main" yang pasti ditolak `play_open`, dan pass iklannya terlihat hilang begitu saja sampai TTL-nya lewat. */
   useEffect(() => {
@@ -116,5 +140,11 @@ export function useArcade({
     setResult(null)
   }, [])
 
-  return { state, phase, game, result, start, settle, reset, reload: load }
+  /** Jedanya ditumpangkan ke potret supaya layar tetap membaca SATU sumber. Yang dipakai efek dan aksi di atas tetap `state` mentah: memberi mereka objek yang identitasnya berubah tiap detik akan menjalankan ulang pengambilalihan ronde dan menyusun ulang `start` pada setiap tick. */
+  const view = useMemo(
+    () => (state === null ? null : { ...state, cooldownSecondsLeft }),
+    [cooldownSecondsLeft, state],
+  )
+
+  return { state: view, phase, game, result, start, settle, reset, reload: load }
 }

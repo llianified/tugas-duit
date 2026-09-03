@@ -23,6 +23,8 @@ const HISTORIC: EconomyConfig = {
   maxEnergy: 5, energyRegenMinutes: 60, energyCostPerTask: 1,
   adsMaxViewsPerDay: 10, adsCooldownSeconds: 120,
   adsTicketTtlSeconds: 300, adsPassTtlMinutes: 30,
+  // Bawaannya mati, dan itu bagian dari keputusannya (ADR 0004): menyalakan gerbang | postback sebelum URL-nya terisi di dashboard Monetag membuat seluruh tiket berhenti | terbit. Yang menyalakannya panel admin setelah `verified_at` terbukti terisi.
+  adsPostbackRequired: 0,
   // Sama dengan DEFAULT_IN_APP_ADS_SETTINGS yang lama, jadi pemindahan jadwal | interstitial ke config tidak mengubah perilaku bawaan.
   inAppAdsFrequency: 2, inAppAdsCappingMinutes: 6,
   inAppAdsIntervalSeconds: 30, inAppAdsTimeoutSeconds: 5,

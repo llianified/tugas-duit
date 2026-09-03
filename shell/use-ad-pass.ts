@@ -1,13 +1,13 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
-import { monetagSdkName, type AdProvider } from '@/domain/ads/ads'
+import { adPassUsable, monetagSdkName, type AdProvider } from '@/domain/ads/ads'
 import {
   adFailureMessage,
   watchAdToFinish,
   type AdWatchSettled,
 } from '@/shell/ad-watch'
-import { sendJson, userFacingMessage } from '@/shell/api-client'
+import { ApiError, sendJson, userFacingMessage } from '@/shell/api-client'
 import { rewardedPlayer, waitForShow } from '@/shell/monetag-sdk'
 import type { AdClaimResponse, AdsState, AdTicketResponse } from '@/shell/session-api'
 
@@ -17,6 +17,15 @@ const SDK_MISSING_MESSAGE =
 const ABANDONED_MESSAGE =
   'Penyedia iklan belum memberi hasil setelah 3 menit. Tiket belum masuk dan jatah tetap utuh. Coba lagi. Kode: AD-TIMEOUT.'
 const LATE_CLAIM_MESSAGE = 'Tiket iklan masuk. Tayangannya ternyata tuntas.'
+/** Konfirmasi Monetag datang ke server, bukan ke perangkat ini, jadi satu-satunya cara klien mengetahuinya adalah bertanya berulang. Jendelanya sengaja pendek: yang ditunggu perjalanan satu permintaan antar-server, bukan tayangan iklannya — yang itu sudah selesai sebelum baris ini jalan. */
+const VERIFY_POLL_MS = 2_500
+const VERIFY_WINDOW_MS = 20_000
+const AWAITING_CODE = 'AD_CLAIM_AWAITING_VERIFICATION'
+/** Tiketnya TIDAK hangus di sini. Kalau konfirmasinya datang setelah jendela ini lewat, `settleAdPostback` tetap menerbitkan passnya di server dan user menemukannya sudah siap saat kembali — jadi pesannya tidak boleh berbunyi seperti kegagalan yang final. */
+const AWAITING_MESSAGE =
+  'Penyedia iklan belum mengonfirmasi tayangan ini. Tiketnya masuk sendiri begitu konfirmasinya datang — cek lagi sebentar lagi. Kode: AD-VERIFY.'
+
+const isAwaiting = (error: unknown) => error instanceof ApiError && error.code === AWAITING_CODE
 
 export function useAdPass({
   ads,
@@ -43,7 +52,31 @@ export function useAdPass({
     [],
   )
 
+  /** Satu klaim saat gerbang postback mati, polling saat menyala. Bentuknya sengaja satu jalur untuk dua mode: yang membedakan cuma jawaban server, jadi klien tidak perlu tahu setelan panelnya sama sekali. */
+  const claimTicket = useCallback(async (ticketId: string): Promise<boolean> => {
+    const deadline = Date.now() + VERIFY_WINDOW_MS
+    for (;;) {
+      try {
+        await sendJson<AdClaimResponse>('/api/ads/claim', 'POST', { ticketId })
+        return true
+      } catch (error) {
+        if (!isAwaiting(error)) throw error
+        if (Date.now() >= deadline) {
+          notifyError(AWAITING_MESSAGE)
+          return false
+        }
+        await new Promise((resolve) => setTimeout(resolve, VERIFY_POLL_MS))
+      }
+    }
+  }, [notifyError])
+
   const hasPass = Boolean(ads?.pass)
+
+  /** Tiket yang masih BISA DIPAKAI, bukan cuma yang ada di potret. Potret sesi tetap menyebut tiketnya ada sampai muat ulang berikutnya, jadi `hasPass` sendirian membuat `watchAd` menjawab "sudah punya" untuk tiket yang tenggatnya lewat — dan pemanggilnya lalu mengirim permintaan yang dijamin ditolak `consumeAdPass`, tanpa satu iklan pun ditonton. Jamnya dikoreksi ke jam server lewat `now - receivedAt`, sama seperti `useAdsProjection`. */
+  const passUsable = useCallback(
+    () => adPassUsable(ads?.pass, Date.now() + (ads ? ads.now - ads.receivedAt : 0)),
+    [ads],
+  )
 
   /** SDK yang melewati backstop ternyata mengonfirmasi tayangan belakangan. Tiketnya masih pending di server, jadi klaimnya sah — membuang hasil terlambat akan membuat user yang sudah menonton penuh tidak mendapat task. */
   const claimWhenLate = useCallback(
@@ -55,7 +88,7 @@ export function useAdPass({
         await sendJson<AdClaimResponse>('/api/ads/claim', 'POST', { ticketId })
         notifySuccess(LATE_CLAIM_MESSAGE)
       } catch {
-        // Tiketnya sudah kedaluwarsa atau diklaim ulang lewat tontonan berikutnya. Tidak ada yang perlu dikabarkan: user sudah menerima pesan timeout tadi.
+        // Tiketnya sudah kedaluwarsa, diklaim ulang lewat tontonan berikutnya, atau konfirmasi Monetag belum datang. Tidak ada yang perlu dikabarkan: user sudah menerima pesan timeout tadi, dan pass yang dikonfirmasi belakangan tetap diterbitkan server sendiri.
       } finally {
         await refreshSession()
       }
@@ -65,7 +98,7 @@ export function useAdPass({
 
   const watchAd = useCallback(async (): Promise<boolean> => {
     if (watchingAd) return false
-    if (hasPass) return true
+    if (passUsable()) return true
     const generation = (watchGeneration.current += 1)
     setWatchingAd(true)
     try {
@@ -87,8 +120,7 @@ export function useAdPass({
         notifyError(adFailureMessage(outcome.reason))
         return false
       }
-      await sendJson<AdClaimResponse>('/api/ads/claim', 'POST', { ticketId: ticket.ticketId })
-      return true
+      return await claimTicket(ticket.ticketId)
     } catch (error) {
       notifyError(userFacingMessage(error))
       return false
@@ -96,7 +128,7 @@ export function useAdPass({
       setWatchingAd(false)
       await refreshSession()
     }
-  }, [claimWhenLate, getPlayer, hasPass, notifyError, refreshSession, watchingAd])
+  }, [claimTicket, claimWhenLate, getPlayer, notifyError, passUsable, refreshSession, watchingAd])
 
   return { watchAd, watchingAd, hasPass }
 }

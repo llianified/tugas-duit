@@ -12,6 +12,18 @@ export function adsConfigured(): boolean {
   return adsMaxViewsPerDay() > 0
 }
 
+/** Gerbang verifikasi postback. Saat menyala, pass hanya diterbitkan oleh konfirmasi Monetag (`settleAdPostback`) — klaim dari klien berubah jadi pertanyaan, bukan perintah. Disimpan sebagai setelan panel, bukan konstanta, karena menyalakannya sebelum URL postback terisi di dashboard Monetag membuat seluruh tiket berhenti keluar; urutan amannya adalah deploy dulu, buktikan `verified_at` terisi, baru nyalakan. */
+export function adsPostbackRequired(): boolean {
+  return economyConfig().adsPostbackRequired === 1
+}
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Ticket ID adalah `ad_views.id`. Bentuknya diperiksa sebelum menyentuh DB karena nilainya datang dari dua sumber yang sama-sama tidak dipercaya: body klaim dari klien dan makro `ymid` pada postback. */
+export function isTicketId(value: string): boolean {
+  return UUID_PATTERN.test(value)
+}
+
 /** Provider ikut terkirim di `/api/session` dan `/api/ads/ticket`. Sekarang hanya satu — tetap dipertahankan sebagai field, bukan dihapus, karena `ad_views.block_id` yang sudah tersimpan berisi campuran unit dari jaringan lama dan klien perlu tahu SDK mana yang dimaksud satu tiket. */
 export type AdProvider = 'monetag'
 
@@ -53,6 +65,11 @@ export function adCooldownSecondsLeft(lastOpenedAt: number | null, now: number):
 export function adCooldownUntil(lastOpenedAt: number | null): number | null {
   if (lastOpenedAt === null) return null
   return lastOpenedAt + adsCooldownMs()
+}
+
+/** Tiket yang ADA di potret sesi belum tentu masih hidup: potretnya diambil sekali, tenggatnya terus berjalan. Setiap keputusan klien yang berdasar tiket harus lewat bentuk ini, bukan sekadar "ada tiket di potret" — `consumeAdPass` di server menuntut `expires_at > now()`, jadi keputusan yang lebih longgar berakhir sebagai permintaan yang pasti ditolak. `now` sudah dikoreksi ke jam server oleh pemanggilnya. */
+export function adPassUsable(pass: { expiresAt: number } | null | undefined, now: number): boolean {
+  return pass !== null && pass !== undefined && pass.expiresAt > now
 }
 
 export function adOpenRefusal(state: AdOpenState, now: number): AdRefusal | null {

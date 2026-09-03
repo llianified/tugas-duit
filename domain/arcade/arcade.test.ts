@@ -5,6 +5,7 @@ import {
   type EconomyConfig,
 } from '../economy/economy-config'
 import {
+  arcadeCooldownLeft,
   arcadeCooldownSecondsLeft,
   arcadeEnabled,
   arcadeOpenRefusal,
@@ -167,5 +168,34 @@ describe('ARCADE-5 hitung mundur jeda', () => {
     expect(arcadeCooldownSecondsLeft(null, T0)).toBe(0)
     expect(arcadeCooldownSecondsLeft(T0 - 60_000, T0)).toBe(60)
     expect(arcadeCooldownSecondsLeft(T0 - 999_000, T0)).toBe(0)
+  })
+})
+
+describe('ARCADE-6 jeda diproyeksikan dari tenggatnya, bukan dari potret detiknya', () => {
+  /** `/api/arcade` hanya dibaca ulang saat ronde dibuka atau disetel, jadi `cooldownSecondsLeft`
+   *  yang dipakai apa adanya membeku di layar: hitungannya tidak pernah maju dan tombol Main
+   *  tidak pernah hidup lagi sampai view-nya dipasang ulang. Yang dikirim untuk dihitung ulang
+   *  adalah `cooldownUntil`, sama seperti `adCooldownUntil` pada iklan. */
+  it('memajukan hitungannya seiring jam klien berjalan', () => {
+    on({ arcadeCooldownSeconds: 300 })
+    const until = T0 + 300_000
+
+    expect(arcadeCooldownLeft(until, T0, 300)).toBe(300)
+    expect(arcadeCooldownLeft(until, T0 + 60_000, 300)).toBe(240)
+    expect(arcadeCooldownLeft(until, T0 + 299_500, 300)).toBe(1)
+  })
+
+  it('menyentuh nol tepat di tenggatnya dan tidak pernah negatif', () => {
+    on({ arcadeCooldownSeconds: 300 })
+    expect(arcadeCooldownLeft(T0 + 300_000, T0 + 300_000, 300)).toBe(0)
+    expect(arcadeCooldownLeft(T0 + 300_000, T0 + 900_000, 300)).toBe(0)
+  })
+
+  /** Balasan tanpa tenggat — user yang belum pernah membuka ronde — tidak boleh berubah arti. */
+  it('jatuh ke potret detiknya saat tenggatnya tidak ada', () => {
+    on({ arcadeCooldownSeconds: 300 })
+    expect(arcadeCooldownLeft(null, T0, 0)).toBe(0)
+    expect(arcadeCooldownLeft(null, T0, 42)).toBe(42)
+    expect(arcadeCooldownLeft(null, T0, -5)).toBe(0)
   })
 })

@@ -6,6 +6,8 @@ import {
   adOpenRefusal,
   adViewsLeft,
   adsConfigured,
+  adsPostbackRequired,
+  isTicketId,
   type AdProvider,
   type AdRefusal,
 } from '@/domain/ads/ads'
@@ -17,7 +19,6 @@ import { recordAdClaimSignal } from '../task/fraud'
 import { isPremium } from '../premium/premium'
 
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const PG_UNIQUE_VIOLATION = '23505'
 
 /** `entry_open_count` menjumlahkan DUA ongkos masuk yang sedang terbuka: challenge dan ronde Arena. Keduanya memotong pass lewat `consumeAdPass`, jadi keduanya sama-sama menahan tiket berikutnya — pass yang dipakai baru bisa dihidupkan lagi kalau slot `ad_views_one_ready` kosong, dan tiket baru yang keburu diklaim membuat pengembalian itu ditolak. Ronde Arena disaring umurnya karena sapuan `expireStalePlays` hanya jalan saat Arena dibuka; tanpa saringan itu satu ronde yang ditinggal akan mengunci tiket user selamanya. */
@@ -48,7 +49,8 @@ type StateRow = {
   now: Date
 }
 
-const EXPIRE_STALE_SQL = `update ad_views set state='expired'
+/** Diekspor untuk `settleAdPostback`: jalur itu juga menerbitkan pass, jadi ia menanggung penjagaan slot `ad_views_one_ready` yang sama dan butuh sapuan yang sama persis. Satu definisi, bukan dua yang bisa menyimpang. */
+export const EXPIRE_STALE_SQL = `update ad_views set state='expired'
   where user_id=$1 and state in ('pending','ready') and expires_at <= now()`
 
 async function run<T>(sql: string, params: unknown[], tx?: PoolClient): Promise<T[]> {
@@ -195,18 +197,44 @@ export async function openAdTicket(userId: number): Promise<OpenTicketResult> {
 
 export type ClaimTicketResult =
   | { ok: true; pass: { expiresAt: number } }
-  | { ok: false; reason: 'no_ticket' | 'ticket_expired' | 'pass_ready' }
+  | {
+      ok: false
+      reason: 'no_ticket' | 'ticket_expired' | 'pass_ready' | 'awaiting_verification'
+    }
 
 const CLAIM_BURST_WINDOW_MINUTES = 10
 const CLAIM_BURST_THRESHOLD = 5
 
+/** Gerbang postback menyala: klien tidak lagi menerbitkan pass, ia hanya bertanya apakah Monetag sudah mengonfirmasi tayangannya. Yang menerbitkan `settleAdPostback`, jadi jalur ini murni baca. | Sinyal `ad_claim_too_fast` dan `ad_claim_burst` sengaja tidak dipasang di sini: keduanya mengukur kecurigaan pada klaim yang dipercaya, dan di mode ini klaim tidak memberi apa pun. Yang tersisa cuma `ad_claim_without_ticket`, karena menanyakan tiket yang tidak pernah ada tetap berarti ada yang mengarang ticketId. */
+async function readVerifiedClaim(userId: number, ticketId: string): Promise<ClaimTicketResult> {
+  const rows = await query<{ state: string; expires_at: Date; now: Date }>(
+    'select state, expires_at, now() as now from ad_views where id=$1 and user_id=$2',
+    [ticketId, userId],
+  )
+  const row = rows[0]
+  if (!row) {
+    await transaction((tx) =>
+      recordAdClaimSignal(tx, userId, 'ad_claim_without_ticket', { ticketId, gated: true }),
+    )
+    return { ok: false, reason: 'no_ticket' }
+  }
+  if (row.state === 'ready') return { ok: true, pass: { expiresAt: row.expires_at.getTime() } }
+  /** Baris yang sudah `consumed` atau `expired` bukan tiket karangan — ia tiket yang riwayatnya sudah lewat, jadi tidak menerbitkan sinyal fraud. */
+  if (row.state !== 'pending') return { ok: false, reason: 'no_ticket' }
+  if (row.expires_at.getTime() <= row.now.getTime())
+    return { ok: false, reason: 'ticket_expired' }
+  return { ok: false, reason: 'awaiting_verification' }
+}
+
 export async function claimAdTicket(userId: number, ticketId: string): Promise<ClaimTicketResult> {
-  if (!ticketId || !UUID_PATTERN.test(ticketId)) {
+  if (!ticketId || !isTicketId(ticketId)) {
     await transaction((tx) =>
       recordAdClaimSignal(tx, userId, 'ad_claim_without_ticket', { ticketId: null }),
     )
     return { ok: false, reason: 'no_ticket' }
   }
+
+  if (adsPostbackRequired()) return readVerifiedClaim(userId, ticketId)
 
   return transaction(async (tx) => {
     const locked = await tx.query<{ state: string; created_at: Date; expires_at: Date; now: Date }>(
@@ -214,13 +242,16 @@ export async function claimAdTicket(userId: number, ticketId: string): Promise<C
       [ticketId, userId],
     )
     const row = locked.rows[0]
-    if (!row || row.state !== 'pending') {
-      await recordAdClaimSignal(tx, userId, 'ad_claim_without_ticket', {
-        ticketId,
-        state: row?.state ?? null,
-      })
+    if (!row) {
+      await recordAdClaimSignal(tx, userId, 'ad_claim_without_ticket', { ticketId, state: null })
       return { ok: false as const, reason: 'no_ticket' as const }
     }
+    /** Klasifikasinya dikembarkan dengan `readVerifiedClaim` di atas, dan itu bukan kerapian: sejak `settleAdPostback` bisa menerbitkan pass sendiri — dan ia jalan TANPA memeriksa `adsPostbackRequired` — baris 'ready' milik user ini berarti Monetag mengonfirmasi lebih dulu daripada klaim yang berangkat dari perangkatnya. Keduanya berangkat pada momen yang sama, jadi siapa yang menang murni balapan. Menjawabnya `no_ticket` membuat user membaca "tiket iklan tidak ketemu" tepat setelah menonton iklan penuh, sementara passnya justru sudah siap — dan menuliskan sinyal fraud atas orang yang tidak melakukan apa pun. Sinyal itu masuk `sum(f.severity)` yang jadi skor risiko di antrean payout, yaitu angka yang dibaca admin tepat sebelum mentransfer uang. */
+    if (row.state === 'ready') {
+      return { ok: true as const, pass: { expiresAt: row.expires_at.getTime() } }
+    }
+    /** Baris yang sudah `consumed` atau `expired` bukan tiket karangan — ia tiket yang riwayatnya sudah lewat, jadi tidak menerbitkan sinyal fraud. */
+    if (row.state !== 'pending') return { ok: false as const, reason: 'no_ticket' as const }
 
     const now = row.now.getTime()
     if (row.expires_at.getTime() <= now) {
@@ -282,6 +313,8 @@ export async function restoreAdPass(
   userId: number,
   adViewId: string,
 ): Promise<boolean> {
+  /** Slot `ad_views_one_ready` bisa ditempati pass yang tenggatnya sudah lewat: sapuan `EXPIRE_STALE_SQL` hanya jalan di `readState` (`/api/session`, `/api/ads/ticket`), tidak di jalur pengembalian ini. Tanpa disapu lebih dulu, pass mati itu tetap memblokir `not exists` di bawah dan iklan yang benar-benar ditonton hangus permanen — persis kerugian yang penjagaan itu justru dibuat untuk dihindari. Disapu, bukan sekadar diabaikan di klausanya: indeks uniknya tidak menerima dua baris 'ready' sekaligus. */
+  await tx.query(EXPIRE_STALE_SQL, [userId])
   const restored = await tx.query<{ id: string }>(
     `update ad_views
         set state='ready', consumed_at=null,

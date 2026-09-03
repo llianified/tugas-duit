@@ -128,6 +128,16 @@ export function arcadeCooldownUntil(lastOpenedAt: number | null): number | null 
   return lastOpenedAt + arcadeCooldownSeconds() * 1_000
 }
 
+/** Sisa jeda dihitung ulang dari TENGGATNYA, bukan dibaca dari potret detik yang sudah basi begitu balasannya terkirim. `/api/arcade` hanya dibaca ulang saat ronde dibuka atau disetel, jadi `cooldownSecondsLeft` apa adanya membeku di layar: hitungannya tidak pernah maju dan tombolnya tidak pernah hidup lagi sampai view-nya dipasang ulang. `fallbackSeconds` menjaga arti jawaban untuk balasan yang tidak membawa tenggat. Kembaran `adCooldownUntil` di `domain/ads/ads.ts`, yang sisi kliennya sudah diproyeksikan `useAdsProjection`. */
+export function arcadeCooldownLeft(
+  cooldownUntil: number | null,
+  now: number,
+  fallbackSeconds = 0,
+): number {
+  if (cooldownUntil === null) return Math.max(0, Math.ceil(fallbackSeconds))
+  return Math.max(0, Math.ceil((cooldownUntil - now) / 1_000))
+}
+
 /** Urutannya bukan selera: penolakan yang bisa diperbaiki user sendiri diperiksa paling akhir. `play_open` mendahului cooldown supaya main yang belum ditutup tidak terbaca sebagai "tunggu dulu", dan `nothing_to_win` berdiri paling belakang karena ia satu-satunya yang butuh membaca stok dan energi. */
 export function arcadeOpenRefusal(state: ArcadeOpenState, now: number): ArcadeRefusal | null {
   if (!arcadeEnabled()) return 'arcade_disabled'

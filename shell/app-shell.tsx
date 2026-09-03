@@ -62,8 +62,11 @@ function AppShellInner() {
     !session.unauthenticated &&
     session.channelBlocked
 
+  const activeChallenge = session.view === 'captcha' ? session.activeChallenge : null
+
+  /** Pendaftaran jadwal ditahan selama ada task berjalan. Ini BUKAN jeda pada jadwal yang sudah terdaftar — Monetag tidak menyediakannya — melainkan penundaan tayangan pertama supaya ia tidak jatuh di dalam task yang bayarannya dihitung dari waktu. Lihat catatan panjang di `useInAppAds`. */
   useInAppAds({
-    enabled: session.inAppAdsEnabled && !channelBlocked,
+    enabled: session.inAppAdsEnabled && !channelBlocked && activeChallenge === null,
     zoneId: inAppZoneId(),
     settings: adsSettings,
   })
@@ -80,7 +83,6 @@ function AppShellInner() {
     showError('Sesi tidak dikenal. Buka Tugas Duit lewat Telegram.')
   }, [session.unauthenticated, showError])
 
-  const activeChallenge = session.view === 'captcha' ? session.activeChallenge : null
   const effectiveView = session.view === 'captcha' && !activeChallenge ? 'home' : session.view
 
   useEffect(() => {

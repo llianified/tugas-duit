@@ -80,6 +80,8 @@ export interface AdsSessionState {
   /** Jam server saat potret diambil, dipakai klien untuk mengoreksi selisih jam perangkat. */
   now: number
   pass: { expiresAt: number } | null
+  /** Ada task yang dibayar tiket dan belum ditutup. `openAdTicket` menolak selama ini menyala (`entry_open`), jadi klien harus tahu sebelum menggambar tombol yang pasti gagal ditekan. */
+  entryOpen: boolean
 }
 
 const ADS_OFF: Omit<AdsSessionState, 'now'> = {
@@ -91,6 +93,7 @@ const ADS_OFF: Omit<AdsSessionState, 'now'> = {
   cooldownSecondsLeft: 0,
   cooldownUntil: null,
   pass: null,
+  entryOpen: false,
 }
 
 /** Premium mematikan interstitial otomatis saja (`inAppEnabled: false`). Tiket berhadiah sengaja tetap hidup untuk premium: ia tidak pernah muncul sendiri, hanya dirender sebagai tombol saat user butuh task tambahan, jadi tidak melanggar janji "bebas iklan yang ganggu" tapi tetap menjaga impresi yang membayari reward pool. */
@@ -111,6 +114,7 @@ export async function readAdsState(userId: number): Promise<AdsSessionState> {
     cooldownUntil: adCooldownUntil(state.lastOpenedAt),
     now: state.now,
     pass: state.hasReady && state.passExpiresAt !== null ? { expiresAt: state.passExpiresAt } : null,
+    entryOpen: state.hasEntryOpen,
   }
 }
 

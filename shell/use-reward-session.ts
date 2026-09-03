@@ -8,14 +8,19 @@ import type { Withdrawal, WithdrawalDraft } from '@/domain/economy/withdrawal'
 import { useViewStack } from '@/navigation/use-view-stack'
 import { rememberAdsHint } from '@/shell/ads-hint'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
-import { useAdCooldownProjection } from '@/shell/use-ad-cooldown-projection'
 import { useAdPass } from '@/shell/use-ad-pass'
+import { useAdsProjection } from '@/shell/use-ads-projection'
 import { useEnergyProjection } from '@/shell/use-energy-projection'
 import { useRewardPoolProjection } from '@/shell/use-reward-pool-projection'
 import { useSessionQueries } from '@/shell/use-session-queries'
 import { useTaskFlow } from '@/shell/use-task-flow'
+import type { ToastTone } from '@/shell/toast'
 
-export function useRewardSession({ onError }: { onError: (message: string) => void }) {
+export function useRewardSession({
+  onError,
+}: {
+  onError: (message: string, tone?: ToastTone) => void
+}) {
   const {
     view,
     depth: viewDepth,
@@ -28,6 +33,10 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     onErrorRef.current = onError
   }, [onError])
   const notifyError = useCallback((message: string) => onErrorRef.current(message), [])
+  const notifySuccess = useCallback(
+    (message: string) => onErrorRef.current(message, 'success'),
+    [],
+  )
 
   const {
     session,
@@ -103,18 +112,25 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
   const { watchAd, watchingAd, hasPass } = useAdPass({
     ads: session?.ads ?? null,
     notifyError,
+    notifySuccess,
     refreshSession: mutateSession,
   })
 
-  const { adCooldownSecondsLeft } = useAdCooldownProjection({
+  const { adCooldownSecondsLeft, adPassSecondsLeft, adPassExpired } = useAdsProjection({
     payload: session?.ads ?? null,
     refreshSession: retrySession,
   })
 
+  /** Potret sesi masih menyebut tiketnya ada sampai muat ulang berikutnya selesai; proyeksi tenggatnya yang tahu lebih dulu bahwa ia sudah mati. Yang dipakai UI harus yang lebih pesimis dari keduanya. */
+  const adPassReady = hasPass && !adPassExpired
+
+  /** Iklan sudah tuntas dan tiketnya masuk, tapi tasknya tetap gagal dimulai — stok reward kosong, misalnya. Tanpa pengakuan terpisah, satu-satunya yang user lihat adalah toast merah dari `startTask`, dan kesimpulan yang paling wajar dari itu adalah "iklannya sia-sia". Tiketnya justru aman dan masih bisa dipakai sampai tenggatnya. */
   const startTaskWithAd = useCallback(async () => {
-    if (!hasPass && !(await watchAd())) return
-    void startTask('ad')
-  }, [hasPass, startTask, watchAd])
+    const ticketReady = adPassReady || (await watchAd())
+    if (!ticketReady) return
+    const started = await startTask('ad')
+    if (!started) notifySuccess('Tiket iklan aman dan masih bisa dipakai.')
+  }, [adPassReady, notifySuccess, startTask, watchAd])
 
   const history = useMemo(
     () => (historyPages ?? []).flatMap((page) => page.entries),
@@ -247,7 +263,9 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     inAppAdsEnabled: session?.ads?.inAppEnabled ?? false,
     adViewsLeft: session?.ads?.viewsLeft ?? 0,
     adCooldownSecondsLeft,
-    adPassReady: hasPass,
+    adPassReady,
+    adPassSecondsLeft,
+    adEntryOpen: session?.ads?.entryOpen ?? false,
     watchingAd,
     completeTask,
     nextTask,

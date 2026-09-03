@@ -11,7 +11,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react'
-import { hapticError } from '@/shared/lib/haptic'
+import { hapticError, hapticSuccess } from '@/shared/lib/haptic'
 import { EASE_OUT_QUART, SPRING_SOFT } from '@/shared/lib/motion'
 
 const TOAST_TTL_MS = 4000
@@ -22,16 +22,19 @@ const SWIPE_DISMISS_PX = 36
 
 const LEAVE_DURATION_MS = 180
 
-type Toast = { id: number; message: string }
+/** Nada pesan. Bawaannya `error` supaya pemanggil lama yang cuma mengirim teks tidak berubah artinya. */
+export type ToastTone = 'error' | 'success'
 
-type ShowError = (message: string) => void
+type Toast = { id: number; message: string; tone: ToastTone }
 
-const ToastContext = createContext<ShowError | null>(null)
+type ShowToast = (message: string, tone?: ToastTone) => void
 
-export function useToast(): ShowError {
-  const showError = useContext(ToastContext)
-  if (!showError) throw new Error('useToast dipakai di luar <ToastProvider>')
-  return showError
+const ToastContext = createContext<ShowToast | null>(null)
+
+export function useToast(): ShowToast {
+  const showToast = useContext(ToastContext)
+  if (!showToast) throw new Error('useToast dipakai di luar <ToastProvider>')
+  return showToast
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -42,19 +45,20 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((current) => current.filter((toast) => toast.id !== id))
   }, [])
 
-  const showError = useCallback<ShowError>((message) => {
+  const showToast = useCallback<ShowToast>((message, tone = 'error') => {
     const trimmed = message.trim()
     if (!trimmed) return
-    hapticError()
+    if (tone === 'success') hapticSuccess()
+    else hapticError()
     setToasts((current) => {
       const withoutDuplicate = current.filter((toast) => toast.message !== trimmed)
-      const next = [...withoutDuplicate, { id: nextId.current++, message: trimmed }]
+      const next = [...withoutDuplicate, { id: nextId.current++, message: trimmed, tone }]
       return next.slice(-MAX_TOASTS)
     })
   }, [])
 
   return (
-    <ToastContext.Provider value={showError}>
+    <ToastContext.Provider value={showToast}>
       {children}
       <div className="toast-layer">
         <AnimatePresence initial={false}>
@@ -105,7 +109,9 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: number)
 
   return (
     <motion.div
-      role="alert"
+      role={toast.tone === 'success' ? 'status' : 'alert'}
+      aria-live={toast.tone === 'success' ? 'polite' : 'assertive'}
+      data-tone={toast.tone}
       className="toast-item bubble-p"
       initial={{ opacity: 0, y: 12, scale: 0.97 }}
       animate={{

@@ -38,6 +38,8 @@ interface HomeViewProps {
   adViewsLeft: number
   adCooldownSecondsLeft: number
   adPassReady: boolean
+  adPassSecondsLeft: number | null
+  adEntryOpen: boolean
   watchingAd: boolean
   /** Lihat `ActiveTask`: `hold` menahan perpindahan halaman selama karcisnya disobek. */
   onStart: (hold?: Promise<unknown>) => Promise<boolean>
@@ -70,6 +72,8 @@ export function HomeView({
   adViewsLeft,
   adCooldownSecondsLeft,
   adPassReady,
+  adPassSecondsLeft,
+  adEntryOpen,
   watchingAd,
   onStart,
   onStartWithAd,
@@ -143,6 +147,8 @@ export function HomeView({
             adViewsLeft={adViewsLeft}
             adCooldownSecondsLeft={adCooldownSecondsLeft}
             adPassReady={adPassReady}
+            adPassSecondsLeft={adPassSecondsLeft}
+            adEntryOpen={adEntryOpen}
             watchingAd={watchingAd}
             onStart={onStart}
             onStartWithAd={onStartWithAd}

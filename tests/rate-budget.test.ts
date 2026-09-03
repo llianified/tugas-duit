@@ -60,24 +60,24 @@ describe('RL-3 — laju polling klien harus muat di plafon route-nya', () => {
     expect(limit).toBeGreaterThanOrEqual(perHour * 1.25)
   })
 
-  it('dialog QRIS premium tidak boleh menghabiskan jatah /api/session', async () => {
-    const dialog = await read('features/premium/components/premium-dialog.tsx')
-    const budget = constantOf(dialog, 'POLL_BUDGET')
+  it('lembar QRIS premium tidak boleh menghabiskan jatah /api/session', async () => {
+    const sheet = await read('features/premium/components/premium-sheet.tsx')
+    const budget = constantOf(sheet, 'POLL_BUDGET')
     const limit = hourlyLimitOf(await read('app/api/session/route.ts'), 'session')
 
     /** Seluruh app memakai bucket `session` yang sama — setiap task selesai
-     *  memicu satu `mutateSession()`. Dialog ini paling banyak boleh mengambil
+     *  memicu satu `mutateSession()`. Lembar ini paling banyak boleh mengambil
      *  separuh jatahnya. */
     expect(budget).toBeLessThanOrEqual(limit / 2)
   })
 
-  it('polling QRIS berhenti sendiri, tidak berjalan selama dialognya terbuka', async () => {
-    const dialog = await read('features/premium/components/premium-dialog.tsx')
+  it('polling QRIS berhenti sendiri, tidak berjalan selama lembarnya terbuka', async () => {
+    const sheet = await read('features/premium/components/premium-sheet.tsx')
 
     // Anggaran permintaan yang benar-benar dipakai, bukan cuma dideklarasikan.
-    expect(dialog).toContain('spent >= POLL_BUDGET')
+    expect(sheet).toContain('spent >= POLL_BUDGET')
     // Tagihan yang lewat umurnya tidak akan berubah jadi lunas lewat polling.
-    expect(dialog).toContain('Date.now() >= invoice.expiresAt')
-    expect(dialog).toContain('clearInterval(timer)')
+    expect(sheet).toContain('Date.now() >= invoice.expiresAt')
+    expect(sheet).toContain('clearInterval(timer)')
   })
 })

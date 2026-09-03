@@ -100,7 +100,11 @@ export type AdsState = {
   provider: AdProvider | null
   unitId: string | null
   viewsLeft: number
+  /** Potret dari server. Untuk hitungan mundur yang berjalan pakai `cooldownUntil`. */
   cooldownSecondsLeft: number
+  cooldownUntil: number | null
+  now: number
+  receivedAt: number
   pass: { expiresAt: number } | null
 }
 
@@ -159,6 +163,7 @@ async function fetchSession(): Promise<SessionResponse> {
     ...session,
     energy: session.energy ? { ...session.energy, receivedAt } : undefined,
     rewardPool: session.rewardPool ? { ...session.rewardPool, receivedAt } : undefined,
+    ads: session.ads ? { ...session.ads, receivedAt } : undefined,
   }
 }
 

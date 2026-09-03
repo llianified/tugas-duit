@@ -48,6 +48,12 @@ export function adCooldownSecondsLeft(lastOpenedAt: number | null, now: number):
   return Math.max(0, Math.ceil((lastOpenedAt + adsCooldownMs() - now) / 1000))
 }
 
+/** Tenggat cooldown, bukan sisa detiknya. Yang dikirim ke klien harus titik akhir yang tetap: sisa detik ikut basi seiring waktu berjalan, sedangkan tenggat tetap benar berapa lama pun potret sesi itu dipegang. */
+export function adCooldownUntil(lastOpenedAt: number | null): number | null {
+  if (lastOpenedAt === null) return null
+  return lastOpenedAt + adsCooldownMs()
+}
+
 export function adOpenRefusal(state: AdOpenState, now: number): AdRefusal | null {
   if (!adsConfigured()) return 'ads_disabled'
   if (state.hasReady) return 'pass_ready'

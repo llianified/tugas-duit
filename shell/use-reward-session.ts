@@ -7,6 +7,7 @@ import type { Withdrawal, WithdrawalDraft } from '@/domain/economy/withdrawal'
 import { useViewStack } from '@/navigation/use-view-stack'
 import { rememberAdsHint } from '@/shell/ads-hint'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
+import { useAdCooldownProjection } from '@/shell/use-ad-cooldown-projection'
 import { useAdPass } from '@/shell/use-ad-pass'
 import { useEnergyProjection } from '@/shell/use-energy-projection'
 import { useRewardPoolProjection } from '@/shell/use-reward-pool-projection'
@@ -102,6 +103,11 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     ads: session?.ads ?? null,
     notifyError,
     refreshSession: mutateSession,
+  })
+
+  const { adCooldownSecondsLeft } = useAdCooldownProjection({
+    payload: session?.ads ?? null,
+    refreshSession: retrySession,
   })
 
   const startTaskWithAd = useCallback(async () => {
@@ -238,7 +244,7 @@ export function useRewardSession({ onError }: { onError: (message: string) => vo
     adsEnabled,
     inAppAdsEnabled: session?.ads?.inAppEnabled ?? false,
     adViewsLeft: session?.ads?.viewsLeft ?? 0,
-    adCooldownSecondsLeft: session?.ads?.cooldownSecondsLeft ?? 0,
+    adCooldownSecondsLeft,
     adPassReady: hasPass,
     watchingAd,
     completeTask,

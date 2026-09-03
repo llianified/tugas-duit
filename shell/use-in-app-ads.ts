@@ -7,10 +7,7 @@ import {
   inAppShowParams,
   type InAppAdsSettings,
 } from '@/domain/ads/in-app-ads'
-// INSTRUMENTASI SEMENTARA — hapus bersama probe setelah penyebab interstitial ganda terbukti.
-import { skipExplicitInAppShow } from '@/domain/ads/in-app-ads-experiment'
 import { readShow, showFailureReason, waitForShow } from '@/shell/monetag-sdk'
-import { ADS_PROBE_SKIP_STORAGE_KEY } from '@/shell/pre-sdk-ads-probe'
 
 /** Jeda sebelum mencoba lagi kalau fungsi global SDK belum tersedia. */
 const SDK_RETRY_MS = 30_000
@@ -39,15 +36,6 @@ export function useInAppAds({
     if (!enabled || settings.frequency <= 0) return
 
     const sdkName = monetagSdkName(zoneId)
-
-    /** INSTRUMENTASI SEMENTARA — bawaannya mati, jadi jalur di bawahnya sama persis
-     * dengan sebelum saklar ini ada. Saat dinyalakan, pendaftaran jadwal dilewati
-     * TANPA menandai `initializedZones`: kalau saklarnya dimatikan lagi dalam dokumen
-     * yang sama, effect berikutnya masih bisa mendaftar seperti biasa. */
-    if (skipExplicitInAppShow({ env: explicitSkipEnv(), override: explicitSkipOverride() })) {
-      recordProbe('useInAppAds SKIP (kill-switch)', { sdk: sdkName, settings })
-      return
-    }
     let retryTimer: ReturnType<typeof setTimeout> | undefined
     let cancelled = false
 
@@ -65,9 +53,6 @@ export function useInAppAds({
 
       // Tandai sebelum memanggil SDK agar dua effect yang selesai menunggu bersamaan | tidak dapat mendaftarkan dua penjadwal untuk zone yang sama.
       initializedZones.add(sdkName)
-      // INSTRUMENTASI SEMENTARA — menandai URUTAN: entri ini vs `show() didefinisikan`
-      // dari probe pre-SDK menunjukkan apakah SDK sudah menjadwalkan sendiri lebih dulu.
-      recordProbe('useInAppAds mendaftarkan jadwal', { sdk: sdkName, params: inAppShowParams(settings) })
       try {
         // Satu-satunya pemanggilan otomatis: SDK Monetag mengurus timeout, interval, | frequency, dan capping setelah menerima payload native ini.
         await show(inAppShowParams(settings))
@@ -88,38 +73,4 @@ export function useInAppAds({
 /** Zone yang dipakai kalau env publiknya tidak diset — sama dengan script tag di layout. */
 export function inAppZoneId(): string {
   return process.env.NEXT_PUBLIC_MONETAG_ZONE_ID?.trim() || MONETAG_DEFAULT_ZONE_ID
-}
-
-/** INSTRUMENTASI SEMENTARA — tiga helper di bawah ikut terhapus bersama probe.
- *
- * Dibaca lewat `process.env` langsung (bukan variabel) karena Next.js mengganti
- * bentuk itu saat build; nilainya karena itu tetap tertanam di bundle klien. */
-function explicitSkipEnv(): string | null {
-  return process.env.NEXT_PUBLIC_ADS_PROBE_SKIP_EXPLICIT ?? null
-}
-
-/** Override uji lapangan. Storage bisa melempar di WebView Telegram yang mempartisi
- * storage, dan kegagalan membacanya tidak boleh menyentuh alur iklan sama sekali —
- * karena itu `null` (artinya "pakai env") saat apa pun salah. */
-function explicitSkipOverride(): string | null {
-  if (typeof window === 'undefined') return null
-  try {
-    return window.localStorage.getItem(ADS_PROBE_SKIP_STORAGE_KEY)
-  } catch {
-    return null
-  }
-}
-
-/** Menulis ke timeline probe kalau probe-nya terpasang; diam kalau tidak. Sengaja tidak
- * mengimpor probe supaya hook ini tidak pernah bergantung pada instrumentasi. */
-function recordProbe(tag: string, data: unknown): void {
-  if (typeof window === 'undefined') return
-  const probe = (window as unknown as Record<string, unknown>).__adProbe as
-    | { record?: (tag: string, data?: unknown) => void }
-    | undefined
-  try {
-    probe?.record?.(tag, data)
-  } catch {
-    // Instrumentasi tidak boleh menjatuhkan alur iklan.
-  }
 }

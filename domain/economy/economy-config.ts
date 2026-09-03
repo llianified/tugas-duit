@@ -46,6 +46,7 @@ export interface EconomyConfig {
   adsCooldownSeconds: number
   adsTicketTtlSeconds: number
   adsPassTtlMinutes: number
+  adsPostbackRequired: number
   inAppAdsFrequency: number
   inAppAdsCappingMinutes: number
   inAppAdsIntervalSeconds: number
@@ -136,6 +137,7 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   adsCooldownSeconds: 120,
   adsTicketTtlSeconds: 300,
   adsPassTtlMinutes: 30,
+  adsPostbackRequired: 0,
   inAppAdsFrequency: 2,
   inAppAdsCappingMinutes: 6,
   inAppAdsIntervalSeconds: 30,
@@ -389,6 +391,12 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     description: 'Waktu sejak klaim diterima sampai pass hangus tanpa dipakai. Memaksa hasil tontonan dipakai, bukan ditimbun.',
     impact: 'Menaikkannya membuat lebih banyak pass menganggur; menurunkannya membuat hasil tontonan lebih sering hangus.',
     min: 1, max: 1_440, riskyWhen: 'higher',
+  },
+  {
+    key: 'adsPostbackRequired', group: 'ads', label: 'Wajib verifikasi postback', unit: '1 = wajib',
+    description: 'Isi 1 supaya tiket iklan hanya terbit setelah Monetag mengonfirmasi tayangannya lewat postback server-ke-server, dan menandainya berbayar. Isi 0 untuk kembali percaya laporan dari perangkat user. Nyalakan hanya setelah URL postback terisi di dashboard Monetag dan kolom verified_at pada ad_views terbukti mulai terisi — menyalakannya sebelum itu membuat tidak ada satu pun tiket bisa terbit.',
+    impact: 'Menurunkannya membuka kembali celah "tap iklan lalu back": tayangan yang tidak dibayar penyedia tetap menerbitkan tiket.',
+    min: 0, max: 1, riskyWhen: 'lower',
   },
   {
     key: 'inAppAdsFrequency', group: 'ads', label: 'Interstitial per jendela', unit: 'iklan',

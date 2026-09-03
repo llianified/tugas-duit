@@ -31,6 +31,7 @@ interface HomeViewProps {
   energyFill: EnergyFill
   rewardPoolCredits: number | null
   rewardPoolMax: number | null
+  rewardPoolRegenCredits: number | null
   rewardPoolSecondsToNext: number | null
   economy: EconomyConfig
   adsEnabled: boolean
@@ -62,6 +63,7 @@ export function HomeView({
   energyFill,
   rewardPoolCredits,
   rewardPoolMax,
+  rewardPoolRegenCredits,
   rewardPoolSecondsToNext,
   economy,
   adsEnabled,
@@ -122,6 +124,7 @@ export function HomeView({
               config={economy}
               rewardPoolCredits={rewardPoolCredits}
               rewardPoolMax={rewardPoolMax}
+              rewardPoolRegenCredits={rewardPoolRegenCredits}
               rewardPoolSecondsToNext={rewardPoolSecondsToNext}
             />
           </div>

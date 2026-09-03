@@ -3,6 +3,7 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { ActionButton } from '@/shared/components/action-button'
 import { GlyphChevron } from '@/shared/components/glyph'
+import { MetaBadge } from '@/shared/components/meta-badge'
 import { ResultPanel } from '@/shared/components/result-panel'
 import { StarRating } from '@/shared/components/star-rating'
 import type { TaskOutcome } from '@/domain/task/challenge'
@@ -20,11 +21,13 @@ const BURST_DELAY_MS = 580
 export function CaptchaSuccessPanel({
   outcome,
   balance,
+  turboRewardEnabled,
   onNext,
   onExit,
 }: {
   outcome: TaskOutcome
   balance: number
+  turboRewardEnabled: boolean
   onNext: () => void
   onExit: () => void
 }) {
@@ -47,8 +50,11 @@ export function CaptchaSuccessPanel({
           rupiah={formatRupiah(creditsToRupiah(outcome.reward))}
           className="gap-4"
         >
-          <div ref={badgeRef}>
-            <StarRating stars={outcome.stars} size="lg" animated />
+          <div className="flex flex-col items-center gap-2">
+            <div ref={badgeRef}>
+              <StarRating stars={outcome.stars} size="lg" animated />
+            </div>
+            {turboRewardEnabled ? <MetaBadge tone="primary">Turbo Reward</MetaBadge> : null}
           </div>
         </ResultPanel>
       </div>

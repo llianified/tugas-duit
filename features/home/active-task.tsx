@@ -5,6 +5,7 @@ import { WatchAdToPlay } from '@/features/ads/watch-ad-to-play'
 import { DifficultyBadge } from '@/features/captcha/components/difficulty-badge'
 import { EnergyRecoverySheet } from '@/features/home/energy-recovery-sheet'
 import { InfoHint } from '@/shared/components/info-hint'
+import { MetaBadge } from '@/shared/components/meta-badge'
 import { TapAction, TapActionWaiting } from '@/shared/components/tap-action'
 import { hapticTap } from '@/shared/lib/haptic'
 import type { Challenge } from '@/domain/task/challenge'
@@ -169,11 +170,7 @@ function TaskHeading({
       <div className="flex items-center justify-between gap-3">
         <p className="home-tag flex min-w-0 items-center gap-1.5 truncate">
           <span>Tiket <span className="tabular-nums">{serialCode(serial)}</span></span>
-          {turboRewardEnabled ? (
-            <span className="rounded-full bg-primary px-1.5 py-1 text-[9px] leading-none tracking-wider text-primary-foreground">
-              Turbo
-            </span>
-          ) : null}
+          {turboRewardEnabled ? <MetaBadge tone="primary">Turbo</MetaBadge> : null}
         </p>
         <DifficultyBadge difficulty={difficulty} />
       </div>

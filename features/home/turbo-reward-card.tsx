@@ -9,6 +9,7 @@ interface TurboRewardCardProps {
   config: EconomyConfig
   rewardPoolCredits: number | null
   rewardPoolMax: number | null
+  rewardPoolRegenCredits: number | null
   rewardPoolSecondsToNext: number | null
 }
 
@@ -22,12 +23,14 @@ export function TurboRewardCard({
   config,
   rewardPoolCredits,
   rewardPoolMax,
+  rewardPoolRegenCredits,
   rewardPoolSecondsToNext,
 }: TurboRewardCardProps) {
   const rewardValues = REWARD_ROWS.flatMap((row) => row.keys.map((key) => config[key]))
   const maxRewardCredits = Math.max(...rewardValues)
   const maxRewardIdr = maxRewardCredits * config.creditValueIdr
-  const regenIdr = config.rewardPoolRegenCredits * config.creditValueIdr
+  const regenCredits = rewardPoolRegenCredits ?? config.rewardPoolRegenCredits
+  const regenIdr = regenCredits * config.creditValueIdr
   const poolCurrent = rewardPoolCredits ?? 0
   const poolMax = rewardPoolMax ?? Math.floor(config.rewardPoolCapIdr / config.creditValueIdr)
   const poolFull = rewardPoolCredits !== null && poolCurrent >= poolMax
@@ -60,8 +63,8 @@ export function TurboRewardCard({
             </span>
           </span>
           <span className="rounded-lg bg-muted px-2.5 py-2">
-            <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Isi ulang berikutnya
+            <span className="block truncate text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Isi ulang +{formatRupiah(regenIdr)}
             </span>
             <span className="mt-0.5 block text-sm font-bold tabular-nums text-foreground">
               {poolFull

@@ -7,7 +7,7 @@ import { RecentTransactions } from '@/features/home/recent-transactions'
 import { ChannelBonusCard } from '@/features/channel/channel-card'
 import { channelBonusReachable } from '@/features/channel/use-channel-bonus'
 import { PremiumCard } from '@/features/premium/components/premium-card'
-import { PremiumDialog } from '@/features/premium/components/premium-dialog'
+import { PremiumSheet } from '@/features/premium/components/premium-sheet'
 import { CardCarousel } from '@/shared/components/card-carousel'
 import type { Challenge, HistoryEntry } from '@/domain/task/challenge'
 import type { EnergyFill } from '@/domain/economy/energy'
@@ -151,7 +151,7 @@ export function HomeView({
       />
 
       {premium ? (
-        <PremiumDialog
+        <PremiumSheet
           open={premiumOpen}
           onOpenChange={setPremiumOpen}
           premium={premium}

@@ -1982,6 +1982,135 @@
   --stamp-accent-fg: var(--chip-fg-primary);
 }
 
+/* --- Perangko kecil: satu paket, satu keping ------------------------------
+   Bentuk yang sama dengan perangko di beranda, dikecilkan jadi sebesar keping
+   pilihan. Ini yang membuat langkah "pilih paket" tetap berbicara bahasa yang
+   sama dengan kartu yang membukanya: yang diketuk di beranda perangko, dan yang
+   dipilih di dalam lembarnya perangko juga — cuma berlembar tiga.
+
+   Tiga variabel yang diganti, bukan tiga aturan yang ditulis ulang. Gigi, mask,
+   bingkai cetak, dan bidang kertasnya tetap milik `.stamp`, jadi tiap perubahan
+   di sana ikut turun ke sini. Giginya dirapatkan sekali lagi (0.16rem, dari
+   0.28rem) karena pada keping selebar ~6rem gigi seukuran perangko penuh hanya
+   menyisakan empat lubang per tepi — dan empat lubang terbaca sebagai kartu
+   yang tepinya rusak, bukan sebagai gigi.
+
+   Yang menyatakan "keping ini yang dipilih" tintanya, bukan cincin di luarnya:
+   `mask` di `.stamp` memotong apa pun yang jatuh di luar bidang kertas, jadi
+   `box-shadow`, `outline`, dan `ring` semuanya lenyap di bentuk ini. Maka yang
+   dipakai justru hal yang memang milik perangko — kertas yang belum dipilih
+   TIDAK BERTINTA (aksennya jatuh ke abu netral), dan yang dipilih dapat tinta
+   emasnya plus bingkai cetak yang berubah dari putus-putus jadi utuh. Membaca
+   pilihannya jadi tidak bergantung pada satu warna saja: ada beda nada DAN beda
+   gaya garis. */
+.stamp-chip {
+  --stamp-tooth: 0.16rem;
+  --stamp-step: 0.5625rem;
+  --stamp-p: 0.625rem 0.4375rem;
+  align-items: center;
+  text-align: center;
+  gap: 0.25rem;
+}
+.stamp-chip[data-selected='false'] {
+  --stamp-accent: var(--muted-foreground);
+  --stamp-accent-fg: var(--muted-foreground);
+}
+.stamp-chip[data-selected='true'] {
+  --stamp-ink: color-mix(in oklab, var(--stamp-accent) 68%, transparent);
+}
+.stamp-chip[data-selected='true']::before {
+  border-style: solid;
+}
+
+/* ============================================================================
+   Lembar bawah
+   ============================================================================
+   Dialog yang duduk di tepi bawah layar, bukan di tengahnya. Bedanya bukan
+   selera: aplikasi ini dipakai satu tangan di layar 384px, dan dialog premium
+   adalah satu-satunya dialog di beranda yang isinya harus DIPILIH lalu DIBAYAR
+   — dua aksi yang keduanya berakhir di jempol. Dialog tengah menaruh tombol
+   bayarnya di tengah tinggi layar sementara jempolnya ada di bawah; lembar
+   bawah menaruh tombolnya persis di tempat jempol itu berhenti.
+
+   Sudut atasnya saja yang dibulatkan, dan tepi bawahnya menempel ke tepi layar:
+   lembar ini datang DARI bawah, jadi ia tidak punya tepi bawah. Tingginya
+   dibatasi 92dvh supaya scrim di atasnya selalu kelihatan — tanpa sisa itu ia
+   terbaca sebagai halaman baru, bukan sebagai lapisan di atas beranda. */
+.sheet-popup {
+  position: fixed;
+  z-index: 50;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  margin-inline: auto;
+  display: flex;
+  width: 100%;
+  max-width: 28rem;
+  max-height: min(92dvh, 46rem);
+  flex-direction: column;
+  overflow: hidden;
+  border-top-left-radius: 1.25rem;
+  border-top-right-radius: 1.25rem;
+  background-color: var(--card);
+  outline: none;
+  animation: sheet-in 280ms var(--ease-out-quart);
+}
+/* Keluarnya lebih cepat daripada masuknya, dan easing-nya dibalik: yang masuk
+   perlu terbaca sebagai benda yang naik, yang keluar cuma perlu pergi. */
+.sheet-popup[data-ending-style] {
+  animation: sheet-out 180ms ease-in forwards;
+}
+@keyframes sheet-in {
+  from {
+    translate: 0 100%;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+@keyframes sheet-out {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 100%;
+  }
+}
+/* Bukan `animation: none`: base-ui menunggu `animationend` sebelum melepas
+   popup-nya dari DOM, jadi animasi yang dihapus total membuat lembarnya
+   tersangkut terbuka. Durasinya dipendekkan sampai tak terlihat, bukan dimatikan. */
+@media (prefers-reduced-motion: reduce) {
+  .sheet-popup,
+  .sheet-popup[data-ending-style] {
+    animation-duration: 1ms;
+  }
+}
+
+/* Pegangan di tepi atas. Tidak bisa ditarik — dan itu disengaja: ia penanda
+   arah, bukan kontrol. Yang diberitahukannya cuma satu hal, bahwa benda ini
+   datang dari bawah dan pergi ke bawah, dan itu yang membuat tombol tutup di
+   sebelahnya tidak jadi satu-satunya jalan keluar yang kelihatan. */
+.sheet-grip {
+  flex: none;
+  width: 2.25rem;
+  height: 0.25rem;
+  margin: 0.5rem auto 0;
+  border-radius: 9999px;
+  background-color: color-mix(in oklab, var(--muted-foreground) 45%, transparent);
+}
+
+/* Kaki lembar: bidang yang menahan satu tombol bayar. Kertasnya sendiri, bukan
+   bagian dari isi yang men-scroll — harga yang mau dibayar tidak boleh ikut
+   hilang ke atas saat daftar keuntungannya digulir. `env(safe-area-inset-bottom)`
+   yang menjaganya tetap di atas garis geser iPhone. */
+.sheet-foot {
+  flex: none;
+  border-top: 1px solid var(--border);
+  padding: 0.75rem var(--content-px)
+    calc(0.75rem + max(0px, env(safe-area-inset-bottom)));
+  background-color: var(--card);
+}
+
 /* --- Cap "dicap": perangko yang habis dipakai ------------------------------ Ini yang menggantikan sobekan kupon. Perangko tidak bisa disobek tanpa berhenti terbaca sebagai perangko, tapi ia punya cara sendiri untuk habis: DICAP. Capnya ditekankan ke kertas, ditahan sebentar supaya terbaca, lalu kertasnya pergi — dan yang tertinggal di beranda adalah kartu berikutnya di carousel. Bahasa ini bukan bahasa baru di halaman ini: premium yang aktif memakai cap pos yang sama, cuma di sana capnya sudah kering sejak kartunya digambar. Dipasang HANYA di klaim, bukan di "Join". Membuka channel di tab lain tidak menghabiskan apa pun — tabnya bisa ditutup dan bonusnya masih ada — sedangkan klaim satu-satunya langkah yang tidak bisa diulang. Durasinya datang dari `--stamp-ms` yang dipasang komponen, seperti `--tear-ms` di karcis: penyegaran sesi ditahan selama itu, karena data barulah yang melepas kartu ini dari beranda. Kalau tidak ditahan, capnya terpotong di frame pertama — dan dengan satu variabel, angka di JS dan CSS tak bisa berbeda. */
 .stamp[data-stamping='true'] {
   /* Kartu sedang pergi: "Join" dan "Klaim" tidak boleh bisa ditekan lagi di tengah cap. */

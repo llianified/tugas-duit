@@ -6,7 +6,8 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/server/platform/db', () => ({ query: mocks.query }))
-vi.mock('@/server/platform/env', () => ({ env: { webhookSecret: 'secret-uji' } }))
+const envMock = vi.hoisted(() => ({ webhookSecretOrNull: 'secret-uji' as string | null }))
+vi.mock('@/server/platform/env', () => ({ env: envMock }))
 vi.mock('@/server/integrations/telegram', () => ({
   escapeTelegramHtml: (value: string) => value,
   openAppMarkup: vi.fn(() => ({ inline_keyboard: [] })),
@@ -27,6 +28,27 @@ describe('POST /api/telegram/webhook', () => {
 
   it('menolak request tanpa secret Telegram yang tepat', async () => {
     const response = await POST(request({ message: { text: '/start' } }, 'salah'))
+
+    expect(response.status).toBe(401)
+    expect(mocks.query).not.toHaveBeenCalled()
+  })
+
+  /** `env.webhookSecret` MELEMPAR saat env-nya kosong, dan lemparnya terjadi sebelum `try` di route ini — jadi env yang belum diset dulu menjadi 500, status yang justru membuat Telegram mengulang kirim tanpa henti. Tanpa secret, jawabannya harus 401: menolak semua orang, bukan membuka diri. Bentuk yang sama dengan `CRON_SECRET` di `app/api/cron/maintenance`. */
+  it('menolak, bukan melempar, saat TELEGRAM_WEBHOOK_SECRET belum diset', async () => {
+    envMock.webhookSecretOrNull = null
+    try {
+      const response = await POST(request({ message: { chat: { id: 42 }, text: '/start' } }))
+
+      expect(response.status).toBe(401)
+      expect(mocks.query).not.toHaveBeenCalled()
+      expect(mocks.sendTelegramMessage).not.toHaveBeenCalled()
+    } finally {
+      envMock.webhookSecretOrNull = 'secret-uji'
+    }
+  })
+
+  it('menolak secret yang panjangnya berbeda tanpa melempar', async () => {
+    const response = await POST(request({ message: { text: '/start' } }, 'x'))
 
     expect(response.status).toBe(401)
     expect(mocks.query).not.toHaveBeenCalled()

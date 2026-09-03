@@ -265,3 +265,49 @@ describe('ENG-9 — pengiriman dan penanda sekali kirim', () => {
     expect(Number(sent[0].count)).toBe(0)
   })
 })
+
+describe('ENG-10 — kebijakan pemuatan config sama dengan jalur request', () => {
+  /** `loadEconomyConfig` (jalur request) memakai `fillMissing: true`, dan itu jaring pengaman yang sengaja dipasang untuk jendela "kode baru sudah live, migrasinya belum jalan". Pemuat lokal di `engagement.ts` sempat tidak memakainya, jadi di jendela yang sama aplikasi tetap melayani dengan nilai bawaan sementara SELURUH pesan bot berhenti — dan berhentinya diam, karena `runMaintenance` menerima `{}` sebagai hasil yang sah, bukan sebagai error. */
+  it('memakai nilai bawaan untuk key yang belum ada di baris tersimpan, bukan berhenti mengirim', async () => {
+    const { query } = await import('../platform/db')
+    const { generateReferralCode } = await import('../economy/referral')
+    const { runEngagementNotifications } = await import('./engagement')
+
+    const suffix = Math.floor(Math.random() * 1_000_000_000)
+    const users = await query<{ id: string }>(
+      `insert into users(telegram_id,first_name,referral_code,energy,energy_updated_at,reward_pool)
+       values($1,'Config',$2,$3,now()-interval '2 days',0) returning id`,
+      [630_000_000_000_000 + suffix, generateReferralCode(), DEFAULT_ECONOMY_CONFIG.maxEnergy],
+    )
+    const userId = Number(users[0].id)
+    const challenge = await query<{ id: string }>(
+      `insert into challenges(user_id,type,difficulty,payload,answer_hash,max_reward,expires_at,submitted_at,solved)
+       values($1,'text','Easy','{}','\\x00',1,now(),now(),true) returning id`,
+      [userId],
+    )
+    await query(
+      `insert into task_completions(user_id,challenge_id,type,difficulty,elapsed_ms,stars,reward,completed_at)
+       values($1,$2,'text','Easy',1000,3,1,now()-interval '2 days')`,
+      [userId, challenge[0].id],
+    )
+
+    // Baris config kehilangan satu key, persis seperti deploy yang mendahului migrasinya.
+    await query("update economy_config set config = config - 'missionAdsReward' where id=1")
+    try {
+      await runEngagementNotifications({ now: new Date('2026-08-24T05:00:00Z') })
+
+      const sent = await query<{ kind: string }>(
+        'select kind from bot_notifications where user_id=$1',
+        [userId],
+      )
+      expect(sent.map((row) => row.kind)).toEqual(['energy_full'])
+    } finally {
+      await query(
+        `update economy_config
+            set config = config || jsonb_build_object('missionAdsReward', $1::int)
+          where id=1`,
+        [DEFAULT_ECONOMY_CONFIG.missionAdsReward],
+      )
+    }
+  })
+})

@@ -1,5 +1,6 @@
 import { query } from '../platform/db'
 import { requireAdmin } from '../auth/session'
+import { likeEscaped } from './like'
 
 /** Pembacaan operasional yang tidak muat di halaman lain: tagihan premium, akun bersinyal, dan riwayat penarikan yang sudah selesai. Ketiganya jawaban atas pertanyaan yang sebelumnya hanya bisa dijawab lewat SQL manual. Antrean payout hanya menampilkan `processing`, jadi begitu satu pengajuan diputuskan ia hilang dari pandangan; dashboard menghitung akun bersinyal tanpa menyebut siapa; dan pembayaran premium tidak punya permukaan sama sekali walau ia satu-satunya pemasukan langsung dari user. */
 
@@ -159,9 +160,9 @@ export async function readPayoutHistory(input: {
       where ($1::text = 'semua' or w.state = $1::withdrawal_state)
         and (
           $2::text = ''
-          or w.account_number like '%' || $2::text || '%'
-          or u.first_name ilike '%' || $2::text || '%'
-          or w.account_name ilike '%' || $2::text || '%'
+          or w.account_number like '%' || ${likeEscaped('$2::text')} || '%'
+          or u.first_name ilike '%' || ${likeEscaped('$2::text')} || '%'
+          or w.account_name ilike '%' || ${likeEscaped('$2::text')} || '%'
         )
       order by w.requested_at desc
       limit $3 offset $4`,

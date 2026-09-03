@@ -8,6 +8,7 @@ import {
   firstWithdrawalEstimateDays,
   withdrawalMinimumCredits,
 } from '@/domain/economy/economy'
+import type { WithdrawalGatingReason } from '@/domain/economy/withdrawal'
 import { formatCredits, formatHistoryTime, formatRupiah } from '@/shared/lib/format'
 
 export function NotEligibleNote({
@@ -19,7 +20,7 @@ export function NotEligibleNote({
   activeDays = 0,
   requiredActiveDays = 7,
 }: {
-  reason?: 'balance' | 'days' | 'referrals' | 'cooldown' | 'loading'
+  reason?: WithdrawalGatingReason
   activeReferralCount?: number
   requiredActiveReferrals?: number
   cooldownEndsAt?: number | null
@@ -28,15 +29,17 @@ export function NotEligibleNote({
   requiredActiveDays?: number
 }) {
   const title =
-    reason === 'balance'
-      ? 'Belum bisa ditarik'
-      : reason === 'loading'
-        ? 'Lagi ngecek syaratnya'
-        : reason === 'days'
-          ? 'Hari aktifnya belum cukup'
-          : reason === 'referrals'
-            ? 'Referral belum cukup'
-            : 'Masih cooldown'
+    reason === 'processing'
+      ? 'Penarikan kamu masih diproses'
+      : reason === 'balance'
+        ? 'Belum bisa ditarik'
+        : reason === 'loading'
+          ? 'Lagi ngecek syaratnya'
+          : reason === 'days'
+            ? 'Hari aktifnya belum cukup'
+            : reason === 'referrals'
+              ? 'Referral belum cukup'
+              : 'Masih cooldown'
 
   return (
     <Surface as="section" aria-label={title}>
@@ -48,7 +51,13 @@ export function NotEligibleNote({
       </div>
 
       <p className="stack-gap-t text-xs leading-relaxed text-muted-foreground text-pretty">
-        {reason === 'balance' ? (
+        {reason === 'processing' ? (
+          <>
+            Pengajuan kamu yang sebelumnya belum kami putuskan, jadi pengajuan baru belum bisa
+            masuk. Saldonya lagi ditahan buat penarikan itu dan bakal balik utuh kalau
+            pengajuannya ditolak. Kami kabarin lewat bot begitu ada hasilnya.
+          </>
+        ) : reason === 'balance' ? (
           <>
             Nabung dulu sampai {formatRupiah(creditsToRupiah(withdrawalMinimumCredits()))} ya, baru
             penarikannya kebuka. Dengan laju isi ulang stok reward sekarang, penarikan pertama

@@ -1,4 +1,5 @@
 import { readAdminActions, type AdminActionEntry } from './admin-grants'
+import { likeEscaped } from './like'
 import { query, transaction } from '../platform/db'
 import { env } from '../platform/env'
 import { requireAdmin } from '../auth/session'
@@ -108,8 +109,8 @@ export async function searchAdminUsers(term: string): Promise<AdminUserSummary[]
      from users
      where ($2::uuid is not null and public_id=$2::uuid)
         or ($3::bigint is not null and telegram_id=$3::bigint)
-        or username ilike '%' || replace(replace(replace($1,'\\','\\\\'),'%','\\%'),'_','\\_') || '%'
-        or first_name ilike '%' || replace(replace(replace($1,'\\','\\\\'),'%','\\%'),'_','\\_') || '%'
+        or username ilike '%' || ${likeEscaped('$1')} || '%'
+        or first_name ilike '%' || ${likeEscaped('$1')} || '%'
         or upper(referral_code)=upper($1)
      order by created_at desc
      limit ${SEARCH_LIMIT}`,

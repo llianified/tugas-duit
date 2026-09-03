@@ -1,5 +1,6 @@
 import { query } from '@/server/platform/db'
 import { env } from '@/server/platform/env'
+import { matchesSecret } from '@/server/platform/secret'
 import { escapeTelegramHtml, openAppMarkup, sendTelegramMessage } from '@/server/integrations/telegram'
 
 export const runtime = 'nodejs'
@@ -66,8 +67,11 @@ async function wasMuted(telegramId: string): Promise<boolean> {
   return Boolean(rows[0]?.notifications_muted_at)
 }
 
+/** Satu pintu, satu cara membandingkan rahasia: `matchesSecret` sama seperti `CRON_SECRET` di `app/api/cron/maintenance`. Perbandingan `!==` yang dipakai sebelumnya bocor lewat waktu, dan membaca `env.webhookSecret` (yang MELEMPAR saat env-nya kosong) di luar `try` mengubah env yang belum diset menjadi 500 — status yang justru membuat Telegram mengulang kirim tanpa henti. Tanpa secret, route ini menolak semua orang, bukan membuka diri. */
 export async function POST(request: Request) {
-  if (request.headers.get('x-telegram-bot-api-secret-token') !== env.webhookSecret) {
+  const expected = env.webhookSecretOrNull
+  const supplied = request.headers.get('x-telegram-bot-api-secret-token')
+  if (!expected || !supplied || !matchesSecret(supplied, expected)) {
     return new Response(null, { status: 401 })
   }
 

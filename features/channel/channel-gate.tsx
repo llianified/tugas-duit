@@ -8,12 +8,15 @@ import { userFacingMessage } from '@/shell/api-client'
 import { useToast } from '@/shell/toast'
 import { verifyChannelMembership, type ChannelGateState } from '@/shell/session-api'
 
+/** Gerbangnya menahan cara MENGHASILKAN credit, bukan cara mengambil yang sudah terkumpul. `channelGateEnabled` di panel menjanjikan itu apa adanya — "penarikan saldo tidak pernah ikut diblokir" — dan `docs/keputusan-desain.md` memberi alasannya: memblokirnya menyandera saldo yang terkumpul SEBELUM gerbangnya dinyalakan, dan itu tidak menutup celah apa pun karena penarikan tidak mencetak credit. Server memang tidak pernah menjaganya (`channelGateBlocks` cuma dipasang di `POST /api/task/start`), tapi klien sempat mengganti seluruh pohon aplikasi dengan layar ini — termasuk dialog penarikannya — sehingga janji itu tidak pernah benar-benar berlaku. `onWithdraw` adalah jalan keluarnya; `null` saat memang tidak ada yang bisa ditarik maupun ditengok. */
 export function ChannelGate({
   gate,
   onVerified,
+  onWithdraw,
 }: {
   gate: ChannelGateState
   onVerified: () => Promise<unknown>
+  onWithdraw: (() => void) | null
 }) {
   const [checking, setChecking] = useState(false)
   const showError = useToast()
@@ -49,6 +52,7 @@ export function ChannelGate({
       <p className="stack-gap-t max-w-[17rem] text-sm leading-relaxed text-pretty text-muted-foreground">
         Tugas Duit cuma bisa dipakai anggota channel Telegram kami. Semua pengumuman
         pembayaran dan perubahan aturan diumumkan di sana.
+        {onWithdraw ? ' Saldo yang udah kamu kumpulin tetap bisa ditarik dari sini.' : ''}
       </p>
 
       <div className="stack-gap-t flex w-full max-w-xs flex-col gap-2">
@@ -63,6 +67,11 @@ export function ChannelGate({
         <ActionButton variant="ghost" onClick={verify} disabled={checking}>
           {checking ? 'Mengecek…' : 'Saya sudah join'}
         </ActionButton>
+        {onWithdraw ? (
+          <ActionButton variant="quiet" onClick={onWithdraw}>
+            Tarik dana
+          </ActionButton>
+        ) : null}
       </div>
     </section>
   )

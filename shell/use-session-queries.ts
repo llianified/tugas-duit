@@ -16,8 +16,8 @@ import {
   type WithdrawalsResponse,
 } from '@/shell/session-api'
 
-/** Jeda polling umpan aktivitas. Lima belas detik cukup terasa langsung untuk umpan sosial tanpa jadi beban: umpannya publik dan sama untuk semua orang, jadi tiap user yang membuka tab ini menambah satu permintaan per interval. */
-const ACTIVITY_POLL_MS = 15_000
+/** Jeda polling umpan aktivitas, dan angkanya terikat plafon `/api/activity` — bukan selera. Lima belas detik berarti 240 permintaan per jam melawan plafon yang saat itu 120, jadi user yang membuka tab Peringkat lebih dari setengah jam mendapat 429 dan umpannya berhenti hidup tanpa pesan apa pun. Tiga puluh detik = 120 permintaan per jam, dan plafon route-nya dinaikkan ke 200 supaya `revalidateOnFocus` serta pemasangan ulang komponen punya sisa. Menaikkan salah satunya tanpa yang lain mengembalikan bug yang sama; `tests/rate-budget.test.ts` yang menahannya. */
+const ACTIVITY_POLL_MS = 30_000
 
 export function useSessionQueries(view: AppView) {
   const {
@@ -50,9 +50,9 @@ export function useSessionQueries(view: AppView) {
     authenticated ? '/api/stats' : null,
     fetchJson,
   )
-  // Umpan aktivitas global milik semua user, jadi ia bergerak walau user ini diam — | polling-nya yang bikin tab Aktivitas terasa hidup, bukan aksi user sendiri. | Interval hanya jalan selagi tab papan peringkat kebuka, dan `refreshWhenHidden` | dibiarkan mati supaya app yang di-background tidak menembaki API tanpa penonton.
+  // Umpan aktivitas global milik semua user, jadi ia bergerak walau user ini diam — | polling-nya yang bikin tab Aktivitas terasa hidup, bukan aksi user sendiri. | Interval hanya jalan selagi tab papan peringkat kebuka, dan `refreshWhenHidden` | dibiarkan mati supaya app yang di-background tidak menembaki API tanpa penonton. | `leaderboardEnabled()` ikut menjaganya, sama seperti papan di bawah: umpan ini | bagian dari view Peringkat, dan tanpa penjaga itu ia tetap dipoll tiap interval | di belakang layar "segera hadir" — permintaan berkala untuk fitur yang sedang | dimatikan, dan sejak route-nya ikut dijaga ia cuma memanen 404.
   const { data: activityData } = useSWR<ActivityResponse>(
-    authenticated && view === 'leaderboard' ? '/api/activity' : null,
+    leaderboardEnabled() && authenticated && view === 'leaderboard' ? '/api/activity' : null,
     fetchJson,
     {
       revalidateOnFocus: true,

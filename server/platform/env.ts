@@ -19,6 +19,8 @@ export const env = {
   get botUsername() { return required('TELEGRAM_BOT_USERNAME') },
   get botUsernameOrNull() { return process.env.TELEGRAM_BOT_USERNAME ?? null },
   get webhookSecret() { return required('TELEGRAM_WEBHOOK_SECRET') },
+  /** Bentuk yang tidak melempar, dipakai webhook Telegram. Membaca `webhookSecret` di sana berarti env yang belum diset menjadi 500 bertumpuk — Telegram mengulang kirim untuk 5xx — padahal jawaban yang benar adalah menolak dengan 401 seperti `CRON_SECRET` di `app/api/cron/maintenance`. */
+  get webhookSecretOrNull() { return process.env.TELEGRAM_WEBHOOK_SECRET?.trim() || null },
   get appOrigin() { return required('APP_ORIGIN') },
   get appOriginOrNull() { return process.env.APP_ORIGIN ?? null },
   get adminPasswordOrNull() { return process.env.ADMIN_PASSWORD || null },

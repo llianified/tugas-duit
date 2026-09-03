@@ -17,7 +17,11 @@ import { useToast } from '@/shell/toast'
 import { formatCredits, formatLongCountdown, formatRupiah } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 
-const POLL_MS = 6_000
+/** Jeda polling status pembayaran, terikat plafon `/api/session`: 100 permintaan per jam per user, dan SELURUH aplikasi memakai jatah yang sama. Bentuk sebelumnya memoll tiap 6 detik tanpa henti — 600 permintaan per jam, jadi plafonnya habis dalam sepuluh menit dan yang ikut mati bukan cuma dialog ini melainkan setiap penyegaran saldo, energi, dan stok reward di seluruh app, untuk user yang justru baru saja membayar. Kegagalannya pun diam: SWR menahan data lama sehingga `sessionFailed` tidak pernah menyala. Yang sebenarnya menangkap pembayaran bukan polling rapat melainkan `revalidateOnFocus` pada SWR sesi — user membayar di aplikasi banknya lalu kembali, dan kembalinya itu sudah memicu satu penyegaran. */
+const POLL_MS = 15_000
+
+/** Batas keras permintaan yang boleh dipakai satu dialog: 40 × 15 detik = sepuluh menit polling, dan paling banyak 40 dari 100 jatah per jam. Sesudahnya polling berhenti sendiri — statusnya masih tersusul lewat fokus, buka-ulang dialog, atau `startPremiumCheckout` yang menanyakan gateway langsung. */
+const POLL_BUDGET = 40
 
 export function PremiumDialog({
   open,
@@ -82,7 +86,15 @@ function PremiumDialogBody({
 
   useEffect(() => {
     if (!invoice || premium.active) return
+    let spent = 0
     const timer = setInterval(() => {
+      // Tagihan yang sudah lewat umurnya tidak akan berubah jadi lunas lewat polling,
+      // dan anggarannya habis berarti berhenti — bukan melambat.
+      if (spent >= POLL_BUDGET || Date.now() >= invoice.expiresAt) {
+        clearInterval(timer)
+        return
+      }
+      spent += 1
       void onRefresh()
     }, POLL_MS)
     return () => clearInterval(timer)

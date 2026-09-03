@@ -114,15 +114,16 @@ export async function startChallenge(
     return { ok: false, reason: 'not_startable', energy: await readEnergy(userId) }
 
   return transaction(async (tx) => {
-    const locked = await tx.query<Row>(
-      'select id,type,difficulty,payload,issued_at,started_at,expires_at,submitted_at,ad_view_id from challenges where id=$1 and user_id=$2 for update',
+    const locked = await tx.query<Row & { now: Date }>(
+      'select id,type,difficulty,payload,issued_at,started_at,expires_at,submitted_at,ad_view_id,now() as now from challenges where id=$1 and user_id=$2 for update',
       [id, userId],
     )
     const existing = locked.rows[0]
+    /** Jam acuannya `now()` dari Postgres, bukan `new Date()` proses ini. `expires_at` ditulis database (`now()+interval`) dan `elapsed_ms` juga dihitung database, jadi membandingkannya dengan jam lambda memasukkan selisih jam kedua mesin tepat ke titik yang menentukan satu task dibayar atau ongkosnya dikembalikan. Bentuknya mengikuti `readEnergy`, `readRewardPool`, dan `claimAdTicket`, yang semuanya sudah membawa `now() as now` sendiri. */
     const startable =
       existing &&
       !existing.submitted_at &&
-      (existing.started_at === null || existing.expires_at > new Date())
+      (existing.started_at === null || existing.expires_at > existing.now)
     if (!startable)
       return {
         ok: false as const,
@@ -197,8 +198,8 @@ export async function submitAnswer(
   if (!id || !UUID_PATTERN.test(id)) return { ok: false, reason: 'not_found' }
   if (typeof input !== 'string' || input.length > 32) return { ok: false, reason: 'not_found' }
   return transaction(async (tx) => {
-    const result = await tx.query<Row>(
-      'select id,type,difficulty,payload,answer_hash,max_reward,attempts,submitted_at,issued_at,started_at,expires_at from challenges where id=$1 and user_id=$2 for update',
+    const result = await tx.query<Row & { now: Date }>(
+      'select id,type,difficulty,payload,answer_hash,max_reward,attempts,submitted_at,issued_at,started_at,expires_at,now() as now from challenges where id=$1 and user_id=$2 for update',
       [id, userId],
     )
     const c = result.rows[0]
@@ -208,7 +209,7 @@ export async function submitAnswer(
       await recordSubmitWithoutStart(tx, userId, { challengeId: id })
       return { ok: false, reason: 'not_started' }
     }
-    if (c.expires_at <= new Date()) {
+    if (c.expires_at <= c.now) {
       await tx.query('update challenges set submitted_at=now() where id=$1', [id])
       if (Number(c.attempts) === 0) await refundEntry(tx, userId, id)
       return { ok: false, reason: 'expired' }

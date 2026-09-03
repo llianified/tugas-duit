@@ -12,6 +12,8 @@ import { ProgressionBadges } from '@/features/home/progression-badges'
 import { NavPill } from '@/navigation/nav-pill'
 import { AppFrame } from '@/shell/app-frame'
 import { AppViewRouter } from '@/shell/app-view-router'
+// INSTRUMENTASI SEMENTARA — hapus bersama `shell/in-app-ads-probe.ts` setelah penyebab terbukti.
+import { startInAppAdsProbe } from '@/shell/in-app-ads-probe'
 import { ToastProvider, useToast } from '@/shell/toast'
 import { useTelegramViewport } from '@/shell/telegram-viewport'
 import { inAppZoneId, useInAppAds } from '@/shell/use-in-app-ads'
@@ -29,6 +31,11 @@ export function AppShell() {
 
 function AppShellInner() {
   useTelegramViewport()
+  // INSTRUMENTASI SEMENTARA — didaftarkan paling awal supaya `show_<zone>` sudah terbungkus
+  // sebelum effect `useInAppAds` di bawah memanggilnya. Hanya membaca dan mencatat.
+  useEffect(() => {
+    startInAppAdsProbe()
+  }, [])
   const showError = useToast()
   const session = useRewardSession({ onError: showError })
   const [liveTaskReward, setLiveTaskReward] = useState<number | null>(null)

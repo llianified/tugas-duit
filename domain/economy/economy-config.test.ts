@@ -41,13 +41,14 @@ const HISTORIC: EconomyConfig = {
   premiumPrice1Idr: 19_900, premiumPrice2Idr: 34_900, premiumPrice3Idr: 44_900,
   premiumMaxEnergy: 10, premiumEnergyRegenMinutes: 25, premiumPoolCapBonus: 15,
   premiumMaxTasksPerDay: 1_000, premiumWithdrawalCooldownDays: 3,
+  turboRewardEnabled: 1,
 }
 
 const withField = (patch: Partial<EconomyConfig>) => ({ ...DEFAULT_ECONOMY_CONFIG, ...patch })
 
 const CONFIG_WITHOUT_NEW_KEY = (() => {
   const config: Record<string, number> = { ...DEFAULT_ECONOMY_CONFIG }
-  delete config.withdrawalMinActiveReferrals
+  delete config.turboRewardEnabled
   return config
 })()
 
@@ -224,6 +225,12 @@ describe('invarian setelan panel yang baru dipindah dari kode', () => {
     expect(validateEconomyConfig(withField({ leaderboardEnabled: 0 })).ok).toBe(true)
   })
 
+  it('event Turbo Reward hanya menerima 0 atau 1', () => {
+    expect(validateEconomyConfig(withField({ turboRewardEnabled: 2 })).ok).toBe(false)
+    expect(validateEconomyConfig(withField({ turboRewardEnabled: -1 })).ok).toBe(false)
+    expect(validateEconomyConfig(withField({ turboRewardEnabled: 0 })).ok).toBe(true)
+  })
+
   it('hari aktif minimum tidak boleh nol — itu mencabut gerbang waktunya sama sekali', () => {
     expect(validateEconomyConfig(withField({ withdrawalMinActiveDays: 0 })).ok).toBe(false)
   })
@@ -235,7 +242,7 @@ describe('kompatibilitas konfigurasi tersimpan', () => {
 
     expect(result.ok).toBe(false)
     if (result.ok) return
-    expect(result.errors.withdrawalMinActiveReferrals).toBeTruthy()
+    expect(result.errors.turboRewardEnabled).toBeTruthy()
   })
 
   it('mengisi key baru dari nilai bawaan ketika membaca database lama', () => {
@@ -243,9 +250,7 @@ describe('kompatibilitas konfigurasi tersimpan', () => {
 
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.config.withdrawalMinActiveReferrals).toBe(
-      DEFAULT_ECONOMY_CONFIG.withdrawalMinActiveReferrals,
-    )
+    expect(result.config.turboRewardEnabled).toBe(DEFAULT_ECONOMY_CONFIG.turboRewardEnabled)
     expect(result.config.creditValueIdr).toBe(DEFAULT_ECONOMY_CONFIG.creditValueIdr)
   })
 

@@ -29,6 +29,7 @@ interface CaptchaViewProps {
   onExit: () => void
   onError: (message: string) => void
   onRewardChange: (reward: number) => void
+  turboRewardEnabled: boolean
 }
 
 export function CaptchaView({
@@ -41,6 +42,7 @@ export function CaptchaView({
   onExit,
   onError,
   onRewardChange,
+  turboRewardEnabled,
 }: CaptchaViewProps) {
   const attempt = useCaptchaAttempt(challenge, onSuccess, onError, elapsedMs)
   const inputLocked = attempt.verifying || attempt.attemptsExhausted
@@ -83,7 +85,13 @@ export function CaptchaView({
     return (
       <div className="view-min-h flex flex-col gap-3">
         <TopBar />
-        <CaptchaSuccessPanel outcome={attempt.outcome} balance={balance} onNext={onNext} onExit={onExit} />
+        <CaptchaSuccessPanel
+          outcome={attempt.outcome}
+          balance={balance}
+          turboRewardEnabled={turboRewardEnabled}
+          onNext={onNext}
+          onExit={onExit}
+        />
       </div>
     )
   }

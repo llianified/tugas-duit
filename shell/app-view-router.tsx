@@ -83,6 +83,7 @@ export function AppViewRouter({
         onExit={session.exitTask}
         onError={showError}
         onRewardChange={onTaskRewardChange}
+        turboRewardEnabled={session.economy.turboRewardEnabled === 1}
       />
     )
   }
@@ -177,7 +178,9 @@ export function AppViewRouter({
       energyMax={session.energyMax}
       energyFill={session.energyFill}
       rewardPoolCredits={session.rewardPoolCredits}
+      rewardPoolMax={session.rewardPoolMax}
       rewardPoolSecondsToNext={session.rewardPoolSecondsToNext}
+      economy={session.economy}
       adsEnabled={session.adsEnabled}
       adViewsLeft={session.adViewsLeft}
       adCooldownSecondsLeft={session.adCooldownSecondsLeft}

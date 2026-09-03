@@ -8,7 +8,9 @@ import { ChannelBonusCard } from '@/features/channel/channel-card'
 import { channelBonusReachable } from '@/features/channel/use-channel-bonus'
 import { PremiumCard } from '@/features/premium/components/premium-card'
 import { PremiumSheet } from '@/features/premium/components/premium-sheet'
+import { TurboRewardCard } from '@/features/home/turbo-reward-card'
 import { CardCarousel } from '@/shared/components/card-carousel'
+import type { EconomyConfig } from '@/domain/economy/economy-config'
 import type { Challenge, HistoryEntry } from '@/domain/task/challenge'
 import type { EnergyFill } from '@/domain/economy/energy'
 import type { ChannelBonusState, PremiumState } from '@/shell/session-api'
@@ -28,7 +30,9 @@ interface HomeViewProps {
   energyMax: number
   energyFill: EnergyFill
   rewardPoolCredits: number | null
+  rewardPoolMax: number | null
   rewardPoolSecondsToNext: number | null
+  economy: EconomyConfig
   adsEnabled: boolean
   adViewsLeft: number
   adCooldownSecondsLeft: number
@@ -57,7 +61,9 @@ export function HomeView({
   energyMax,
   energyFill,
   rewardPoolCredits,
+  rewardPoolMax,
   rewardPoolSecondsToNext,
+  economy,
   adsEnabled,
   adViewsLeft,
   adCooldownSecondsLeft,
@@ -110,9 +116,21 @@ export function HomeView({
           onWithdraw={() => setWithdrawOpen(true)}
         />
 
+        {economy.turboRewardEnabled === 1 ? (
+          <div className={`animate-view-in region-gap-t ${ENTER_STEP_CLASS[1]}`}>
+            <TurboRewardCard
+              config={economy}
+              rewardPoolCredits={rewardPoolCredits}
+              rewardPoolMax={rewardPoolMax}
+              rewardPoolSecondsToNext={rewardPoolSecondsToNext}
+            />
+          </div>
+        ) : null}
+
         <div className={`animate-view-in region-gap-t ${ENTER_STEP_CLASS[1]}`}>
           <ActiveTask
             task={task}
+            turboRewardEnabled={economy.turboRewardEnabled === 1}
             energy={energy}
             energyMax={energyMax}
             energyFill={energyFill}

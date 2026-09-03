@@ -24,7 +24,7 @@ export function WatchAdToPlay({
   passReady: boolean
   /** Sisa umur tiket, diproyeksikan klien dari `pass.expiresAt`. */
   passSecondsLeft: number | null
-  /** Ada task berbayar tiket yang belum ditutup; server pasti menolak tiket baru. */
+  /** Ada task atau ronde Arena berbayar tiket yang belum ditutup; server pasti menolak tiket baru. */
   entryOpen: boolean
   watching: boolean
   poolEmpty: boolean
@@ -63,7 +63,7 @@ export function WatchAdToPlay({
       />
     )
 
-  /** Tiket berikutnya baru boleh dibuka setelah task yang dibayar tiket sebelumnya ditutup. Dulu keadaan ini tidak terlihat sama sekali: tombolnya tetap tampak normal dan baru menolak lewat toast setelah diketuk. Jalan keluarnya ada tepat di sebelah kiri — tombol "Lanjutkan" pada task yang sama, dan melanjutkannya tidak menagih ongkos apa pun lagi. */
+  /** Tiket berikutnya baru boleh dibuka setelah ongkos masuk sebelumnya ditutup — task, atau ronde Arena yang juga dibayar pass. Dulu keadaan ini tidak terlihat sama sekali: tombolnya tetap tampak normal dan baru menolak lewat toast setelah diketuk. Untuk task, jalan keluarnya ada tepat di sebelah kiri — tombol "Lanjutkan" pada task yang sama, dan melanjutkannya tidak menagih ongkos apa pun lagi. */
   if (entryOpen)
     return (
       <TapActionWaiting

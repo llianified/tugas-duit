@@ -1,6 +1,7 @@
 import type { PoolClient } from 'pg'
 import {
   buildMissionProgress,
+  isMissionAvailable,
   isMissionKey,
   missionDefinition,
   type MissionCounts,
@@ -65,7 +66,8 @@ export async function claimMission(
   userId: number,
   key: string,
 ): Promise<MissionClaimResult> {
-  if (!isMissionKey(key)) return { ok: false, reason: 'unknown_mission' }
+  if (!isMissionKey(key) || !isMissionAvailable(key))
+    return { ok: false, reason: 'unknown_mission' }
   const mission = missionDefinition(key)
 
   return transaction(async (tx) => {

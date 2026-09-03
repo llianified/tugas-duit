@@ -1,7 +1,9 @@
 'use client'
 
 import { Dialog } from '@base-ui/react/dialog'
+import { creditsToRupiah } from '@/domain/economy/economy'
 import type { EconomyConfig } from '@/domain/economy/economy-config'
+import { baseRewardPoolCredits } from '@/domain/economy/reward-pool'
 import { GlyphBolt, GlyphChevron, GlyphCross } from '@/shared/components/glyph'
 import { formatCountdown, formatCredits, formatRupiah } from '@/shared/lib/format'
 
@@ -28,11 +30,11 @@ export function TurboRewardCard({
 }: TurboRewardCardProps) {
   const rewardValues = REWARD_ROWS.flatMap((row) => row.keys.map((key) => config[key]))
   const maxRewardCredits = Math.max(...rewardValues)
-  const maxRewardIdr = maxRewardCredits * config.creditValueIdr
+  const maxRewardIdr = creditsToRupiah(maxRewardCredits)
   const regenCredits = rewardPoolRegenCredits ?? config.rewardPoolRegenCredits
-  const regenIdr = regenCredits * config.creditValueIdr
+  const regenIdr = creditsToRupiah(regenCredits)
   const poolCurrent = rewardPoolCredits ?? 0
-  const poolMax = rewardPoolMax ?? Math.floor(config.rewardPoolCapIdr / config.creditValueIdr)
+  const poolMax = rewardPoolMax ?? baseRewardPoolCredits()
   const poolFull = rewardPoolCredits !== null && poolCurrent >= poolMax
 
   return (
@@ -142,7 +144,7 @@ export function TurboRewardCard({
                         </th>
                         {row.keys.map((key) => (
                           <td key={key} className="px-2 py-2.5 text-right font-medium tabular-nums text-foreground">
-                            {formatRupiah(config[key] * config.creditValueIdr)}
+                            {formatRupiah(creditsToRupiah(config[key]))}
                           </td>
                         ))}
                       </tr>

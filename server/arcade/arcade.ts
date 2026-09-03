@@ -1,5 +1,6 @@
 import type { PoolClient } from 'pg'
 import {
+  ARCADE_OPEN_PLAY_TTL_MINUTES as OPEN_PLAY_TTL_MINUTES,
   arcadeAdGated,
   arcadeCooldownSecondsLeft,
   arcadeCooldownUntil,
@@ -27,9 +28,6 @@ import { transaction } from '../platform/db'
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
 const PG_UNIQUE_VIOLATION = '23505'
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-/** Umur satu main yang dibuka tapi tidak pernah disetel. Operasional, bukan ekonomi: ia tidak menggeser satu rupiah pun, hanya membebaskan slot `arcade_plays_one_open` supaya app yang tertutup di tengah ronde tidak mengunci Arena user itu selamanya. Dipilih longgar karena ronde terpanjang yang bisa disetel panel adalah `arcadeMatchSeconds` maksimum 300 detik. */
-const OPEN_PLAY_TTL_MINUTES = 15
 
 /** Main yang ditinggal dikembalikan pass iklannya, tidak dihanguskan. Iklannya sudah benar-benar ditonton, dan yang menahan penyalahgunaan bukan pass itu melainkan jatah harian — barisnya tetap terhitung di `plays_today` walau state-nya berubah jadi 'expired', jadi meninggalkan ronde berulang kali tetap menghabiskan jatah orang itu sendiri. `restoreAdPass` sendiri menolak kalau user sudah memegang pass lain yang siap, jadi stok pass tidak bisa ditumpuk lewat jalur ini. */
 async function expireStalePlays(tx: PoolClient, userId: number): Promise<void> {
@@ -267,9 +265,10 @@ export async function settleArcadePlay(userId: number, input: SettleInput): Prom
       game: string
       state: string
       opened_at: Date
+      ad_view_id: string | null
       now: Date
     }>(
-      `select id, game, state, opened_at, now() as now from arcade_plays
+      `select id, game, state, opened_at, ad_view_id, now() as now from arcade_plays
         where id=$1 and user_id=$2 for update`,
       [input.playId, userId],
     )
@@ -277,8 +276,10 @@ export async function settleArcadePlay(userId: number, input: SettleInput): Prom
     if (!row || row.state !== 'open') return { ok: false as const, reason: 'unknown_play' as const }
 
     const now = row.now.getTime()
+    /** Passnya dikembalikan di sini juga, persis seperti `expireStalePlays`. Ronde yang lewat TTL bisa ditutup dari dua arah — sapuan saat Arena dibuka lagi, atau penyetelan yang datang terlambat dari app yang sempat di-background — dan begitu barisnya keluar dari state 'open' sapuan tidak akan pernah bisa menyusul. Tanpa baris ini jalur kedua menghanguskan iklan yang sudah benar-benar ditonton, permanen. */
     if (now - row.opened_at.getTime() > OPEN_PLAY_TTL_MINUTES * 60_000) {
       await tx.query("update arcade_plays set state='expired' where id=$1", [row.id])
+      if (row.ad_view_id !== null) await restoreAdPass(tx, userId, row.ad_view_id)
       return { ok: false as const, reason: 'play_expired' as const }
     }
 

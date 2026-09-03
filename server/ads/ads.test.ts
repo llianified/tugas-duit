@@ -368,3 +368,46 @@ describe('ADS-DB-10 — potret sesi memberitahukan keadaan yang bikin tiket dito
     expect(state.pass!.expiresAt).toBeGreaterThan(state.now)
   })
 })
+
+describe('ADS-DB-11 — ronde Arena menahan tiket berikutnya, sama seperti task', () => {
+  /** Arena memotong pass lewat `consumeAdPass` persis seperti `startChallenge`, jadi ia menanggung
+   *  akibat yang sama: pass yang sudah dipakai baru bisa dihidupkan lagi kalau slot
+   *  `ad_views_one_ready` kosong. Selama `entry_open` cuma menengok `challenges`, user bisa
+   *  menonton iklan baru selagi rondenya terbuka — lalu saat ronde itu ditinggal, pengembalian
+   *  passnya ditolak dan tiket yang sudah benar-benar ditonton hilang tanpa jejak. */
+  it('menolak tiket baru selama ronde berbayar pass belum ditutup', async () => {
+    withConfig({ arcadeEnabled: 1, arcadeAdGated: 1, arcadeCooldownSeconds: 0 })
+    const { openAdTicket, readAdsState } = await import('./ads')
+    const { openArcadePlay } = await import('../arcade/arcade')
+    const userId = await makeUser(0)
+    const ticketId = await grantPass(userId)
+
+    const opened = await openArcadePlay(userId, 'boxes')
+    expect(opened.ok).toBe(true)
+    expect((await readAdView(ticketId)).state).toBe('consumed')
+
+    expect((await readAdsState(userId)).entryOpen).toBe(true)
+    expect(await openAdTicket(userId)).toMatchObject({ ok: false, reason: 'entry_open' })
+  })
+
+  /** Sapuan ronde basi hanya jalan saat Arena dibuka. Tanpa saringan umur, satu ronde yang
+   *  ditinggal akan mengunci tiket user sampai ia ingat membuka Arena lagi — menukar satu pass
+   *  yang hilang dengan seluruh jalur iklan yang mati. */
+  it('melepas kuncian itu begitu rondenya lewat umur, tanpa menunggu Arena dibuka lagi', async () => {
+    withConfig({ arcadeEnabled: 1, arcadeAdGated: 1, arcadeCooldownSeconds: 0 })
+    const { query } = await import('../platform/db')
+    const { openAdTicket, readAdsState } = await import('./ads')
+    const { openArcadePlay } = await import('../arcade/arcade')
+    const userId = await makeUser(0)
+    await grantPass(userId)
+
+    const opened = await openArcadePlay(userId, 'boxes')
+    if (!opened.ok) throw new Error(`pembukaan ronde ditolak: ${opened.reason}`)
+    await query("update arcade_plays set opened_at = now() - interval '1 hour' where id=$1", [
+      opened.play.id,
+    ])
+
+    expect((await readAdsState(userId)).entryOpen).toBe(false)
+    expect(await openAdTicket(userId)).toMatchObject({ ok: true })
+  })
+})

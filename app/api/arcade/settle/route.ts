@@ -15,7 +15,11 @@ export const dynamic = 'force-dynamic'
 
 const REFUSAL: Record<string, { message: string; status: number }> = {
   unknown_play: { message: 'Rondenya nggak ketemu.', status: 409 },
-  play_expired: { message: 'Rondenya kelamaan ditinggal. Jatahnya balik, coba lagi.', status: 409 },
+  /** Yang balik cuma tiket iklannya. Jatah main harian sengaja tidak pernah dikembalikan — `plays_today` menghitung ronde yang DIBUKA — jadi kalimat lama yang menjanjikan "jatahnya balik" salah menyebut dua hal sekaligus. */
+  play_expired: {
+    message: 'Rondenya kelamaan ditinggal. Tiket iklannya balik, tapi jatah main hari ini tetap terpakai.',
+    status: 409,
+  },
   bad_pick: { message: 'Kotaknya nggak valid.', status: 400 },
 }
 

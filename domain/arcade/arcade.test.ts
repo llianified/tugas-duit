@@ -6,6 +6,7 @@ import {
 } from '../economy/economy-config'
 import {
   arcadeCooldownSecondsLeft,
+  arcadeEnabled,
   arcadeOpenRefusal,
   arcadePlaysLeft,
   arcadePrizeTable,
@@ -39,6 +40,19 @@ describe('ARCADE-1 saklar panel', () => {
   it('menutup Arena saat admin mematikannya', () => {
     setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, arcadeEnabled: 0 })
     expect(arcadeOpenRefusal(openState(), T0)).toBe('arcade_disabled')
+  })
+
+  /** Ongkos masuk Arena adalah satu pass iklan, dan tombol mati iklan membuat pass itu tidak akan pernah bisa dibuat. Arena yang tetap "menyala" di situ cuma menawarkan tombol yang dijawab "iklan lagi tidak tersedia" — jadi ia ikut tertutup, dan layar `ArcadeClosed` yang menjelaskannya. */
+  it('ikut tertutup saat tombol mati iklan menyala, selama Arena dikunci iklan', () => {
+    on({ arcadeAdGated: 1, adsMaxViewsPerDay: 0 })
+    expect(arcadeEnabled()).toBe(false)
+    expect(arcadeOpenRefusal(openState(), T0)).toBe('arcade_disabled')
+  })
+
+  it('tetap terbuka tanpa iklan kalau memang tidak dikunci iklan', () => {
+    on({ arcadeAdGated: 0, adsMaxViewsPerDay: 0 })
+    expect(arcadeEnabled()).toBe(true)
+    expect(arcadeOpenRefusal(openState({ hasAdPass: false }), T0)).toBeNull()
   })
 })
 

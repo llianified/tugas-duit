@@ -122,6 +122,23 @@ describe('batas arsitektur', () => {
     expect(ambiguous).toEqual([])
   })
 
+  /** Aturan keras #3 di `CLAUDE.md`: konversi credit → Rupiah hanya lewat `creditsToRupiah`. Ditegakkan di sini karena pelanggarannya tidak pernah gagal — hasilnya identik hari ini, dan baru menyimpang diam-diam begitu konversinya dapat aturan (pembulatan, potongan, satuan lain). `TurboRewardCard` sempat mengalikan sendiri di empat tempat tanpa ada satu pun tes yang keberatan. Angkanya sendiri tetap boleh dibaca di `domain/` (yang mendefinisikan konversinya), di `server/` (yang menyimpan dan memvalidasinya), dan di panel admin (yang memang menyunting field-nya). */
+  it('menjaga konversi credit ke Rupiah lewat satu fungsi', async () => {
+    const layers = ['features', 'shell', 'shared', 'navigation'] as const
+    const violations: string[] = []
+
+    for (const root of layers) {
+      for (const file of await sourceFiles(path.join(ROOT, root))) {
+        if (file.includes('.test.')) continue
+        if ((await readFile(file, 'utf8')).includes('creditValueIdr')) {
+          violations.push(`${path.relative(ROOT, file)} memakai creditValueIdr langsung`)
+        }
+      }
+    }
+
+    expect(violations, violations.join('\n')).toEqual([])
+  })
+
   it('mencegah source produksi mengimpor fixture test', async () => {
     const violations: string[] = []
 

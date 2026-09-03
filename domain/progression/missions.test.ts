@@ -1,11 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
+import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '../economy/economy-config'
 import {
   MISSION_KEYS,
   buildMissionProgress,
   claimableMissions,
   hasUnclaimedMissions,
+  isMissionAvailable,
   isMissionKey,
   missionDefinition,
+  missions,
 } from './missions'
 
 describe('missions', () => {
@@ -57,5 +60,32 @@ describe('missions', () => {
 
     const allClaimed = buildMissionProgress({ tasks: 0, stars: 0, ads: 0 }, MISSION_KEYS)
     expect(hasUnclaimedMissions(allClaimed)).toBe(false)
+  })
+})
+
+describe('misi iklan mengikuti tombol mati iklan', () => {
+  afterEach(() => setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG))
+
+  it('menerbitkan ketiganya selama iklan menyala', () => {
+    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, adsMaxViewsPerDay: 10 })
+    expect(missions().map((mission) => mission.key)).toEqual(['tasks', 'stars', 'ads'])
+    expect(isMissionAvailable('ads')).toBe(true)
+  })
+
+  /** Misi yang mustahil lebih buruk daripada misi yang hilang: progresnya berhenti di 0/N selamanya, dan karena `hasUnclaimedMissions` menyala selama masih ada yang belum diklaim, titik pengingat di nav ikut menyala permanen tanpa satu pun cara membersihkannya. */
+  it('berhenti menerbitkan misi iklan saat plafon tayangannya nol', () => {
+    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, adsMaxViewsPerDay: 0 })
+    expect(missions().map((mission) => mission.key)).toEqual(['tasks', 'stars'])
+    expect(isMissionAvailable('ads')).toBe(false)
+
+    const list = buildMissionProgress({ tasks: 0, stars: 0, ads: 0 }, ['tasks', 'stars'])
+    expect(hasUnclaimedMissions(list)).toBe(false)
+  })
+
+  /** Katalognya tetap utuh: kunci `ads` masih dikenal (`mission_claims_known_key` di migrasi 0031 tidak berubah) dan targetnya masih bisa dibaca — yang berubah hanya apa yang diterbitkan. */
+  it('tetap mengenali kunci dan targetnya walau misinya tidak diterbitkan', () => {
+    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, adsMaxViewsPerDay: 0 })
+    expect(isMissionKey('ads')).toBe(true)
+    expect(missionDefinition('ads').target).toBe(DEFAULT_ECONOMY_CONFIG.missionAdsTarget)
   })
 })

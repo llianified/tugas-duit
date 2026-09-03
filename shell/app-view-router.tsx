@@ -7,6 +7,8 @@ import {
   ProfileSkeleton,
   StatsSkeleton,
 } from '@/shared/components/app-skeleton'
+import { arcadeEnabled } from '@/domain/arcade/arcade'
+import { ArcadeClosed, ArcadeView } from '@/features/arcade/arcade'
 import { CaptchaView } from '@/features/captcha/components/captcha'
 import type { Challenge } from '@/domain/task/challenge'
 import { HistoryView } from '@/features/history/history'
@@ -115,6 +117,19 @@ export function AppViewRouter({
     )
   }
 
+  if (effectiveView === 'arcade') {
+    /** Saklar dibaca lagi di sini, bukan cuma di pintu masuknya. View ini bisa dicapai lewat tumpukan riwayat browser yang dipulihkan `useViewStack`, jadi Arena yang dimatikan admin selagi user berada di dalamnya harus tetap menutup dirinya sendiri. */
+    if (!arcadeEnabled()) return <ArcadeClosed key="arcade" />
+    return (
+      <ArcadeView
+        key="arcade"
+        watchAd={session.watchAd}
+        watchingAd={session.watchingAd}
+        refreshSession={session.refreshSession}
+      />
+    )
+  }
+
   if (effectiveView === 'referral') {
     return (
       <ReferralView
@@ -196,6 +211,7 @@ export function AppViewRouter({
       onSubmitWithdrawal={session.submitWithdrawal}
       onOpenHistory={session.openHistory}
       onOpenMissions={session.openMissions}
+      onOpenArcade={session.openArcade}
       premium={session.premium}
       channelBonus={session.channelBonus}
       onRefreshSession={session.refreshSession}

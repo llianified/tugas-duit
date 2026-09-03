@@ -79,6 +79,16 @@ export interface EconomyConfig {
   premiumMaxTasksPerDay: number
   premiumWithdrawalCooldownDays: number
   turboRewardEnabled: number
+  arcadeEnabled: number
+  arcadeAdGated: number
+  arcadeMaxPlaysPerDay: number
+  arcadeCooldownSeconds: number
+  arcadeMatchSeconds: number
+  arcadePoolPrizeCredits: number
+  arcadePoolPrizeWeight: number
+  arcadeEnergyPrizeAmount: number
+  arcadeEnergyPrizeWeight: number
+  arcadeBlankWeight: number
 }
 
 export type EconomyConfigKey = keyof EconomyConfig
@@ -159,6 +169,19 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   premiumMaxTasksPerDay: 1_000,
   premiumWithdrawalCooldownDays: 3,
   turboRewardEnabled: 1,
+  // Arena lahir dalam keadaan MATI. Ia satu-satunya fitur yang hadiahnya bisa menaikkan
+  // plafon payout, jadi menyalakannya adalah keputusan ekonomi yang diambil sadar di panel,
+  // bukan efek samping sebuah deploy.
+  arcadeEnabled: 0,
+  arcadeAdGated: 1,
+  arcadeMaxPlaysPerDay: 3,
+  arcadeCooldownSeconds: 300,
+  arcadeMatchSeconds: 30,
+  arcadePoolPrizeCredits: 5,
+  arcadePoolPrizeWeight: 1,
+  arcadeEnergyPrizeAmount: 1,
+  arcadeEnergyPrizeWeight: 2,
+  arcadeBlankWeight: 1,
 }
 
 export type EconomyGroup =
@@ -174,6 +197,7 @@ export type EconomyGroup =
   | 'channel'
   | 'premium'
   | 'mission'
+  | 'arcade'
   | 'feature'
 
 export interface EconomyFieldMeta {
@@ -537,6 +561,66 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     impact: 'Menurunkannya membuat user premium menarik lebih sering, sehingga biaya transfer per rupiah naik.',
     min: 1, max: 365, riskyWhen: 'lower',
   },
+  {
+    key: 'arcadeEnabled', group: 'arcade', label: 'Arena', unit: '0/1',
+    description: 'Isi 1 untuk membuka Arena. Satu-satunya fitur yang hadiahnya boleh mengisi stok reward, jadi satu-satunya yang menambah rupiah yang harus dibayarkan. Biaya maksimumnya per user per hari = jatah main × isi stok per hadiah × nilai 1 credit.',
+    impact: 'Menaikkannya membuka jalur hadiah yang menaikkan plafon payout, bukan cuma mempercepat user mencapainya.',
+    min: 0, max: 1, riskyWhen: 'higher',
+  },
+  {
+    key: 'arcadeAdGated', group: 'arcade', label: 'Arena dikunci iklan', unit: '0/1',
+    description: 'Isi 1 supaya satu kali main memakai satu pass iklan berhadiah, persis seperti tiket yang membayar ongkos masuk task. Ini yang membeli balik biaya hadiahnya.',
+    impact: 'Menurunkannya membuat hadiah Arena dibayar tanpa satu impresi iklan pun yang mendanainya.',
+    min: 0, max: 1, riskyWhen: 'lower',
+  },
+  {
+    key: 'arcadeMaxPlaysPerDay', group: 'arcade', label: 'Jatah main per hari', unit: 'main',
+    description: 'Berapa kali satu user boleh membuka Arena dalam satu hari WIB. Ini plafon biaya harian fitur ini, dan satu-satunya penjaga yang tidak bergantung pada kejujuran klien.',
+    impact: 'Menaikkannya menaikkan biaya hadiah maksimum per user per hari secara langsung.',
+    min: 1, max: 100, riskyWhen: 'higher',
+  },
+  {
+    key: 'arcadeCooldownSeconds', group: 'arcade', label: 'Jeda antar main', unit: 'detik',
+    description: 'Jarak minimum antara dua kali membuka Arena. Menyebar jatah harian sepanjang hari, bukan habis dalam satu menit.',
+    impact: 'Menurunkannya membuat jatah harian habis dalam satu duduk, sehingga alasan untuk kembali ikut hilang.',
+    min: 0, max: 86_400, riskyWhen: 'lower',
+  },
+  {
+    key: 'arcadeMatchSeconds', group: 'arcade', label: 'Waktu Cocokkan Kartu', unit: 'detik',
+    description: 'Batas waktu satu ronde Cocokkan Kartu. Ini yang menentukan seberapa sering ronde berakhir menang, jadi ia menggeser berapa banyak hadiah yang benar-benar keluar.',
+    impact: 'Menaikkannya membuat lebih banyak ronde berakhir menang, sehingga lebih banyak hadiah dibayarkan.',
+    min: 5, max: 300, riskyWhen: 'higher',
+  },
+  {
+    key: 'arcadePoolPrizeCredits', group: 'arcade', label: 'Hadiah isi stok', unit: 'credit',
+    description: 'Credit yang masuk ke stok reward saat hadiah isi stok keluar. Dijepit kapasitas stok user; hadiah yang tidak muat seluruhnya dicoret dari undian, bukan dibayar sebagian.',
+    impact: 'Menaikkannya menaikkan rupiah yang bisa ditarik user, karena stok reward adalah plafon payout-nya.',
+    min: 1, max: 1_000, riskyWhen: 'higher',
+  },
+  {
+    key: 'arcadePoolPrizeWeight', group: 'arcade', label: 'Bobot hadiah isi stok', unit: 'bobot',
+    description: 'Peluang relatif hadiah isi stok terhadap dua hadiah lain. Isi 0 untuk mematikannya tanpa mematikan Arena.',
+    impact: 'Menaikkannya memperbesar porsi undian yang berujung isi stok, sehingga biaya rata-rata per main naik.',
+    min: 0, max: 100, riskyWhen: 'higher',
+  },
+  {
+    key: 'arcadeEnergyPrizeAmount', group: 'arcade', label: 'Hadiah energi', unit: 'energi',
+    description: 'Energi yang diberikan saat hadiah energi keluar. Dicoret dari undian kalau tidak muat seluruhnya di kapasitas energi user.',
+    impact: 'Energi tidak menggeser plafon payout sedikit pun; ia hanya membuat user sampai ke plafonnya lewat lebih banyak task, dan itu berarti lebih banyak tayangan iklan.',
+    min: 1, max: 50, riskyWhen: 'never',
+  },
+  {
+    key: 'arcadeEnergyPrizeWeight', group: 'arcade', label: 'Bobot hadiah energi', unit: 'bobot',
+    description: 'Peluang relatif hadiah energi. Hadiah termurah yang ada: biayanya nol rupiah.',
+    impact: 'Porsi undian yang berujung energi tidak menambah satu rupiah pun yang harus dibayarkan.',
+    min: 0, max: 100, riskyWhen: 'never',
+  },
+  {
+    key: 'arcadeBlankWeight', group: 'arcade', label: 'Bobot zonk', unit: 'bobot',
+    description: 'Peluang relatif tidak dapat apa-apa. Isi 0 kalau setiap main harus berhadiah.',
+    impact: 'Menurunkannya memperbesar porsi undian yang berhadiah, sehingga biaya rata-rata per main naik.',
+    min: 0, max: 100, riskyWhen: 'lower',
+  },
 ]
 
 export type EconomyValidationErrors = Partial<Record<EconomyConfigKey, string>> & { _?: string }
@@ -692,6 +776,12 @@ export function validateEconomyConfig(
 
   if (config.maxPayoutIdr / config.creditValueIdr > 100_000_000) {
     errors.maxPayoutIdr = 'Maksimum penarikan melampaui batas yang diterima database untuk kolom credits.'
+  }
+
+  /** Arena yang menyala tanpa satu pun hadiah berbobot adalah mesin zonk: user membakar pass iklan untuk hasil yang sudah pasti kosong. `hasWinnablePrize` menolaknya saat dijalankan, tapi penolakan itu terbaca user sebagai fitur rusak, bukan sebagai setelan. Ditangkap di sini supaya salah setelnya berhenti di form panel. */
+  if (config.arcadeEnabled > 0 && config.arcadePoolPrizeWeight + config.arcadeEnergyPrizeWeight <= 0) {
+    errors.arcadeBlankWeight =
+      'Arena butuh minimal satu hadiah berbobot. Isi bobot hadiah isi stok atau bobot hadiah energi di atas 0, atau matikan Arena.'
   }
 
   return Object.keys(errors).length > 0 ? { ok: false, errors } : { ok: true, config }

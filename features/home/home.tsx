@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { arcadeEnabled } from '@/domain/arcade/arcade'
+import { ArcadeCard } from '@/features/arcade/arcade-card'
 import { ActiveTask } from '@/features/home/active-task'
 import { BalanceSummary } from '@/features/home/balance-summary'
 import { RecentTransactions } from '@/features/home/recent-transactions'
@@ -49,6 +51,7 @@ interface HomeViewProps {
   onSubmitWithdrawal: (input: WithdrawalSubmitInput) => Promise<Withdrawal | null>
   onOpenHistory: () => void
   onOpenMissions: () => void
+  onOpenArcade: () => void
   premium: PremiumState | null
   channelBonus: ChannelBonusState | null
   onRefreshSession: () => Promise<unknown>
@@ -82,6 +85,7 @@ export function HomeView({
   onSubmitWithdrawal,
   onOpenHistory,
   onOpenMissions,
+  onOpenArcade,
   premium,
   channelBonus,
   onRefreshSession,
@@ -156,6 +160,13 @@ export function HomeView({
             onOpenPremium={premiumReachable ? () => setPremiumOpen(true) : null}
           />
         </div>
+
+        {/* Ditempatkan tepat di bawah kartu task, bukan di antara kartu penawaran: saat stok habis, tombol "Stok habis" berada di ujung bawah kartu task, dan tujuan yang ditawarkan sebagai gantinya harus berdiri di baris berikutnya — bukan tiga region di bawah, di antara promosi. */}
+        {arcadeEnabled() ? (
+          <div className={`animate-view-in region-gap-t ${ENTER_STEP_CLASS[1]}`}>
+            <ArcadeCard poolEmpty={rewardPoolCredits === 0} onOpen={onOpenArcade} />
+          </div>
+        ) : null}
       </div>
 
       <div className={`animate-view-in region-t ${ENTER_STEP_CLASS[2]}`}>

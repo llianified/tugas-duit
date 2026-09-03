@@ -3,6 +3,7 @@ import {
   DEFAULT_IN_APP_ADS_SETTINGS,
   inAppAdsSettings,
   inAppShowParams,
+  minInAppWindowSeconds,
 } from './in-app-ads'
 
 describe('INAPP-1 — payload native Monetag', () => {
@@ -46,5 +47,53 @@ describe('INAPP-2 — config ekonomi ke satuan SDK', () => {
       timeoutSeconds: 10,
       everyPage: false,
     })
+  })
+})
+
+describe('INAPP-3 — jendela tidak boleh bergulir lebih rapat daripada jedanya', () => {
+  it('menaikkan jendela yang lebih pendek daripada jeda antar iklan', () => {
+    // Persis kombinasi yang bikin interstitial nembak dua kali di produksi: | jendela 1 menit habis lebih dulu daripada jeda 120 detik, lalu jendela baru | menjalankan tunda 10 detik dari nol — iklan berikutnya datang di detik ke-70.
+    expect(
+      inAppAdsSettings({
+        inAppAdsFrequency: 1,
+        inAppAdsCappingMinutes: 1,
+        inAppAdsIntervalSeconds: 120,
+        inAppAdsTimeoutSeconds: 10,
+      }),
+    ).toEqual({
+      frequency: 1,
+      cappingHours: 120 / 3600,
+      intervalSeconds: 120,
+      timeoutSeconds: 10,
+      everyPage: false,
+    })
+  })
+
+  it('membiarkan jendela yang sudah cukup panjang apa adanya', () => {
+    expect(
+      inAppAdsSettings({
+        inAppAdsFrequency: 2,
+        inAppAdsCappingMinutes: 6,
+        inAppAdsIntervalSeconds: 30,
+        inAppAdsTimeoutSeconds: 5,
+      }).cappingHours,
+    ).toBe(0.1)
+  })
+
+  it('menghitung lantai jendela dari syarat muat maupun syarat tempo', () => {
+    // Tunda panjang: yang mengikat adalah semua iklan harus muat di jendelanya.
+    expect(
+      minInAppWindowSeconds({ frequency: 2, intervalSeconds: 30, timeoutSeconds: 300 }),
+    ).toBe(330)
+    // Tunda pendek: yang mengikat adalah pergantian jendela tidak boleh lebih rapat | daripada jeda antar iklan.
+    expect(
+      minInAppWindowSeconds({ frequency: 2, intervalSeconds: 300, timeoutSeconds: 5 }),
+    ).toBe(600)
+  })
+
+  it('tidak menuntut apa pun saat interstitial dimatikan', () => {
+    expect(
+      minInAppWindowSeconds({ frequency: 0, intervalSeconds: 300, timeoutSeconds: 5 }),
+    ).toBe(0)
   })
 })

@@ -22,6 +22,8 @@
  * Karena itu yang dicatat: script SDK yang disuntikkan, jumlah global `show_*`, transisi
  * state bersama, semua pemanggil `show_*`, siklus hidup dokumen, dan asal overlay yang muncul. */
 
+import { PRE_SDK_PROBE_GLOBAL } from '@/shell/pre-sdk-ads-probe'
+
 const SHARED_STATE_KEY = 'ug4qk5tymo'
 const POLL_MS = 1000
 const MAX_ENTRIES = 600
@@ -29,8 +31,27 @@ const MAX_ENTRIES = 600
 interface ProbeEntry {
   at: string
   sinceStart: number
+  /** `pre` = dicatat script inline sebelum SDK dimuat, `post` = dicatat probe React ini. */
+  phase?: 'pre' | 'post'
   tag: string
   data?: unknown
+}
+
+/** Bentuk `window.__adProbePre` yang dipasang `shell/pre-sdk-ads-probe.ts`. Diketik lokal
+ * karena yang menyediakannya adalah string inline, bukan modul yang bisa diimpor. */
+interface PreSdkProbe {
+  origin: number
+  drain: () => ProbeEntry[]
+  stop: () => void
+}
+
+function preSdkProbe(): PreSdkProbe | undefined {
+  const candidate = (window as unknown as Record<string, unknown>)[PRE_SDK_PROBE_GLOBAL]
+  if (!candidate || typeof candidate !== 'object') return undefined
+  const probe = candidate as Partial<PreSdkProbe>
+  return typeof probe.drain === 'function' && typeof probe.origin === 'number'
+    ? (probe as PreSdkProbe)
+    : undefined
 }
 
 interface AdState {
@@ -52,12 +73,32 @@ function record(tag: string, data?: unknown): void {
   const entry: ProbeEntry = {
     at: new Date(now).toISOString(),
     sinceStart: startedAt ? now - startedAt : 0,
+    phase: 'post',
     tag,
     ...(data === undefined ? {} : { data }),
   }
   entries.push(entry)
   if (entries.length > MAX_ENTRIES) entries.shift()
   console.log(`[v0][adprobe] +${entry.sinceStart}ms ${tag}`, data ?? '')
+}
+
+/** Menarik entri pre-hydration ke timeline ini. Dipanggil di awal `startInAppAdsProbe()`
+ * dan lagi di setiap `dump()`, karena script inline masih bisa mencatat setelah probe
+ * React hidup (poll dan MutationObserver-nya tetap jalan). Urutan dijaga dengan sort
+ * pada `sinceStart` yang sudah memakai `origin` yang sama. */
+function drainPreSdkEntries(): void {
+  const probe = preSdkProbe()
+  if (!probe) return
+  let drained: ProbeEntry[] = []
+  try {
+    drained = probe.drain()
+  } catch {
+    return
+  }
+  if (drained.length === 0) return
+  entries.push(...drained)
+  entries.sort((left, right) => left.sinceStart - right.sinceStart)
+  while (entries.length > MAX_ENTRIES) entries.shift()
 }
 
 /** `Le.read` menulis ke localStorage/indexedDB/sessionStorage saat `everyPage: false`, jadi
@@ -146,6 +187,13 @@ function watchShow(name: string): void {
 
   const existing = target[name]
   if (typeof existing === 'function') {
+    // Probe pre-SDK sudah membungkusnya. Menulis ulang di sini hanya memicu setter-nya
+    // dan menambah entri palsu ke timeline, jadi cukup diakui.
+    if ((existing as { __probed?: boolean }).__probed) {
+      wrapped.add(name)
+      record('show() sudah dibungkus probe pre-SDK', { sdk: name })
+      return
+    }
     target[name] = wrap(existing)
     wrapped.add(name)
     record('show() dibungkus (sudah ada)', { sdk: name })
@@ -228,11 +276,22 @@ function looksFullScreen(node: Element): boolean {
 export function startInAppAdsProbe(): void {
   if (typeof window === 'undefined' || started.value) return
   started.value = true
-  startedAt = Date.now()
+
+  /** Titik nol diambil dari probe pre-SDK kalau ada, supaya `sinceStart` kedua fase bisa
+   * dibandingkan langsung dan "SDK mendefinisikan `show_*`" vs "`useInAppAds` mendaftar"
+   * terbaca sebagai satu urutan. Tanpa probe inline, perilakunya seperti sebelumnya. */
+  const pre = preSdkProbe()
+  startedAt = pre?.origin ?? Date.now()
+  drainPreSdkEntries()
 
   const navigation = (
     performance.getEntriesByType('navigation') as PerformanceNavigationTiming[]
   )[0]
+
+  record('probe React start (post-hydration)', {
+    preSdkProbeTerpasang: Boolean(pre),
+    msSejakPreSdkProbe: pre ? Date.now() - pre.origin : null,
+  })
 
   record('probe start', {
     url: window.location.href,
@@ -329,7 +388,14 @@ export function startInAppAdsProbe(): void {
   })
 
   ;(window as unknown as Record<string, unknown>).__adProbe = {
-    dump: () => entries,
+    /** Timeline gabungan: entri pre-SDK diserap dulu supaya apa pun yang dicatat script
+     * inline setelah hydration tetap ikut, lalu seluruhnya dikembalikan terurut. */
+    dump: () => {
+      drainPreSdkEntries()
+      return entries
+    },
+    /** Dipakai `useInAppAds` untuk menandai kapan panggilan eksplisit terjadi (atau dilewati). */
+    record,
     state: readAdState,
     showGlobals,
     stop: stopInAppAdsProbe,
@@ -339,5 +405,12 @@ export function startInAppAdsProbe(): void {
 export function stopInAppAdsProbe(): void {
   clearInterval(timer)
   observer?.disconnect()
+  // Poll dan observer script inline berjalan terpisah, jadi ikut dihentikan — kalau tidak,
+  // "stop" hanya membungkam separuh instrumentasi.
+  try {
+    preSdkProbe()?.stop()
+  } catch {
+    // Tidak ada yang bisa dilakukan; probe memang sedang dimatikan.
+  }
   started.value = false
 }

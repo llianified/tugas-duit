@@ -6,6 +6,8 @@ import { Geist, Plus_Jakarta_Sans } from 'next/font/google'
 import Script from 'next/script'
 import { MONETAG_DEFAULT_ZONE_ID, monetagSdkName } from '@/domain/ads/ads'
 import { ADS_HINT_INIT_SCRIPT } from '@/shell/ads-hint'
+// INSTRUMENTASI SEMENTARA — hapus bersama probe setelah penyebab interstitial ganda terbukti.
+import { preSdkAdsProbeScript } from '@/shell/pre-sdk-ads-probe'
 import './globals.css'
 
 const geistSans = Geist({
@@ -56,6 +58,20 @@ export default async function RootLayout({
     >
       <head>
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: ADS_HINT_INIT_SCRIPT }} />
+        {/* INSTRUMENTASI SEMENTARA — hapus bersama `shell/pre-sdk-ads-probe.ts` dan
+            `shell/in-app-ads-probe.ts` setelah penyebab interstitial ganda terbukti.
+            Wajib di `<head>` dan sebelum `libtl.com/sdk.js` di bawah: jebakan pada
+            `show_<zone>` hanya berguna kalau terpasang sebelum SDK mendefinisikannya.
+            Nonce-nya sama dengan inline script lain di dokumen ini. */}
+        <script
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: preSdkAdsProbeScript({
+              zoneId: monetagZoneId,
+              sdkName: monetagSdkName(monetagZoneId),
+            }),
+          }}
+        />
       </head>
       <body className="antialiased font-sans">
         <Script

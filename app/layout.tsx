@@ -45,7 +45,9 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const nonce = (await headers()).get('x-nonce') ?? undefined
-  // Zone Monetag hanya dipakai interstitial otomatis in-app. Rewarded/tiket memakai spot OnClicka yang dimuat terpisah di bawah.
+  // Satu zone Monetag melayani dua format: `show_<zone>()` polos untuk tiket rewarded, dan
+  // `show_<zone>({ type: 'inApp' })` untuk interstitial otomatis. Nilainya harus sama dengan
+  // yang dikirim `resolveAdProvider()`, karena itulah yang tersimpan di `ad_views.block_id`.
   const monetagZoneId = process.env.NEXT_PUBLIC_MONETAG_ZONE_ID?.trim() || MONETAG_DEFAULT_ZONE_ID
 
   return (
@@ -69,13 +71,6 @@ export default async function RootLayout({
           nonce={nonce}
           data-zone={monetagZoneId}
           data-sdk={monetagSdkName(monetagZoneId)}
-        />
-        {/* Rewarded/tiket — OnClicka. Loader-nya hanya memasang `initCdTma`; spot ID baru
-            diserahkan saat init dari klien, jadi tidak ada ID di URL script ini. */}
-        <Script
-          src="https://js.onclckvd.com/in-stream-ad-admanager/tma.js"
-          strategy="afterInteractive"
-          nonce={nonce}
         />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}

@@ -22,18 +22,12 @@ function buildCsp(nonce: string, isDev: boolean) {
     ...(isDev ? DEV_FRAME_ANCESTORS : []),
   ].join(' ')
 
-  // Script tetap dibatasi ke origin loader kedua SDK; host kreatif tidak ditebak di sini.
-  // OnClicka memuat `tma.js` dari `js.onclckvd.com` lalu dapat menarik modul lanjutan dari
-  // subdomain `onclckvd.com` lain. Di produksi `'strict-dynamic'` sudah mengizinkannya,
-  // tetapi di dev allowlist inilah yang berlaku. Anggota chain OnClicka belum diaudit
-  // report-only, jadi kalau rewarded gagal HANYA di dev, baca `/api/csp-report` dulu dan
-  // tambahkan host yang dilaporkan — jangan melonggarkan `script-src` secara umum.
-  const adHosts = [
-    'https://libtl.com',
-    'https://*.libtl.com',
-    'https://js.onclckvd.com',
-    'https://*.onclckvd.com',
-  ].join(' ')
+  // Script tetap dibatasi ke origin loader SDK-nya; host kreatif tidak ditebak di sini.
+  // Sejak rewarded ikut pindah ke Monetag, keluarga `libtl.com` adalah satu-satunya yang
+  // perlu mengeksekusi script — dan itu keluarga yang sudah dipanen lewat report-only.
+  // Keluarga `onclckvd.com` dicabut bersama loader-nya: allowlist yang tidak lagi punya
+  // pemakai adalah permukaan serang tanpa imbalan.
+  const adHosts = ['https://libtl.com', 'https://*.libtl.com'].join(' ')
 
   const scriptSrc = isDev
     ? `script-src 'self' https://telegram.org ${adHosts} 'unsafe-inline' 'unsafe-eval'`

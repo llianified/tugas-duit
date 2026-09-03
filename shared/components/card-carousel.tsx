@@ -21,11 +21,14 @@ export function CardCarousel({
   ariaLabel,
   items,
   className,
+  autoAdvance = true,
 }: {
   ariaLabel: string
-  /** Sudah tersaring oleh pemanggilnya: kartu yang tidak tersedia tidak masuk daftar sama sekali, bukan masuk sebagai `null`. Kalau `null` ikut masuk, ia terhitung sebagai slide dan carousel-nya berputar ke halaman kosong. */
+  /** Sudah tersaring oleh pemanggilnya: kartu yang tidak tersedia tidak masuk daftar sama sekali, bukan masuk sebagai `null`. Kalau `null` ikut masuk, ia terhitung satu slide dan carousel-nya akan menampilkan halaman kosong. */
   items: { key: string; label: string; node: ReactNode }[]
   className?: string
+  /** Matikan untuk banner yang harus berpindah hanya lewat swipe atau indikator. */
+  autoAdvance?: boolean
 }) {
   const count = items.length
   const [slide, setSlide] = useState(0)
@@ -36,7 +39,7 @@ export function CardCarousel({
   const active = count === 0 ? 0 : Math.min(slide, count - 1)
 
   useEffect(() => {
-    if (count < 2 || held) return
+    if (!autoAdvance || count < 2 || held) return
 
     const timer = window.setInterval(() => {
       // Dibaca dari state sebelumnya, bukan dari `active`: dengan `active` di
@@ -46,10 +49,10 @@ export function CardCarousel({
     }, CARD_CAROUSEL_MS)
 
     return () => window.clearInterval(timer)
-  }, [count, held])
+  }, [autoAdvance, count, held])
 
   useEffect(() => {
-    if (count < 2) return
+    if (!autoAdvance || count < 2) return
 
     // Tab yang tidak terlihat tetap menjalankan interval-nya, jadi kembali ke
     // tab setelah semenit berarti kartunya sudah berputar belasan kali tanpa
@@ -59,7 +62,7 @@ export function CardCarousel({
     onVisibility()
 
     return () => document.removeEventListener('visibilitychange', onVisibility)
-  }, [count])
+  }, [autoAdvance, count])
 
   if (count === 0) return null
 

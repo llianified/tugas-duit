@@ -53,9 +53,9 @@ function PremiumUpsellStamp({
       aria-label="Lihat paket premium"
       className="focus-ring transition-ui press-scale-soft flex w-full text-left"
     >
-      <span className="stamp min-w-0 flex-1">
+      <span className="stamp stamp-card min-w-0 flex-1">
         {/* Nominal perangko: harga di sudut kanan atas, ukuran yang sama dengan angka nominal di perangko bonus — dua kertas, satu tinggi angka. */}
-        <span className="flex items-start justify-between gap-3">
+        <span className="stamp-card-head flex items-start justify-between gap-3">
           <span className="home-tag stamp-tag pt-1">Premium</span>
           <span className="flex flex-col items-end gap-1">
             <span className="num-display stamp-ink-fg text-[1.375rem]">
@@ -65,14 +65,14 @@ function PremiumUpsellStamp({
           </span>
         </span>
 
-        <span className="stack-gap-t flex items-start gap-2">
+        <span className="stamp-card-lead stack-gap-t flex items-center gap-2">
           <CrownPortrait />
           <span className="text-sm font-semibold leading-snug text-foreground">
             Mahkota emas di samping nama, terlihat di papan peringkat.
           </span>
         </span>
 
-        <span className="stack-gap-t block space-y-1">
+        <span className="stamp-card-detail stack-gap-t flex flex-col gap-1">
           {printed.map((benefit) => (
             <span key={benefit.key} className="flex items-start gap-1.5 text-xs text-muted-foreground">
               <GlyphCheck className="stamp-ink-fg mt-0.5 size-3 shrink-0" />
@@ -84,7 +84,7 @@ function PremiumUpsellStamp({
         {/* Baris aksi kartu ini: ajakan "lihat paket" plus chevron-nya. `.stamp-foot`
             menahannya di garis bawah kertas, jadi ia berhenti setinggi baris tombol
             di perangko bonus channel alih-alih menggantung di tengah slide. */}
-        <span className="stamp-foot flex items-center justify-between gap-2">
+        <span className="stamp-card-foot stamp-foot flex items-center justify-between gap-2">
           <span className="text-[11px] leading-snug text-muted-foreground">
             {bestValue
               ? `Ambil ${formatCredits(bestValue.months)} bulan, hemat ${formatCredits(bestValue.savingPercent)}%`

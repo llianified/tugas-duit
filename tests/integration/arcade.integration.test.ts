@@ -11,7 +11,7 @@ beforeAll(async () => {
   await query('select 1')
 }, 120_000)
 
-/** Arena mati di bawaan, jadi setiap tes menyalakannya sendiri. Bobot diatur ekstrem — satu hadiah berbobot, sisanya nol — supaya hasil undian menjadi pasti tanpa perlu menyetel `Math.random`. Yang diuji di berkas ini memang bukan keacakannya (itu urusan `domain/arcade/arcade.test.ts`), melainkan apa yang tersentuh di database. */
+/** Bobot diatur ekstrem — satu hadiah berbobot, sisanya nol — supaya hasil undian menjadi pasti tanpa perlu menyetel `Math.random`. Yang diuji di berkas ini memang bukan keacakannya (itu urusan `domain/arcade/arcade.test.ts`), melainkan apa yang tersentuh di database. */
 const configure = (patch: Partial<EconomyConfig> = {}) =>
   setActiveEconomyConfig({
     ...DEFAULT_ECONOMY_CONFIG,
@@ -276,7 +276,7 @@ describe('ARCADE-DB-5 — satu ronde dibayar sekali', () => {
 
 describe('ARCADE-DB-6 — saklar panel menutup jalur server, bukan cuma layarnya', () => {
   it('menolak pembukaan saat Arena dimatikan', async () => {
-    setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
+    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, arcadeEnabled: 0 })
     const { openArcadePlay } = await import('../../server/arcade/arcade')
     const userId = await makeUser()
     await giveAdPass(userId)

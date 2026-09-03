@@ -37,42 +37,47 @@ export function TurboRewardCard({
 
   return (
     <Dialog.Root>
-      <Dialog.Trigger className="focus-ring press-scale-soft block w-full rounded-xl border border-primary/45 bg-card p-3 text-left text-card-foreground shadow-sm">
-        <span className="flex items-center gap-2">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <GlyphBolt className="size-4" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="home-tag block text-primary">Event Turbo Reward</span>
-            <span className="mt-1 block truncate text-base font-bold tracking-tight text-foreground">
-              Hingga {formatRupiah(maxRewardIdr)} per task
+      <Dialog.Trigger className="focus-ring transition-ui press-scale-soft group flex w-full text-left">
+        <span className="stamp stamp-card stamp-primary min-w-0 flex-1">
+          <span className="stamp-card-head flex items-start justify-between gap-3">
+            <span className="home-tag stamp-tag pt-1">Turbo Reward</span>
+            <span className="flex flex-col items-end gap-1">
+              <span className="num-display stamp-ink-fg text-[1.375rem]">
+                {formatRupiah(maxRewardIdr)}
+              </span>
+              <span className="home-tag">per task</span>
             </span>
           </span>
-          <GlyphChevron className="size-4 shrink-0 text-muted-foreground" />
-        </span>
 
-        <span className="mt-3 grid grid-cols-2 gap-2">
-          <span className="rounded-lg bg-muted px-2.5 py-2">
-            <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Stok sekarang
+          <span className="stamp-card-lead stack-gap-t flex items-center gap-2">
+            <span className="stamp-portrait">
+              <GlyphBolt className="stamp-ink-fg size-4" />
             </span>
-            <span className="mt-0.5 block text-sm font-bold tabular-nums text-foreground">
-              {rewardPoolCredits === null
-                ? 'Memuat…'
-                : `${formatCredits(poolCurrent)}/${formatCredits(poolMax)} credit`}
+            <span className="text-sm font-semibold leading-snug text-foreground">
+              Reward lebih besar, stok kembali lebih cepat.
             </span>
           </span>
-          <span className="rounded-lg bg-muted px-2.5 py-2">
-            <span className="block truncate text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Isi ulang +{formatRupiah(regenIdr)}
+
+          <span className="stamp-card-detail stack-gap-t block text-xs leading-snug text-muted-foreground">
+            Stok sekarang{' '}
+            <strong className="font-semibold text-foreground">
+              {rewardPoolCredits === null
+                ? 'memuat…'
+                : `${formatCredits(poolCurrent)}/${formatCredits(poolMax)} credit`}
+            </strong>
+            . Isi ulang +{formatRupiah(regenIdr)}{' '}
+            {poolFull
+              ? 'saat stok dipakai.'
+              : rewardPoolSecondsToNext === null
+                ? 'sedang disiapkan.'
+                : `dalam ${formatCountdown(rewardPoolSecondsToNext)}.`}
+          </span>
+
+          <span className="stamp-card-foot stamp-foot flex items-center justify-between gap-2">
+            <span className="text-[11px] leading-snug text-muted-foreground">
+              Lihat rincian reward
             </span>
-            <span className="mt-0.5 block text-sm font-bold tabular-nums text-foreground">
-              {poolFull
-                ? 'Stok penuh'
-                : rewardPoolSecondsToNext === null
-                  ? 'Menyiapkan…'
-                  : formatCountdown(rewardPoolSecondsToNext)}
-            </span>
+            <GlyphChevron className="stamp-ink-fg size-4 shrink-0 transition-transform duration-150 group-active:translate-x-0.5 motion-reduce:transition-none" />
           </span>
         </span>
       </Dialog.Trigger>

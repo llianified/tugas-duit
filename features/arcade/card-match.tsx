@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MATCH_PAIRS } from '@/domain/arcade/arcade'
+import { GlyphCheck } from '@/shared/components/glyph'
+import { ProgressBar } from '@/shared/components/progress-bar'
 import { formatCountdown } from '@/shared/lib/format'
 import { hapticTap } from '@/shared/lib/haptic'
-import { ProgressBar } from '@/shared/components/progress-bar'
 import { cn } from '@/shared/lib/utils'
 
-/** Enam kartu, tiga pasang. Lambangnya teks, bukan glyph Tabler: yang dibandingkan mata di sini adalah bentuk yang sangat berbeda satu sama lain, dan tiga ikon bergaris tipis dengan bobot yang mirip justru membuat rondenya soal ketelitian melihat, bukan soal mengingat. */
+/** Enam kartu, tiga pasang. Lambangnya teks, bukan glyph: yang dibandingkan mata di sini adalah bentuk padat yang sangat berbeda satu sama lain, sehingga rondenya benar-benar soal mengingat posisi. */
 const SYMBOLS = ['◆', '●', '▲'] as const
 
 const FLIP_BACK_MS = 700
@@ -87,17 +88,25 @@ export function CardMatch({
   )
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-[13px] font-medium text-muted-foreground">
-          Cocokkan {MATCH_PAIRS} pasang
-        </p>
-        <p
-          aria-live="off"
-          className="text-[13px] font-bold tabular-nums text-foreground"
+    <div className="flex flex-col gap-4">
+      <div className="flex items-start justify-between gap-3">
+        <span>
+          <span className="block text-sm font-bold tracking-tight text-foreground">
+            Temukan {MATCH_PAIRS} pasang
+          </span>
+          <span className="mt-0.5 block text-sm text-muted-foreground">
+            {matched.length} dari {MATCH_PAIRS} pasangan cocok
+          </span>
+        </span>
+        <span
+          aria-label={`Sisa waktu ${formatCountdown(secondsLeft)}`}
+          className={cn(
+            'rounded-lg bg-background/55 px-2.5 py-1.5 text-sm font-bold tabular-nums ring-border',
+            secondsLeft <= 5 ? 'text-destructive' : 'text-foreground',
+          )}
         >
           {formatCountdown(secondsLeft)}
-        </p>
+        </span>
       </div>
 
       <ProgressBar
@@ -109,29 +118,50 @@ export function CardMatch({
       <ul className="grid grid-cols-3 gap-2.5" aria-label="Papan kartu">
         {cards.map((card, index) => {
           const open = isOpen(index)
+          const complete = matched.includes(card.symbol)
+
           return (
             <li key={card.id}>
               <button
                 type="button"
                 disabled={busy || open || flipped.length === 2}
-                aria-label={open ? `Kartu ${card.symbol}` : `Buka kartu ${index + 1}`}
+                aria-label={
+                  complete
+                    ? `Kartu ${index + 1}, simbol ${card.symbol}, sudah cocok`
+                    : open
+                      ? `Kartu ${index + 1}, simbol ${card.symbol}`
+                      : `Buka kartu ${index + 1}`
+                }
                 onClick={() => {
                   hapticTap()
                   setFlipped((current) => (current.length === 2 ? current : [...current, index]))
                 }}
                 className={cn(
-                  'focus-ring transition-ui press-scale-soft flex aspect-square w-full items-center justify-center rounded-lg text-2xl font-black disabled:pointer-events-none',
-                  open
-                    ? 'bg-primary/15 text-primary ring-1 ring-primary/40'
-                    : 'bg-muted/60 text-transparent hover:bg-muted active:bg-muted',
+                  'focus-ring transition-ui press-scale-soft relative flex aspect-[4/5] w-full items-center justify-center overflow-hidden rounded-lg text-2xl font-black disabled:pointer-events-none motion-reduce:transition-none',
+                  complete
+                    ? 'bg-primary text-primary-foreground ring-1 ring-primary'
+                    : open
+                      ? 'bg-primary/15 text-primary ring-1 ring-primary/50'
+                      : 'bg-background/55 text-muted-foreground ring-border hover:bg-background/75 active:bg-background',
                 )}
               >
-                <span aria-hidden>{open ? card.symbol : '?'}</span>
+                {complete ? (
+                  <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center rounded-full bg-primary-foreground/15">
+                    <GlyphCheck className="size-3" />
+                  </span>
+                ) : null}
+                <span aria-hidden className="transition-transform duration-150 motion-reduce:transition-none">
+                  {open ? card.symbol : index + 1}
+                </span>
               </button>
             </li>
           )
         })}
       </ul>
+
+      <p className="text-center text-xs font-medium text-muted-foreground">
+        Dua kartu yang berbeda akan tertutup lagi.
+      </p>
     </div>
   )
 }

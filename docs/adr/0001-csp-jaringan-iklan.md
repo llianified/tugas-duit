@@ -1,7 +1,12 @@
 # ADR 0001: CSP untuk jaringan iklan
 
-- Status: diterima
+- Status: diterima; bagian OnClicka digantikan [ADR 0003](0003-rewarded-pindah-ke-monetag.md)
 - Cakupan: `proxy.ts`, `/api/csp-report`, Monetag, OnClicka
+
+> **Sudah tidak berlaku:** seluruh klausa OnClicka di bawah — host `onclckvd.com` di
+> `script-src`, loader `initCdTma`, dan pembeda audit yang memisahkan keduanya. Rewarded
+> pindah ke Monetag dan allowlist-nya menciut kembali ke keluarga `libtl.com`. Yang masih
+> berlaku: keputusan 3–7, dan seluruh prosedur report-only di bagian Operasional.
 
 ## Konteks
 

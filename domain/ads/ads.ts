@@ -12,11 +12,10 @@ export function adsConfigured(): boolean {
   return adsMaxViewsPerDay() > 0
 }
 
-/** Provider ikut terkirim di `/api/session` dan `/api/ads/ticket`, sehingga klien dapat memilih SDK yang benar untuk setiap jenis tayangan. */
-export type AdProvider = 'monetag' | 'onclicka'
+/** Provider ikut terkirim di `/api/session` dan `/api/ads/ticket`. Sekarang hanya satu — tetap dipertahankan sebagai field, bukan dihapus, karena `ad_views.block_id` yang sudah tersimpan berisi campuran unit dari jaringan lama dan klien perlu tahu SDK mana yang dimaksud satu tiket. */
+export type AdProvider = 'monetag'
 
 /** Konstanta jaringan disimpan di modul daun tanpa import agar aman dipakai dari runtime server maupun layout. */
-export { ONCLICKA_SPOT_ID } from './onclicka-spot'
 export { MONETAG_DEFAULT_ZONE_ID } from './monetag-zone'
 
 /** Nama fungsi global yang disuntikkan SDK Monetag untuk satu zone. */

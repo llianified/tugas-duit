@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
-  ONCLICKA_SPOT_ID,
+  MONETAG_DEFAULT_ZONE_ID,
   adCooldownSecondsLeft,
   adOpenRefusal,
   adViewsLeft,
   adsConfigured,
+  monetagSdkName,
 } from './ads'
 import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig, type EconomyConfig } from '../economy/economy-config'
 
@@ -25,8 +26,10 @@ const state = (patch: Partial<Parameters<typeof adOpenRefusal>[0]> = {}) => ({
 })
 
 describe('ADS-0 — konfigurasi provider rewarded', () => {
-  it('memakai spot OnClicka yang disetujui', () => {
-    expect(ONCLICKA_SPOT_ID).toBe('6145580')
+  /** Zone ini menamai fungsi global yang dipanggil klien (`show_<zone>`), dipasang script tag di `app/layout.tsx`, dan tersimpan sebagai `ad_views.block_id`. Tiga tempat, satu angka — dipatok di sini supaya penggantiannya tidak pernah setengah jalan. */
+  it('memakai zone Monetag yang disetujui untuk rewarded maupun in-app', () => {
+    expect(MONETAG_DEFAULT_ZONE_ID).toBe('11615417')
+    expect(monetagSdkName(MONETAG_DEFAULT_ZONE_ID)).toBe('show_11615417')
   })
 })
 

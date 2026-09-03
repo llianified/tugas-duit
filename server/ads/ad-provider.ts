@@ -1,12 +1,13 @@
-import { ONCLICKA_SPOT_ID, type AdProvider } from '@/domain/ads/ads'
+import { MONETAG_DEFAULT_ZONE_ID, type AdProvider } from '@/domain/ads/ads'
 
 export interface ResolvedAdProvider {
   provider: AdProvider
-  /** Identitas unit iklan yang disimpan di `ad_views.block_id`; untuk OnClicka nilainya adalah spot ID. */
+  /** Identitas unit iklan yang disimpan di `ad_views.block_id`; untuk Monetag nilainya adalah zone ID. */
   unitId: string
 }
 
-/** Tiket rewarded selalu memakai OnClicka. Monetag tetap dimuat terpisah khusus interstitial otomatis in-app. */
+/** Zone yang sama dipakai tiket rewarded dan interstitial otomatis: satu zone Monetag melayani dua format lewat fungsi global yang sama — `show_<zone>()` polos adalah Rewarded Interstitial, `show_<zone>({ type: 'inApp' })` adalah interstitial otomatis. Dibaca dari env yang sama dengan `app/layout.tsx` supaya script tag, hook in-app, dan `block_id` yang tersimpan tidak pernah menunjuk zone berbeda. */
 export function resolveAdProvider(): ResolvedAdProvider {
-  return { provider: 'onclicka', unitId: ONCLICKA_SPOT_ID }
+  const zoneId = process.env.NEXT_PUBLIC_MONETAG_ZONE_ID?.trim() || MONETAG_DEFAULT_ZONE_ID
+  return { provider: 'monetag', unitId: zoneId }
 }

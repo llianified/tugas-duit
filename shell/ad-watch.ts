@@ -1,6 +1,9 @@
 'use client'
 
-import { adFailureReason, type AdShow } from '@/shell/onclicka-sdk'
+import { showFailureReason as adFailureReason } from '@/shell/monetag-sdk'
+
+/** Kontrak minimum yang dibutuhkan penonton: satu fungsi yang menayangkan iklan berhadiah dan resolve saat tayangannya tuntas. Tinggal di sini, bukan di adapter SDK, supaya pergantian jaringan tidak menyeret berkas ini. */
+export type AdShow = () => Promise<unknown>
 
 /** Jeda setelah dokumen terlihat lagi sebelum tayangan dinyatakan ditinggal. Sebagian format berhadiah baru me-resolve promise-nya persis saat penonton kembali; tanpa jeda ini kepulangan yang sah ikut terbaca sebagai batal. */
 const RETURN_GRACE_MS = 2_500

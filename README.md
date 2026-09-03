@@ -59,7 +59,7 @@ Salin nilai yang dibutuhkan dari `.env.example` ke `.env.development.local` jika
 - kredensial Telegram untuk login, webhook, dan notifikasi bot;
 - `APP_ORIGIN` serta `CRON_SECRET` untuk callback dan maintenance;
 - kredensial KlikQRIS untuk premium;
-- zone ID Monetag untuk interstitial otomatis in-app; rewarded/tiket memakai OnClicka spot `6145580`.
+- zone ID Monetag, dipakai dua format sekaligus: `show_<zone>()` polos untuk tiket rewarded dan `show_<zone>({ type: 'inApp' })` untuk interstitial otomatis.
 
 Jangan commit file environment atau rahasia.
 

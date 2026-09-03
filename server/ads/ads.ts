@@ -2,6 +2,7 @@ import type { PoolClient } from 'pg'
 import {
   adClaimTooFast,
   adCooldownSecondsLeft,
+  adCooldownUntil,
   adOpenRefusal,
   adViewsLeft,
   adsConfigured,
@@ -74,16 +75,21 @@ export interface AdsSessionState {
   unitId: string | null
   viewsLeft: number
   cooldownSecondsLeft: number
+  /** Tenggat cooldown sebagai timestamp, bukan cuma sisa detiknya. `cooldownSecondsLeft` adalah potret yang langsung basi begitu terkirim, jadi klien butuh titik akhirnya supaya bisa memajukan hitungan mundur sendiri — pola yang sama dipakai `energy.nextAt` dan `rewardPool.nextAt`. */
+  cooldownUntil: number | null
+  /** Jam server saat potret diambil, dipakai klien untuk mengoreksi selisih jam perangkat. */
+  now: number
   pass: { expiresAt: number } | null
 }
 
-const ADS_OFF: AdsSessionState = {
+const ADS_OFF: Omit<AdsSessionState, 'now'> = {
   enabled: false,
   inAppEnabled: false,
   provider: null,
   unitId: null,
   viewsLeft: 0,
   cooldownSecondsLeft: 0,
+  cooldownUntil: null,
   pass: null,
 }
 
@@ -91,7 +97,7 @@ const ADS_OFF: AdsSessionState = {
 export async function readAdsState(userId: number): Promise<AdsSessionState> {
   const resolved = resolveAdProvider()
   const enabled = Boolean(resolved) && adsConfigured()
-  if (!resolved || !enabled) return ADS_OFF
+  if (!resolved || !enabled) return { ...ADS_OFF, now: Date.now() }
   const premium = await isPremium(userId)
   const state = await readState(userId)
   return {
@@ -102,6 +108,8 @@ export async function readAdsState(userId: number): Promise<AdsSessionState> {
     unitId: resolved.unitId,
     viewsLeft: adViewsLeft(state.viewsToday),
     cooldownSecondsLeft: adCooldownSecondsLeft(state.lastOpenedAt, state.now),
+    cooldownUntil: adCooldownUntil(state.lastOpenedAt),
+    now: state.now,
     pass: state.hasReady && state.passExpiresAt !== null ? { expiresAt: state.passExpiresAt } : null,
   }
 }

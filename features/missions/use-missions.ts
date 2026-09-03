@@ -1,14 +1,15 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import type { MissionProgress } from '@/domain/progression/missions'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import useSWR from 'swr'
 import { fetchJson, sendJson, userFacingMessage } from '@/shell/api-client'
+import type { MissionsResponse } from '@/shell/session-api'
 import { hapticTap } from '@/shared/lib/haptic'
 import { useToast } from '@/shell/toast'
 
 type ClaimResponse = { energyGranted: number; energy: number; energyMax: number }
 
-/** Misi memuat datanya sendiri, tidak menumpang `/api/session`. Kemajuan misi berubah setiap kali satu task selesai, sementara payload sesi dibaca jauh lebih jarang. Menitipkannya di sana berarti angka misi tertinggal di belakang apa yang baru saja dikerjakan user — bentuk kesalahan yang paling merusak untuk sebuah daftar yang seluruh gunanya adalah menunjukkan progres. Dipisah dari komponennya supaya kartu misi tinggal menggambar: fetch, klaim, haptic, dan toast hidup di sini, dan `MissionCard` hanya menerima state yang sudah jadi. */
+/** Misi tetap punya endpoint sendiri, tetapi datanya berbagi cache SWR dengan shell supaya kartu dan indikator nav selalu membaca potret yang sama. Dipisah dari komponennya supaya kartu misi tinggal menggambar: refresh, klaim, haptic, dan toast hidup di sini, dan `MissionCard` hanya menerima state yang sudah jadi. */
 export function useMissions({
   refreshKey,
   onClaimed,
@@ -16,20 +17,24 @@ export function useMissions({
   refreshKey: number
   onClaimed: () => Promise<unknown>
 }) {
-  const [missions, setMissions] = useState<MissionProgress[] | null>(null)
   const [claiming, setClaiming] = useState<string | null>(null)
+  const previousRefreshKey = useRef(refreshKey)
   const showError = useToast()
+  const { data, error, mutate } = useSWR<MissionsResponse>('/api/missions', fetchJson, {
+    revalidateOnMount: true,
+  })
 
   const load = useCallback(async () => {
     try {
-      const data = await fetchJson<{ missions: MissionProgress[] }>('/api/missions')
-      setMissions(data.missions)
+      await mutate()
     } catch {
-      setMissions([])
+      // SWR menyimpan error-nya; daftar memakai fallback kosong seperti perilaku sebelumnya.
     }
-  }, [])
+  }, [mutate])
 
   useEffect(() => {
+    if (previousRefreshKey.current === refreshKey) return
+    previousRefreshKey.current = refreshKey
     void load()
   }, [load, refreshKey])
 
@@ -50,5 +55,9 @@ export function useMissions({
     [load, onClaimed, showError],
   )
 
-  return { missions, claiming, claim }
+  return {
+    missions: error ? [] : (data?.missions ?? null),
+    claiming,
+    claim,
+  }
 }

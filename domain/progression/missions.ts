@@ -87,3 +87,8 @@ export function buildMissionProgress(
 export function claimableMissions(list: readonly MissionProgress[]): MissionProgress[] {
   return list.filter((mission) => mission.done && !mission.claimed)
 }
+
+/** Nav tetap mengingatkan selama masih ada hadiah misi yang belum diambil. Progres tidak ikut menentukan: misi yang baru dimulai dan misi yang sudah claimable sama-sama belum diklaim. */
+export function hasUnclaimedMissions(list: readonly MissionProgress[]): boolean {
+  return list.some((mission) => !mission.claimed)
+}

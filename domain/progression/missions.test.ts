@@ -3,6 +3,7 @@ import {
   MISSION_KEYS,
   buildMissionProgress,
   claimableMissions,
+  hasUnclaimedMissions,
   isMissionKey,
   missionDefinition,
 } from './missions'
@@ -38,5 +39,23 @@ describe('missions', () => {
     )
 
     expect(claimableMissions(list).map((mission) => mission.key)).toEqual(['tasks'])
+  })
+
+  it('menandai semua misi yang belum diklaim, terlepas dari progresnya', () => {
+    const incomplete = buildMissionProgress({ tasks: 0, stars: 0, ads: 0 }, [])
+    expect(hasUnclaimedMissions(incomplete)).toBe(true)
+
+    const claimable = buildMissionProgress(
+      {
+        tasks: missionDefinition('tasks').target,
+        stars: missionDefinition('stars').target,
+        ads: missionDefinition('ads').target,
+      },
+      ['stars', 'ads'],
+    )
+    expect(hasUnclaimedMissions(claimable)).toBe(true)
+
+    const allClaimed = buildMissionProgress({ tasks: 0, stars: 0, ads: 0 }, MISSION_KEYS)
+    expect(hasUnclaimedMissions(allClaimed)).toBe(false)
   })
 })

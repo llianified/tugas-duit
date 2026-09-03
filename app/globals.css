@@ -996,9 +996,24 @@
     justify-content: center;
     border-radius: 9999px;
   }
+  .nav-pill-icon-anchor {
+    position: relative;
+    display: inline-flex;
+  }
   .nav-pill-icon {
     width: var(--nav-glyph);
     height: var(--nav-glyph);
+  }
+  .nav-pill-status-dot {
+    position: absolute;
+    top: -0.1875rem;
+    right: -0.25rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border: 2px solid var(--background);
+    border-radius: 9999px;
+    background-color: var(--destructive);
+    box-sizing: content-box;
   }
   /* Cincin dipasang lewat box-shadow agar diameter foto tidak menyusut. */
   .nav-pill-avatar {

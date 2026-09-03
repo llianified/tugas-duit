@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
-import { GlyphCross } from '@/shared/components/glyph'
+import { GlyphCross, GlyphWithdraw } from '@/shared/components/glyph'
 import { AvailableBalance } from '@/features/withdraw/components/available-balance'
 import { NotEligibleNote } from '@/features/withdraw/components/not-eligible-note'
 import {
@@ -35,7 +35,7 @@ export function WithdrawDialog({
       <Dialog.Portal>
         <Dialog.Backdrop className="animate-in fade-in data-[ending-style]:animate-out data-[ending-style]:fade-out fixed inset-0 z-40 bg-scrim duration-150" />
 
-        <Dialog.Popup className="animate-in fade-in zoom-in-95 data-[ending-style]:animate-out data-[ending-style]:fade-out data-[ending-style]:zoom-out-95 fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg bg-card outline-none duration-150">
+        <Dialog.Popup className="sheet-popup">
           <WithdrawDialogBody
             balance={balance}
             withdrawals={withdrawals}
@@ -74,19 +74,41 @@ function WithdrawDialogBody({
     return created
   }
 
+  const description = receipt
+    ? 'Permintaanmu sudah masuk'
+    : gatingReason
+      ? 'Lihat status dan syarat penarikan'
+      : step === 'amount'
+        ? 'Pilih nominal dan tujuan'
+        : step === 'account'
+          ? 'Lengkapi akun penerima'
+          : 'Periksa sebelum diajukan'
+
   return (
     <>
-      <div className="flex shrink-0 items-center justify-between gap-3 px-content pt-[var(--header-gap)]">
-        <Dialog.Title className="text-sm font-semibold tracking-tight">Tarik dana</Dialog.Title>
+      <div className="sheet-grip" aria-hidden="true" />
+
+      <div className="flex shrink-0 items-center gap-2 px-content pt-3">
+        <span className="stamp-channel stamp-portrait">
+          <GlyphWithdraw className="stamp-ink-fg size-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <Dialog.Title className="truncate text-sm font-semibold tracking-tight text-foreground">
+            {receipt ? 'Penarikan diajukan' : 'Tarik dana'}
+          </Dialog.Title>
+          <Dialog.Description className="mt-0.5 truncate text-[11px] leading-none text-muted-foreground">
+            {description}
+          </Dialog.Description>
+        </div>
         <Dialog.Close
           aria-label="Tutup"
-          className="focus-ring transition-ui relative -mr-2 flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground after:absolute after:-inset-1.5 after:content-[''] hover:text-foreground"
+          className="focus-ring transition-ui relative -mr-1 flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground after:absolute after:-inset-1.5 after:content-[''] hover:text-foreground"
         >
           <GlyphCross className="size-4" />
         </Dialog.Close>
       </div>
 
-      <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-y-auto px-content pb-[var(--content-px)]">
+      <div className="mt-3 flex min-h-0 flex-1 flex-col overflow-y-auto px-content pb-[calc(var(--content-px)+max(0px,env(safe-area-inset-bottom)))]">
         {receipt ? (
           <WithdrawReceipt withdrawal={receipt} />
         ) : (

@@ -47,16 +47,7 @@ export function MissionsView({
       </div>
 
       {turboReachable || arenaReachable ? (
-        <section aria-labelledby="mission-feature-title" className="region-t flex flex-col gap-3">
-          <div>
-            <h2 id="mission-feature-title" className="text-base font-semibold tracking-tight">
-              Pilihan lainnya
-            </h2>
-            <p className="stack-gap-t text-sm leading-relaxed text-muted-foreground text-pretty">
-              Tambah hadiah lewat Turbo Reward atau mainkan kreditmu di Arena.
-            </p>
-          </div>
-
+        <section aria-label="Pilihan hadiah lainnya" className="region-t flex flex-col gap-3">
           {turboReachable ? (
             <TurboRewardCard
               config={economy}

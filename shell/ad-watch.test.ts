@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { watchAdToFinish, type AdWatchOutcome } from './ad-watch'
+import { adFailureMessage, watchAdToFinish, type AdWatchOutcome } from './ad-watch'
 
 /** Suite ini jalan di environment `node`, jadi `document`/`window` dipalsukan seadanya. Yang dipakai `watchAdToFinish` cuma pendaftaran event dan `document.hidden`, dan `EventTarget` bawaan Node sudah cukup untuk keduanya — lebih murah daripada menarik jsdom hanya demi dua objek. */
 type FakeDocument = EventTarget & { hidden: boolean }
@@ -129,5 +129,21 @@ describe('ADWATCH-3 — katup darurat', () => {
     await vi.advanceTimersByTimeAsync(180_000)
 
     expect((await pending).status).toBe('abandoned')
+  })
+})
+
+describe('ADWATCH-4 — galat yang bisa ditindaklanjuti', () => {
+  it.each([
+    ['no ads available', 'AD-NO-FILL'],
+    ['closed by user', 'AD-CLOSED'],
+    ['network timeout', 'AD-NETWORK'],
+    ['request blocked', 'AD-BLOCKED'],
+    ['unknown provider failure', 'AD-PROVIDER'],
+  ])('memetakan alasan "%s" ke kode %s', (reason, code) => {
+    expect(adFailureMessage(reason)).toContain(`Kode: ${code}.`)
+  })
+
+  it('selalu menjelaskan bahwa tiket belum masuk untuk penolakan tayangan', () => {
+    expect(adFailureMessage('unknown provider failure')).toContain('Tiket belum masuk')
   })
 })

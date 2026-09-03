@@ -18,6 +18,46 @@ export type AdWatchOutcome =
   /** Penonton mengetuk kreatifnya lalu menekan back: iklannya hilang dari layar tanpa promise-nya pernah selesai. `late` adalah promise yang sama yang masih berjalan — ia menolak menyerah pada tayangan yang ternyata tuntas belakangan. */
   | { status: 'abandoned'; late: Promise<AdWatchSettled> }
 
+/** Pesan kegagalan dibedakan berdasarkan alasan SDK supaya user mendapat penyebab, langkah berikutnya, dan kode yang bisa dilaporkan—bukan satu pesan "belum selesai" untuk semua masalah. Alasan mentah tetap tidak ditampilkan karena format vendor tidak stabil dan kadang bukan teks yang layak dibaca user. */
+export function adFailureMessage(reason: string): string {
+  const marker = reason.toLowerCase()
+
+  if (marker.includes('no ad') || marker.includes('no fill') || marker.includes('empty')) {
+    return 'Stok iklan dari penyedia sedang kosong. Tiket belum masuk; coba lagi beberapa menit. Kode: AD-NO-FILL.'
+  }
+
+  if (
+    marker.includes('closed') ||
+    marker.includes('close') ||
+    marker.includes('cancel') ||
+    marker.includes('skip') ||
+    marker.includes('abort')
+  ) {
+    return 'Iklan ditutup sebelum penyedia mengonfirmasi selesai. Tiket belum masuk dan jatah tetap utuh. Coba lagi sampai iklan menutup sendiri. Kode: AD-CLOSED.'
+  }
+
+  if (
+    marker.includes('network') ||
+    marker.includes('offline') ||
+    marker.includes('fetch') ||
+    marker.includes('timeout') ||
+    marker.includes('connection')
+  ) {
+    return 'Koneksi ke penyedia iklan terputus saat tayang. Tiket belum masuk dan jatah tetap utuh. Periksa koneksi, lalu coba lagi. Kode: AD-NETWORK.'
+  }
+
+  if (
+    marker.includes('block') ||
+    marker.includes('not allowed') ||
+    marker.includes('denied') ||
+    marker.includes('forbidden')
+  ) {
+    return 'Iklan diblokir oleh browser, DNS, atau pemblokir iklan. Izinkan iklan, lalu coba lagi. Kode: AD-BLOCKED.'
+  }
+
+  return 'Penyedia iklan menolak tayangan ini. Tiket belum masuk dan jatah tetap utuh. Coba lagi. Kode: AD-PROVIDER.'
+}
+
 /** Fungsi show rewarded hanya resolve kalau tayangannya benar-benar tuntas, tapi ia juga tidak pernah reject saat penonton kabur ke halaman pengiklan — jadi tombolnya bisa menggantung di "Memuat" selamanya. Perginya dokumen lalu kembali dipakai sebagai tanda batal supaya UI selalu punya jawaban.
  *
  * Tanda itu cuma tebakan, dan tebakan yang salah di sini berarti user menonton iklan penuh lalu tidak dapat apa-apa: dokumen juga tersembunyi saat ada notifikasi masuk, layar terkunci, atau user pindah chat sebentar di tengah tayangan. Karena itu jawaban `abandoned` TIDAK menutup pintu — `play()` dibiarkan hidup di `late`, dan tayangan yang tuntas belakangan tetap berhak atas tiketnya. Yang dikorbankan hanya urutan pesannya, bukan hadiahnya. */

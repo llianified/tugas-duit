@@ -2,25 +2,21 @@
 
 import { useCallback, useRef, useState } from 'react'
 import { monetagSdkName, type AdProvider } from '@/domain/ads/ads'
-import { watchAdToFinish, type AdWatchSettled } from '@/shell/ad-watch'
+import {
+  adFailureMessage,
+  watchAdToFinish,
+  type AdWatchSettled,
+} from '@/shell/ad-watch'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
 import { waitForShow } from '@/shell/monetag-sdk'
 import type { AdClaimResponse, AdsState, AdTicketResponse } from '@/shell/session-api'
 
-const SHOW_FAILED_MESSAGE = 'Iklannya belum selesai. Tiket belum masuk.'
-const NO_INVENTORY_MESSAGE = 'Lagi nggak ada iklan buat ditayangkan. Coba lagi sebentar lagi.'
-const SDK_MISSING_MESSAGE = 'Iklan gagal dimuat. Coba lagi nanti.'
-/** Ditinggal ke halaman pengiklan lalu back: jatah harian dan cooldown belum terpakai, jadi ajakannya mencoba lagi — bukan sekadar kabar buruk. */
-const ABANDONED_MESSAGE = 'Iklannya belum tuntas jadi tiket belum masuk. Jatah kamu utuh, coba lagi.'
+const SDK_MISSING_MESSAGE =
+  'Pemutar iklan tidak termuat dalam 8 detik. Periksa koneksi atau pemblokir iklan, lalu coba lagi. Kode: AD-LOAD.'
+/** Ditinggal ke halaman pengiklan lalu back: jatah harian dan cooldown belum terpakai. Pesannya menyebut sinyal yang benar-benar hilang serta kode pelaporan, alih-alih menyimpulkan user sengaja menutup iklan. */
+const ABANDONED_MESSAGE =
+  'Konfirmasi selesai tidak diterima setelah aplikasi kembali aktif. Tiket belum masuk dan jatah tetap utuh. Coba lagi, lalu tunggu iklan menutup sendiri. Kode: AD-UNCONFIRMED.'
 const LATE_CLAIM_MESSAGE = 'Tiket iklan masuk. Tayangannya ternyata tuntas.'
-
-/** Alasan mentah dari SDK tidak pernah sampai ke user: isinya bahasa Inggris vendor ("no ads available", "closed by user") yang tidak menjelaskan apa pun bagi penonton dan melanggar bahasa UI. Yang dipakai cuma golongannya; teks aslinya berhenti di `console.warn` untuk yang membaca log. */
-function showFailureMessage(reason: string): string {
-  const marker = reason.toLowerCase()
-  const noInventory =
-    marker.includes('no ad') || marker.includes('no fill') || marker.includes('empty')
-  return noInventory ? NO_INVENTORY_MESSAGE : SHOW_FAILED_MESSAGE
-}
 
 export function useAdPass({
   ads,
@@ -84,7 +80,7 @@ export function useAdPass({
       }
       if (outcome.status === 'failed') {
         console.warn('[ads] rewarded show_<zone>() reject', outcome.reason)
-        notifyError(showFailureMessage(outcome.reason))
+        notifyError(adFailureMessage(outcome.reason))
         return false
       }
       await sendJson<AdClaimResponse>('/api/ads/claim', 'POST', { ticketId: ticket.ticketId })

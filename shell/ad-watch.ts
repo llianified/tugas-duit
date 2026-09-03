@@ -5,17 +5,14 @@ import { showFailureReason as adFailureReason } from '@/shell/monetag-sdk'
 /** Kontrak minimum yang dibutuhkan penonton: satu fungsi yang menayangkan iklan berhadiah dan resolve saat tayangannya tuntas. Tinggal di sini, bukan di adapter SDK, supaya pergantian jaringan tidak menyeret berkas ini. */
 export type AdShow = () => Promise<unknown>
 
-/** Jeda setelah dokumen terlihat lagi sebelum tayangan dinyatakan ditinggal. Sebagian format berhadiah baru me-resolve promise-nya persis saat penonton kembali; tanpa jeda ini kepulangan yang sah ikut terbaca sebagai batal. */
-const RETURN_GRACE_MS = 2_500
-
-/** Penjaga terakhir kalau SDK mati tanpa suara: promise-nya tidak pernah selesai DAN dokumennya tidak pernah pergi, jadi tidak ada satu pun sinyal yang membebaskan tombol dari "Memuat". Panjangnya sengaja jauh di atas durasi kreatif berhadiah mana pun — ini katup darurat, bukan batas waktu menonton. */
+/** Penjaga terakhir kalau SDK mati tanpa suara. Visibility tidak dipakai sebagai bukti gagal karena Telegram WebView memang menyembunyikan dokumen selama rewarded ad; hanya Promise SDK yang boleh menyatakan tayangan selesai atau ditolak. Panjangnya sengaja jauh di atas durasi kreatif berhadiah mana pun — ini katup darurat, bukan batas waktu menonton. */
 const HANG_BACKSTOP_MS = 180_000
 
 export type AdWatchSettled = { status: 'finished' } | { status: 'failed'; reason: string }
 
 export type AdWatchOutcome =
   | AdWatchSettled
-  /** Penonton mengetuk kreatifnya lalu menekan back: iklannya hilang dari layar tanpa promise-nya pernah selesai. `late` adalah promise yang sama yang masih berjalan — ia menolak menyerah pada tayangan yang ternyata tuntas belakangan. */
+  /** SDK tidak menjawab hingga backstop. `late` adalah Promise yang sama yang tetap menunggu konfirmasi provider agar reward yang sah tidak hilang. */
   | { status: 'abandoned'; late: Promise<AdWatchSettled> }
 
 /** Pesan kegagalan dibedakan berdasarkan alasan SDK supaya user mendapat penyebab, langkah berikutnya, dan kode yang bisa dilaporkan—bukan satu pesan "belum selesai" untuk semua masalah. Alasan mentah tetap tidak ditampilkan karena format vendor tidak stabil dan kadang bukan teks yang layak dibaca user. */
@@ -58,9 +55,9 @@ export function adFailureMessage(reason: string): string {
   return 'Penyedia iklan menolak tayangan ini. Tiket belum masuk dan jatah tetap utuh. Coba lagi. Kode: AD-PROVIDER.'
 }
 
-/** Fungsi show rewarded hanya resolve kalau tayangannya benar-benar tuntas, tapi ia juga tidak pernah reject saat penonton kabur ke halaman pengiklan — jadi tombolnya bisa menggantung di "Memuat" selamanya. Perginya dokumen lalu kembali dipakai sebagai tanda batal supaya UI selalu punya jawaban.
+/** Promise resmi dari SDK adalah satu-satunya sumber kebenaran hasil rewarded ad. Telegram WebView dapat mengirim `visibilitychange`, `pagehide`, lalu `pageshow` saat iklan normal dibuka dan ditutup; menjadikan lifecycle halaman sebagai kegagalan membuat tayangan penuh salah dibaca sebagai batal dan mencegah task terbuka.
  *
- * Tanda itu cuma tebakan, dan tebakan yang salah di sini berarti user menonton iklan penuh lalu tidak dapat apa-apa: dokumen juga tersembunyi saat ada notifikasi masuk, layar terkunci, atau user pindah chat sebentar di tengah tayangan. Karena itu jawaban `abandoned` TIDAK menutup pintu — `play()` dibiarkan hidup di `late`, dan tayangan yang tuntas belakangan tetap berhak atas tiketnya. Yang dikorbankan hanya urutan pesannya, bukan hadiahnya. */
+ * Backstop hanya membebaskan UI bila SDK benar-benar tidak menjawab selama tiga menit. Promise asli tetap hidup lewat `late`, sehingga konfirmasi provider yang datang setelah backstop masih bisa mengklaim tiket. */
 export function watchAdToFinish(play: AdShow): Promise<AdWatchOutcome> {
   let resolveSettled: ((value: AdWatchSettled) => void) | undefined
   const settled = new Promise<AdWatchSettled>((resolve) => {
@@ -69,51 +66,20 @@ export function watchAdToFinish(play: AdShow): Promise<AdWatchOutcome> {
 
   return new Promise<AdWatchOutcome>((resolve) => {
     let decided = false
-    let leftPage = false
-    let graceTimer: ReturnType<typeof setTimeout> | undefined
-
-    function stopWatching() {
-      clearTimeout(graceTimer)
-      clearTimeout(backstopTimer)
-      document.removeEventListener('visibilitychange', onVisibilityChange)
-      window.removeEventListener('pagehide', onLeave)
-      window.removeEventListener('pageshow', onReturn)
-    }
 
     function decide(outcome: AdWatchOutcome) {
       if (decided) return
       decided = true
-      stopWatching()
+      clearTimeout(backstopTimer)
       resolve(outcome)
     }
 
-    function onLeave() {
-      leftPage = true
-      clearTimeout(graceTimer)
-    }
-
-    function onReturn() {
-      if (!leftPage || decided) return
-      clearTimeout(graceTimer)
-      graceTimer = setTimeout(() => decide({ status: 'abandoned', late: settled }), RETURN_GRACE_MS)
-    }
-
-    /** `pagehide`/`pageshow` untuk WebView yang menahan halaman di bfcache saat kreatifnya dibuka, `visibilitychange` untuk yang cuma menyembunyikannya. Dua-duanya dipasang karena WebView Telegram tidak konsisten mengirim keduanya. */
-    function onVisibilityChange() {
-      if (document.hidden) onLeave()
-      else onReturn()
-    }
-
-    document.addEventListener('visibilitychange', onVisibilityChange)
-    window.addEventListener('pagehide', onLeave)
-    window.addEventListener('pageshow', onReturn)
-    /** Dipasang setelah listener-nya supaya `stopWatching` tidak pernah menyentuhnya sebelum ia ada: satu-satunya jalan ke sana adalah `decide`, dan `decide` baru mungkin terpanggil dari timer atau event setelah baris ini lewat. */
     const backstopTimer = setTimeout(
       () => decide({ status: 'abandoned', late: settled }),
       HANG_BACKSTOP_MS,
     )
 
-    /** Hasil asli `play()` selalu diumumkan ke `late` lebih dulu, baru dipakai menjawab. Urutannya penting: kalau `abandoned` sudah terlanjur dijawab, `decide` di sini tidak melakukan apa-apa dan `late` yang membawa hasilnya ke pemanggil. */
+    /** Hasil asli `play()` selalu diumumkan ke `late` lebih dulu. Kalau backstop sudah menjawab, `late` yang membawa konfirmasi akhirnya ke pemanggil. */
     const finish = (outcome: AdWatchSettled) => {
       resolveSettled?.(outcome)
       decide(outcome)

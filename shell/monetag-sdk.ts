@@ -2,8 +2,36 @@
 
 import type { InAppShowParams } from '@/domain/ads/in-app-ads'
 
-/** Akses ke SDK Monetag khusus interstitial otomatis in-app. SDK menempel satu fungsi global per zone dari atribut `data-sdk` di `app/layout.tsx`, dengan bentuk `show_<zone>`. */
-export type MonetagShow = (params?: InAppShowParams) => Promise<unknown>
+export interface RewardedShowParams {
+  /** Rewarded interstitial eksplisit; berbeda dari penjadwal otomatis `inApp`. */
+  type: 'end'
+  /** ID unik per kesempatan reward untuk deduplikasi dan atribusi provider. */
+  ymid: string
+  /** Label placement yang muncul pada laporan provider. */
+  requestVar: 'task_ticket'
+  /** Minta SDK menolak Promise saat inventory kosong agar UI tidak menggantung. */
+  catchIfNoFeed: true
+}
+
+export type MonetagShowParams = InAppShowParams | RewardedShowParams
+
+/** Akses ke SDK Monetag. SDK menempel satu fungsi global per zone dari atribut `data-sdk` di `app/layout.tsx`, dengan bentuk `show_<zone>`. */
+export type MonetagShow = (params?: MonetagShowParams) => Promise<unknown>
+
+export function rewardedShowParams(ticketId: string): RewardedShowParams {
+  return {
+    type: 'end',
+    ymid: ticketId,
+    requestVar: 'task_ticket',
+    catchIfNoFeed: true,
+  }
+}
+
+/** Membekukan identitas tiket ke satu tayangan. Pemanggil lalu hanya dapat menjalankan Promise rewarded yang sudah dikonfigurasi dengan benar. */
+export function rewardedPlayer(show: MonetagShow, ticketId: string): () => Promise<unknown> {
+  const params = rewardedShowParams(ticketId)
+  return () => show(params)
+}
 
 /** Nama fungsinya baru diketahui saat runtime (`show_<zone>`), jadi pembacaannya lewat indeks — bukan properti bernama pada `Window`. `unknown` dulu, baru dipastikan callable, supaya SDK yang belum termuat atau berubah bentuk tidak lolos jadi `TypeError`. */
 export function readShow(name: string): MonetagShow | undefined {

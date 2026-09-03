@@ -84,7 +84,7 @@ describe('ADS-DB-1 — pass membayar ongkos masuk, energi tidak tersentuh', () =
     const row = await readChallengeEntry(challenge.id)
     expect(row.ad_view_id).toBe(ticketId)
     expect(row.energy_spent_at).toBeNull()
-    expect(await readAdView(ticketId)).toMatchObject({ state: 'consumed', block_id: '7799' })
+    expect(await readAdView(ticketId)).toMatchObject({ state: 'consumed', block_id: '6145580' })
   })
 
   it('tetap memotong energi saat task dibayar energi', async () => {

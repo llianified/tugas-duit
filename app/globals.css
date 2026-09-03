@@ -1955,6 +1955,46 @@
   padding-top: var(--stack-gap);
 }
 
+/* Varian kartu carousel: empat perangko memakai irama yang sama dari kiri ke kanan.
+   Tekstur diagonal sengaja dilepas di sini agar bidangnya lebih tenang; identitas perangko
+   tetap datang dari gigi, bingkai cetak, dan tintanya. Baris kepala, isi, detail, dan aksi
+   punya garis awal yang konsisten supaya pergantian slide terasa seperti satu kartu yang
+   berganti informasi, bukan empat komponen dengan tata letak berbeda. */
+.stamp-card {
+  --stamp-p: 1rem;
+  min-height: 11.5rem;
+  background-image: linear-gradient(
+    155deg,
+    color-mix(in oklab, var(--stamp-accent) 18%, var(--card)),
+    color-mix(in oklab, var(--stamp-accent) 7%, var(--card)) 68%,
+    var(--card)
+  );
+}
+.stamp-card::before {
+  border-style: solid;
+  border-color: color-mix(in oklab, var(--stamp-accent) 28%, transparent);
+}
+.stamp-card-head {
+  min-height: 2.25rem;
+}
+.stamp-card-head > :last-child {
+  min-width: 6.75rem;
+}
+.stamp-card-head .num-display {
+  white-space: nowrap;
+}
+.stamp-card-lead {
+  min-height: 2rem;
+}
+.stamp-card-detail {
+  min-height: 2rem;
+}
+.stamp-card-foot {
+  min-height: 2.5rem;
+  align-items: center;
+  padding-top: 0.5rem;
+}
+
 /* Cap pos: dua cincin sepusat berisi sisa hari. Miringnya yang penting — cap tegak terbaca sebagai lencana yang dirancang, sementara cap miring terbaca sebagai sesuatu yang ditekankan ke kertas SETELAH perangkonya ditempel. Angkanya duduk di dalam cap karena sisa hari memang satu-satunya hal yang diminta dibaca dari perangko yang sudah terpakai; cap yang cuma berisi tulisan hiasan tidak akan berhak menempati ruang sebesar ini. */
 .stamp-postmark {
   position: relative;
@@ -1981,8 +2021,9 @@
   text-indent: 0.2em;
 }
 
-/* --- Perangko bonus channel: kertas yang sama, tinta biru ------------------ Warnanya sengaja TIDAK ikut jadi emas. Emas di aplikasi ini sudah punya arti tunggal — premium — dan perangko bonus yang emas akan menjanjikan hal yang bukan miliknya. Jadi yang diseragamkan bentuknya, bukan tintanya: dua perangko dari mesin yang sama, dicetak dengan dua tinta. */
-.stamp-channel {
+/* --- Perangko tinta biru -------------------------------------------------- Bonus channel, Turbo Reward, dan Arena memakai kertas yang sama dengan premium, tetapi bukan tinta emas. Emas di aplikasi ini tetap punya arti tunggal — premium. Alias channel dipertahankan agar nama komponennya tetap menjelaskan konteks, sementara `stamp-primary` dipakai oleh kartu promosi umum yang sekarang tinggal di carousel yang sama. */
+.stamp-channel,
+.stamp-primary {
   --stamp-accent: var(--primary);
   /* `--primary` sebagai huruf 10px di atas kertas gelap tidak lolos kontras, dan nada terangnya sudah punya token sejak chip. Hanya nada TEKS yang diganti — bidang, gigi, bingkai cetak, dan cap tetap dari `--primary`, jadi kertasnya tetap biru. */
   --stamp-accent-fg: var(--chip-fg-primary);

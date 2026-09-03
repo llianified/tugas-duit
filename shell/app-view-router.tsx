@@ -112,7 +112,13 @@ export function AppViewRouter({
       <MissionsView
         key="missions"
         refreshKey={session.completedCount}
+        economy={session.economy}
+        rewardPoolCredits={session.rewardPoolCredits}
+        rewardPoolMax={session.rewardPoolMax}
+        rewardPoolRegenCredits={session.rewardPoolRegenCredits}
+        rewardPoolSecondsToNext={session.rewardPoolSecondsToNext}
         onClaimed={session.refreshSession}
+        onOpenArcade={session.openArcade}
       />
     )
   }

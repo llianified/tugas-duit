@@ -17,7 +17,23 @@ type PgliteInstance = {
 const INT8_OID = 20
 const NUMERIC_OID = 1700
 
-const globalForPreview = globalThis as unknown as { previewDb?: Promise<PgliteInstance> }
+const globalForPreview = globalThis as unknown as {
+  previewDb?: Promise<PgliteInstance>
+  previewFeaturesConfigured?: Promise<void>
+}
+
+/** Preview manusia harus selalu membuka seluruh permukaan produk yang sedang ditinjau. Nilai
+ * ini ditulis ke PGlite, bukan dioverride di respons sesi, supaya API Arena dan UI membaca
+ * sumber konfigurasi yang sama. Uji dikecualikan karena masing-masing skenario mengatur flag
+ * ekonominya sendiri. Promise disimpan di `globalThis` agar Fast Refresh tidak menjalankan
+ * update yang sama berulang kali pada database preview yang persisten. */
+async function configurePreviewFeatures(db: PgliteInstance): Promise<void> {
+  await db.exec(`
+    update economy_config
+       set config = jsonb_set(config, '{arcadeEnabled}', '1'::jsonb, true)
+     where id = 1
+  `)
+}
 
 async function boot(): Promise<PgliteInstance> {
   const { PGlite } = await import('@electric-sql/pglite')
@@ -56,9 +72,14 @@ async function migrate(db: PgliteInstance): Promise<void> {
   }
 }
 
-function getDb(): Promise<PgliteInstance> {
+async function getDb(): Promise<PgliteInstance> {
   globalForPreview.previewDb ??= boot()
-  return globalForPreview.previewDb
+  const db = await globalForPreview.previewDb
+  if (!process.env.VITEST) {
+    globalForPreview.previewFeaturesConfigured ??= configurePreviewFeatures(db)
+    await globalForPreview.previewFeaturesConfigured
+  }
+  return db
 }
 
 let queue: Promise<unknown> = Promise.resolve()

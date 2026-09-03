@@ -18,7 +18,7 @@ import {
 
 const T0 = 1_700_000_000_000
 
-/** Arena mati di bawaan, jadi hampir setiap tes di berkas ini harus menyalakannya lebih dulu. Itu memang bentuk yang diinginkan: yang gagal kalau saklarnya berubah bukan cuma satu tes, melainkan seluruh berkas. */
+/** Patch eksplisit menjaga tiap skenario ekonomi tetap terbaca, termasuk tes saklar yang mematikan Arena sementara meski bawaan produksi kini aktif. */
 const on = (patch: Partial<EconomyConfig> = {}) =>
   setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, arcadeEnabled: 1, ...patch })
 
@@ -35,9 +35,9 @@ const openState = (patch: Partial<ArcadeOpenState> = {}): ArcadeOpenState => ({
 
 afterEach(() => setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG))
 
-describe('ARCADE-1 saklar bawaan', () => {
-  it('mati sampai panel menyalakannya, karena ia satu-satunya hadiah yang menaikkan plafon payout', () => {
-    setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
+describe('ARCADE-1 saklar panel', () => {
+  it('menutup Arena saat admin mematikannya', () => {
+    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, arcadeEnabled: 0 })
     expect(arcadeOpenRefusal(openState(), T0)).toBe('arcade_disabled')
   })
 })

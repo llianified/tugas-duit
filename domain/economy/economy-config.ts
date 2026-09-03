@@ -169,10 +169,9 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   premiumMaxTasksPerDay: 1_000,
   premiumWithdrawalCooldownDays: 3,
   turboRewardEnabled: 1,
-  // Arena lahir dalam keadaan MATI. Ia satu-satunya fitur yang hadiahnya bisa menaikkan
-  // plafon payout, jadi menyalakannya adalah keputusan ekonomi yang diambil sadar di panel,
-  // bukan efek samping sebuah deploy.
-  arcadeEnabled: 0,
+  // Arena aktif setelah angka hadiah, jatah, dan gerbang iklannya ditinjau. Saklar ini tetap
+  // hidup di panel agar admin bisa menutupnya lagi tanpa deploy bila ekonomi perlu dihentikan.
+  arcadeEnabled: 1,
   arcadeAdGated: 1,
   arcadeMaxPlaysPerDay: 3,
   arcadeCooldownSeconds: 300,

@@ -2,6 +2,7 @@ import { isTicketId } from '@/domain/ads/ads'
 import type { AdPostbackParams } from '@/domain/ads/postback'
 import { economyConfig } from '@/domain/economy/economy-config'
 import { transaction } from '../platform/db'
+import { EXPIRE_STALE_SQL } from './ads'
 
 /** Yang bisa terjadi pada satu postback. Dikembalikan apa adanya ke route supaya jawabannya bisa dibaca saat menguji URL dari dashboard Monetag — tanpa itu, "postback sudah masuk tapi tiket tidak keluar" cuma bisa ditebak. */
 export type AdPostbackOutcome =
@@ -49,6 +50,9 @@ export async function settleAdPostback(params: AdPostbackParams): Promise<AdPost
       ])
       return 'ticket_expired'
     }
+
+    /** Slot `ad_views_one_ready` bisa ditempati pass yang tenggatnya sudah lewat: sapuannya cuma jalan di `readState`, tidak di sini. Tanpa disapu, pass mati itu memblokir `not exists` di bawah, promosinya jadi `noted`, dan route menjawab 200 — Monetag berhenti mengulang. Hasilnya: impresi terbayar dan `verified_at` tertulis, tapi tiketnya tinggal `pending` sampai hangus, dan saat gerbangnya menyala tidak ada satu pun jalur lain yang bisa menyusul. Sama persis dengan yang ditanggung `restoreAdPass`, jadi obatnya pun sama. */
+    await tx.query(EXPIRE_STALE_SQL, [row.user_id])
 
     /** Bentuk `not exists` dipakai, bukan menangkap pelanggaran `ad_views_one_ready`: exception di dalam transaksi ikut membatalkan penulisan `verified_at` di atas, sehingga jejak konfirmasinya hilang justru pada kasus yang paling perlu terbaca. Pola yang sama sudah dipakai `restoreAdPass`. */
     const promoted = await tx.query(

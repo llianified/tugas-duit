@@ -49,7 +49,8 @@ type StateRow = {
   now: Date
 }
 
-const EXPIRE_STALE_SQL = `update ad_views set state='expired'
+/** Diekspor untuk `settleAdPostback`: jalur itu juga menerbitkan pass, jadi ia menanggung penjagaan slot `ad_views_one_ready` yang sama dan butuh sapuan yang sama persis. Satu definisi, bukan dua yang bisa menyimpang. */
+export const EXPIRE_STALE_SQL = `update ad_views set state='expired'
   where user_id=$1 and state in ('pending','ready') and expires_at <= now()`
 
 async function run<T>(sql: string, params: unknown[], tx?: PoolClient): Promise<T[]> {
@@ -241,13 +242,16 @@ export async function claimAdTicket(userId: number, ticketId: string): Promise<C
       [ticketId, userId],
     )
     const row = locked.rows[0]
-    if (!row || row.state !== 'pending') {
-      await recordAdClaimSignal(tx, userId, 'ad_claim_without_ticket', {
-        ticketId,
-        state: row?.state ?? null,
-      })
+    if (!row) {
+      await recordAdClaimSignal(tx, userId, 'ad_claim_without_ticket', { ticketId, state: null })
       return { ok: false as const, reason: 'no_ticket' as const }
     }
+    /** Klasifikasinya dikembarkan dengan `readVerifiedClaim` di atas, dan itu bukan kerapian: sejak `settleAdPostback` bisa menerbitkan pass sendiri — dan ia jalan TANPA memeriksa `adsPostbackRequired` — baris 'ready' milik user ini berarti Monetag mengonfirmasi lebih dulu daripada klaim yang berangkat dari perangkatnya. Keduanya berangkat pada momen yang sama, jadi siapa yang menang murni balapan. Menjawabnya `no_ticket` membuat user membaca "tiket iklan tidak ketemu" tepat setelah menonton iklan penuh, sementara passnya justru sudah siap — dan menuliskan sinyal fraud atas orang yang tidak melakukan apa pun. Sinyal itu masuk `sum(f.severity)` yang jadi skor risiko di antrean payout, yaitu angka yang dibaca admin tepat sebelum mentransfer uang. */
+    if (row.state === 'ready') {
+      return { ok: true as const, pass: { expiresAt: row.expires_at.getTime() } }
+    }
+    /** Baris yang sudah `consumed` atau `expired` bukan tiket karangan — ia tiket yang riwayatnya sudah lewat, jadi tidak menerbitkan sinyal fraud. */
+    if (row.state !== 'pending') return { ok: false as const, reason: 'no_ticket' as const }
 
     const now = row.now.getTime()
     if (row.expires_at.getTime() <= now) {

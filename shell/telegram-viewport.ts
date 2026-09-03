@@ -5,6 +5,24 @@ import { useEffect } from 'react'
 /** Aplikasinya gelap-saja, jadi chrome Telegram cukup satu nilai — sama dengan `--background` di `globals.css`. Kalau nilai itu berubah, ubah di sini juga. */
 const TELEGRAM_CHROME = '#101014'
 
+/** EKSPERIMEN — dimatikan sementara atas permintaan pemilik repo, bukan keputusan desain.
+ *
+ * Interstitial in-app Monetag tayang berlapis-lapis HANYA di Telegram Android; di
+ * `web.telegram.org` (iframe) dan di browser biasa (top-level, sesi lewat `#tgWebAppData`)
+ * ia normal. Payload `show_<zone>({ type: 'inApp' })`-nya identik di ketiganya dan tidak ada
+ * satu pun kode aplikasi ini yang bercabang per platform — `requestFullscreen` adalah
+ * satu-satunya asimetri yang kita punya, karena mode fullscreen Mini App memang cuma ada di
+ * Android/iOS. Dugaan yang sedang diuji: overlay iklan memaksa Telegram keluar-masuk
+ * fullscreen, WebView-nya resize, dan SDK membaca goyangan itu sebagai halaman baru lalu
+ * menjalankan ulang `timeout`-nya — kaskade yang memberi makan dirinya sendiri.
+ *
+ * Kembalikan ke `true` begitu hasilnya diketahui. Selama `false`, `isFullscreen` tidak pernah
+ * menyala sehingga `[data-telegram-controls]` tidak terpasang dan pita brand memakai geometri
+ * mode biasa — jalur yang sama yang dipakai Telegram Web dan Desktop hari ini, bukan tata letak
+ * yang belum pernah dijalankan. Aturan keras #6 di `CLAUDE.md` melarang menyentuh ini tanpa
+ * permintaan eksplisit; permintaannya ada, dan sifatnya sementara. */
+const REQUEST_FULLSCREEN = false
+
 type TelegramInset = { top: number; bottom: number; left: number; right: number }
 type TelegramWebApp = {
   ready?: () => void
@@ -65,7 +83,7 @@ export function useTelegramViewport() {
     telegram.onEvent?.('themeChanged', syncColors)
     telegram.onEvent?.('fullscreenChanged', syncControls)
 
-    if (telegram.isVersionAtLeast?.('8.0') === true) {
+    if (REQUEST_FULLSCREEN && telegram.isVersionAtLeast?.('8.0') === true) {
       try {
         telegram.requestFullscreen?.()
       } catch {

@@ -8,14 +8,14 @@ import {
   type AdWatchSettled,
 } from '@/shell/ad-watch'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
-import { waitForShow } from '@/shell/monetag-sdk'
+import { rewardedPlayer, waitForShow } from '@/shell/monetag-sdk'
 import type { AdClaimResponse, AdsState, AdTicketResponse } from '@/shell/session-api'
 
 const SDK_MISSING_MESSAGE =
   'Pemutar iklan tidak termuat dalam 8 detik. Periksa koneksi atau pemblokir iklan, lalu coba lagi. Kode: AD-LOAD.'
-/** Ditinggal ke halaman pengiklan lalu back: jatah harian dan cooldown belum terpakai. Pesannya menyebut sinyal yang benar-benar hilang serta kode pelaporan, alih-alih menyimpulkan user sengaja menutup iklan. */
+/** Hanya muncul jika Promise SDK tidak memberi hasil selama tiga menit; perpindahan visibility normal selama iklan tidak lagi memicu pesan ini. */
 const ABANDONED_MESSAGE =
-  'Konfirmasi selesai tidak diterima setelah aplikasi kembali aktif. Tiket belum masuk dan jatah tetap utuh. Coba lagi, lalu tunggu iklan menutup sendiri. Kode: AD-UNCONFIRMED.'
+  'Penyedia iklan belum memberi hasil setelah 3 menit. Tiket belum masuk dan jatah tetap utuh. Coba lagi. Kode: AD-TIMEOUT.'
 const LATE_CLAIM_MESSAGE = 'Tiket iklan masuk. Tayangannya ternyata tuntas.'
 
 export function useAdPass({
@@ -33,15 +33,19 @@ export function useAdPass({
   /** Dinaikkan tiap kali tontonan baru dimulai. Klaim susulan memakainya untuk mundur: tiket yang sama sedang ditonton ulang, dan tontonan kedua itu yang berhak mengklaimnya. Tanpa penanda ini keduanya berlomba, yang kalah menerima `no_ticket`, dan user membaca "tiket tidak ketemu" untuk tiket yang justru baru saja masuk. */
   const watchGeneration = useRef(0)
 
-  /** `show_<zone>()` TANPA argumen adalah Rewarded Interstitial: promise-nya baru resolve setelah tayangannya tuntas, dan itulah izin mengklaim tiketnya. Discriminator `type: 'inApp'` sengaja tidak ikut — payload itu mendaftarkan penjadwal interstitial otomatis, bukan menayangkan satu iklan berhadiah. Zone-nya datang dari server (`unitId`) supaya tiket, script tag, dan `ad_views.block_id` tidak pernah menunjuk zone berbeda. */
-  const getPlayer = useCallback(async (provider: AdProvider, unitId: string) => {
-    if (provider !== 'monetag' || !unitId) return null
-    return waitForShow(monetagSdkName(unitId))
-  }, [])
+  /** Rewarded Interstitial dipanggil eksplisit sebagai `type: 'end'`. Ticket ID menjadi `ymid` unik, sedangkan `catchIfNoFeed` memastikan inventory kosong menolak Promise alih-alih menggantung. Zone tetap datang dari server (`unitId`) supaya tiket, script tag, dan `ad_views.block_id` tidak pernah menunjuk zone berbeda. */
+  const getPlayer = useCallback(
+    async (provider: AdProvider, unitId: string, ticketId: string) => {
+      if (provider !== 'monetag' || !unitId) return null
+      const show = await waitForShow(monetagSdkName(unitId))
+      return show ? rewardedPlayer(show, ticketId) : null
+    },
+    [],
+  )
 
   const hasPass = Boolean(ads?.pass)
 
-  /** Tayangan yang dinyatakan ditinggal ternyata tuntas belakangan. Tiketnya masih pending di server, jadi klaimnya sah — dan diam-diam membuangnya persis sama saja dengan bug yang mau dihindari: user menonton iklan penuh lalu tidak dapat apa-apa. */
+  /** SDK yang melewati backstop ternyata mengonfirmasi tayangan belakangan. Tiketnya masih pending di server, jadi klaimnya sah — membuang hasil terlambat akan membuat user yang sudah menonton penuh tidak mendapat task. */
   const claimWhenLate = useCallback(
     async (late: Promise<AdWatchSettled>, ticketId: string, generation: number) => {
       const outcome = await late
@@ -51,7 +55,7 @@ export function useAdPass({
         await sendJson<AdClaimResponse>('/api/ads/claim', 'POST', { ticketId })
         notifySuccess(LATE_CLAIM_MESSAGE)
       } catch {
-        // Tiketnya sudah kedaluwarsa atau sudah diklaim ulang lewat tontonan berikutnya. Tidak ada yang perlu dikabarkan: user sudah menerima pesan "belum tuntas" tadi.
+        // Tiketnya sudah kedaluwarsa atau diklaim ulang lewat tontonan berikutnya. Tidak ada yang perlu dikabarkan: user sudah menerima pesan timeout tadi.
       } finally {
         await refreshSession()
       }
@@ -66,13 +70,13 @@ export function useAdPass({
     setWatchingAd(true)
     try {
       const ticket = await sendJson<AdTicketResponse>('/api/ads/ticket', 'POST')
-      const play = await getPlayer(ticket.provider, ticket.unitId)
+      const play = await getPlayer(ticket.provider, ticket.unitId, ticket.ticketId)
       if (!play) {
         notifyError(SDK_MISSING_MESSAGE)
         return false
       }
       const outcome = await watchAdToFinish(play)
-      /** Tiket pending sengaja dibiarkan terbuka: `openAdTicket` memakai ulang tiket yang sama dan hitungan harian baru naik setelah klaim, jadi tayangan yang ditinggal tidak menghukum siapa pun. */
+      /** Tiket pending sengaja dibiarkan terbuka: `openAdTicket` memakai ulang tiket yang sama dan hitungan harian baru naik setelah klaim, jadi timeout SDK tidak mengurangi jatah siapa pun. */
       if (outcome.status === 'abandoned') {
         notifyError(ABANDONED_MESSAGE)
         void claimWhenLate(outcome.late, ticket.ticketId, generation)

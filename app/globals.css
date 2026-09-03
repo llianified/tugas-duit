@@ -1992,7 +1992,6 @@
 .stamp-card-foot {
   min-height: 2.5rem;
   align-items: center;
-  border-top: 1px solid color-mix(in oklab, var(--stamp-accent) 18%, transparent);
   padding-top: 0.5rem;
 }
 

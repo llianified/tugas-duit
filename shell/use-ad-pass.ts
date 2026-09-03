@@ -2,17 +2,21 @@
 
 import { useCallback, useState } from 'react'
 import type { AdProvider } from '@/domain/ads/ads'
+import { watchAdToFinish } from '@/shell/ad-watch'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
-import { gigaPubFailureReason, waitForGigaPubShow } from '@/shell/gigapub-sdk'
+import { waitForGigaPubShow } from '@/shell/gigapub-sdk'
 import type { AdClaimResponse, AdsState, AdTicketResponse } from '@/shell/session-api'
 
 const SHOW_FAILED_MESSAGE = 'Iklannya belum selesai. Tiket belum masuk.'
 const SDK_MISSING_MESSAGE = 'Iklan gagal dimuat. Coba lagi nanti.'
+/** Ditinggal ke halaman pengiklan lalu back: jatah harian dan cooldown belum terpakai, jadi ajakannya mencoba lagi — bukan sekadar kabar buruk. */
+const ABANDONED_MESSAGE =
+  'Iklannya harus ditonton sampai habis. Jangan keluar atau tekan back di tengah tayangan — tiket belum masuk, coba lagi.'
 
-/** `showGiga()` dapat ditolak saat penonton menutup iklan atau kreatif gagal dimuat. Ringkas alasan tanpa membocorkan objek mentah ke UI. */
-function showFailureMessage(error: unknown): string {
-  const reason = gigaPubFailureReason(error).trim().slice(0, 80)
-  return reason ? `${SHOW_FAILED_MESSAGE} (${reason})` : SHOW_FAILED_MESSAGE
+/** `showGiga()` dapat menolak Promise dengan string, Error, atau objek bermessage. Ringkas alasan tanpa membocorkan objek mentah ke UI. */
+function showFailureMessage(reason: string): string {
+  const trimmed = reason.trim().slice(0, 80)
+  return trimmed ? `${SHOW_FAILED_MESSAGE} (${trimmed})` : SHOW_FAILED_MESSAGE
 }
 
 export function useAdPass({
@@ -45,11 +49,15 @@ export function useAdPass({
         notifyError(SDK_MISSING_MESSAGE)
         return false
       }
-      try {
-        await play()
-      } catch (error) {
-        console.warn('[ads] showGiga() reject', error)
-        notifyError(showFailureMessage(error))
+      const outcome = await watchAdToFinish(play)
+      /** Tiket pending sengaja dibiarkan terbuka: `openAdTicket` memakai ulang tiket yang sama dan hitungan harian baru naik setelah klaim, jadi tayangan yang ditinggal tidak menghukum siapa pun. */
+      if (outcome.status === 'abandoned') {
+        notifyError(ABANDONED_MESSAGE)
+        return false
+      }
+      if (outcome.status === 'failed') {
+        console.warn('[ads] showGiga() reject', outcome.reason)
+        notifyError(showFailureMessage(outcome.reason))
         return false
       }
       await sendJson<AdClaimResponse>('/api/ads/claim', 'POST', { ticketId: ticket.ticketId })

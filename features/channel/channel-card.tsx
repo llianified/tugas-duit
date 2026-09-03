@@ -25,13 +25,13 @@ export function ChannelBonusCard({
   return (
     <section
       aria-label="Bonus join channel"
-      className="stamp stamp-channel"
+      className="stamp stamp-card stamp-channel"
       data-stamping={stamped ? 'true' : undefined}
       style={{ '--stamp-ms': `${CHANNEL_STAMP_MS}ms` } as CSSProperties}
     >
       {/* Nominal perangko, di tempat dan ukuran yang sama dengan harga di kartu
           premium: dua kertas dari mesin yang sama, satu tinggi angka. */}
-      <div className="flex items-start justify-between gap-3">
+      <div className="stamp-card-head flex items-start justify-between gap-3">
         <p className="home-tag stamp-tag pt-1">Bonus</p>
         <p className="flex flex-col items-end gap-1">
           <span className="num-display stamp-ink-fg text-[1.375rem]">
@@ -43,7 +43,7 @@ export function ChannelBonusCard({
 
       {/* Posisi potret: pesawat kertas, benda yang sama dengan yang ada di tombol
           "Join" di bawahnya. `GlyphSvg` sudah menyetel `aria-hidden` sendiri. */}
-      <div className="stack-gap-t flex items-start gap-2">
+      <div className="stamp-card-lead stack-gap-t flex items-center gap-2">
         <span className="stamp-portrait">
           <GlyphTelegram className="stamp-ink-fg size-4" />
         </span>
@@ -52,7 +52,7 @@ export function ChannelBonusCard({
         </span>
       </div>
 
-      <p className="stack-gap-t text-xs leading-snug text-muted-foreground">
+      <p className="stamp-card-detail stack-gap-t text-xs leading-snug text-muted-foreground">
         Sekali per akun. Setelah diklaim, bonus ini tidak muncul lagi.
       </p>
 
@@ -60,7 +60,7 @@ export function ChannelBonusCard({
           "Mulai" di karcis. Yang membedakan derajatnya bidangnya — tenang vs aksen —
           bukan ukuran hurufnya. `.stamp-foot` yang menahannya di garis bawah kertas,
           supaya barisnya berhenti setinggi baris aksi kartu premium di slide lain. */}
-      <div className="stamp-foot flex gap-2">
+      <div className="stamp-card-foot stamp-foot flex gap-2">
         <a
           href={bonus.url}
           target="_blank"
@@ -71,7 +71,7 @@ export function ChannelBonusCard({
           <GlyphTelegram className="size-4 shrink-0" />
           Join
         </a>
-        <ActionButton size="sm" className="flex-[1.6]" onClick={claim} disabled={claiming}>
+        <ActionButton size="sm" className="flex-1" onClick={claim} disabled={claiming}>
           {claiming ? 'Mengecek…' : 'Klaim bonus'}
         </ActionButton>
       </div>

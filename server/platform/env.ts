@@ -29,6 +29,8 @@ export const env = {
   get klikqrisBaseUrl() {
     return process.env.KLIKQRIS_BASE_URL?.trim() || 'https://klikqris.com/api'
   },
+  /** Rahasia postback Monetag. Ikut di query URL karena postback berupa GET tanpa header (lihat `app/api/ads/postback/route.ts`). Kalau kosong, route-nya menolak SEMUA pemanggil (503) — verifikasi mati, bukan terbuka untuk siapa saja. */
+  get monetagPostbackSecretOrNull() { return process.env.MONETAG_POSTBACK_SECRET?.trim() || null },
   get telegramChannelId() {
     return process.env.TELEGRAM_CHANNEL_ID?.trim() || '@tugasduit'
   },

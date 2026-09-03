@@ -12,6 +12,18 @@ export function adsConfigured(): boolean {
   return adsMaxViewsPerDay() > 0
 }
 
+/** Gerbang verifikasi postback. Saat menyala, pass hanya diterbitkan oleh konfirmasi Monetag (`settleAdPostback`) — klaim dari klien berubah jadi pertanyaan, bukan perintah. Disimpan sebagai setelan panel, bukan konstanta, karena menyalakannya sebelum URL postback terisi di dashboard Monetag membuat seluruh tiket berhenti keluar; urutan amannya adalah deploy dulu, buktikan `verified_at` terisi, baru nyalakan. */
+export function adsPostbackRequired(): boolean {
+  return economyConfig().adsPostbackRequired === 1
+}
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Ticket ID adalah `ad_views.id`. Bentuknya diperiksa sebelum menyentuh DB karena nilainya datang dari dua sumber yang sama-sama tidak dipercaya: body klaim dari klien dan makro `ymid` pada postback. */
+export function isTicketId(value: string): boolean {
+  return UUID_PATTERN.test(value)
+}
+
 /** Provider ikut terkirim di `/api/session` dan `/api/ads/ticket`. Sekarang hanya satu — tetap dipertahankan sebagai field, bukan dihapus, karena `ad_views.block_id` yang sudah tersimpan berisi campuran unit dari jaringan lama dan klien perlu tahu SDK mana yang dimaksud satu tiket. */
 export type AdProvider = 'monetag'
 

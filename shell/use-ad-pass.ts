@@ -1,17 +1,17 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { monetagSdkName } from '@/domain/ads/ads'
-import { showFailureReason, waitForShow } from '@/shell/monetag-sdk'
+import type { AdProvider } from '@/domain/ads/ads'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
+import { gigaPubFailureReason, waitForGigaPubShow } from '@/shell/gigapub-sdk'
 import type { AdClaimResponse, AdsState, AdTicketResponse } from '@/shell/session-api'
 
 const SHOW_FAILED_MESSAGE = 'Iklannya belum selesai ditonton, jadi tiketnya belum bisa dipakai.'
 const SDK_MISSING_MESSAGE = 'Iklannya gagal dimuat. Coba lagi sebentar lagi ya.'
 
-/** `show_<zone>()` bisa reject karena dua hal yang tampak sama di UI tapi beda akarnya: penonton menutup iklan lebih awal (wajar), atau kreatifnya memang tidak pernah termuat (stok kosong / diblokir). Alasan mentahnya diringkas oleh `showFailureReason` lalu ditempelkan ke pesan. Tanpa ini satu-satunya petunjuk yang tersisa cuma "belum selesai ditonton", yang menyesatkan saat penyebabnya iklan gagal muat. */
+/** `showGiga()` dapat ditolak saat penonton menutup iklan atau kreatif gagal dimuat. Ringkas alasan tanpa membocorkan objek mentah ke UI. */
 function showFailureMessage(error: unknown): string {
-  const reason = showFailureReason(error).trim().slice(0, 80)
+  const reason = gigaPubFailureReason(error).trim().slice(0, 80)
   return reason ? `${SHOW_FAILED_MESSAGE} (${reason})` : SHOW_FAILED_MESSAGE
 }
 
@@ -26,11 +26,10 @@ export function useAdPass({
 }) {
   const [watchingAd, setWatchingAd] = useState(false)
 
-  /** Rewarded Interstitial memakai pemanggilan SDK tanpa `type: 'inApp'`. Promise hanya dianggap selesai setelah Monetag menyelesaikan tayangan; barulah tiket diklaim. */
-  const getPlayer = useCallback(async (unitId: string) => {
-    const show = await waitForShow(monetagSdkName(unitId))
-    if (!show) return null
-    return () => show()
+  /** Promise Giga.pub hanya resolve setelah rewarded ad selesai; tiket baru boleh diklaim sesudah itu. Monetag sengaja tidak menjadi fallback karena hanya dipakai untuk in-app. */
+  const getPlayer = useCallback(async (provider: AdProvider) => {
+    if (provider !== 'gigapub') return null
+    return waitForGigaPubShow()
   }, [])
 
   const hasPass = Boolean(ads?.pass)
@@ -41,7 +40,7 @@ export function useAdPass({
     setWatchingAd(true)
     try {
       const ticket = await sendJson<AdTicketResponse>('/api/ads/ticket', 'POST')
-      const play = await getPlayer(ticket.unitId)
+      const play = await getPlayer(ticket.provider)
       if (!play) {
         notifyError(SDK_MISSING_MESSAGE)
         return false
@@ -49,7 +48,7 @@ export function useAdPass({
       try {
         await play()
       } catch (error) {
-        console.warn('[ads] show_<zone>() reject', error)
+        console.warn('[ads] showGiga() reject', error)
         notifyError(showFailureMessage(error))
         return false
       }

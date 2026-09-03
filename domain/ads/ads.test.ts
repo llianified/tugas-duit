@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { adCooldownSecondsLeft, adOpenRefusal, adViewsLeft, adsConfigured } from './ads'
+import {
+  GIGAPUB_PROJECT_ID,
+  adCooldownSecondsLeft,
+  adOpenRefusal,
+  adViewsLeft,
+  adsConfigured,
+} from './ads'
 import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig, type EconomyConfig } from '../economy/economy-config'
 
 afterEach(() => setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG))
@@ -16,6 +22,12 @@ const state = (patch: Partial<Parameters<typeof adOpenRefusal>[0]> = {}) => ({
   hasReady: false,
   hasEntryOpen: false,
   ...patch,
+})
+
+describe('ADS-0 — konfigurasi provider rewarded', () => {
+  it('memakai project Giga.pub yang disetujui', () => {
+    expect(GIGAPUB_PROJECT_ID).toBe('7799')
+  })
 })
 
 describe('ADS-1 — adsMaxViewsPerDay 0 adalah tombol mati', () => {

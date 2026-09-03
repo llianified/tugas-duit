@@ -22,14 +22,14 @@ function buildCsp(nonce: string, isDev: boolean) {
     ...(isDev ? DEV_FRAME_ANCESTORS : []),
   ].join(' ')
 
-  // Script tetap dibatasi ke keluarga domain SDK; host kreatif tidak ditebak di sini.
-  const adHosts = 'https://libtl.com https://*.libtl.com'
+  // Script tetap dibatasi ke origin loader kedua SDK; host kreatif tidak ditebak di sini.
+  const adHosts = 'https://libtl.com https://*.libtl.com https://ad.gigapub.tech'
 
   const scriptSrc = isDev
     ? `script-src 'self' https://telegram.org ${adHosts} 'unsafe-inline' 'unsafe-eval'`
     : `script-src 'self' https://telegram.org ${adHosts} 'nonce-${nonce}' 'strict-dynamic'`
 
-  // Monetag merender iframe dan media dari host HTTPS yang berubah, bukan hanya libtl.com.
+  // Kedua provider dapat merender iframe dan media dari host HTTPS yang berubah.
   const adRenderHosts = 'https:'
 
   return [

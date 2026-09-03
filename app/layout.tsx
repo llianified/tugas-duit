@@ -4,7 +4,7 @@ import type { Metadata, Viewport } from 'next'
 import { headers } from 'next/headers'
 import { Geist, Plus_Jakarta_Sans } from 'next/font/google'
 import Script from 'next/script'
-import { MONETAG_DEFAULT_ZONE_ID, monetagSdkName } from '@/domain/ads/ads'
+import { GIGAPUB_PROJECT_ID, MONETAG_DEFAULT_ZONE_ID, monetagSdkName } from '@/domain/ads/ads'
 import { ADS_HINT_INIT_SCRIPT } from '@/shell/ads-hint'
 import './globals.css'
 
@@ -46,7 +46,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const nonce = (await headers()).get('x-nonce') ?? undefined
-  // Cerminan `resolveAdProvider()`: zone yang sama harus dipakai di script tag dan di | `useAdPass`, karena nama fungsi global SDK-nya diturunkan dari zone itu.
+  // Zone Monetag hanya dipakai interstitial otomatis in-app. Rewarded/tiket memakai project Giga.pub yang dimuat terpisah di bawah.
   const monetagZoneId = process.env.NEXT_PUBLIC_MONETAG_ZONE_ID?.trim() || MONETAG_DEFAULT_ZONE_ID
 
   return (
@@ -66,11 +66,15 @@ export default async function RootLayout({
         />
         <Script
           src="https://libtl.com/sdk.js"
-          // `lazyOnload` menunda SDK sampai window `load`; di jaringan seluler dalam | WebView Telegram itu sering lewat dari jendela tunggu 8s di `useAdPass`, | jadi fungsi `show_<zone>` belum ada saat tombol ditekan.
           strategy="afterInteractive"
           nonce={nonce}
           data-zone={monetagZoneId}
           data-sdk={monetagSdkName(monetagZoneId)}
+        />
+        <Script
+          src={`https://ad.gigapub.tech/script?id=${GIGAPUB_PROJECT_ID}`}
+          strategy="afterInteractive"
+          nonce={nonce}
         />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}

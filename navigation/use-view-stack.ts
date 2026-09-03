@@ -11,6 +11,7 @@ const VIEWS: Record<AppView, true> = {
   home: true,
   captcha: true,
   missions: true,
+  arcade: true,
   history: true,
   referral: true,
   stats: true,

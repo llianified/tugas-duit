@@ -192,6 +192,7 @@ export function useRewardSession({
 
   const openHistory = useCallback(() => pushView('history'), [pushView])
   const openMissions = useCallback(() => pushView('missions'), [pushView])
+  const openArcade = useCallback(() => pushView('arcade'), [pushView])
   const openProfile = useCallback(() => pushView('profile'), [pushView])
   const openStats = useCallback(() => pushView('stats'), [pushView])
   const openReferral = useCallback(() => {
@@ -214,6 +215,7 @@ export function useRewardSession({
     founder: session?.user?.founder ?? false,
     openHistory,
     openMissions,
+    openArcade,
     openProfile,
     openStats,
     openReferral,
@@ -266,6 +268,7 @@ export function useRewardSession({
     adPassReady,
     adPassSecondsLeft,
     adEntryOpen: session?.ads?.entryOpen ?? false,
+    watchAd,
     watchingAd,
     completeTask,
     nextTask,

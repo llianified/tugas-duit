@@ -401,9 +401,9 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     min: 0, max: 1, riskyWhen: 'lower',
   },
   {
-    key: 'adsMinWatchSeconds', group: 'ads', label: 'Minimum lama tontonan', unit: 'detik',
-    description: 'Tiket ditolak kalau jarak antara tiket dibuka dan klaimnya masuk lebih pendek dari ini. Diukur dua-duanya dengan jam server, jadi tidak bisa dikarang klien — satu-satunya cara melewatinya adalah benar-benar menunggu. Ini penjaga yang tidak bergantung penyedia iklan: tetap berlaku saat gerbang postback mati. Jendelanya ikut memuat waktu memuat SDK, jadi setel dari sebaran ready_at - created_at yang sudah tercatat di ad_views, bukan dari perkiraan durasi iklan. Isi 0 untuk mematikannya.',
-    impact: 'Menurunkannya membuka kembali celah "tap iklan lalu back": tontonan sekejap tetap menerbitkan tiket. Menaikkannya terlalu jauh menolak tontonan yang sah — tiket berhenti terbit sementara impresinya tetap dibayar penyedia, jadi kedua arah punya biayanya sendiri.',
+    key: 'adsMinWatchSeconds', group: 'ads', label: 'Minimum tontonan iklan berhadiah', unit: 'detik',
+    description: 'Hanya berlaku untuk tiket iklan berhadiah yang dibuka sendiri oleh user. Tiket ditolak kalau jarak antara tiket dibuka dan klaimnya masuk lebih pendek dari ini. Diukur dengan jam server, jadi tidak bisa dikarang klien. Tidak berlaku untuk interstitial otomatis `type: inApp`, karena format itu tidak memberi tiket atau hadiah. Jendelanya ikut memuat waktu memuat SDK, jadi setel dari sebaran ready_at - created_at yang sudah tercatat di ad_views, bukan dari perkiraan durasi iklan. Isi 0 untuk mematikannya pada iklan berhadiah.',
+    impact: 'Menurunkannya membuka kembali celah "tap iklan lalu back" pada tiket berhadiah. Menaikkannya terlalu jauh menolak tontonan berhadiah yang sah, tetapi tidak mengubah frekuensi, jeda, atau perilaku interstitial in-app.',
     min: 0, max: 120, riskyWhen: 'lower',
   },
   {

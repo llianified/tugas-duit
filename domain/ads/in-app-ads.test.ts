@@ -29,6 +29,14 @@ describe('INAPP-1 — payload native Monetag', () => {
       },
     })
   })
+
+  it('tidak membawa identitas tiket rewarded atau masuk ke jalur minimum watch', () => {
+    const params = inAppShowParams(DEFAULT_IN_APP_ADS_SETTINGS)
+
+    expect(params).not.toHaveProperty('ymid')
+    expect(params).not.toHaveProperty('requestVar')
+    expect(Object.keys(params)).toEqual(['type', 'inAppSettings'])
+  })
 })
 
 describe('INAPP-2 — config ekonomi ke satuan SDK', () => {

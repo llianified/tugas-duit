@@ -6,16 +6,18 @@ import { EXPIRE_STALE_SQL } from './ads'
 
 /** Yang bisa terjadi pada satu postback. Dikembalikan apa adanya ke route supaya jawabannya bisa dibaca saat menguji URL dari dashboard Monetag — tanpa itu, "postback sudah masuk tapi tiket tidak keluar" cuma bisa ditebak. */
 export type AdPostbackOutcome =
-  /** Tiket dipromosikan jadi pass siap pakai. */
+  /** Dua bukti lengkap dan tiket dipromosikan jadi pass siap pakai. */
   | 'granted'
-  /** Konfirmasinya dicatat, tapi tiketnya sudah lewat state `pending` — sudah diklaim jalur lama, sudah dipakai, atau user sedang memegang pass lain. */
+  /** Konfirmasi Monetag sudah dicatat, tetapi Promise SDK belum menyelesaikan klaim klien. */
+  | 'awaiting_claim'
+  /** Konfirmasinya dicatat, tapi tiketnya sudah lewat state `pending` — sudah menjadi pass, sudah dipakai, dibatalkan, atau user sedang memegang pass lain. */
   | 'noted'
   /** Tayangan sah tapi tiketnya keburu hangus. Kalau ini sering muncul, `adsTicketTtlSeconds` lebih pendek daripada waktu tempuh postback Monetag. */
   | 'ticket_expired'
   | 'unknown_ticket'
   | 'not_paid'
 
-/** Satu-satunya jalur yang boleh menerbitkan pass saat `adsPostbackRequired` menyala. | Yang diperiksa cuma satu hal: Monetag membayar event ini atau tidak. Bukan durasi, bukan jenis event — `impression` maupun `click` sama-sama sah asal berbayar, karena keduanya berarti uang benar-benar masuk. Tayangan yang disaring Monetag sebagai fraud datang sebagai tidak berbayar dan berhenti di sini, dan itulah yang menutup celah "tap iklan lalu back". */
+/** Postback hanya mencatat bukti server-ke-server bahwa Monetag membayar event ini. Ia tidak boleh menjadi pass sendirian: Promise SDK yang selesai dan lolos minimum watch harus lebih dulu menulis `client_claimed_at`. Karena klaim dan postback mengunci baris yang sama, siapa pun yang datang terakhir akan mempromosikan tiket tanpa membuka celah balapan. */
 export async function settleAdPostback(params: AdPostbackParams): Promise<AdPostbackOutcome> {
   if (!params.paid) return 'not_paid'
   if (!params.ymid || !isTicketId(params.ymid)) return 'unknown_ticket'
@@ -26,10 +28,12 @@ export async function settleAdPostback(params: AdPostbackParams): Promise<AdPost
       user_id: string
       state: string
       expires_at: Date
+      client_claimed_at: Date | null
       verified_at: Date | null
       now: Date
     }>(
-      'select user_id, state, expires_at, verified_at, now() as now from ad_views where id=$1 for update',
+      `select user_id, state, expires_at, client_claimed_at, verified_at, now() as now
+         from ad_views where id=$1 for update`,
       [ticketId],
     )
     const row = locked.rows[0]
@@ -50,6 +54,8 @@ export async function settleAdPostback(params: AdPostbackParams): Promise<AdPost
       ])
       return 'ticket_expired'
     }
+    /** Postback yang datang sangat cepat bukan bukti user menonton sampai selesai. Konfirmasinya tetap disimpan, tetapi tiket tetap pending sampai klaim klien yang lolos durasi minimum datang. */
+    if (!row.client_claimed_at) return 'awaiting_claim'
 
     /** Slot `ad_views_one_ready` bisa ditempati pass yang tenggatnya sudah lewat: sapuannya cuma jalan di `readState`, tidak di sini. Tanpa disapu, pass mati itu memblokir `not exists` di bawah, promosinya jadi `noted`, dan route menjawab 200 — Monetag berhenti mengulang. Hasilnya: impresi terbayar dan `verified_at` tertulis, tapi tiketnya tinggal `pending` sampai hangus, dan saat gerbangnya menyala tidak ada satu pun jalur lain yang bisa menyusul. Sama persis dengan yang ditanggung `restoreAdPass`, jadi obatnya pun sama. */
     await tx.query(EXPIRE_STALE_SQL, [row.user_id])
@@ -59,6 +65,7 @@ export async function settleAdPostback(params: AdPostbackParams): Promise<AdPost
       `update ad_views
           set state='ready', ready_at=now(), expires_at=now()+($3::int * interval '1 minute')
         where id=$1 and state='pending'
+          and client_claimed_at is not null and verified_at is not null
           and not exists (
             select 1 from ad_views other where other.user_id=$2 and other.state='ready'
           )

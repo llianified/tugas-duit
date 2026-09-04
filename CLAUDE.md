@@ -28,16 +28,17 @@ pnpm lint           pnpm test           pnpm test:watch
 pnpm db:migrate     pnpm db:cleanup
 ```
 
-Sebelum menyatakan selesai, jalankan seperlunya saja — `.github/workflows/ci.yml` tetap
-menjalankan semuanya di tiap PR, jadi jangan duplikasi suite penuh untuk perubahan kecil:
+Pengecekan sebelum selesai **hanya** untuk perubahan backend. `.github/workflows/ci.yml`
+menjalankan seluruh suite di tiap PR, jadi jangan mengulangnya di sini.
 
-- Ubah styling/teks/markup saja → tidak perlu apa-apa.
-- Sentuh `.ts`/`.tsx` yang punya logika → `pnpm exec tsc --noEmit`.
-- Sentuh `domain/`, `server/`, atau file yang punya test → tambah `pnpm test`.
-- Sentuh route, `proxy.ts`, config build, atau migrasi → tambah `pnpm build`.
+- **Kerja UI** — `features/`, `shell/`, `shared/components/`, `navigation/`, `app/globals.css`,
+  file `.tsx` presentasional, styling, copy, layout → **jangan jalankan apa pun.** Langsung
+  selesai; iterasi desain harus cepat.
+- **Kerja backend** — `domain/`, `server/`, `app/api/`, `db/migrations/`, `scripts/`,
+  `proxy.ts` → `pnpm exec tsc --noEmit`, lalu `pnpm test` bila menyentuh `domain/` atau `server/`.
 
-`pnpm lint` dan `pnpm build` penuh bukan syarat selesai; serahkan ke CI kecuali dugaannya
-memang di situ masalahnya.
+`pnpm lint` dan `pnpm build` bukan syarat selesai; serahkan ke CI kecuali dugaannya memang
+di situ masalahnya.
 
 ## Database
 

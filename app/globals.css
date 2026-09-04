@@ -1257,10 +1257,14 @@
     white-space: nowrap;
   }
   .admin-btn:disabled {
-    opacity: 0.5;
+    cursor: not-allowed;
   }
   .admin-btn-primary {
     background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+  .admin-btn-primary:disabled {
+    background-color: color-mix(in oklab, var(--primary) 68%, var(--muted));
     color: var(--primary-foreground);
   }
   .admin-btn-quiet {

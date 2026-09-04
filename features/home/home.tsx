@@ -1,8 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { arcadeEnabled } from '@/domain/arcade/arcade'
-import { ArcadeCard } from '@/features/arcade/arcade-card'
 import { ActiveTask } from '@/features/home/active-task'
 import { BalanceSummary } from '@/features/home/balance-summary'
 import { RecentTransactions } from '@/features/home/recent-transactions'
@@ -10,7 +8,6 @@ import { ChannelBonusCard } from '@/features/channel/channel-card'
 import { channelBonusReachable } from '@/features/channel/use-channel-bonus'
 import { PremiumCard } from '@/features/premium/components/premium-card'
 import { PremiumSheet } from '@/features/premium/components/premium-sheet'
-import { TurboRewardCard } from '@/features/home/turbo-reward-card'
 import { CardCarousel } from '@/shared/components/card-carousel'
 import type { EconomyConfig } from '@/domain/economy/economy-config'
 import type { Challenge, HistoryEntry } from '@/domain/task/challenge'
@@ -32,8 +29,6 @@ interface HomeViewProps {
   energyMax: number
   energyFill: EnergyFill
   rewardPoolCredits: number | null
-  rewardPoolMax: number | null
-  rewardPoolRegenCredits: number | null
   rewardPoolSecondsToNext: number | null
   economy: EconomyConfig
   adsEnabled: boolean
@@ -51,7 +46,6 @@ interface HomeViewProps {
   onSubmitWithdrawal: (input: WithdrawalSubmitInput) => Promise<Withdrawal | null>
   onOpenHistory: () => void
   onOpenMissions: () => void
-  onOpenArcade: () => void
   premium: PremiumState | null
   channelBonus: ChannelBonusState | null
   onRefreshSession: () => Promise<unknown>
@@ -67,8 +61,6 @@ export function HomeView({
   energyMax,
   energyFill,
   rewardPoolCredits,
-  rewardPoolMax,
-  rewardPoolRegenCredits,
   rewardPoolSecondsToNext,
   economy,
   adsEnabled,
@@ -85,7 +77,6 @@ export function HomeView({
   onSubmitWithdrawal,
   onOpenHistory,
   onOpenMissions,
-  onOpenArcade,
   premium,
   channelBonus,
   onRefreshSession,
@@ -96,32 +87,9 @@ export function HomeView({
   /** Tab beranda dilepas begitu Misi pindah ke nav. Tiga tab menyisakan dua tanpa Misi, dan dua-duanya sudah bermasalah sebelum itu: "Aktivitas" dan view "Riwayat" adalah data yang sama dengan dua nama berbeda — user tidak punya cara menduga bedanya — sementara "Bonus" cuma ada selama bonusnya belum diklaim, jadi jumlah tabnya berubah di tempat yang sama. Sisanya sekarang berderet, dan barisnya memakai nama aslinya, "Transaksi terakhir", sehingga tidak lagi bersaing dengan Riwayat. Bonus diletakkan di atas transaksi karena ia satu-satunya yang menuntut aksi dan bisa hilang; transaksi hanya catatan yang tidak ke mana-mana. */
   const premiumReachable = Boolean(premium && (premium.active || premium.paymentEnabled))
   const bonusReachable = channelBonusReachable(channelBonus)
-  const arenaReachable = arcadeEnabled()
 
-  /** Semua kartu promosi berbagi SATU tempat di bawah task dan bergantian otomatis tiap lima detik. Daftarnya disaring di sini, bukan di dalam carousel: kartu yang tidak tersedia TIDAK BOLEH masuk sebagai `null`, karena `null` tetap terhitung satu slide dan carousel-nya akan berputar ke halaman kosong. Kalau tinggal satu yang tersedia, `CardCarousel` mengembalikannya sebagai kartu tunggal tanpa trek dan tanpa titik. Kalau tidak ada satu pun, tidak ada apa-apa, dan `region-gap-t` di atas daftar transaksi ikut hilang bersamanya. */
+  /** Beranda hanya merotasi penawaran yang melekat ke akun: premium dan bonus channel. Turbo Reward serta Arena tetap dapat dijangkau dari view Misi, sehingga beranda tidak mengulang kartu yang sama. Daftarnya disaring di sini, bukan di dalam carousel: kartu yang tidak tersedia TIDAK BOLEH masuk sebagai `null`, karena `null` tetap terhitung satu slide dan carousel-nya akan berputar ke halaman kosong. Kalau tinggal satu yang tersedia, `CardCarousel` mengembalikannya sebagai kartu tunggal tanpa trek dan tanpa titik. Kalau tidak ada satu pun, tidak ada apa-apa, dan `region-gap-t` di atas daftar transaksi ikut hilang bersamanya. */
   const stamps = [
-    economy.turboRewardEnabled === 1
-      ? {
-          key: 'turbo-reward',
-          label: 'Lihat kartu Turbo Reward',
-          node: (
-            <TurboRewardCard
-              config={economy}
-              rewardPoolCredits={rewardPoolCredits}
-              rewardPoolMax={rewardPoolMax}
-              rewardPoolRegenCredits={rewardPoolRegenCredits}
-              rewardPoolSecondsToNext={rewardPoolSecondsToNext}
-            />
-          ),
-        }
-      : null,
-    arenaReachable
-      ? {
-          key: 'arcade',
-          label: 'Lihat kartu Arena',
-          node: <ArcadeCard poolEmpty={rewardPoolCredits === 0} onOpen={onOpenArcade} />,
-        }
-      : null,
     premium && premiumReachable
       ? {
           key: 'premium',

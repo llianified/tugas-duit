@@ -259,4 +259,125 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
       reason: 'already_claimed',
     })
   })
+
+  it('menyimpan confirmAt yang sama saat aksi dimulai ulang dan memulihkannya setelah reload', async () => {
+    const { readMissions, startMissionAction } = await import('./missions')
+    const userId = await makeUser(0)
+
+    const first = await startMissionAction(userId, 'twitter_post')
+    const second = await startMissionAction(userId, 'twitter_post')
+    expect(first).toMatchObject({ ok: true })
+    expect(second).toMatchObject({ ok: true })
+    if (!first.ok || !second.ok) throw new Error('aksi sosial gagal dimulai')
+
+    expect(second.confirmAt).toBe(first.confirmAt)
+    expect(first.confirmAt).toBeGreaterThan(first.serverNow)
+    const reloaded = (await readMissions(userId)).find(
+      (mission) => mission.key === 'twitter_post',
+    )
+    expect(reloaded?.confirmAt).toBe(first.confirmAt)
+  })
+
+  it('mengabaikan percobaan hari WIB sebelumnya', async () => {
+    const { claimMission, readMissions, startMissionAction } = await import('./missions')
+    const { query } = await import('../platform/db')
+    const userId = await makeUser(0)
+
+    await startMissionAction(userId, 'twitter_post')
+    await query(
+      `update social_mission_attempts
+        set quota_date=(now() at time zone 'Asia/Jakarta')::date-1,
+            started_at=now()-interval '1 day'
+        where user_id=$1 and mission_key='twitter_post'`,
+      [userId],
+    )
+
+    const expired = (await readMissions(userId)).find(
+      (mission) => mission.key === 'twitter_post',
+    )
+    expect(expired?.confirmAt).toBeNull()
+    expect(await claimMission(userId, 'twitter_post')).toEqual({
+      ok: false,
+      reason: 'action_required',
+    })
+  })
+
+  it('mengunci dua klaim bersamaan agar energi hanya diberikan sekali', async () => {
+    const { claimMission, startMissionAction } = await import('./missions')
+    const { query } = await import('../platform/db')
+    const userId = await makeUser(0)
+
+    await startMissionAction(userId, 'facebook_post')
+    await query(
+      `update social_mission_attempts
+        set started_at=now()-interval '11 seconds'
+        where user_id=$1 and mission_key='facebook_post'`,
+      [userId],
+    )
+
+    const results = await Promise.all([
+      claimMission(userId, 'facebook_post'),
+      claimMission(userId, 'facebook_post'),
+    ])
+    expect(results.filter((result) => result.ok)).toHaveLength(1)
+    expect(results.filter((result) => !result.ok)).toEqual([
+      { ok: false, reason: 'already_claimed' },
+    ])
+    expect(await readEnergyValue(userId)).toBe(DEFAULT_ECONOMY_CONFIG.missionFacebookPostReward)
+
+    const claims = await query<{ count: number }>(
+      `select count(*)::int as count from mission_claims
+        where user_id=$1 and mission_key='facebook_post'`,
+      [userId],
+    )
+    expect(Number(claims[0].count)).toBe(1)
+  })
+
+  it('membayar tiga reward sosial dari key masing-masing tanpa menyentuh credit ledger', async () => {
+    const { claimMission, startMissionAction } = await import('./missions')
+    const { query } = await import('../platform/db')
+    const userId = await makeUser(0)
+    setActiveEconomyConfig({
+      ...DEFAULT_ECONOMY_CONFIG,
+      missionTwitterFollowReward: 1,
+      missionTwitterPostReward: 2,
+      missionFacebookPostReward: 2,
+    })
+
+    try {
+      for (const key of ['twitter_follow', 'twitter_post', 'facebook_post'] as const) {
+        await startMissionAction(userId, key)
+      }
+      await query(
+        `update social_mission_attempts
+          set started_at=now()-interval '11 seconds'
+          where user_id=$1`,
+        [userId],
+      )
+
+      for (const key of ['twitter_follow', 'twitter_post', 'facebook_post'] as const) {
+        expect(await claimMission(userId, key)).toMatchObject({ ok: true })
+      }
+
+      const grants = await query<{ mission_key: string; energy_granted: number }>(
+        `select mission_key, energy_granted from mission_claims
+          where user_id=$1 order by mission_key`,
+        [userId],
+      )
+      expect(grants.map((row) => [row.mission_key, Number(row.energy_granted)])).toEqual([
+        ['facebook_post', 2],
+        ['twitter_follow', 1],
+        ['twitter_post', 2],
+      ])
+      expect(await readEnergyValue(userId)).toBe(5)
+
+      const ledger = await query<{ count: number }>(
+        'select count(*)::int as count from credit_ledger where user_id=$1',
+        [userId],
+      )
+      expect(Number(ledger[0].count)).toBe(0)
+    } finally {
+      setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
+    }
+  })
 })

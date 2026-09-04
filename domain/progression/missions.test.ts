@@ -62,12 +62,12 @@ describe('missions', () => {
     expect(hasUnclaimedMissions(allClaimed)).toBe(false)
   })
 
-  it('membedakan follow sekali dari post harian dan membawa cap waktu aksi', () => {
-    const startedAt = Date.now()
+  it('membedakan follow sekali dari post harian dan membawa waktu konfirmasi', () => {
+    const confirmAt = Date.now() + 10_000
     const list = buildMissionProgress(
       { tasks: 0, stars: 0, ads: 0 },
       ['twitter_follow'],
-      { twitter_post: startedAt },
+      { twitter_post: confirmAt },
     )
 
     expect(list.find((mission) => mission.key === 'twitter_follow')).toMatchObject({
@@ -78,9 +78,25 @@ describe('missions', () => {
     expect(list.find((mission) => mission.key === 'twitter_post')).toMatchObject({
       kind: 'social',
       cadence: 'daily',
-      actionStartedAt: startedAt,
+      confirmAt,
       claimed: false,
     })
+  })
+
+  it('memetakan setiap misi sosial ke reward konfigurasinya sendiri', () => {
+    setActiveEconomyConfig({
+      ...DEFAULT_ECONOMY_CONFIG,
+      missionTwitterFollowReward: 2,
+      missionTwitterPostReward: 3,
+      missionFacebookPostReward: 4,
+    })
+    try {
+      expect(missionDefinition('twitter_follow').reward).toBe(2)
+      expect(missionDefinition('twitter_post').reward).toBe(3)
+      expect(missionDefinition('facebook_post').reward).toBe(4)
+    } finally {
+      setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
+    }
   })
 })
 

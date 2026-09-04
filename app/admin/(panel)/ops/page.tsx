@@ -8,6 +8,7 @@ import { readBroadcasts } from '@/server/messaging/broadcast'
 import { loadEconomyConfig } from '@/server/economy/economy-config'
 import { getSessionUser } from '@/server/auth/session'
 import { formatCredits, formatDateTime, formatRupiah } from '@/shared/lib/format'
+import { GlyphChevron } from '@/shared/components/glyph'
 import { BroadcastComposer } from './broadcast-composer'
 import { MaintenanceButton } from './maintenance-button'
 
@@ -86,12 +87,15 @@ export default async function AdminOpsPage({ searchParams }: { searchParams: Pro
           </label>
           <label className="admin-field">
             <span className="admin-field-k">Status</span>
-            <select name="state" defaultValue={filter} className="focus-ring admin-input">
-              <option value="semua">Semua status</option>
-              <option value="processing">Diproses</option>
-              <option value="paid">Terkirim</option>
-              <option value="rejected">Ditolak</option>
-            </select>
+            <span className="admin-select-wrap">
+              <select name="state" defaultValue={filter} className="focus-ring admin-input admin-select">
+                <option value="semua">Semua status</option>
+                <option value="processing">Diproses</option>
+                <option value="paid">Terkirim</option>
+                <option value="rejected">Ditolak</option>
+              </select>
+              <GlyphChevron direction="down" className="admin-select-icon" />
+            </span>
           </label>
           <button type="submit" className="focus-ring transition-ui admin-btn admin-btn-primary">
             Terapkan filter

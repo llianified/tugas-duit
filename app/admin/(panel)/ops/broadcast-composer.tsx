@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { BROADCAST_BODY_MAX, BROADCAST_SEGMENTS, type BroadcastSegment } from '@/domain/messaging/broadcast'
 import { ApiError, sendJson } from '@/shell/api-client'
 import { formatCredits } from '@/shared/lib/format'
+import { GlyphChevron } from '@/shared/components/glyph'
 
 type Stage = 'tulis' | 'konfirmasi' | 'kirim'
 type RunResult = { id: string; sent: number; failed: number; remaining: number; done: boolean }
@@ -116,17 +117,20 @@ export function BroadcastComposer() {
         <>
           <label className="admin-field">
             <span className="admin-field-k">Penerima</span>
-            <select
-              value={segment}
-              onChange={(event) => setSegment(event.target.value as BroadcastSegment)}
-              className="focus-ring admin-input"
-            >
-              {BROADCAST_SEGMENTS.map((entry) => (
-                <option key={entry.id} value={entry.id}>
-                  {entry.label}
-                </option>
-              ))}
-            </select>
+            <span className="admin-select-wrap">
+              <select
+                value={segment}
+                onChange={(event) => setSegment(event.target.value as BroadcastSegment)}
+                className="focus-ring admin-input admin-select"
+              >
+                {BROADCAST_SEGMENTS.map((entry) => (
+                  <option key={entry.id} value={entry.id}>
+                    {entry.label}
+                  </option>
+                ))}
+              </select>
+              <GlyphChevron direction="down" className="admin-select-icon" />
+            </span>
             <span className="admin-sub">{chosen?.description}</span>
           </label>
 

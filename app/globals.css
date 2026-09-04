@@ -1143,6 +1143,14 @@
   .admin-stat:last-child:nth-child(odd) {
     grid-column: 1 / -1;
   }
+  @media (min-width: 23rem) {
+    .admin-stats {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .admin-stat:last-child:nth-child(odd) {
+      grid-column: auto;
+    }
+  }
   .admin-stat-k {
     font-size: 0.6875rem;
     line-height: 1.3;

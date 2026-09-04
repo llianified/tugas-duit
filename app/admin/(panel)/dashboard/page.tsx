@@ -55,9 +55,9 @@ export default async function AdminDashboardPage() {
         <Stat label="Online" value={formatCredits(stats.active.online)} hint="5 menit terakhir" />
         <Stat label="Task hari ini" value={formatCompact(stats.tasks.today)} hint="selesai" />
         <Stat
-          label="Dibayar hari ini"
+          label="Credit dibayar"
           value={formatCompact(stats.paid.todayCredits)}
-          hint={formatRupiah(creditsToRupiah(stats.paid.todayCredits))}
+          hint={`${formatRupiah(creditsToRupiah(stats.paid.todayCredits))} hari ini`}
         />
       </div>
 

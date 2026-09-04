@@ -8,20 +8,41 @@ export default async function AdminPanelLayout({ children }: { children: React.R
   if (!user || user.bannedAt || !user.isAdmin) redirect('/admin/login')
 
   return (
-    <>
-      <header className="sticky top-0 z-30 border-b border-border bg-background">
-        <div className="mx-auto flex h-14 max-w-md items-center gap-3 px-4">
+    <div className="admin-shell">
+      <aside className="admin-sidebar">
+        <div className="admin-brand">
+          <span className="admin-brand-mark" aria-hidden="true">TD</span>
+          <div className="min-w-0">
+            <p className="font-display text-sm font-bold text-foreground">Tugas Duit</p>
+            <p className="text-xs text-muted-foreground">Pusat kendali admin</p>
+          </div>
+        </div>
+
+        <AdminNav />
+
+        <div className="admin-account">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-foreground">Panel admin</p>
+            <p className="truncate text-sm font-medium text-foreground">{user.firstName}</p>
+            <p className="text-xs text-muted-foreground">Administrator</p>
+          </div>
+          <SignOutButton compact />
+        </div>
+      </aside>
+
+      <header className="admin-mobile-header">
+        <div className="admin-brand">
+          <span className="admin-brand-mark" aria-hidden="true">TD</span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-display text-sm font-bold text-foreground">Panel admin</p>
             <p className="truncate text-xs text-muted-foreground">{user.firstName}</p>
           </div>
-          <SignOutButton />
         </div>
+        <SignOutButton compact />
       </header>
 
-      <main className="admin-pb mx-auto max-w-md px-4 py-4">{children}</main>
-
-      <AdminNav />
-    </>
+      <main className="admin-main">
+        <div className="admin-content">{children}</div>
+      </main>
+    </div>
   )
 }

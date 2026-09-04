@@ -12,16 +12,17 @@ export function CopyButton({ value }: { value: string }) {
     } catch {
       setState('failed')
     }
-    setTimeout(() => setState('idle'), 2_000)
+    window.setTimeout(() => setState('idle'), 2_000)
   }
 
   return (
     <button
       type="button"
       onClick={copy}
-      className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted-foreground/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      aria-live="polite"
+      className="focus-ring transition-ui rounded-md border border-border bg-card px-2 py-1 text-xs font-semibold text-muted-foreground hover:bg-background hover:text-foreground"
     >
-      {state === 'copied' ? 'Tersalin' : state === 'failed' ? 'Gagal' : 'Salin'}
+      {state === 'copied' ? 'Tersalin' : state === 'failed' ? 'Gagal menyalin' : 'Salin'}
       <span className="sr-only"> nomor rekening</span>
     </button>
   )

@@ -25,118 +25,113 @@ export default async function AdminWithdrawalsPage({
   const raw = Number((await searchParams).offset)
   const offset = Number.isSafeInteger(raw) && raw > 0 ? raw : 0
   const { payouts: pending, hasMore } = await listPendingPayouts(offset)
-
-  if (pending.length === 0) {
-    return (
-      <div className="flex flex-col gap-3">
-        <AutoRefresh seconds={QUEUE_REFRESH_SECONDS} />
-        <p className="rounded-lg bg-muted px-4 py-8 text-center text-sm text-muted-foreground">
-          {offset === 0
-            ? 'Tidak ada pengajuan yang menunggu.'
-            : 'Halaman ini sudah kosong — antreannya menyusut sejak tautan ini dibuka.'}
-        </p>
-        {offset > 0 ? <PageLink offset={0}>Kembali ke awal antrean</PageLink> : null}
-      </div>
-    )
-  }
-
   const first = offset + 1
   const last = offset + pending.length
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="admin-page">
+      <header className="admin-page-header">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="admin-page-title">Antrean payout</h1>
+          {pending.length > 0 ? (
+            <span className="rounded-md bg-primary px-2 py-1 text-xs font-bold text-primary-foreground">
+              {pending.length} di halaman ini
+            </span>
+          ) : null}
+        </div>
+        <p className="admin-page-description">
+          Verifikasi tujuan, risiko akun, dan bukti transfer sebelum menyelesaikan penarikan.
+        </p>
+      </header>
+
       <AutoRefresh seconds={QUEUE_REFRESH_SECONDS} />
-      <p className="text-sm text-muted-foreground">
-        Pengajuan {formatCredits(first)}–{formatCredits(last)}
-        {hasMore ? ' dari antrean' : ''}, terlama di atas.
-      </p>
 
-      <ul className="flex flex-col gap-3">
-        {pending.map((payout) => {
-          const channel = getPayoutChannel(payout.channelId)
+      {pending.length === 0 ? (
+        <div className="flex flex-col gap-3">
+          <p className="admin-empty">
+            {offset === 0
+              ? 'Antrean bersih. Tidak ada pengajuan yang menunggu diproses.'
+              : 'Halaman ini sudah kosong karena antrean berubah sejak tautan dibuka.'}
+          </p>
+          {offset > 0 ? <PageLink offset={0}>Kembali ke awal antrean</PageLink> : null}
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">
+              Menampilkan pengajuan {formatCredits(first)}–{formatCredits(last)}. Yang paling lama ada di atas.
+            </p>
+            <p className="text-xs font-medium text-muted-foreground">Periksa rekening sebelum transfer</p>
+          </div>
 
-          return (
-            <li
-              key={payout.id}
-              className="flex flex-col gap-4 rounded-lg bg-muted p-4"
-            >
-              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <div className="flex flex-wrap items-baseline gap-x-2">
-                  <span className="font-medium text-foreground">{payout.user.firstName}</span>
-                  <span className="text-sm text-muted-foreground">{payout.user.id}</span>
-                </div>
-                <div className="flex items-baseline gap-2 tabular-nums">
-                  <span className="font-semibold text-foreground">
-                    {formatRupiah(payout.amountIdr)}
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    {formatCredits(payout.credits)} credit
-                  </span>
-                </div>
-              </div>
+          <ol className="flex flex-col gap-4">
+            {pending.map((payout, index) => {
+              const channel = getPayoutChannel(payout.channelId)
+              const shared = payout.risk.sharedDestinationAccounts > 0
 
-              <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                <div className="flex flex-col gap-1">
-                  <dt className="text-muted-foreground">{channel.accountLabel}</dt>
-                  <dd>
-                    <CopyableAccount value={payout.accountNumber} channelName={channel.name} />
-                  </dd>
-                </div>
+              return (
+                <li key={payout.id}>
+                  <article className="admin-panel overflow-hidden">
+                    <header className="flex flex-col gap-4 border-b border-border p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Antrean #{formatCredits(first + index)}</p>
+                        <h2 className="pt-1 font-display text-lg font-bold text-foreground">{payout.user.firstName}</h2>
+                        <p className="text-sm text-muted-foreground">ID {payout.user.id} · diajukan {formatHistoryTime(payout.requestedAt)}</p>
+                      </div>
+                      <div className="sm:text-right">
+                        <p className="font-display text-2xl font-bold tabular-nums text-foreground">{formatRupiah(payout.amountIdr)}</p>
+                        <p className="text-xs tabular-nums text-muted-foreground">{formatCredits(payout.credits)} credit ditahan</p>
+                      </div>
+                    </header>
 
-                <div className="flex flex-col gap-1">
-                  <dt className="text-muted-foreground">Nama pemilik</dt>
-                  <dd className="font-medium text-foreground">{payout.accountName}</dd>
-                </div>
+                    <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3">
+                      <div className="rounded-lg bg-muted p-3.5 sm:col-span-2 lg:col-span-1">
+                        <p className="text-xs text-muted-foreground">Tujuan {channel.name}</p>
+                        <div className="flex flex-wrap items-center gap-2 pt-2">
+                          <p className="font-display text-lg font-bold tabular-nums text-foreground">{payout.accountNumber}</p>
+                          <CopyButton value={payout.accountNumber} />
+                        </div>
+                        <p className="pt-1 text-sm font-medium text-foreground">a.n. {payout.accountName}</p>
+                        <p className="pt-1 text-xs text-muted-foreground">{channel.accountLabel}</p>
+                      </div>
 
-                <div className="flex flex-col gap-1">
-                  <dt className="text-muted-foreground">Diajukan</dt>
-                  <dd className="text-foreground tabular-nums">
-                    {formatHistoryTime(payout.requestedAt)}
-                  </dd>
-                </div>
+                      <div className="rounded-lg bg-muted p-3.5">
+                        <p className="text-xs text-muted-foreground">Kondisi akun</p>
+                        <p className="pt-2 text-sm font-semibold text-foreground">Usia {formatCredits(payout.risk.accountAgeDays)} hari</p>
+                        <p className="pt-1 text-xs text-muted-foreground">Skor risiko {formatCredits(payout.risk.score)} dalam 7 hari</p>
+                      </div>
 
-                <div className="flex flex-col gap-1">
-                  <dt className="text-muted-foreground">Konteks</dt>
-                  <dd className="text-foreground tabular-nums">
-                    Skor risiko {formatCredits(payout.risk.score)} (7 hari) · akun{' '}
-                    {formatCredits(payout.risk.accountAgeDays)} hari
-                  </dd>
-                  {payout.risk.sharedDestinationAccounts > 0 ? (
-                    <dd className="font-medium text-foreground tabular-nums">
-                      ⚠ {formatCredits(payout.risk.sharedDestinationAccounts)} akun lain
-                      menarik ke tujuan yang sama
-                    </dd>
-                  ) : null}
-                </div>
-              </dl>
+                      <div className={shared ? 'rounded-lg border border-destructive p-3.5' : 'rounded-lg bg-muted p-3.5'}>
+                        <p className="text-xs text-muted-foreground">Tujuan bersama</p>
+                        <p className={shared ? 'pt-2 text-sm font-semibold text-destructive' : 'pt-2 text-sm font-semibold text-foreground'}>
+                          {shared ? `${formatCredits(payout.risk.sharedDestinationAccounts)} akun lain memakai tujuan ini` : 'Tidak dipakai akun lain'}
+                        </p>
+                        <p className="pt-1 text-xs leading-relaxed text-muted-foreground">
+                          {shared ? 'Pastikan identitas dan aktivitas akun masuk akal sebelum transfer.' : 'Tidak ada duplikasi tujuan yang terdeteksi.'}
+                        </p>
+                      </div>
+                    </div>
 
-              <PayoutActions
-                id={payout.id}
-                userName={payout.user.firstName}
-                amountLabel={formatRupiah(payout.amountIdr)}
-                accountLabel={`${channel.name} ${payout.accountNumber}`}
-              />
-            </li>
-          )
-        })}
-      </ul>
+                    <PayoutActions
+                      id={payout.id}
+                      userName={payout.user.firstName}
+                      amountLabel={formatRupiah(payout.amountIdr)}
+                      accountLabel={`${channel.name} ${payout.accountNumber}`}
+                    />
+                  </article>
+                </li>
+              )
+            })}
+          </ol>
 
-      {offset > 0 || hasMore ? (
-        <nav aria-label="Halaman antrean" className="flex items-center justify-between gap-3">
-          {offset > 0 ? (
-            <PageLink offset={Math.max(0, offset - PENDING_PAYOUT_PAGE_SIZE)}>
-              Sebelumnya
-            </PageLink>
-          ) : (
-            <span />
-          )}
-          {hasMore ? (
-            <PageLink offset={offset + PENDING_PAYOUT_PAGE_SIZE}>Berikutnya</PageLink>
-          ) : (
-            <span />
-          )}
-        </nav>
-      ) : null}
+          {offset > 0 || hasMore ? (
+            <nav aria-label="Halaman antrean" className="flex items-center justify-between gap-3">
+              {offset > 0 ? <PageLink offset={Math.max(0, offset - PENDING_PAYOUT_PAGE_SIZE)}>Sebelumnya</PageLink> : <span />}
+              {hasMore ? <PageLink offset={offset + PENDING_PAYOUT_PAGE_SIZE}>Berikutnya</PageLink> : <span />}
+            </nav>
+          ) : null}
+        </>
+      )}
     </div>
   )
 }
@@ -145,19 +140,9 @@ function PageLink({ offset, children }: { offset: number; children: ReactNode })
   return (
     <Link
       href={offset === 0 ? '/admin/withdrawals' : `/admin/withdrawals?offset=${offset}`}
-      className="focus-ring rounded-md bg-muted px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted-foreground/15"
+      className="focus-ring transition-ui self-start rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-muted"
     >
       {children}
     </Link>
-  )
-}
-
-function CopyableAccount({ value, channelName }: { value: string; channelName: string }) {
-  return (
-    <span className="flex flex-wrap items-center gap-2">
-      <span className="font-medium text-foreground tabular-nums">{value}</span>
-      <span className="text-muted-foreground">{channelName}</span>
-      <CopyButton value={value} />
-    </span>
   )
 }

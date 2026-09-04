@@ -53,43 +53,43 @@ export function AutoRefresh({ seconds }: { seconds: number }) {
       : Math.max(0, Math.ceil((refreshedAt + seconds * 1_000 - now) / 1_000))
 
   return (
-    <div className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2">
-      <span
-        aria-hidden="true"
-        className={cn(
-          'size-1.5 shrink-0 rounded-full',
-          !live ? 'bg-muted-foreground' : pending ? 'bg-primary' : 'bg-success',
-        )}
-      />
-      <p className="min-w-0 flex-1 text-[11px] leading-tight text-muted-foreground">
-        <span className="text-foreground">
-          {refreshedAt === null ? 'Baru dimuat' : formatHistoryTime(refreshedAt)}
-        </span>
-        <span aria-live="polite">
-          {' · '}
-          {pending
-            ? 'memuat…'
-            : live
-              ? `segar lagi ${formatCredits(remaining)} dtk`
-              : 'pembaruan otomatis dijeda'}
-        </span>
-      </p>
-      <button
-        type="button"
-        onClick={() => setLive((current) => !current)}
-        aria-pressed={live}
-        className="focus-ring transition-ui shrink-0 rounded-lg px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
-      >
-        {live ? 'Jeda' : 'Lanjut'}
-      </button>
-      <button
-        type="button"
-        onClick={refresh}
-        disabled={pending}
-        className="focus-ring transition-ui shrink-0 rounded-lg bg-background px-2 py-1 text-[11px] font-medium text-foreground disabled:text-muted-foreground"
-      >
-        Muat ulang
-      </button>
+    <div className="admin-refresh">
+      <div className="flex min-w-0 items-center gap-2">
+        <span
+          aria-hidden="true"
+          className={cn(
+            'size-2 shrink-0 rounded-full',
+            !live ? 'bg-muted-foreground' : pending ? 'bg-primary' : 'bg-success',
+          )}
+        />
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-foreground">
+            {pending ? 'Memperbarui data' : live ? 'Data diperbarui otomatis' : 'Pembaruan dijeda'}
+          </p>
+          <p className="truncate text-xs text-muted-foreground" aria-live="polite">
+            {refreshedAt === null ? 'Baru dimuat' : formatHistoryTime(refreshedAt)}
+            {live && !pending ? ` · berikutnya ${formatCredits(remaining)} dtk` : ''}
+          </p>
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => setLive((current) => !current)}
+          aria-pressed={live}
+          className="focus-ring transition-ui rounded-lg px-2.5 py-2 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          {live ? 'Jeda' : 'Aktifkan'}
+        </button>
+        <button
+          type="button"
+          onClick={refresh}
+          disabled={pending}
+          className="focus-ring transition-ui rounded-lg border border-border bg-card px-2.5 py-2 text-xs font-medium text-foreground hover:bg-muted disabled:text-muted-foreground"
+        >
+          Muat ulang
+        </button>
+      </div>
     </div>
   )
 }

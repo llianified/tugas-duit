@@ -26,6 +26,11 @@ export function PayoutActions({
   const [error, setError] = useState<string | null>(null)
   const [proof, setProof] = useState<File | null>(null)
 
+  function changeMode(next: Mode) {
+    setError(null)
+    setMode(next)
+  }
+
   async function submit(action: 'paid' | 'rejected') {
     setPending(true)
     setError(null)
@@ -57,98 +62,78 @@ export function PayoutActions({
 
   if (mode === 'confirm-paid') {
     return (
-      <Panel>
-        <p className="text-sm text-foreground">
-          Tandai <span className="font-medium">{amountLabel}</span> ke {accountLabel} (
-          {userName}) sebagai terkirim?
+      <ActionPanel title="Konfirmasi transfer" description={`Tandai ${amountLabel} ke ${accountLabel} untuk ${userName} sebagai terkirim.`}>
+        <p className="rounded-lg border border-destructive px-3 py-2.5 text-xs leading-relaxed text-destructive">
+          Lanjutkan hanya jika transfer sudah benar-benar berhasil. Status ini tidak dapat dibatalkan dari panel.
         </p>
-        <p className="text-sm text-muted-foreground">
-          Pastikan transfernya sudah benar-benar dilakukan. Status ini tidak bisa dibatalkan —
-          perbaikannya harus lewat penyesuaian ledger manual.
-        </p>
-        <ProofField file={proof} onChange={setProof} disabled={pending} />
-        <NoteField value={note} onChange={setNote} />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <ProofField file={proof} onChange={setProof} disabled={pending} />
+          <NoteField value={note} onChange={setNote} disabled={pending} />
+        </div>
         {error ? <ErrorText>{error}</ErrorText> : null}
         <Row>
+          <GhostButton onClick={() => changeMode('idle')} disabled={pending}>Batal</GhostButton>
           <PrimaryButton onClick={() => submit('paid')} disabled={pending}>
-            {pending ? 'Menyimpan…' : 'Ya, sudah terkirim'}
+            {pending ? 'Menyimpan…' : 'Konfirmasi sudah terkirim'}
           </PrimaryButton>
-          <GhostButton onClick={() => setMode('idle')} disabled={pending}>
-            Batal
-          </GhostButton>
         </Row>
-      </Panel>
+      </ActionPanel>
     )
   }
 
   if (mode === 'reject') {
     const trimmed = reason.trim()
-
     return (
-      <Panel>
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-foreground">Alasan penolakan</span>
-          <span className="text-muted-foreground">
-            Dikirim ke {userName} lewat Telegram. Saldo otomatis dikembalikan.
-          </span>
-          <textarea
-            value={reason}
-            onChange={(event) => setReason(event.target.value)}
-            rows={2}
-            maxLength={WITHDRAWAL_REJECT_REASON_MAX}
-            placeholder="Nama pemilik rekening tidak cocok."
-            className="rounded-md bg-muted px-3 py-2 text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
-          />
-          <span className="text-xs text-muted-foreground tabular-nums">
-            {reason.length}/{WITHDRAWAL_REJECT_REASON_MAX}
-          </span>
-        </label>
-        <NoteField value={note} onChange={setNote} />
+      <ActionPanel title="Tolak pengajuan" description={`Saldo ${userName} akan dikembalikan dan alasan dikirim lewat Telegram.`}>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="font-semibold text-foreground">Alasan penolakan</span>
+            <textarea
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              rows={3}
+              maxLength={WITHDRAWAL_REJECT_REASON_MAX}
+              disabled={pending}
+              placeholder="Contoh: nama pemilik rekening tidak cocok."
+              className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 text-foreground disabled:opacity-50"
+            />
+            <span className="text-right text-xs tabular-nums text-muted-foreground">{reason.length}/{WITHDRAWAL_REJECT_REASON_MAX}</span>
+          </label>
+          <NoteField value={note} onChange={setNote} disabled={pending} />
+        </div>
         {error ? <ErrorText>{error}</ErrorText> : null}
         <Row>
+          <GhostButton onClick={() => changeMode('idle')} disabled={pending}>Batal</GhostButton>
           <DangerButton onClick={() => submit('rejected')} disabled={pending || !trimmed}>
-            {pending ? 'Menyimpan…' : 'Tolak pengajuan'}
+            {pending ? 'Menyimpan…' : 'Tolak dan kembalikan saldo'}
           </DangerButton>
-          <GhostButton onClick={() => setMode('idle')} disabled={pending}>
-            Batal
-          </GhostButton>
         </Row>
-      </Panel>
+      </ActionPanel>
     )
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      {error ? <ErrorText>{error}</ErrorText> : null}
-      <Row>
-        <PrimaryButton onClick={() => setMode('confirm-paid')}>Tandai terkirim</PrimaryButton>
-        <GhostButton onClick={() => setMode('reject')}>Tolak</GhostButton>
-      </Row>
+    <div className="flex flex-col gap-3 border-t border-border p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+      <div>
+        <p className="text-sm font-semibold text-foreground">Keputusan payout</p>
+        <p className="pt-0.5 text-xs text-muted-foreground">Selesaikan setelah transfer, atau tolak dengan alasan yang jelas.</p>
+      </div>
+      <div className="flex flex-col-reverse gap-2 sm:flex-row">
+        <GhostButton onClick={() => changeMode('reject')}>Tolak</GhostButton>
+        <PrimaryButton onClick={() => changeMode('confirm-paid')}>Tandai terkirim</PrimaryButton>
+      </div>
     </div>
   )
 }
 
-function ProofField({
-  file,
-  onChange,
-  disabled,
-}: {
-  file: File | null
-  onChange: (file: File | null) => void
-  disabled: boolean
-}) {
+function ProofField({ file, onChange, disabled }: { file: File | null; onChange: (file: File | null) => void; disabled: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null)
-  // Satu antrean bisa membuka lebih dari satu panel, jadi id-nya tidak boleh tetap: | id ganda membuat label menyorot input milik payout lain.
   const fieldId = useId()
 
   return (
-    <div className="flex flex-col gap-1 text-sm">
-      <label htmlFor={fieldId} className="font-medium text-foreground">
-        Bukti transfer (opsional)
-      </label>
-      <span className="text-muted-foreground">
-        Dikirim langsung ke chat user sebagai gambar. JPEG, PNG, atau WebP, maksimum 5 MB.
-      </span>
+    <div className="flex flex-col gap-1.5 text-sm">
+      <label htmlFor={fieldId} className="font-semibold text-foreground">Bukti transfer <span className="font-normal text-muted-foreground">(opsional)</span></label>
+      <p className="text-xs leading-relaxed text-muted-foreground">JPEG, PNG, atau WebP hingga 5 MB. Gambar dikirim ke chat pengguna.</p>
       <input
         id={fieldId}
         ref={inputRef}
@@ -156,21 +141,13 @@ function ProofField({
         accept={PAYOUT_PROOF_ACCEPT}
         disabled={disabled}
         onChange={(event) => onChange(event.target.files?.[0] ?? null)}
-        className="rounded-md bg-muted px-3 py-2 text-foreground file:mr-3 file:rounded file:border-0 file:bg-card file:px-2 file:py-1 file:text-sm file:font-medium file:text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+        className="focus-ring rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-2 file:py-1 file:text-xs file:font-semibold file:text-foreground disabled:opacity-50"
       />
       {file ? (
-        <span className="flex items-center gap-2 text-xs text-muted-foreground">
+        <span className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
           <span className="truncate">{file.name}</span>
-          <button
-            type="button"
-            onClick={() => {
-              if (inputRef.current) inputRef.current.value = ''
-              onChange(null)
-            }}
-            disabled={disabled}
-            className="shrink-0 font-medium text-destructive hover:underline disabled:opacity-50"
-          >
-            Hapus pilihan
+          <button type="button" onClick={() => { if (inputRef.current) inputRef.current.value = ''; onChange(null) }} disabled={disabled} className="focus-ring shrink-0 rounded font-medium text-destructive hover:underline disabled:opacity-50">
+            Hapus
           </button>
         </span>
       ) : null}
@@ -178,99 +155,46 @@ function ProofField({
   )
 }
 
-function NoteField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+function NoteField({ value, onChange, disabled }: { value: string; onChange: (value: string) => void; disabled: boolean }) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-foreground">Catatan admin (opsional)</span>
-      <span className="text-muted-foreground">Hanya untuk internal, mis. nomor referensi transfer.</span>
-      <input
-        type="text"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="rounded-md bg-muted px-3 py-2 text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
-      />
+    <label className="flex flex-col gap-1.5 text-sm">
+      <span className="font-semibold text-foreground">Catatan internal <span className="font-normal text-muted-foreground">(opsional)</span></span>
+      <span className="text-xs leading-relaxed text-muted-foreground">Simpan nomor referensi atau konteks untuk admin lain.</span>
+      <input type="text" value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 text-foreground disabled:opacity-50" />
     </label>
   )
 }
 
-function Panel({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-col gap-3 rounded-md bg-card p-3">{children}</div>
+function ActionPanel({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-4 border-t border-border bg-muted p-4 sm:p-5">
+      <div>
+        <h3 className="font-display text-base font-bold text-foreground">{title}</h3>
+        <p className="pt-1 text-sm leading-relaxed text-muted-foreground">{description}</p>
+      </div>
+      {children}
+    </section>
+  )
 }
 
 function Row({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-wrap gap-2">{children}</div>
+  return <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">{children}</div>
 }
 
 function ErrorText({ children }: { children: React.ReactNode }) {
-  return (
-    <p role="alert" className="text-sm font-medium text-destructive">
-      {children}
-    </p>
-  )
+  return <p role="alert" className="rounded-lg border border-destructive px-3 py-2.5 text-sm font-medium text-destructive">{children}</p>
 }
 
-const BUTTON_BASE =
-  'rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50'
+const BUTTON_BASE = 'focus-ring transition-ui rounded-lg px-4 py-2.5 text-sm font-semibold disabled:opacity-50'
 
-function PrimaryButton({
-  children,
-  onClick,
-  disabled,
-}: {
-  children: React.ReactNode
-  onClick: () => void
-  disabled?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`${BUTTON_BASE} bg-primary text-primary-foreground hover:bg-[var(--color-primary-hover)]`}
-    >
-      {children}
-    </button>
-  )
+function PrimaryButton({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
+  return <button type="button" onClick={onClick} disabled={disabled} className={`${BUTTON_BASE} bg-primary text-primary-foreground hover:bg-primary-hover`}>{children}</button>
 }
 
-function DangerButton({
-  children,
-  onClick,
-  disabled,
-}: {
-  children: React.ReactNode
-  onClick: () => void
-  disabled?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`${BUTTON_BASE} bg-destructive text-primary-foreground hover:opacity-90`}
-    >
-      {children}
-    </button>
-  )
+function DangerButton({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
+  return <button type="button" onClick={onClick} disabled={disabled} className={`${BUTTON_BASE} bg-destructive text-background hover:opacity-90`}>{children}</button>
 }
 
-function GhostButton({
-  children,
-  onClick,
-  disabled,
-}: {
-  children: React.ReactNode
-  onClick: () => void
-  disabled?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`${BUTTON_BASE} text-muted-foreground hover:bg-muted-foreground/15 hover:text-foreground`}
-    >
-      {children}
-    </button>
-  )
+function GhostButton({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
+  return <button type="button" onClick={onClick} disabled={disabled} className={`${BUTTON_BASE} border border-border text-muted-foreground hover:bg-card hover:text-foreground`}>{children}</button>
 }

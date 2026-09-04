@@ -3,8 +3,9 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { sendJson } from '@/shell/api-client'
+import { cn } from '@/shared/lib/utils'
 
-export function SignOutButton() {
+export function SignOutButton({ compact = false }: { compact?: boolean }) {
   const router = useRouter()
   const [pending, setPending] = useState(false)
 
@@ -13,6 +14,7 @@ export function SignOutButton() {
     try {
       await sendJson('/api/session', 'DELETE')
     } catch {
+      // Tetap arahkan ke login saat sesi sudah hilang atau jaringan gagal.
     }
     router.replace('/admin/login')
     router.refresh()
@@ -23,7 +25,10 @@ export function SignOutButton() {
       type="button"
       onClick={signOut}
       disabled={pending}
-      className="focus-ring rounded-md px-2 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted-foreground/15 hover:text-foreground disabled:opacity-50"
+      className={cn(
+        'focus-ring transition-ui shrink-0 rounded-lg border border-border font-medium text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50',
+        compact ? 'px-2.5 py-2 text-xs' : 'px-3 py-2 text-sm',
+      )}
     >
       {pending ? 'Keluar…' : 'Keluar'}
     </button>

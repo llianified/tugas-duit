@@ -27,11 +27,11 @@ export async function GET(request: Request) {
 }
 
 const MESSAGE: Record<string, string> = {
-  WITHDRAWAL_ALREADY_PENDING: 'Penarikan sebelumnya masih diproses.',
-  BELOW_MINIMUM: 'Jumlahnya di bawah batas minimum.',
+  WITHDRAWAL_ALREADY_PENDING: 'Penarikan kamu yang sebelumnya masih diproses. Tunggu itu kelar dulu ya.',
+  BELOW_MINIMUM: 'Jumlahnya masih kurang dari batas minimum.',
   INSUFFICIENT_BALANCE: 'Saldo kamu nggak cukup.',
-  INVALID_CHANNEL: 'Tujuan transfer nggak dikenal.',
-  ABOVE_MAXIMUM: 'Jumlahnya melewati batas maksimum.',
+  INVALID_CHANNEL: 'Pilih tujuan transfernya dulu ya.',
+  ABOVE_MAXIMUM: 'Jumlahnya kebanyakan, lewat dari batas maksimum.',
   ACCOUNT_NUMBER_IN_USE: 'Nomor ini dipakai akun lain. Pakai nomor kamu sendiri.',
 }
 
@@ -40,19 +40,19 @@ function messageFor(error: PayoutError): string {
   if (error.code === 'ACTIVE_DAYS_REQUIRED') {
     const required = Number(error.fields?.requiredActiveDays)
     return Number.isFinite(required) && required > 0
-      ? `Butuh ${formatCredits(required)} hari aktif buat tarik dana. Selesaikan minimal 1 task per hari aktif.`
-      : 'Butuh beberapa hari aktif buat tarik dana.'
+      ? `Kamu perlu ${formatCredits(required)} hari aktif dulu. Cukup kerjain 1 soal tiap hari.`
+      : 'Kamu perlu beberapa hari aktif dulu sebelum bisa tarik dana.'
   }
   if (error.code === 'ACTIVE_REFERRALS_REQUIRED') {
     const required = Number(error.fields?.requiredActiveReferrals)
     return Number.isFinite(required) && required > 0
-      ? `Butuh ${formatCredits(required)} referral aktif buat tarik dana.`
-      : 'Butuh beberapa referral aktif buat tarik dana.'
+      ? `Kamu perlu ${formatCredits(required)} teman yang aktif dulu sebelum bisa tarik dana.`
+      : 'Kamu perlu beberapa teman yang aktif dulu sebelum bisa tarik dana.'
   }
   if (error.code === 'WITHDRAWAL_COOLDOWN') {
-    return 'Kamu masih dalam masa jeda sejak penarikan terakhir.'
+    return 'Belum bisa tarik lagi. Tunggu jedanya kelar ya.'
   }
-  return MESSAGE[error.code] ?? 'Data penarikannya ada yang salah.'
+  return MESSAGE[error.code] ?? 'Ada data yang belum pas. Cek lagi ya.'
 }
 
 export async function POST(request: Request) {
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       typeof raw.credits !== 'number' ||
       !Number.isInteger(raw.credits)
     ) {
-      return apiError('VALIDATION_FAILED', 'Data penarikannya belum lengkap.', 400)
+      return apiError('VALIDATION_FAILED', 'Datanya belum lengkap. Cek lagi ya.', 400)
     }
 
     const limit = await checkRateLimit(`withdraw:${user.id}`, 5, 3_600)

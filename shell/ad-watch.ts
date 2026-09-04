@@ -15,12 +15,14 @@ export type AdWatchOutcome =
   /** SDK tidak menjawab hingga backstop. `late` adalah Promise yang sama yang tetap menunggu konfirmasi provider agar reward yang sah tidak hilang. */
   | { status: 'abandoned'; late: Promise<AdWatchSettled> }
 
-/** Pesan kegagalan dibedakan berdasarkan alasan SDK supaya user mendapat penyebab, langkah berikutnya, dan kode yang bisa dilaporkan—bukan satu pesan "belum selesai" untuk semua masalah. Alasan mentah tetap tidak ditampilkan karena format vendor tidak stabil dan kadang bukan teks yang layak dibaca user. */
+/** Alasan SDK dipetakan ke pesan yang berbeda supaya user tahu apa yang bisa dia lakukan — bukan supaya dia tahu apa yang rusak. Alasan mentah tidak pernah ditampilkan: formatnya berubah-ubah dan sering bukan kalimat.
+ *
+ * Semua cabang menutup dengan janji yang sama, "jatah kamu aman", karena itulah satu-satunya hal yang benar-benar dikhawatirkan orang saat iklan gagal. Kode teknis (`AD-NO-FILL` dan kawan-kawan) sengaja TIDAK ikut: itu sisa sesi debugging, dan bagi user pesan yang berakhir dengan kode terbaca seperti aplikasinya rusak parah. Kalau butuh melacak kegagalan, tempatnya log — bukan toast di layar orang. */
 export function adFailureMessage(reason: string): string {
   const marker = reason.toLowerCase()
 
   if (marker.includes('no ad') || marker.includes('no fill') || marker.includes('empty')) {
-    return 'Stok iklan dari penyedia sedang kosong. Tiket belum masuk; coba lagi beberapa menit. Kode: AD-NO-FILL.'
+    return 'Iklannya lagi kosong nih. Coba lagi beberapa menit, jatah kamu aman.'
   }
 
   if (
@@ -30,7 +32,7 @@ export function adFailureMessage(reason: string): string {
     marker.includes('skip') ||
     marker.includes('abort')
   ) {
-    return 'Iklan ditutup sebelum penyedia mengonfirmasi selesai. Tiket belum masuk dan jatah tetap utuh. Coba lagi sampai iklan menutup sendiri. Kode: AD-CLOSED.'
+    return 'Iklannya ketutup kecepetan. Tunggu sampai nutup sendiri ya — jatah kamu aman.'
   }
 
   if (
@@ -40,7 +42,7 @@ export function adFailureMessage(reason: string): string {
     marker.includes('timeout') ||
     marker.includes('connection')
   ) {
-    return 'Koneksi ke penyedia iklan terputus saat tayang. Tiket belum masuk dan jatah tetap utuh. Periksa koneksi, lalu coba lagi. Kode: AD-NETWORK.'
+    return 'Internetnya putus pas iklan jalan. Cek koneksi, terus coba lagi — jatah kamu aman.'
   }
 
   if (
@@ -49,10 +51,10 @@ export function adFailureMessage(reason: string): string {
     marker.includes('denied') ||
     marker.includes('forbidden')
   ) {
-    return 'Iklan diblokir oleh browser, DNS, atau pemblokir iklan. Izinkan iklan, lalu coba lagi. Kode: AD-BLOCKED.'
+    return 'Iklannya keblokir di HP kamu. Matiin dulu pemblokir iklannya, terus coba lagi.'
   }
 
-  return 'Penyedia iklan menolak tayangan ini. Tiket belum masuk dan jatah tetap utuh. Coba lagi. Kode: AD-PROVIDER.'
+  return 'Iklannya gagal tayang. Coba lagi ya, jatah kamu aman.'
 }
 
 /** Promise resmi dari SDK adalah satu-satunya sumber kebenaran hasil rewarded ad. Telegram WebView dapat mengirim `visibilitychange`, `pagehide`, lalu `pageshow` saat iklan normal dibuka dan ditutup; menjadikan lifecycle halaman sebagai kegagalan membuat tayangan penuh salah dibaca sebagai batal dan mencegah task terbuka.

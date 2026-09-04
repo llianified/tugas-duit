@@ -12,18 +12,18 @@ import { rewardedPlayer, waitForShow } from '@/shell/monetag-sdk'
 import type { AdClaimResponse, AdsState, AdTicketResponse } from '@/shell/session-api'
 
 const SDK_MISSING_MESSAGE =
-  'Pemutar iklan tidak termuat dalam 8 detik. Periksa koneksi atau pemblokir iklan, lalu coba lagi. Kode: AD-LOAD.'
+  'Iklannya nggak mau kebuka. Cek koneksi atau pemblokir iklan, terus coba lagi.'
 /** Hanya muncul jika Promise SDK tidak memberi hasil selama tiga menit; perpindahan visibility normal selama iklan tidak lagi memicu pesan ini. */
 const ABANDONED_MESSAGE =
-  'Penyedia iklan belum memberi hasil setelah 3 menit. Tiket belum masuk dan jatah tetap utuh. Coba lagi. Kode: AD-TIMEOUT.'
-const LATE_CLAIM_MESSAGE = 'Tiket iklan masuk. Tayangannya ternyata tuntas.'
+  'Iklannya kelamaan nggak selesai. Coba lagi ya, jatah kamu aman.'
+const LATE_CLAIM_MESSAGE = 'Tiketnya masuk kok, iklannya ternyata kelar.'
 /** Konfirmasi Monetag datang ke server, bukan ke perangkat ini, jadi satu-satunya cara klien mengetahuinya adalah bertanya berulang. Jendelanya sengaja pendek: yang ditunggu perjalanan satu permintaan antar-server, bukan tayangan iklannya — yang itu sudah selesai sebelum baris ini jalan. */
 const VERIFY_POLL_MS = 2_500
 const VERIFY_WINDOW_MS = 20_000
 const AWAITING_CODE = 'AD_CLAIM_AWAITING_VERIFICATION'
 /** Tiketnya TIDAK hangus di sini. Kalau konfirmasinya datang setelah jendela ini lewat, `settleAdPostback` tetap menerbitkan passnya di server dan user menemukannya sudah siap saat kembali — jadi pesannya tidak boleh berbunyi seperti kegagalan yang final. */
 const AWAITING_MESSAGE =
-  'Penyedia iklan belum mengonfirmasi tayangan ini. Tiketnya masuk sendiri begitu konfirmasinya datang — cek lagi sebentar lagi. Kode: AD-VERIFY.'
+  'Tiketnya lagi diproses. Masuk sendiri kok, cek lagi sebentar lagi.'
 
 const isAwaiting = (error: unknown) => error instanceof ApiError && error.code === AWAITING_CODE
 

@@ -8,14 +8,14 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const REFUSAL: Record<string, { message: string; status: number }> = {
-  disabled: { message: 'Bonus join channel lagi tidak tersedia.', status: 409 },
+  disabled: { message: 'Bonus join channel lagi tutup.', status: 409 },
   already_claimed: { message: 'Bonus channel-nya udah pernah kamu ambil.', status: 409 },
   not_member: {
     message: 'Kamu belum terdeteksi join. Join dulu, lalu cek lagi.',
     status: 409,
   },
   unverifiable: {
-    message: 'Keanggotaan belum bisa dicek. Coba lagi nanti.',
+    message: 'Belum bisa dicek sekarang. Coba lagi sebentar lagi ya.',
     status: 503,
   },
 }

@@ -35,7 +35,7 @@ export function ArcadeCard({
             <GlyphPlay className="stamp-ink-fg size-4" />
           </span>
           <span className="text-sm font-semibold leading-snug text-foreground">
-            Main, menang, lanjut kerjakan task.
+            Main, menang, lanjut ngerjain soal.
           </span>
         </span>
 

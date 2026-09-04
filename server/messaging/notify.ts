@@ -90,7 +90,7 @@ export async function notifyWithdrawalRejected(notice: WithdrawalNotice & { reas
       '',
       `Tenang, saldo ${amount(notice)} udah balik utuh ke akun kamu.`,
       '',
-      `Cuma satu hal: cooldown ${formatCredits(notice.cooldownDays)} hari tetap jalan dari tanggal pengajuan tadi, jadi pengajuan berikutnya nunggu itu habis dulu. Sambil nunggu, betulin dulu datanya ya.`,
+      `Cuma satu hal: jeda ${formatCredits(notice.cooldownDays)} hari tetap jalan dari tanggal pengajuan tadi, jadi pengajuan berikutnya nunggu itu habis dulu. Sambil nunggu, betulin dulu datanya ya.`,
     ].join('\n'),
     'rejected',
     openAppMarkup('🎮 Balik ke app'),

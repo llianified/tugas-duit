@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     }
     if (error instanceof KlikqrisError) {
       console.error('[premium] gateway gagal (%s): %s', error.code, error.message)
-      return apiError('PAYMENT_GATEWAY_ERROR', 'QRIS gagal dibuat. Coba lagi nanti.', 502)
+      return apiError('PAYMENT_GATEWAY_ERROR', 'QRIS-nya gagal dibuat. Coba lagi sebentar lagi ya.', 502)
     }
     return handleRouteError(error)
   }

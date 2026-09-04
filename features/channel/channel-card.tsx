@@ -53,7 +53,7 @@ export function ChannelBonusCard({
       </div>
 
       <p className="stamp-card-detail stack-gap-t text-xs leading-snug text-muted-foreground">
-        Sekali per akun. Setelah diklaim, bonus ini tidak muncul lagi.
+        Sekali per akun. Begitu diambil, bonus ini nggak muncul lagi.
       </p>
 
       {/* Dua tombol berbagi satu baris, dan keduanya memakai `--btn-label` seperti

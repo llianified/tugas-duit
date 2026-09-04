@@ -173,7 +173,7 @@ function PremiumSheetBody({
               )}
             </ActionButton>
             <p className="mt-2 text-center text-[11px] leading-snug text-muted-foreground">
-              Bayar lewat QRIS. Premium aktif otomatis saat pembayaran masuk.
+              Bayar pakai QRIS. Premium nyala otomatis begitu pembayarannya masuk.
             </p>
           </>
         ) : null}
@@ -319,7 +319,7 @@ function PaymentPanel({ invoice }: { invoice: PremiumInvoice }) {
         </div>
       ) : (
         <p className="text-sm text-destructive">
-          QR gagal dimuat. Tutup, lalu coba lagi.
+          QR-nya gagal muncul. Tutup dulu, terus coba lagi.
         </p>
       )}
 

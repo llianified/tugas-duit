@@ -26,7 +26,7 @@ export function ActivityFeed({ entries }: { entries: ActivityEntry[] | null }) {
       <EmptyState
         icon={<GlyphBolt className="size-5" />}
         title="Belum ada aktivitas"
-        description="Task bintang tiga dan penarikan cair bakal muncul di sini."
+        description="Soal bintang tiga dan penarikan cair bakal muncul di sini."
       />
     )
   }
@@ -80,7 +80,7 @@ function FeedItem({ entry, showDivider }: { entry: ActivityEntry; showDivider: b
             {payout ? formatRupiah(entry.amount) : `+${formatCredits(entry.amount)} credit`}
           </span>
           <span className="text-muted-foreground">
-            {payout ? ' · penarikan dibayar' : ' · task bintang tiga'}
+            {payout ? ' · penarikan dibayar' : ' · soal bintang tiga'}
           </span>
         </p>
       </div>

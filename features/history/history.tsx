@@ -19,15 +19,15 @@ import { formatCredits, formatCreditsPrecise, formatHistoryTime } from '@/shared
 type HistoryTab = 'task' | 'withdrawal'
 
 const TABS: readonly SegmentedTab<HistoryTab>[] = [
-  { value: 'task', label: 'Task' },
+  { value: 'task', label: 'Soal' },
   { value: 'withdrawal', label: 'Penarikan' },
 ]
 
 const SUMMARY = {
   task: {
     label: 'Total didapat',
-    ariaLabel: 'Total credit dari task',
-    hint: 'Semua credit dari task sejak awal. Ini bukan sisa saldo kamu.',
+    ariaLabel: 'Total credit dari soal',
+    hint: 'Semua credit dari soal sejak awal. Ini bukan sisa saldo kamu.',
   },
   withdrawal: {
     label: 'Total ditarik',
@@ -126,7 +126,7 @@ function TaskHistoryPanel({
       <EmptyState
         icon={<GlyphHistory className="glyph-md text-muted-foreground" />}
         title="Belum ada transaksi"
-        description="Selesaikan task pertama. Transaksinya muncul di sini."
+        description="Kerjain soal pertama kamu. Transaksinya muncul di sini."
       />
     )
   }
@@ -183,9 +183,9 @@ function HistoryList({
 }) {
   return (
     <DataList
-      label="Task selesai"
-      badge={`${completedCount} task`}
-      ariaLabel="Riwayat penyelesaian task"
+      label="Soal selesai"
+      badge={`${completedCount} soal`}
+      ariaLabel="Riwayat soal yang udah kelar"
     >
       {history.map((entry, index) => (
         <HistoryListItem

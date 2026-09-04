@@ -12,7 +12,7 @@ export type AppView =
 export const ROOT_VIEW: AppView = 'home'
 
 export const VIEW_TITLE: Record<Exclude<AppView, 'home'>, string> = {
-  captcha: 'Kerjakan task',
+  captcha: 'Kerjain soal',
   missions: 'Misi harian',
   arcade: 'Arena',
   history: 'Riwayat',

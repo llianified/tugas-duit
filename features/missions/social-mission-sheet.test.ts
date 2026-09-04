@@ -10,35 +10,46 @@ import {
 
 const REFERRAL_URL = 'https://t.me/tugasduitbot/app?startapp=REF123'
 
+/** Yang dikunci di sini isi teknisnya — mention, link referral, tujuan tautan — BUKAN kalimat instruksinya. Versi sebelumnya menyamakan `instruction` dengan string persis, jadi setiap perbaikan penulisan menggagalkan test yang sebenarnya tidak menguji apa pun soal itu. Bentuk kalimatnya dijaga `COPY-1` di `tests/copy.test.ts`, yang menguji aturannya, bukan kata-katanya. */
 describe('pesan misi sosial', () => {
+  const SOCIAL_ACTIONS = [
+    'twitter_follow',
+    'twitter_like_repost',
+    'twitter_post',
+    'facebook_post',
+  ] as const
+
   it('menyertakan mention dan link referral user pada template Twitter', () => {
     const text = buildTwitterShareText(REFERRAL_URL)
 
     expect(text).toContain('@Tugasduit')
     expect(text).toContain(REFERRAL_URL)
-    expect(contentFor('twitter_post').instruction).toBe(
-      'Tekan tombol dibawah, lalu post ke Twitter.',
-    )
   })
 
   it('menyatukan Like dan Retweet pada satu postingan X', () => {
-    expect(contentFor('twitter_like_repost')).toMatchObject({
-      actionLabel: 'Buka postingan di X',
-      confirmLabel: 'Ya, keduanya sudah',
-    })
     expect(X_LIKE_REPOST_URL).toBe(
       'https://x.com/TugasDuit/status/2095765886091276589',
     )
+    expect(contentFor('twitter_like_repost').instruction).toMatch(/like/i)
+    expect(contentFor('twitter_like_repost').instruction).toMatch(/retweet/i)
   })
 
   it('menyertakan link referral user dan membuka beranda Facebook', () => {
     const text = buildFacebookShareText(REFERRAL_URL)
 
     expect(text).toContain(REFERRAL_URL)
-    expect(contentFor('facebook_post').instruction).toBe(
-      'Salin & buka tombol dibawah lalu posting ke grup manapun.',
-    )
+    expect(contentFor('facebook_post').instruction).toMatch(/facebook/i)
     expect(FACEBOOK_HOME_URL).toBe('https://www.facebook.com/')
+  })
+
+  it('memberi tiap misi instruksi, label aksi, dan konfirmasi yang terisi', () => {
+    for (const action of SOCIAL_ACTIONS) {
+      const konten = contentFor(action)
+      expect(konten.instruction.length).toBeGreaterThan(0)
+      expect(konten.actionLabel.length).toBeGreaterThan(0)
+      expect(konten.confirmation.endsWith('?')).toBe(true)
+      expect(konten.confirmLabel.length).toBeGreaterThan(0)
+    }
   })
 })
 

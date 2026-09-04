@@ -42,7 +42,7 @@ export function RankIsland({
   const isMaxRank = nextRank === null
   const rankHint = isMaxRank
     ? `Rank tertinggi: ${rank.name}`
-    : `${formatCredits(tasksToNextRank)} task menuju rank ${nextRank.name}`
+    : `${formatCredits(tasksToNextRank)} soal menuju rank ${nextRank.name}`
 
   const poolKnown = rewardPoolCredits !== null && rewardPoolMax !== null
 
@@ -103,7 +103,7 @@ function RankProgressRegion({ progression }: { progression: Progression }) {
   const progressMax = isMaxRank ? 1 : rankSpan
   const progressText = isMaxRank
     ? `Rank ${rank.name}, puncak jenjang`
-    : `${formatCredits(rankProgress)} dari ${formatCredits(rankSpan)} task menuju rank ${nextRank.name}`
+    : `${formatCredits(rankProgress)} dari ${formatCredits(rankSpan)} soal menuju rank ${nextRank.name}`
 
   return (
     <IslandStat

@@ -31,7 +31,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     if (contentType.includes('multipart/form-data')) {
       const form = await request.formData().catch(() => null)
-      if (!form) return apiError('VALIDATION_FAILED', 'Body tidak valid.', 400)
+      if (!form) return apiError('VALIDATION_FAILED', 'Data yang dikirim nggak kebaca.', 400)
 
       const action = form.get('action')
       body = {
@@ -54,10 +54,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     if (!body || typeof body !== 'object') {
-      return apiError('VALIDATION_FAILED', 'Body tidak valid.', 400)
+      return apiError('VALIDATION_FAILED', 'Data yang dikirim nggak kebaca.', 400)
     }
     if (body.action !== 'paid' && body.action !== 'rejected') {
-      return apiError('VALIDATION_FAILED', 'Aksi tidak valid.', 400)
+      return apiError('VALIDATION_FAILED', 'Aksinya nggak dikenali.', 400)
     }
     const reason = body.reason?.trim() ?? ''
     if (body.action === 'rejected' && (!reason || reason.length > WITHDRAWAL_REJECT_REASON_MAX)) {

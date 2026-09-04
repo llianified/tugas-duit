@@ -71,7 +71,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ pu
     const { publicId } = await params
     const body = (await request.json().catch(() => null)) as Body | null
     if (!body || typeof body !== 'object') {
-      return apiError('VALIDATION_FAILED', 'Body tidak valid.', 400)
+      return apiError('VALIDATION_FAILED', 'Data yang dikirim nggak kebaca.', 400)
     }
 
     switch (body.action) {
@@ -167,7 +167,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ pu
         return Response.json(result)
       }
       default:
-        return apiError('VALIDATION_FAILED', 'Aksi tidak valid.', 400)
+        return apiError('VALIDATION_FAILED', 'Aksinya nggak dikenali.', 400)
     }
   } catch (error) {
     if (error instanceof AdminGrantError) {

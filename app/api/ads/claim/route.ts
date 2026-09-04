@@ -8,11 +8,11 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const REFUSAL_MESSAGE: Record<string, string> = {
-  no_ticket: 'Tiket iklan tidak ketemu. Tonton lagi.',
-  ticket_expired: 'Tiket iklan kedaluwarsa. Tonton lagi.',
+  no_ticket: 'Tiketnya nggak ketemu. Tonton iklannya lagi ya.',
+  ticket_expired: 'Tiketnya udah kedaluwarsa. Tonton iklannya lagi ya.',
   pass_ready: 'Tiket iklan kamu sudah siap dipakai.',
-  awaiting_verification: 'Menunggu konfirmasi penyedia iklan.',
-  watch_too_short: 'Iklannya harus ditonton sampai selesai. Tiket belum masuk — coba lagi dan jangan tutup iklannya lebih awal.',
+  awaiting_verification: 'Tiketnya lagi diproses. Cek lagi sebentar lagi ya.',
+  watch_too_short: 'Iklannya kudu ditonton sampai kelar. Coba lagi, jangan ditutup di tengah ya.',
 }
 
 /** Menunggu konfirmasi bukan penolakan yang sama dengan yang lain: klien harus tahu bahwa mencoba lagi sebentar lagi memang berguna, dan itu hanya terbaca kalau kodenya berbeda. */

@@ -229,7 +229,7 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
       text: [
         `<b>Rank kamu naik jadi ${escapeHtml(rank.name)} 🏅</b>`,
         '',
-        `${formatCredits(row.completed_count)} task kelar. Daya tampung stok reward kamu ikut naik, jadi sekali duduk bisa ngumpulin lebih banyak sebelum stoknya habis.`,
+        `${formatCredits(row.completed_count)} soal kelar. Daya tampung stok reward kamu ikut naik, jadi sekali duduk bisa ngumpulin lebih banyak sebelum stoknya habis.`,
       ].join('\n'),
     }
   }
@@ -242,7 +242,7 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
       text: [
         `<b>Streak ${formatCredits(streak)} hari kamu hampir putus 🔥</b>`,
         '',
-        'Hari ini belum ada task yang kelar. Satu aja udah cukup buat nyambungin streak-nya sebelum ganti hari.',
+        'Hari ini belum ada soal yang kelar. Satu aja udah cukup buat nyambungin streak-nya sebelum ganti hari.',
         '',
         'Streak panjang bikin daya tampung stok reward kamu makin gede.',
       ].join('\n'),
@@ -257,7 +257,7 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
       text: [
         '<b>Komisi dari teman kamu masuk 🎉</b>',
         '',
-        `Hari ini kamu dapat ${money(row.commission_today)} dari task yang dikerjain teman-teman kamu. Tanpa ngapa-ngapain.`,
+        `Hari ini kamu dapat ${money(row.commission_today)} dari soal yang dikerjain teman-teman kamu. Tanpa ngapa-ngapain.`,
       ].join('\n'),
     }
   }
@@ -270,7 +270,7 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
       text: [
         `<b>${formatCredits(row.new_referrals_today)} teman baru pakai kode kamu 👋</b>`,
         '',
-        'Begitu mereka mulai ngerjain task, komisinya ngalir ke kamu otomatis. Sekalian colek mereka biar cepet mulai ya.',
+        'Begitu mereka mulai ngerjain soal, komisinya ngalir ke kamu otomatis. Sekalian colek mereka biar cepet mulai ya.',
       ].join('\n'),
     }
   }

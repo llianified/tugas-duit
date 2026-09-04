@@ -93,7 +93,7 @@ export function ActiveTask({
   }, [onStart, tearing])
 
   return (
-    <section aria-label="Task yang tersedia">
+    <section aria-label="Soal yang tersedia">
       {/* Karcisnya dua bagian yang berhimpit di perforasi, bukan satu kotak dengan garis di tengahnya. Pemisahan ini yang membuat sobekannya nyata: saat "Mulai" ditekan, pangkal dan sobekannya berjalan ke arah berlawanan dengan tepi bergerigi. Lihat `--tear-*` di `globals.css`. */}
       <div
         className="task-card active-task-card"
@@ -287,8 +287,8 @@ function StartAction({
         label={resuming ? 'Lanjutkan' : 'Mulai'}
         aria-label={
           resuming
-            ? 'Lanjutkan task yang sudah dimulai, tanpa ongkos tambahan'
-            : `Mulai task dengan memakai ${formatCredits(energyCostPerTask())} energi, sisa ${formatCredits(energy)} dari ${formatCredits(energyMax)}`
+            ? 'Lanjutin soal yang udah dimulai, nggak kena ongkos lagi'
+            : `Mulai soal pakai ${formatCredits(energyCostPerTask())} energi, sisa ${formatCredits(energy)} dari ${formatCredits(energyMax)}`
         }
         onClick={() => {
           hapticTap()

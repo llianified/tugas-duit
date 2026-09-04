@@ -14,13 +14,13 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const REFUSAL: Record<string, { message: string; status: number }> = {
-  unknown_play: { message: 'Rondenya nggak ketemu.', status: 409 },
+  unknown_play: { message: 'Rondenya nggak ketemu. Muat ulang dulu ya.', status: 409 },
   /** Yang balik cuma tiket iklannya. Jatah main harian sengaja tidak pernah dikembalikan — `plays_today` menghitung ronde yang DIBUKA — jadi kalimat lama yang menjanjikan "jatahnya balik" salah menyebut dua hal sekaligus. */
   play_expired: {
     message: 'Rondenya kelamaan ditinggal. Tiket iklannya balik, tapi jatah main hari ini tetap terpakai.',
     status: 409,
   },
-  bad_pick: { message: 'Kotaknya nggak valid.', status: 400 },
+  bad_pick: { message: 'Kotaknya nggak kebaca. Muat ulang dulu ya.', status: 400 },
 }
 
 export async function POST(request: Request) {

@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     if (result.reason === 'daily_task_cap') {
       return apiError(
         'DAILY_TASK_LIMIT',
-        'Jatah task hari ini habis. Biayanya dikembalikan. Coba lagi besok.',
+        'Jatah soal hari ini udah habis. Ongkosnya balik lagi kok. Coba lagi besok ya.',
         429,
       )
     }
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       return apiError('CHALLENGE_NOT_FOUND', 'Soalnya udah nggak ada. Ambil soal baru ya.', 404)
     }
     if (result.reason === 'not_started') {
-      return apiError('CHALLENGE_NOT_STARTED', 'Task-nya belum dimulai. Ambil soal baru ya.', 409)
+      return apiError('CHALLENGE_NOT_STARTED', 'Soalnya belum dimulai. Ambil soal baru ya.', 409)
     }
     if (result.reason === 'expired') {
       return apiError('CHALLENGE_EXPIRED', 'Waktunya habis. Ambil soal baru ya.', 410)

@@ -12,7 +12,7 @@ export function prizeLabel(prize: ArcadePrize): string {
 /** Baris kedua yang menjelaskan artinya, bukan mengulang labelnya. Stok disebut rupiahnya karena itu yang membuat hadiahnya terasa; energi disebut gunanya karena rupiahnya nol. */
 export function prizeDetail(prize: ArcadePrize): string {
   if (prize.kind === 'pool') return `${formatRupiah(creditsToRupiah(prize.amount))} siap dikerjakan`
-  if (prize.kind === 'energy') return 'Bisa langsung buat task'
+  if (prize.kind === 'energy') return 'Bisa langsung buat soal'
   return 'Nggak dapat apa-apa kali ini'
 }
 

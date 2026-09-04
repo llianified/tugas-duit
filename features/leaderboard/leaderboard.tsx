@@ -82,7 +82,7 @@ export function LeaderboardView({
             <EmptyState
               icon={<GlyphTrophy className="glyph-md text-muted-foreground" />}
               title="Papan masih kosong"
-              description="Selesaikan task pertama buat masuk ke puncak papan."
+              description="Kerjain soal pertama kamu buat masuk papan."
             />
           ) : (
             <>
@@ -195,7 +195,7 @@ function PodiumCard({ entry }: { entry: LeaderboardEntry }) {
       <p className="num-display text-[15px]">{formatCredits(entry.credits)}</p>
 
       <p className="text-[11px] tabular-nums text-muted-foreground">
-        credit · {formatCredits(entry.taskCount)} task
+        credit · {formatCredits(entry.taskCount)} soal
       </p>
     </div>
   )
@@ -215,7 +215,7 @@ function YourPosition({
         <div className="label-gap-t task-card">
           <p className="text-base font-semibold tracking-tight">Belum masuk papan</p>
           <p className="stack-gap-t text-sm leading-relaxed text-muted-foreground text-pretty">
-            Selesaikan 1 task buat masuk bersama {formatCredits(participants)} peserta lain.
+            Kerjain 1 soal buat gabung sama {formatCredits(participants)} peserta lain.
           </p>
         </div>
       </section>
@@ -230,8 +230,8 @@ function YourPosition({
         <SectionLabel as="h2">
           Posisi kamu
           <InfoHint label="Posisi kamu">
-            Urutan berdasarkan total credit, bukan jumlah task. Posisi berubah saat peserta lain
-            menyelesaikan task.
+            Urutannya dari total credit, bukan jumlah soal. Posisi bisa geser kalau peserta lain
+            ngerjain soal.
           </InfoHint>
         </SectionLabel>
       </div>
@@ -505,7 +505,7 @@ function BoardListItem({
           <PrestigeChips entry={entry} />
         </span>
       }
-      meta={`${rank.name} · ${formatCredits(entry.taskCount)} task`}
+      meta={`${rank.name} · ${formatCredits(entry.taskCount)} soal`}
       amount={<DataListAmount value={formatCredits(entry.credits)} tone="neutral" />}
     />
   )

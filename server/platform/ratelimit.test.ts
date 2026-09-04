@@ -1,6 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
@@ -108,6 +108,21 @@ describe('RL-3 — reservasi token menekan jumlah write tanpa melonggarkan plafo
     expect(await sumCount(bucket)).toBe(6)
   })
 
+  it('tidak melipatgandakan write di ekor window', async () => {
+    const { checkRateLimit } = await import('./ratelimit')
+    const bucket = uniqueBucket()
+
+    /** Window 2 detik: sisa window **selalu** ≤ `LEASE_GUARD_MS`, jadi setiap request di sini adalah request "ekor window" tanpa perlu memalsukan jam sama sekali. Plafonnya 60 supaya jalur lease aktif — di bawah 60 jalur eksak memang sudah dipakai dan uji ini jadi tidak membuktikan apa pun.
+     *
+     * Sebelum diperbaiki, request seperti ini memesan lease yang langsung kena guard-nya sendiri, gagal mengambil token, lalu memesan lagi sampai `MAX_ACQUIRE_ATTEMPTS` habis dan baru jatuh ke jalur eksak: 9 write untuk satu request, dan ~80 token terbakar tanpa pernah dipakai — cukup untuk memicu 429 palsu di ujung window pada bucket seperti `premium:webhook` 120/60s dan `task:issue` 60/60s. Sekarang satu request = satu write, dan tidak ada token yang hangus. */
+    const panggilan = 12
+    for (let i = 0; i < panggilan; i++) {
+      expect((await checkRateLimit(bucket, 60, 2)).allowed).toBe(true)
+    }
+
+    expect(await sumCount(bucket)).toBe(panggilan)
+  })
+
   it('memberi retryAfter yang masih di dalam window', async () => {
     const { checkRateLimit } = await import('./ratelimit')
     const bucket = uniqueBucket()
@@ -118,6 +133,70 @@ describe('RL-3 — reservasi token menekan jumlah write tanpa melonggarkan plafo
     expect(tertolak.allowed).toBe(false)
     expect(tertolak.retryAfter).toBeGreaterThan(0)
     expect(tertolak.retryAfter).toBeLessThanOrEqual(600)
+  })
+})
+
+describe('RL-4 — plafon efektif saat lease tersebar ke beberapa instance', () => {
+  /** Lease disimpan di memori modul, jadi "instance kedua" berarti salinan modul kedua: `resetModules()` membuat `import` berikutnya mengevaluasi ulang `ratelimit.ts` dengan `Map` lease yang benar-benar baru. Databasenya tetap satu — PGlite di-cache di `globalThis` (`preview-db.ts`), jadi ia lolos dari reset dan kedua salinan menulis ke tabel `rate_limits` yang sama, persis seperti dua instance serverless yang berbagi satu Postgres. */
+  const instanceBaru = async () => {
+    vi.resetModules()
+    return import('./ratelimit')
+  }
+
+  it('tidak pernah melewati plafon meski dua instance melayani bucket yang sama', async () => {
+    const satu = await instanceBaru()
+    const dua = await instanceBaru()
+    const bucket = uniqueBucket()
+
+    let diloloskan = 0
+    for (let i = 0; i < 300; i++) {
+      const instance = i % 2 === 0 ? satu : dua
+      if ((await instance.checkRateLimit(bucket, 200, 3_600)).allowed) diloloskan++
+    }
+
+    /** Yang wajib: plafon tidak pernah naik walau lease-nya terpisah. Kedua instance sama-sama menghabiskan lease-nya di sini, jadi tidak ada token yang hangus dan angkanya harus menempel di plafon. */
+    expect(diloloskan).toBeLessThanOrEqual(200)
+    expect(diloloskan).toBe(200)
+  })
+
+  it('menyusut paling banyak sebesar lease yang ditinggalkan instance menganggur', async () => {
+    const instances = [await instanceBaru(), await instanceBaru(), await instanceBaru()]
+    const bucket = uniqueBucket()
+    const limit = 300
+    const leaseSize = 10
+
+    /** Kasus terburuk yang bisa dibuat: tiap instance memesan satu lease penuh lalu berhenti melayani bucket ini — token sisanya tidak akan pernah terpakai. Ini yang terjadi saat lalu lintas satu admin berpindah instance, atau instance-nya dimatikan di tengah window. */
+    for (const instance of instances) {
+      expect((await instance.checkRateLimit(bucket, limit, 3_600)).allowed).toBe(true)
+    }
+
+    /** Lalu satu instance menghabiskan sisa plafon sampai tertolak. */
+    let diloloskan = instances.length
+    for (let i = 0; i < limit * 2; i++) {
+      if (!(await instances[0].checkRateLimit(bucket, limit, 3_600)).allowed) break
+      diloloskan++
+    }
+
+    /** Toleransi yang diterima, dan alasannya: setiap instance menganggur menghanguskan paling banyak `leaseSize - 1` token, dan instance yang masih melayani tetap memakai sisa lease-nya sendiri. Jadi kerugian maksimum satu window adalah `(instance - 1) × (leaseSize - 1)` = 18 dari 300, alias plafon efektif ≥ 94%. Kalau `LEASE_MAX` atau `LEASE_DIVISOR` digeser sampai toleransi ini terlampaui, test inilah yang gagal lebih dulu — bukan produksi. */
+    const kerugianMaksimum = (instances.length - 1) * (leaseSize - 1)
+    expect(diloloskan).toBeLessThanOrEqual(limit)
+    expect(diloloskan).toBeGreaterThanOrEqual(limit - kerugianMaksimum)
+    expect(diloloskan / limit).toBeGreaterThanOrEqual(0.94)
+  })
+
+  it('menjaga plafon bucket kecil tetap eksak lintas instance', async () => {
+    const satu = await instanceBaru()
+    const dua = await instanceBaru()
+    const bucket = uniqueBucket()
+
+    /** Bucket yang menuntut plafon eksak harus berada di bawah `LEASE_MIN_LIMIT`, dan semuanya memang di sana: `withdraw` 5/jam, `admin:maintenance` 6/jam, `premium:checkout` 10/600s, `task:submit` 30/60s. Tanpa lease tidak ada fragmentasi, jadi plafon efektifnya sama dengan plafon nominal berapa pun jumlah instance-nya. */
+    let diloloskan = 0
+    for (let i = 0; i < 12; i++) {
+      const instance = i % 2 === 0 ? satu : dua
+      if ((await instance.checkRateLimit(bucket, 6, 3_600)).allowed) diloloskan++
+    }
+
+    expect(diloloskan).toBe(6)
   })
 })
 

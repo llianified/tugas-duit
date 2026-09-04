@@ -1,7 +1,11 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Payout — Tugas Duit',
+  title: {
+    default: 'Panel Admin — Tugas Duit',
+    template: '%s — Admin Tugas Duit',
+  },
+  description: 'Pusat kendali operasional Tugas Duit.',
   robots: 'noindex, nofollow',
 }
 

@@ -1027,6 +1027,58 @@
   .admin-safe-b {
     --admin-safe-b: env(safe-area-inset-bottom, 0px);
   }
+  .admin-shell {
+    min-height: 100dvh;
+    background-color: var(--background);
+  }
+  .admin-sidebar {
+    display: none;
+  }
+  .admin-mobile-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    min-height: 4rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.625rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background-color: color-mix(in oklab, var(--background) 92%, transparent);
+    backdrop-filter: blur(14px);
+  }
+  .admin-brand {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .admin-brand-mark {
+    display: inline-flex;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.625rem;
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    font-family: var(--font-plus-jakarta), var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+  .admin-main {
+    min-width: 0;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.25rem);
+  }
+  .admin-content {
+    width: 100%;
+    max-width: 88rem;
+    margin-inline: auto;
+    padding: 1.25rem 1rem 2rem;
+  }
   .admin-nav {
     position: fixed;
     left: 0;
@@ -1035,113 +1087,297 @@
     z-index: 30;
     display: flex;
     justify-content: center;
-    padding-inline: var(--content-px);
+    padding-inline: 0.75rem;
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
     pointer-events: none;
   }
   .admin-nav::before {
     content: '';
     position: absolute;
-    left: 0;
-    right: 0;
-    top: -2rem;
-    bottom: 0;
+    inset: -2rem 0 0;
     background-image: linear-gradient(
       to bottom,
-      transparent 0%,
-      color-mix(in oklab, var(--background) 72%, transparent) 55%,
-      var(--background) 100%
+      transparent,
+      color-mix(in oklab, var(--background) 86%, transparent) 50%,
+      var(--background)
     );
     pointer-events: none;
   }
   .admin-nav-row {
     position: relative;
-    pointer-events: auto;
     display: flex;
     width: 100%;
-    max-width: 28rem;
-    height: 3rem;
+    max-width: 30rem;
     align-items: center;
     gap: 0.25rem;
-    padding-inline: 0.375rem;
-    border-radius: 9999px;
-    background-color: color-mix(in oklab, var(--muted) 72%, transparent);
-    border: 1px solid color-mix(in oklab, var(--border) 70%, transparent);
-    backdrop-filter: saturate(180%) blur(12px);
+    padding: 0.375rem;
+    border: 1px solid var(--border);
+    border-radius: 0.875rem;
+    background-color: color-mix(in oklab, var(--card) 92%, transparent);
+    backdrop-filter: saturate(150%) blur(14px);
+    pointer-events: auto;
   }
   .admin-nav-item {
     display: flex;
-    flex: 1 1 0%;
     min-width: 0;
+    min-height: 2.75rem;
+    flex: 1 1 0%;
     align-items: center;
     justify-content: center;
-    height: 2.25rem;
-    border-radius: 9999px;
-    font-size: 0.8125rem;
-    font-weight: 500;
+    border-radius: 0.625rem;
     color: var(--muted-foreground);
   }
   .admin-nav-item[aria-current='page'] {
-    background-color: var(--background);
-    color: var(--foreground);
+    background-color: var(--primary);
+    color: var(--primary-foreground);
   }
-  .admin-pb {
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 4.5rem);
+  .admin-nav-label {
+    min-width: 0;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .admin-nav-label-full,
+  .admin-nav-description {
+    display: none;
+  }
+  .admin-nav-label-short {
+    display: block;
+  }
+  .admin-account {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .admin-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .admin-page-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+  .admin-page-title {
+    font-family: var(--font-plus-jakarta), var(--font-sans);
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+    color: var(--foreground);
+    text-wrap: balance;
+  }
+  .admin-page-description {
+    max-width: 46rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--muted-foreground);
+    text-wrap: pretty;
+  }
+  .admin-panel {
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background-color: var(--card);
+  }
+  .admin-refresh {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background-color: var(--card);
+  }
+  .admin-empty {
+    padding: 3rem 1.25rem;
+    border: 1px dashed var(--border);
+    border-radius: 0.75rem;
+    color: var(--muted-foreground);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    text-align: center;
+    text-wrap: pretty;
   }
   .admin-savebar {
     position: fixed;
     left: 0;
     right: 0;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 4rem);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 4.75rem);
     z-index: 31;
     display: flex;
     justify-content: center;
-    padding-inline: var(--content-px);
+    padding-inline: 0.75rem;
     pointer-events: none;
   }
   .admin-savebar-row {
-    pointer-events: auto;
     display: flex;
     width: 100%;
-    max-width: 28rem;
+    max-width: 32rem;
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem;
-    border-radius: 1rem;
-    background-color: var(--card);
     border: 1px solid var(--border);
+    border-radius: 0.875rem;
+    background-color: color-mix(in oklab, var(--card) 94%, transparent);
+    box-shadow: 0 1rem 3rem color-mix(in oklab, var(--background) 65%, transparent);
+    backdrop-filter: blur(14px);
+    pointer-events: auto;
   }
   .admin-tabs {
     position: sticky;
-    top: 3.5rem;
+    top: 4rem;
     z-index: 20;
     display: flex;
     gap: 0.375rem;
-    margin-inline: calc(var(--content-px) * -1);
-    padding: 0.5rem var(--content-px);
+    margin-inline: -1rem;
+    padding: 0.625rem 1rem;
     overflow-x: auto;
     scrollbar-width: none;
-    background-color: var(--background);
+    background-color: color-mix(in oklab, var(--background) 94%, transparent);
+    backdrop-filter: blur(12px);
   }
   .admin-tabs::-webkit-scrollbar {
     display: none;
   }
   .admin-tab {
-    flex: none;
     display: inline-flex;
+    min-height: 2.25rem;
+    flex: none;
     align-items: center;
     gap: 0.375rem;
-    height: 2rem;
     padding-inline: 0.75rem;
-    border-radius: 9999px;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    background-color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 0.625rem;
+    background-color: var(--card);
     color: var(--muted-foreground);
+    font-size: 0.8125rem;
+    font-weight: 600;
   }
   .admin-tab[aria-selected='true'] {
+    border-color: var(--primary);
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+  .admin-switch {
+    position: relative;
+    display: inline-flex;
+    width: 3rem;
+    height: 1.75rem;
+    flex: none;
+    align-items: center;
+    padding: 0.1875rem;
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    background-color: var(--muted);
+    transition: background-color var(--duration-ui), border-color var(--duration-ui);
+  }
+  .admin-switch[data-checked='true'] {
+    border-color: var(--primary);
+    background-color: var(--primary);
+  }
+  .admin-switch-thumb {
+    display: block;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 9999px;
     background-color: var(--foreground);
-    color: var(--background);
+    transition: translate var(--duration-ui) var(--ease-out-quart);
+  }
+  .admin-switch[data-checked='true'] .admin-switch-thumb {
+    translate: 1.1875rem 0;
+    background-color: var(--primary-foreground);
+  }
+  @media (min-width: 40rem) {
+    .admin-refresh {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+  @media (min-width: 48rem) {
+    .admin-sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 30;
+      display: flex;
+      width: 16rem;
+      flex-direction: column;
+      gap: 1.5rem;
+      padding: 1.25rem;
+      border-right: 1px solid var(--border);
+      background-color: var(--card);
+    }
+    .admin-mobile-header {
+      display: none;
+    }
+    .admin-main {
+      min-height: 100dvh;
+      margin-left: 16rem;
+      padding-bottom: 0;
+    }
+    .admin-content {
+      padding: 2rem;
+    }
+    .admin-nav {
+      position: static;
+      display: block;
+      flex: 1 1 auto;
+      padding: 0;
+      pointer-events: auto;
+    }
+    .admin-nav::before {
+      display: none;
+    }
+    .admin-nav-row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.375rem;
+      max-width: none;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      backdrop-filter: none;
+    }
+    .admin-nav-item {
+      min-height: 3.5rem;
+      flex: none;
+      align-items: flex-start;
+      padding: 0.625rem 0.75rem;
+    }
+    .admin-nav-label {
+      font-size: 0.875rem;
+      line-height: 1.25;
+    }
+    .admin-nav-label-full,
+    .admin-nav-description {
+      display: block;
+    }
+    .admin-nav-label-short {
+      display: none;
+    }
+    .admin-nav-description {
+      padding-top: 0.125rem;
+      font-size: 0.6875rem;
+      line-height: 1.25;
+      opacity: 0.72;
+    }
+    .admin-savebar {
+      left: 16rem;
+      bottom: 1.5rem;
+      padding-inline: 2rem;
+    }
+    .admin-savebar-row {
+      max-width: 44rem;
+    }
+    .admin-tabs {
+      top: 0;
+      margin-inline: -2rem;
+      padding-inline: 2rem;
+    }
   }
   /** Toast naik dari bawah, duduk di atas nav pill kalau nav-nya ada. `--toast-lift` diisi lewat `[data-app-nav]` yang dipasang `AppFrame`, bukan lewat props: layer ini dirender `ToastProvider` di luar pohon `AppFrame`, jadi variabelnya harus dititipkan di `:root` supaya bisa diwarisi. Tanpa nav (captcha, sesi gagal) toast langsung menempel ke inset bawah. z-index-nya di atas dialog premium (50) — error yang muncul dari aksi di dalam dialog tidak boleh tertutup dialog yang memicunya. */
   .toast-layer {

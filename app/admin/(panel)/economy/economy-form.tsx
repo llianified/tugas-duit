@@ -11,12 +11,7 @@ import {
   type EconomyGroup,
   type EconomyValidationErrors,
 } from '@/domain/economy/economy-config'
-import {
-  ECONOMY_PRESETS,
-  parseEconomyPatch,
-  type EconomyPatch,
-} from '@/domain/economy/economy-presets'
-import type { EconomyAuditEntry, EconomyConfigSnapshot } from '@/server/economy/economy-config'
+import type { EconomyConfigSnapshot } from '@/server/economy/economy-config'
 
 const GROUP_LABEL: Record<EconomyGroup, string> = {
   earnings: 'Plafon',
@@ -33,6 +28,23 @@ const GROUP_LABEL: Record<EconomyGroup, string> = {
   mission: 'Misi',
   arcade: 'Arena',
   feature: 'Fitur',
+}
+
+const GROUP_DESCRIPTION: Record<EconomyGroup, string> = {
+  earnings: 'Nilai credit dan kapasitas penghasilan.',
+  reward: 'Besaran hadiah berdasarkan tingkat kesulitan.',
+  task: 'Batas dan aturan pengerjaan soal.',
+  difficulty: 'Parameter pembentuk tingkat kesulitan.',
+  energy: 'Kapasitas, biaya, dan kecepatan pemulihan.',
+  ads: 'Tiket rewarded dan jadwal interstitial.',
+  withdrawal: 'Syarat, batas, dan jeda penarikan.',
+  referral: 'Komisi dan plafon jaringan referral.',
+  progression: 'Ambang kenaikan rank pengguna.',
+  channel: 'Bonus dan gerbang keanggotaan Telegram.',
+  premium: 'Harga dan manfaat akun premium.',
+  mission: 'Target dan hadiah misi harian maupun sosial.',
+  arcade: 'Akses, biaya, dan peluang hadiah Arena.',
+  feature: 'Sakelar fitur yang terlihat oleh pengguna.',
 }
 
 const GROUP_ORDER: EconomyGroup[] = [
@@ -52,23 +64,30 @@ const GROUP_ORDER: EconomyGroup[] = [
   'feature',
 ]
 
+const BINARY_FIELDS = new Set(
+  ECONOMY_FIELDS.filter((field) => field.min === 0 && field.max === 1).map((field) => field.key),
+)
+
 type Draft = Record<EconomyConfigKey, string>
+type Change = { field: (typeof ECONOMY_FIELDS)[number]; before: number; after: number }
 
 const toDraft = (config: EconomyConfig): Draft =>
-  Object.fromEntries(ECONOMY_FIELDS.map((f) => [f.key, String(config[f.key])])) as Draft
+  Object.fromEntries(ECONOMY_FIELDS.map((field) => [field.key, String(config[field.key])])) as Draft
 
 const toNumbers = (draft: Draft): Record<string, unknown> =>
   Object.fromEntries(
-    ECONOMY_FIELDS.map((f) => [f.key, draft[f.key].trim() === '' ? NaN : Number(draft[f.key])]),
+    ECONOMY_FIELDS.map((field) => [
+      field.key,
+      draft[field.key].trim() === '' ? Number.NaN : Number(draft[field.key]),
+    ]),
   )
 
-export function EconomyForm({
-  snapshot,
-  audit,
-}: {
-  snapshot: EconomyConfigSnapshot
-  audit: EconomyAuditEntry[]
-}) {
+function formatValue(change: Pick<Change, 'field'> & { value: number }) {
+  if (BINARY_FIELDS.has(change.field.key)) return change.value === 1 ? 'Aktif' : 'Nonaktif'
+  return `${change.value} ${change.field.unit ?? ''}`.trim()
+}
+
+export function EconomyForm({ snapshot }: { snapshot: EconomyConfigSnapshot }) {
   const [saved, setSaved] = useState(snapshot)
   const [draft, setDraft] = useState<Draft>(() => toDraft(snapshot.config))
   const [errors, setErrors] = useState<EconomyValidationErrors>({})
@@ -76,15 +95,16 @@ export function EconomyForm({
   const [notice, setNotice] = useState<string | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [group, setGroup] = useState<EconomyGroup>('earnings')
-  const [helpFor, setHelpFor] = useState<EconomyConfigKey | null>(null)
 
   const changes = useMemo(
     () =>
-      ECONOMY_FIELDS.filter((f) => draft[f.key].trim() !== String(saved.config[f.key])).map((f) => ({
-        field: f,
-        before: saved.config[f.key],
-        after: Number(draft[f.key]),
-      })),
+      ECONOMY_FIELDS.filter((field) => draft[field.key].trim() !== String(saved.config[field.key])).map(
+        (field) => ({
+          field,
+          before: saved.config[field.key],
+          after: Number(draft[field.key]),
+        }),
+      ),
     [draft, saved],
   )
 
@@ -96,7 +116,10 @@ export function EconomyForm({
         : false,
   )
 
-  /** Navigasi panah untuk tablist. Fokusnya dipindahkan ke tab tujuan karena hanya tab aktif yang punya `tabIndex=0`: tanpa ini, panah akan mengganti panel sambil meninggalkan fokus di elemen yang barusan keluar dari urutan Tab. */
+  const changedKeys = new Set(changes.map((change) => change.field.key))
+  const visibleFields = ECONOMY_FIELDS.filter((field) => field.group === group)
+  const visibleChanges = visibleFields.filter((field) => changedKeys.has(field.key)).length
+
   function onTabKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     const index = GROUP_ORDER.indexOf(group)
     const last = GROUP_ORDER.length - 1
@@ -118,28 +141,19 @@ export function EconomyForm({
     document.getElementById(`economy-tab-${target}`)?.focus()
   }
 
-  function applyPatch(patch: EconomyPatch, label: string, ignored: string[] = []) {
-    const entries = Object.entries(patch) as [EconomyConfigKey, number][]
-    setDraft((current) => {
-      const next = { ...current }
-      for (const [key, value] of entries) next[key] = String(value)
-      return next
-    })
-    setErrors({})
-    const differing = entries.filter(([key, value]) => value !== saved.config[key]).length
-    setNotice(
-      differing === 0
-        ? `${label} sudah sama dengan konfigurasi aktif. Tidak ada yang perlu diterapkan.`
-        : `${label} dimuat ke draf: ${differing} setelan berbeda dari yang aktif. Periksa lalu tekan Terapkan.` +
-            (ignored.length > 0 ? ` Key tak dikenal diabaikan: ${ignored.slice(0, 5).join(', ')}.` : ''),
-    )
+  function updateField(key: EconomyConfigKey, value: string) {
+    setDraft((current) => ({ ...current, [key]: value }))
+    setErrors((current) => ({ ...current, [key]: undefined, _: undefined }))
+    setNotice(null)
   }
 
   function onSubmit() {
     const parsed = validateEconomyConfig(toNumbers(draft))
     if (!parsed.ok) {
       setErrors(parsed.errors)
-      setNotice(null)
+      const firstInvalid = ECONOMY_FIELDS.find((field) => parsed.errors[field.key])
+      if (firstInvalid) setGroup(firstInvalid.group)
+      setNotice('Ada setelan yang perlu diperbaiki sebelum perubahan dapat diterapkan.')
       return
     }
     setErrors({})
@@ -169,11 +183,19 @@ export function EconomyForm({
       }
       setSaved(payload.snapshot)
       setDraft(toDraft(payload.snapshot.config))
-      setNotice('Konfigurasi tersimpan. Berlaku seketika di server ini, paling lambat 30 detik di instance lain.')
+      setNotice('Semua perubahan sudah aktif. Server lain akan mengikutinya paling lambat 30 detik.')
+    } catch {
+      setNotice('Jaringan bermasalah. Perubahan belum tersimpan, jadi draf tetap dipertahankan.')
     } finally {
       setPending(false)
       setConfirming(false)
     }
+  }
+
+  function resetDraft() {
+    setDraft(toDraft(saved.config))
+    setErrors({})
+    setNotice(null)
   }
 
   if (confirming) {
@@ -191,38 +213,41 @@ export function EconomyForm({
     )
   }
 
-  const changedKeys = new Set(changes.map((change) => change.field.key))
-
   return (
-    <div className="flex flex-col gap-3">
-      <header className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold text-foreground">Ekonomi</h2>
-        <p className="text-xs text-muted-foreground">
-          v{saved.version} · {formatDateTime(saved.updatedAt)}
+    <div className="admin-page">
+      <header className="admin-page-header">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="admin-page-title">Pengaturan ekonomi</h1>
+          <span className="rounded-md border border-border bg-card px-2 py-1 text-xs font-medium text-muted-foreground">
+            Versi {saved.version}
+          </span>
+        </div>
+        <p className="admin-page-description">
+          Atur reward, batas, dan akses fitur. Perubahan baru aktif setelah tombol Terapkan ditekan.
         </p>
+        <p className="text-xs text-muted-foreground">Terakhir diperbarui {formatDateTime(saved.updatedAt)}</p>
       </header>
 
       {notice ? (
-        <p className="rounded-xl bg-muted px-3 py-2.5 text-xs text-foreground">{notice}</p>
+        <p role="status" className={cn('admin-panel px-4 py-3 text-sm', Object.keys(errors).length > 0 ? 'text-destructive' : 'text-foreground')}>
+          {notice}
+        </p>
       ) : null}
       {errors._ ? (
-        <p className="rounded-xl bg-muted px-3 py-2.5 text-xs text-destructive">{errors._}</p>
+        <p role="alert" className="admin-panel px-4 py-3 text-sm font-medium text-destructive">
+          {errors._}
+        </p>
       ) : null}
 
-      <ConfigLoader current={saved.config} onApply={applyPatch} />
-
-      {/* Pola tab yang utuh: tiap tab menunjuk panelnya (`aria-controls`), panelnya
-          membawa `role="tabpanel"`, dan hanya tab aktif yang masuk urutan Tab —
-          sisanya dijangkau panah kiri/kanan seperti yang diwajibkan pola ini. */}
       <div
         role="tablist"
-        aria-label="Kelompok setelan"
+        aria-label="Kategori pengaturan ekonomi"
         onKeyDown={onTabKeyDown}
         className="admin-tabs"
       >
         {GROUP_ORDER.map((entry) => {
-          const pending = ECONOMY_FIELDS.filter(
-            (f) => f.group === entry && changedKeys.has(f.key),
+          const count = ECONOMY_FIELDS.filter(
+            (field) => field.group === entry && changedKeys.has(field.key),
           ).length
           return (
             <button
@@ -237,12 +262,9 @@ export function EconomyForm({
               className="focus-ring transition-ui admin-tab"
             >
               {GROUP_LABEL[entry]}
-              {pending > 0 ? (
-                <span
-                  aria-label={`${pending} belum diterapkan`}
-                  className="rounded-full bg-primary px-1.5 text-[10px] font-semibold leading-4 text-primary-foreground"
-                >
-                  {pending}
+              {count > 0 ? (
+                <span aria-label={`${count} perubahan belum diterapkan`} className="rounded bg-background/20 px-1.5 text-xs tabular-nums">
+                  {count}
                 </span>
               ) : null}
             </button>
@@ -250,108 +272,128 @@ export function EconomyForm({
         })}
       </div>
 
-      <ul
+      <section
         role="tabpanel"
         id="economy-panel"
         aria-labelledby={`economy-tab-${group}`}
         tabIndex={0}
-        className="focus-ring flex flex-col gap-2"
+        className="focus-ring flex flex-col gap-3"
       >
-        {ECONOMY_FIELDS.filter((f) => f.group === group).map((field) => {
-          const changed = changedKeys.has(field.key)
-          const invalid = Boolean(errors[field.key])
-          const open = helpFor === field.key
-          return (
-            <li
-              key={field.key}
-              className={cn(
-                'rounded-xl bg-muted',
-                changed && 'ring-1 ring-primary/50',
-                invalid && 'ring-1 ring-destructive',
-              )}
-            >
-              <div className="flex items-center gap-2 p-2.5">
-                <div className="min-w-0 flex-1">
-                  <label
-                    htmlFor={`economy-${field.key}`}
-                    className="block text-sm font-medium leading-tight text-foreground"
-                  >
-                    {field.label}
-                  </label>
-                  <span id={`economy-${field.key}-meta`} className="text-[11px] text-muted-foreground">
-                    {field.unit} · {field.min}–{field.max}
-                    {changed ? ` · dari ${saved.config[field.key]}` : ''}
-                  </span>
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="font-display text-lg font-bold text-foreground">{GROUP_LABEL[group]}</h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">{GROUP_DESCRIPTION[group]}</p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {visibleFields.length} setelan{visibleChanges > 0 ? ` · ${visibleChanges} diubah` : ''}
+          </p>
+        </div>
+
+        <ul className="grid gap-3 xl:grid-cols-2">
+          {visibleFields.map((field) => {
+            const changed = changedKeys.has(field.key)
+            const invalid = Boolean(errors[field.key])
+            const binary = BINARY_FIELDS.has(field.key)
+            const checked = draft[field.key] === '1'
+
+            return (
+              <li
+                key={field.key}
+                className={cn(
+                  'admin-panel flex flex-col gap-3 p-4',
+                  changed && 'ring-1 ring-primary',
+                  invalid && 'ring-1 ring-destructive',
+                )}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <label htmlFor={`economy-${field.key}`} className="text-sm font-semibold text-foreground">
+                      {field.label}
+                    </label>
+                    <p className="pt-1 text-xs leading-relaxed text-muted-foreground">{field.description}</p>
+                  </div>
+
+                  {binary ? (
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <button
+                        id={`economy-${field.key}`}
+                        type="button"
+                        role="switch"
+                        aria-checked={checked}
+                        aria-describedby={`economy-${field.key}-impact`}
+                        data-checked={checked}
+                        onClick={() => updateField(field.key, checked ? '0' : '1')}
+                        className="focus-ring admin-switch"
+                      >
+                        <span className="admin-switch-thumb" />
+                      </button>
+                      <span className={cn('text-xs font-semibold', checked ? 'text-primary' : 'text-muted-foreground')}>
+                        {checked ? 'Aktif' : 'Nonaktif'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex w-28 shrink-0 flex-col items-end gap-1.5">
+                      <input
+                        id={`economy-${field.key}`}
+                        type="number"
+                        inputMode="numeric"
+                        min={field.min}
+                        max={field.max}
+                        step={1}
+                        value={draft[field.key]}
+                        onChange={(event) => updateField(field.key, event.target.value)}
+                        aria-invalid={invalid}
+                        aria-describedby={`economy-${field.key}-meta economy-${field.key}-impact`}
+                        className="focus-ring w-full rounded-lg border border-border bg-background px-3 py-2 text-right text-sm font-semibold tabular-nums text-foreground"
+                      />
+                      <span id={`economy-${field.key}-meta`} className="text-right text-xs text-muted-foreground">
+                        {field.unit} · {field.min}–{field.max}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <input
-                  id={`economy-${field.key}`}
-                  inputMode="numeric"
-                  value={draft[field.key]}
-                  onChange={(event) =>
-                    setDraft((current) => ({ ...current, [field.key]: event.target.value }))
-                  }
-                  aria-invalid={invalid}
-                  aria-describedby={`economy-${field.key}-meta`}
-                  className="focus-ring w-24 shrink-0 rounded-lg bg-background px-2 py-2 text-right text-sm tabular-nums text-foreground"
-                />
-                <button
-                  type="button"
-                  aria-expanded={open}
-                  aria-controls={`economy-${field.key}-help`}
-                  aria-label={`Penjelasan ${field.label}`}
-                  onClick={() => setHelpFor(open ? null : field.key)}
-                  /* Bidangnya 32px, sementara jari butuh ~44px. `after:-inset-1.5` melebarkan
-                     area sentuh 6px ke segala arah tanpa mengubah bentuk tombolnya — pola yang
-                     sama dipakai `info-hint` dan sheet-sheet lain di app ini. */
-                  className='focus-ring transition-ui relative size-8 shrink-0 rounded-full text-sm font-semibold text-muted-foreground after:absolute after:-inset-1.5 after:content-[""] hover:text-foreground'
-                >
-                  ?
-                </button>
-              </div>
 
-              {open ? (
-                <p
-                  id={`economy-${field.key}-help`}
-                  className="border-t border-border px-2.5 py-2 text-xs leading-relaxed text-muted-foreground"
-                >
-                  {field.description}{' '}
-                  <span className="text-foreground/70">{field.impact}</span>
+                <p id={`economy-${field.key}-impact`} className="border-t border-border pt-3 text-xs leading-relaxed text-muted-foreground">
+                  <span className="font-medium text-foreground">Dampak: </span>
+                  {field.impact}
                 </p>
-              ) : null}
 
-              {invalid ? (
-                <p className="border-t border-border px-2.5 py-2 text-xs font-medium text-destructive">
-                  {errors[field.key]}
-                </p>
-              ) : null}
-            </li>
-          )
-        })}
-      </ul>
-
-      <AuditList entries={audit} />
+                {changed ? (
+                  <p className="text-xs font-medium text-primary">
+                    Sebelumnya {formatValue({ field, value: saved.config[field.key] })}
+                  </p>
+                ) : null}
+                {invalid ? (
+                  <p role="alert" className="text-xs font-medium text-destructive">{errors[field.key]}</p>
+                ) : null}
+              </li>
+            )
+          })}
+        </ul>
+      </section>
 
       {changes.length > 0 ? (
         <>
-          <div aria-hidden="true" className="h-14" />
+          <div aria-hidden="true" className="h-16" />
           <div className="admin-savebar">
             <div className="admin-savebar-row">
+              <div className="hidden min-w-0 flex-1 px-2 sm:block">
+                <p className="text-sm font-semibold text-foreground">{changes.length} perubahan</p>
+                <p className="truncate text-xs text-muted-foreground">Belum diterapkan ke pengguna</p>
+              </div>
               <button
                 type="button"
                 disabled={pending}
-                onClick={() => {
-                  setDraft(toDraft(saved.config))
-                  setErrors({})
-                }}
-                className="focus-ring transition-ui rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground"
+                onClick={resetDraft}
+                className="focus-ring transition-ui rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
               >
-                Batal
+                Batalkan
               </button>
               <button
                 type="button"
                 disabled={pending}
                 onClick={onSubmit}
-                className="focus-ring transition-ui flex-1 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground disabled:bg-muted disabled:text-muted-foreground"
+                className="focus-ring transition-ui flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:bg-muted disabled:text-muted-foreground sm:flex-none"
               >
                 {pending ? 'Menyimpan…' : `Terapkan ${changes.length} perubahan`}
               </button>
@@ -363,122 +405,6 @@ export function EconomyForm({
   )
 }
 
-function ConfigLoader({
-  current,
-  onApply,
-}: {
-  current: EconomyConfig
-  onApply: (patch: EconomyPatch, label: string, ignored?: string[]) => void
-}) {
-  const [text, setText] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
-
-  const exported = useMemo(
-    () =>
-      JSON.stringify(
-        Object.fromEntries(ECONOMY_FIELDS.map((f) => [f.key, current[f.key]])),
-        null,
-        2,
-      ),
-    [current],
-  )
-
-  function onLoad() {
-    const parsed = parseEconomyPatch(text)
-    if (!parsed.ok) {
-      setError(parsed.message)
-      return
-    }
-    setError(null)
-    onApply(parsed.patch, 'Config tempelan', parsed.unknownKeys)
-  }
-
-  async function onCopy() {
-    try {
-      await navigator.clipboard.writeText(exported)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2_000)
-    } catch {
-      setError('Papan klip tidak bisa diakses. Salin manual dari kotak di bawah.')
-    }
-  }
-
-  return (
-    <details className="rounded-xl bg-muted">
-      <summary className="focus-ring cursor-pointer list-none rounded-xl px-3 py-2.5 text-sm font-medium text-foreground">
-        Muat config
-        <span className="pl-1.5 text-xs font-normal text-muted-foreground">preset atau JSON</span>
-      </summary>
-
-      <div className="flex flex-col gap-2 px-2.5 pb-2.5">
-        <ul className="flex flex-col gap-2">
-          {ECONOMY_PRESETS.map((preset) => (
-            <li key={preset.id} className="rounded-lg bg-background p-2.5">
-              <div className="flex items-start gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium leading-tight text-foreground">{preset.label}</p>
-                  <p className="pt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-                    {preset.summary}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setError(null)
-                    onApply(preset.values as EconomyPatch, preset.label)
-                  }}
-                  className="focus-ring transition-ui shrink-0 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground"
-                >
-                  Muat
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-
-        <label htmlFor="economy-import" className="pt-1 text-xs font-medium text-foreground">
-          Tempel JSON config
-        </label>
-        <textarea
-          id="economy-import"
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          rows={4}
-          spellCheck={false}
-          placeholder={'{\n  "rewardPoolCapIdr": 10000,\n  "rewardPoolRegenMinutes": 6\n}'}
-          aria-invalid={Boolean(error)}
-          aria-describedby="economy-import-hint"
-          className="focus-ring w-full rounded-lg bg-background px-2.5 py-2 font-mono text-xs text-foreground"
-        />
-        <p id="economy-import-hint" className="text-[11px] leading-relaxed text-muted-foreground">
-          Boleh sebagian key saja. Key yang tidak dikenal diabaikan, dan tidak ada yang tersimpan
-          sebelum kamu menekan Terapkan.
-        </p>
-
-        {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}
-
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onLoad}
-            className="focus-ring transition-ui flex-1 rounded-lg bg-primary px-2.5 py-2 text-xs font-semibold text-primary-foreground"
-          >
-            Muat ke draf
-          </button>
-          <button
-            type="button"
-            onClick={() => void onCopy()}
-            className="focus-ring transition-ui rounded-lg bg-background px-2.5 py-2 text-xs font-medium text-foreground"
-          >
-            {copied ? 'Tersalin' : 'Salin config aktif'}
-          </button>
-        </div>
-      </div>
-    </details>
-  )
-}
-
 function ConfirmPanel({
   changes,
   risky,
@@ -486,103 +412,58 @@ function ConfirmPanel({
   onCancel,
   onConfirm,
 }: {
-  changes: { field: (typeof ECONOMY_FIELDS)[number]; before: number; after: number }[]
-  risky: { field: (typeof ECONOMY_FIELDS)[number] }[]
+  changes: Change[]
+  risky: Pick<Change, 'field'>[]
   pending: boolean
   onCancel: () => void
   onConfirm: () => void
 }) {
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-1.5 rounded-xl bg-muted p-3">
-        <h2 className="text-sm font-semibold text-foreground">
-          Perubahan ini bisa menaikkan uang yang keluar
-        </h2>
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          {risky.length} dari {changes.length} perubahan menambah pembayaran ke user. Periksa sekali
-          lagi sebelum menerapkannya.
+    <div className="admin-page max-w-3xl">
+      <header className="admin-page-header">
+        <p className="text-xs font-bold uppercase tracking-wider text-destructive">Perlu konfirmasi</p>
+        <h1 className="admin-page-title">Perubahan dapat menaikkan pengeluaran</h1>
+        <p className="admin-page-description">
+          {risky.length} dari {changes.length} perubahan berpotensi menambah pembayaran ke pengguna. Periksa nilai berikut sebelum melanjutkan.
         </p>
-      </div>
+      </header>
 
-      <ul className="flex flex-col gap-2">
+      <ul className="admin-panel divide-y divide-border">
         {changes.map(({ field, before, after }) => {
           const isRisky = risky.some((entry) => entry.field.key === field.key)
           return (
-            <li key={field.key} className="rounded-xl bg-muted p-2.5">
-              <div className="flex items-baseline gap-2">
-                <span className="min-w-0 flex-1 text-sm font-medium text-foreground">
-                  {isRisky ? '⚠ ' : ''}
-                  {field.label}
-                </span>
-                <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
-                  {before} → <span className="font-semibold text-foreground">{after}</span>
-                </span>
+            <li key={field.key} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground">{field.label}</p>
+                {isRisky ? <p className="pt-1 text-xs leading-relaxed text-destructive">{field.impact}</p> : null}
               </div>
-              {isRisky ? (
-                <p className="pt-1 text-xs leading-relaxed text-muted-foreground">{field.impact}</p>
-              ) : null}
+              <p className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                {formatValue({ field, value: before })} <span aria-hidden="true">→</span>{' '}
+                <span className="font-semibold text-foreground">{formatValue({ field, value: after })}</span>
+              </p>
             </li>
           )
         })}
       </ul>
 
-      <div aria-hidden="true" className="h-14" />
-      <div className="admin-savebar">
-        <div className="admin-savebar-row">
-          <button
-            type="button"
-            disabled={pending}
-            onClick={onCancel}
-            className="focus-ring transition-ui rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground"
-          >
-            Kembali
-          </button>
-          <button
-            type="button"
-            disabled={pending}
-            onClick={onConfirm}
-            className="focus-ring transition-ui flex-1 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground disabled:bg-muted disabled:text-muted-foreground"
-          >
-            {pending ? 'Menyimpan…' : 'Ya, terapkan'}
-          </button>
-        </div>
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={onCancel}
+          className="focus-ring transition-ui rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          Kembali periksa
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={onConfirm}
+          className="focus-ring transition-ui rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+        >
+          {pending ? 'Menyimpan…' : 'Konfirmasi dan terapkan'}
+        </button>
       </div>
     </div>
-  )
-}
-
-function AuditList({ entries }: { entries: EconomyAuditEntry[] }) {
-  return (
-    <details className="rounded-xl bg-muted">
-      <summary className="focus-ring cursor-pointer list-none rounded-xl px-3 py-2.5 text-sm font-medium text-foreground">
-        Riwayat perubahan
-        <span className="pl-1.5 text-xs font-normal text-muted-foreground">
-          {entries.length === 0 ? 'belum ada' : entries.length}
-        </span>
-      </summary>
-      {entries.length === 0 ? null : (
-        <ul className="flex flex-col gap-2 px-2.5 pb-2.5">
-          {entries.map((entry, index) => (
-            <li
-              key={`${entry.version}-${entry.field}-${index}`}
-              className="rounded-lg bg-background px-2.5 py-2 text-xs"
-            >
-              <div className="flex items-baseline gap-2">
-                <span className="min-w-0 flex-1 truncate font-medium text-foreground">
-                  {entry.field}
-                </span>
-                <span className="shrink-0 tabular-nums text-foreground">
-                  {entry.oldValue} → {entry.newValue}
-                </span>
-              </div>
-              <p className="pt-0.5 text-[11px] text-muted-foreground">
-                v{entry.version} · {entry.changedBy ?? 'admin dihapus'} ·{' '}
-                {formatDateTime(entry.changedAt)}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
-    </details>
   )
 }

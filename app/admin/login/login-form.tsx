@@ -18,12 +18,10 @@ export function LoginForm() {
     setError(null)
     try {
       await sendJson('/api/admin/login', 'POST', { password })
-      router.replace('/admin/withdrawals')
+      router.replace('/admin/dashboard')
       router.refresh()
     } catch (cause) {
-      setError(
-        cause instanceof ApiError ? cause.message : 'Gagal masuk. Periksa koneksi lalu coba lagi.',
-      )
+      setError(cause instanceof ApiError ? cause.message : 'Gagal masuk. Periksa koneksi lalu coba lagi.')
       setPending(false)
       setPassword('')
     }
@@ -31,8 +29,8 @@ export function LoginForm() {
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-2 text-sm">
-        <span className="font-medium text-foreground">Kata sandi admin</span>
+      <label className="flex flex-col gap-1.5 text-sm">
+        <span className="font-semibold text-foreground">Kata sandi admin</span>
         <input
           type="password"
           name="password"
@@ -41,22 +39,15 @@ export function LoginForm() {
           autoComplete="current-password"
           autoFocus
           required
-          className="rounded-md bg-muted px-3 py-2 text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
+          aria-invalid={Boolean(error)}
+          className="focus-ring rounded-lg border border-border bg-background px-3 py-3 text-foreground"
         />
       </label>
 
-      {error ? (
-        <p role="alert" className="text-sm font-medium text-destructive">
-          {error}
-        </p>
-      ) : null}
+      {error ? <p role="alert" className="rounded-lg border border-destructive px-3 py-2.5 text-sm font-medium text-destructive">{error}</p> : null}
 
-      <button
-        type="submit"
-        disabled={pending || !password}
-        className="focus-ring rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
-      >
-        {pending ? 'Memeriksa…' : 'Masuk'}
+      <button type="submit" disabled={pending || !password} className="focus-ring transition-ui rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:bg-muted disabled:text-muted-foreground">
+        {pending ? 'Memeriksa akses…' : 'Masuk ke panel'}
       </button>
     </form>
   )

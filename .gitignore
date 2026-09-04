@@ -1,0 +1,9 @@
+node_modules/
+.next/
+# Di-generate ulang tiap `next dev`/`next build`, dan isinya ikut `distDir`: | varian dev menunjuk .next/dev/types/*, varian build menunjuk .next/types/*. | Meng-commit salah satunya membuat yang lain selalu tampil sebagai diff kotor.
+next-env.d.ts
+.vercel/
+.env*
+!.env.example
+*.tsbuildinfo
+.DS_Store

@@ -1,0 +1,9 @@
+-- Gerbang join channel: app diblok sepenuhnya sampai keanggotaan terbukti. | Bedanya dengan bonus join channel (`0027`) bukan cuma besar hadiahnya, tapi arahnya. | Bonus itu tawaran sekali seumur akun yang boleh diabaikan; gerbang ini syarat masuk | yang berlaku terus-menerus. Karena itu penandanya tidak bisa menumpang | `channel_bonus_claimed_at`: kolom itu tidak pernah kembali ke null, jadi user yang | sudah klaim bonus lalu keluar dari channel akan tetap terbaca sebagai anggota | selamanya. | Dua kolom, bukan satu, karena jawabannya ada tiga: anggota, bukan anggota, dan belum | pernah dicek. `channel_member is null` berarti yang ketiga. Menyimpan yang kedua | sama pentingnya dengan yang pertama — tanpa itu setiap panggilan dari user yang | belum join akan memukul getChatMember lagi. | Umur cache-nya berbeda per hasil, dan itu ditegakkan di `server/channel.ts`, bukan di | sini: hasil "anggota" bertahan berjam-jam karena orang jarang keluar channel, hasil | "bukan anggota" hanya semenit karena orang yang baru saja join sedang menunggu di | depan layar gerbangnya.
+alter table users
+  add column channel_member boolean,
+  add column channel_checked_at timestamptz;
+
+-- Urutan `||` seperti migrasi sebelumnya: objek default di kiri, `config` di kanan, | supaya baris yang sudah disetel admin tidak tertimpa. Nilainya harus sama dengan | `DEFAULT_ECONOMY_CONFIG` — `server/economy-config.test.ts` membandingkan keduanya. | Disemai 1 (aktif) karena gerbangnya memang yang diminta ada, bukan yang menunggu | dinyalakan. Mematikannya lagi tidak perlu deploy: setel `channelGateEnabled` ke 0 di | panel ekonomi. Dua pengaman lain hidup di kode, bukan di sini — keanggotaan yang | tidak bisa dipastikan (Telegram down, bot bukan admin channel) diloloskan, dan | pemeriksaannya tidak pernah menahan penarikan saldo yang sudah terkumpul.
+update economy_config
+set config = jsonb_build_object('channelGateEnabled', 1) || config
+where id = 1;

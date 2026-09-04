@@ -1,0 +1,77 @@
+import { isTicketId } from '@/domain/ads/ads'
+import type { AdPostbackParams } from '@/domain/ads/postback'
+import { economyConfig } from '@/domain/economy/economy-config'
+import { transaction } from '../platform/db'
+import { EXPIRE_STALE_SQL } from './ads'
+
+/** Yang bisa terjadi pada satu postback. Dikembalikan apa adanya ke route supaya jawabannya bisa dibaca saat menguji URL dari dashboard Monetag — tanpa itu, "postback sudah masuk tapi tiket tidak keluar" cuma bisa ditebak. */
+export type AdPostbackOutcome =
+  /** Dua bukti lengkap dan tiket dipromosikan jadi pass siap pakai. */
+  | 'granted'
+  /** Konfirmasi Monetag sudah dicatat, tetapi Promise SDK belum menyelesaikan klaim klien. */
+  | 'awaiting_claim'
+  /** Konfirmasinya dicatat, tapi tiketnya sudah lewat state `pending` — sudah menjadi pass, sudah dipakai, dibatalkan, atau user sedang memegang pass lain. */
+  | 'noted'
+  /** Tayangan sah tapi tiketnya keburu hangus. Kalau ini sering muncul, `adsTicketTtlSeconds` lebih pendek daripada waktu tempuh postback Monetag. */
+  | 'ticket_expired'
+  | 'unknown_ticket'
+  | 'not_paid'
+
+/** Postback hanya mencatat bukti server-ke-server bahwa Monetag membayar event ini. Ia tidak boleh menjadi pass sendirian: Promise SDK yang selesai dan lolos minimum watch harus lebih dulu menulis `client_claimed_at`. Karena klaim dan postback mengunci baris yang sama, siapa pun yang datang terakhir akan mempromosikan tiket tanpa membuka celah balapan. */
+export async function settleAdPostback(params: AdPostbackParams): Promise<AdPostbackOutcome> {
+  if (!params.paid) return 'not_paid'
+  if (!params.ymid || !isTicketId(params.ymid)) return 'unknown_ticket'
+  const ticketId = params.ymid
+
+  return transaction(async (tx) => {
+    const locked = await tx.query<{
+      user_id: string
+      state: string
+      expires_at: Date
+      client_claimed_at: Date | null
+      verified_at: Date | null
+      now: Date
+    }>(
+      `select user_id, state, expires_at, client_claimed_at, verified_at, now() as now
+         from ad_views where id=$1 for update`,
+      [ticketId],
+    )
+    const row = locked.rows[0]
+    if (!row) return 'unknown_ticket'
+
+    /** Jejaknya ditulis sekali saja. Monetag mengulang kirim dengan `ymid` yang sama sampai dijawab 200, dan konfirmasi kedua tidak boleh menggeser waktu konfirmasi pertama. */
+    if (!row.verified_at) {
+      await tx.query(
+        'update ad_views set verified_at=now(), verify_event=$2, verify_price=$3 where id=$1 and verified_at is null',
+        [ticketId, params.event ?? 'impression', params.price],
+      )
+    }
+
+    if (row.state !== 'pending') return 'noted'
+    if (row.expires_at.getTime() <= row.now.getTime()) {
+      await tx.query("update ad_views set state='expired' where id=$1 and state='pending'", [
+        ticketId,
+      ])
+      return 'ticket_expired'
+    }
+    /** Postback yang datang sangat cepat bukan bukti user menonton sampai selesai. Konfirmasinya tetap disimpan, tetapi tiket tetap pending sampai klaim klien yang lolos durasi minimum datang. */
+    if (!row.client_claimed_at) return 'awaiting_claim'
+
+    /** Slot `ad_views_one_ready` bisa ditempati pass yang tenggatnya sudah lewat: sapuannya cuma jalan di `readState`, tidak di sini. Tanpa disapu, pass mati itu memblokir `not exists` di bawah, promosinya jadi `noted`, dan route menjawab 200 — Monetag berhenti mengulang. Hasilnya: impresi terbayar dan `verified_at` tertulis, tapi tiketnya tinggal `pending` sampai hangus, dan saat gerbangnya menyala tidak ada satu pun jalur lain yang bisa menyusul. Sama persis dengan yang ditanggung `restoreAdPass`, jadi obatnya pun sama. */
+    await tx.query(EXPIRE_STALE_SQL, [row.user_id])
+
+    /** Bentuk `not exists` dipakai, bukan menangkap pelanggaran `ad_views_one_ready`: exception di dalam transaksi ikut membatalkan penulisan `verified_at` di atas, sehingga jejak konfirmasinya hilang justru pada kasus yang paling perlu terbaca. Pola yang sama sudah dipakai `restoreAdPass`. */
+    const promoted = await tx.query(
+      `update ad_views
+          set state='ready', ready_at=now(), expires_at=now()+($3::int * interval '1 minute')
+        where id=$1 and state='pending'
+          and client_claimed_at is not null and verified_at is not null
+          and not exists (
+            select 1 from ad_views other where other.user_id=$2 and other.state='ready'
+          )
+        returning id`,
+      [ticketId, row.user_id, economyConfig().adsPassTtlMinutes],
+    )
+    return promoted.rowCount === 0 ? 'noted' : 'granted'
+  })
+}

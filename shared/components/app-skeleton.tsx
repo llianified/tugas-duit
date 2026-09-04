@@ -243,11 +243,6 @@ export function MissionListSkeleton({ surface = true }: { surface?: boolean }) {
             <div className="min-w-0 flex-1">
               <Bar className={cn('h-3 max-w-full', titleWidth)} tone={tone} />
             </div>
-            <span className="flex w-14 shrink-0 items-center gap-1">
-              {Array.from({ length: 4 }, (_, index) => (
-                <Bar key={index} className="meter-h flex-1 rounded-full" tone={tone} />
-              ))}
-            </span>
             <Bar
               className="h-8 w-[3.75rem] shrink-0 rounded-md"
               tone={tone}

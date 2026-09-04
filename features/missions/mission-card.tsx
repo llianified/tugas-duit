@@ -93,7 +93,6 @@ export function MissionCard({
   )
 }
 
-/** Misi otomatis mempertahankan meter segmen; misi sosial mengganti meter dengan label frekuensi supaya baris tidak menyiratkan progres yang sebenarnya tidak bisa dibaca dari platform sosial. */
 function MissionRow({
   mission,
   claiming,
@@ -116,19 +115,6 @@ function MissionRow({
         {mission.title}
       </p>
 
-      {mission.kind === 'automatic' ? (
-        <MissionMeter
-          progress={mission.progress}
-          target={mission.target}
-          muted={mission.claimed}
-          className="w-14 shrink-0"
-        />
-      ) : (
-        <span className="w-14 shrink-0 text-center text-[11px] font-medium text-muted-foreground">
-          {mission.cadence === 'once' ? 'Sekali' : 'Harian'}
-        </span>
-      )}
-
       <MissionAction
         mission={mission}
         claiming={claiming}
@@ -136,44 +122,6 @@ function MissionRow({
         onOpenSocial={onOpenSocial}
       />
     </li>
-  )
-}
-
-function MissionMeter({
-  progress,
-  target,
-  muted,
-  className,
-}: {
-  progress: number
-  target: number
-  muted: boolean
-  className?: string
-}) {
-  const filled = Math.max(0, Math.min(target, progress))
-
-  return (
-    <div
-      role="meter"
-      aria-valuemin={0}
-      aria-valuemax={target}
-      aria-valuenow={filled}
-      aria-valuetext={`${formatCredits(filled)} dari ${formatCredits(target)}`}
-      className={cn('flex items-center gap-1', className)}
-    >
-      {Array.from({ length: Math.max(1, target) }, (_, index) => (
-        <span key={index} className="meter-h flex-1 overflow-hidden rounded-full bg-border">
-          {index < filled ? (
-            <span
-              className={cn(
-                'block h-full rounded-full transition-colors duration-300 ease-out motion-reduce:transition-none',
-                muted ? 'bg-muted-foreground/40' : 'bg-primary',
-              )}
-            />
-          ) : null}
-        </span>
-      ))}
-    </div>
   )
 }
 

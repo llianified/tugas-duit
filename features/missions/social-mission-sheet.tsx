@@ -21,6 +21,7 @@ import { formatCredits } from '@/shared/lib/format'
 import { useToast } from '@/shell/toast'
 
 const X_FOLLOW_URL = 'https://twitter.com/intent/follow?screen_name=tugasduit'
+export const X_LIKE_REPOST_URL = 'https://x.com/TugasDuit/status/2095765886091276589'
 export const FACEBOOK_HOME_URL = 'https://www.facebook.com/'
 const AD_COPY = 'Kerjakan task singkat, kumpulkan energi, dan dapatkan reward'
 
@@ -61,6 +62,14 @@ export function contentFor(action: SocialMissionAction) {
       actionLabel: 'Buka profil X',
       confirmation: 'Sudah follow akun @tugasduit?',
       confirmLabel: 'Ya, sudah follow',
+    }
+  }
+  if (action === 'twitter_like_repost') {
+    return {
+      instruction: 'Buka postingan Tugas Duit di X, lalu Like dan Retweet postingan yang sama.',
+      actionLabel: 'Buka postingan di X',
+      confirmation: 'Postingannya sudah di-Like dan di-Retweet?',
+      confirmLabel: 'Ya, keduanya sudah',
     }
   }
   if (action === 'twitter_post') {
@@ -137,6 +146,8 @@ export function SocialMissionSheet({
 
     if (mission.action === 'twitter_follow') {
       openExternal(X_FOLLOW_URL)
+    } else if (mission.action === 'twitter_like_repost') {
+      openExternal(X_LIKE_REPOST_URL)
     } else if (mission.action === 'twitter_post') {
       const intent = new URL('https://twitter.com/intent/tweet')
       intent.searchParams.set('text', shareText)

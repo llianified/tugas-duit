@@ -39,7 +39,8 @@ const HISTORIC: EconomyConfig = {
   missionTasksTarget: 5, missionTasksReward: 2,
   missionStarsTarget: 3, missionStarsReward: 2,
   missionAdsTarget: 3, missionAdsReward: 3,
-  missionTwitterFollowReward: 1, missionTwitterPostReward: 1, missionFacebookPostReward: 1,
+  missionTwitterFollowReward: 1, missionTwitterLikeRepostReward: 1,
+  missionTwitterPostReward: 1, missionFacebookPostReward: 1,
   maxPayoutIdr: 2_000_000_000, referralCommissionPercent: 10, dailyCommissionCapIdr: 6_000,
   rankTier2Tasks: 100, rankTier3Tasks: 300, rankTier4Tasks: 700, rankTier5Tasks: 1_500,
   channelJoinBonusCredits: 25, channelGateEnabled: 1,
@@ -235,6 +236,7 @@ describe('invarian setelan panel yang baru dipindah dari kode', () => {
 
   it.each([
     'missionTwitterFollowReward',
+    'missionTwitterLikeRepostReward',
     'missionTwitterPostReward',
     'missionFacebookPostReward',
   ] as const)('menerapkan batas kapasitas yang sama pada %s', (rewardKey) => {

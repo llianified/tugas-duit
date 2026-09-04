@@ -4,11 +4,15 @@ import { adsConfigured } from '../ads/ads.ts'
 import { economyConfig } from '../economy/economy-config.ts'
 
 export type AutomaticMissionKey = 'tasks' | 'stars' | 'ads'
-export type SocialMissionKey = 'twitter_follow' | 'twitter_post' | 'facebook_post'
+export type SocialMissionKey =
+  | 'twitter_follow'
+  | 'twitter_like_repost'
+  | 'twitter_post'
+  | 'facebook_post'
 export type MissionKey = AutomaticMissionKey | SocialMissionKey
 
 export const AUTOMATIC_MISSION_KEYS: readonly AutomaticMissionKey[] = ['tasks', 'stars', 'ads']
-export type SocialMissionAction = 'twitter_follow' | 'twitter_post' | 'facebook_post'
+export type SocialMissionAction = SocialMissionKey
 
 interface MissionDefinitionBase {
   key: MissionKey
@@ -28,7 +32,7 @@ export interface SocialMissionDefinition extends MissionDefinitionBase {
   key: SocialMissionKey
   kind: 'social'
   action: SocialMissionAction
-  /** Follow hanya sekali seumur akun; kedua post kembali tersedia setiap hari WIB. */
+  /** Follow dan aksi pada post tetap hanya sekali seumur akun; post referral tersedia setiap hari WIB. */
   cadence: 'once' | 'daily'
 }
 
@@ -40,12 +44,14 @@ export const MISSION_KEYS: readonly MissionKey[] = [
   'stars',
   'ads',
   'twitter_follow',
+  'twitter_like_repost',
   'twitter_post',
   'facebook_post',
 ]
 
 export const SOCIAL_MISSION_KEYS: readonly SocialMissionKey[] = [
   'twitter_follow',
+  'twitter_like_repost',
   'twitter_post',
   'facebook_post',
 ]
@@ -85,6 +91,15 @@ function missionCatalog(): MissionDefinition[] {
       title: 'Follow Twitter Tugas Duit',
       target: 1,
       reward: config.missionTwitterFollowReward,
+    },
+    {
+      key: 'twitter_like_repost',
+      kind: 'social',
+      action: 'twitter_like_repost',
+      cadence: 'once',
+      title: 'Like & Retweet di X',
+      target: 1,
+      reward: config.missionTwitterLikeRepostReward,
     },
     {
       key: 'twitter_post',

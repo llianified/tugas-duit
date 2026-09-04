@@ -5,6 +5,7 @@ import {
   contentFor,
   FACEBOOK_HOME_URL,
   secondsUntilConfirmation,
+  X_LIKE_REPOST_URL,
 } from './social-mission-sheet'
 
 const REFERRAL_URL = 'https://t.me/tugasduitbot/app?startapp=REF123'
@@ -17,6 +18,16 @@ describe('pesan misi sosial', () => {
     expect(text).toContain(REFERRAL_URL)
     expect(contentFor('twitter_post').instruction).toBe(
       'Tekan tombol dibawah, lalu post ke Twitter.',
+    )
+  })
+
+  it('menyatukan Like dan Retweet pada satu postingan X', () => {
+    expect(contentFor('twitter_like_repost')).toMatchObject({
+      actionLabel: 'Buka postingan di X',
+      confirmLabel: 'Ya, keduanya sudah',
+    })
+    expect(X_LIKE_REPOST_URL).toBe(
+      'https://x.com/TugasDuit/status/2095765886091276589',
     )
   })
 

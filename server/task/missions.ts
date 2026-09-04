@@ -31,10 +31,13 @@ const COUNTS_SQL = `select
         and (created_at at time zone 'Asia/Jakarta')::date = ${TODAY})::int
       as ads`
 
-/** Follow X dibaca sepanjang umur akun; klaim lainnya hanya milik hari WIB ini. */
+/** Follow X dan aksi pada post tetap dibaca sepanjang umur akun; klaim lainnya hanya milik hari WIB ini. */
 const CLAIMED_SQL = `select mission_key from mission_claims
   where user_id=$1
-    and (quota_date = ${TODAY} or mission_key = 'twitter_follow')`
+    and (
+      quota_date = ${TODAY}
+      or mission_key in ('twitter_follow', 'twitter_like_repost')
+    )`
 
 const ATTEMPTS_SQL = `select
     mission_key,
@@ -109,7 +112,10 @@ async function isAlreadyClaimed(
   const result = await tx.query(
     `select 1 from mission_claims
       where user_id=$1 and mission_key=$2
-        and ($2='twitter_follow' or quota_date=${TODAY})
+        and (
+          $2 in ('twitter_follow', 'twitter_like_repost')
+          or quota_date=${TODAY}
+        )
       limit 1`,
     [userId, key],
   )

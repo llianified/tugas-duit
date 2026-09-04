@@ -382,6 +382,17 @@ interface PendingPayoutPage {
   hasMore: boolean
 }
 
+/** Hitungan murah untuk penanda antrean di nav admin. Sengaja tidak memakai `listPendingPayouts` yang ikut menarik data risiko: nav dirender di setiap halaman panel, jadi ia hanya boleh menyentuh satu indeks. */
+export async function countPendingPayouts(): Promise<number> {
+  await requireAdmin()
+
+  const rows = await query<{ pending: string }>(
+    `select count(*) pending from withdrawals where state='processing'`,
+  )
+
+  return Number(rows[0]?.pending ?? 0)
+}
+
 export async function listPendingPayouts(offset = 0): Promise<PendingPayoutPage> {
   await requireAdmin()
 

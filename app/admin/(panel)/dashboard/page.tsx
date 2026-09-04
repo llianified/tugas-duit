@@ -7,6 +7,7 @@ import { getSessionUser } from '@/server/auth/session'
 import { creditsToRupiah } from '@/domain/economy/economy'
 import { formatCompact, formatCredits, formatHistoryTime, formatRupiah } from '@/shared/lib/format'
 import { AutoRefresh } from '../auto-refresh'
+import { SignOutButton } from '../sign-out-button'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -20,126 +21,138 @@ export default async function AdminDashboardPage() {
   await loadEconomyConfig()
   const [stats, activity] = await Promise.all([readAdminDashboard(), readAdminActivity()])
 
+  const pending = stats.payouts.pendingCount
+  const flagged = stats.flaggedUsers
+
   return (
     <div className="admin-page">
-      <header className="admin-page-header">
-        <p className="text-xs font-bold uppercase tracking-wider text-primary">Ringkasan langsung</p>
-        <h1 className="admin-page-title">Kondisi Tugas Duit</h1>
-        <p className="admin-page-description">
-          Prioritas operasional, aktivitas pengguna, dan arus credit dalam satu tampilan baca-saja.
-        </p>
-      </header>
+      <div className="admin-head">
+        <h1 className="admin-head-title">Pantau</h1>
+        <span className="chip chip-muted">Baca saja</span>
+      </div>
 
       <AutoRefresh seconds={DASHBOARD_REFRESH_SECONDS} />
 
-      <section aria-labelledby="priority-heading" className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 id="priority-heading" className="font-display text-lg font-bold text-foreground">Perlu diketahui sekarang</h2>
-          {stats.payouts.pendingCount > 0 ? (
-            <Link href="/admin/withdrawals" className="focus-ring rounded-md text-xs font-semibold text-primary hover:underline">
-              Buka antrean
-            </Link>
-          ) : null}
-        </div>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Metric
-            label="Payout menunggu"
-            value={formatCredits(stats.payouts.pendingCount)}
-            hint={formatRupiah(creditsToRupiah(stats.payouts.pendingCredits))}
-            urgent={stats.payouts.pendingCount > 0}
-          />
-          <Metric label="Online sekarang" value={formatCredits(stats.active.online)} hint="5 menit terakhir" />
-          <Metric label="Task hari ini" value={formatCompact(stats.tasks.today)} hint="selesai" />
-          <Metric
-            label="Dibayar hari ini"
-            value={formatCompact(stats.paid.todayCredits)}
-            hint={formatRupiah(creditsToRupiah(stats.paid.todayCredits))}
-          />
-        </div>
-      </section>
+      {pending > 0 ? (
+        <Link href="/admin/withdrawals" className="focus-ring transition-ui admin-note" data-tone="danger">
+          <span className="font-bold">{formatCredits(pending)} payout menunggu</span> ·{' '}
+          {formatRupiah(creditsToRupiah(stats.payouts.pendingCredits))} siap ditransfer. Ketuk untuk buka antrean.
+        </Link>
+      ) : (
+        <p className="admin-note" data-tone="success">
+          Antrean payout bersih. Tidak ada uang yang menunggu keputusan.
+        </p>
+      )}
 
-      <div className="grid items-start gap-4 xl:grid-cols-3">
-        <div className="flex flex-col gap-4 xl:col-span-2">
-          <Section title="Pengguna" description="Pertumbuhan, aktivitas, dan akun yang perlu diawasi.">
-            <Metric
-              label="Total pengguna"
-              value={formatCompact(stats.users.total)}
-              hint={stats.users.newToday > 0 ? `+${formatCredits(stats.users.newToday)} hari ini` : 'Belum ada pendaftar hari ini'}
-            />
-            <Metric label="Aktif hari ini" value={formatCredits(stats.active.daily)} hint="menyelesaikan task" />
-            <Metric label="Aktif 7 hari" value={formatCompact(stats.active.weekly)} />
-            <Metric label="Aktif 30 hari" value={formatCompact(stats.active.monthly)} />
-            <Metric
-              label="Ditangguhkan"
-              value={formatCredits(stats.users.banned)}
-              hint={stats.flaggedUsers > 0 ? `${formatCredits(stats.flaggedUsers)} akun bersinyal` : 'Tidak ada akun bersinyal'}
-              urgent={stats.flaggedUsers > 0}
-            />
-          </Section>
+      {flagged > 0 ? (
+        <Link href="/admin/ops" className="focus-ring transition-ui admin-note">
+          <span className="font-bold text-foreground">{formatCredits(flagged)} akun bersinyal</span> perlu ditinjau di
+          Operasi sebelum saldonya keluar.
+        </Link>
+      ) : null}
 
-          <Section title="Task dan credit" description="Volume kerja serta nilai reward yang sudah dibukukan.">
-            <Metric label="Task selesai" value={formatCompact(stats.tasks.total)} />
-            <Metric
-              label="Credit dibayar"
-              value={formatCompact(stats.paid.totalCredits)}
-              hint={formatRupiah(creditsToRupiah(stats.paid.totalCredits))}
-            />
-            <Metric
-              label="Saldo beredar"
-              value={formatCompact(stats.outstandingCredits)}
-              hint={`${formatRupiah(creditsToRupiah(stats.outstandingCredits))} belum ditarik`}
-            />
-            <Metric
-              label="Payout selesai"
-              value={formatCredits(stats.payouts.paidCount)}
-              hint={formatRupiah(creditsToRupiah(stats.payouts.paidCredits))}
-            />
-            <Metric label="Payout ditolak" value={formatCredits(stats.payouts.rejectedCount)} />
-          </Section>
+      <div className="admin-stats">
+        <Stat label="Online" value={formatCredits(stats.active.online)} hint="5 menit terakhir" />
+        <Stat label="Task hari ini" value={formatCompact(stats.tasks.today)} hint="selesai" />
+        <Stat
+          label="Dibayar hari ini"
+          value={formatCompact(stats.paid.todayCredits)}
+          hint={formatRupiah(creditsToRupiah(stats.paid.todayCredits))}
+        />
+      </div>
 
-          <Section title="Iklan · 7 hari" description="Konversi tiket iklan menjadi akses task dan credit.">
-            <Metric
-              label="Tiket dibuka"
-              value={formatCompact(stats.ads.ticketsOpened)}
-              hint={`${formatCredits(stats.ads.ticketsReady)} siap dipakai`}
-            />
-            <Metric
-              label="Pass terpakai"
-              value={formatCompact(stats.ads.passesConsumed)}
-              hint={`${formatCredits(stats.ads.ticketsReady - stats.ads.passesConsumed)} tidak terpakai`}
-            />
-            <Metric
-              label="Task lewat iklan"
-              value={formatCompact(stats.ads.tasksPaidByAd)}
-              hint={`${formatCompact(stats.ads.tasksPaidByEnergy)} lewat energi`}
-            />
-            <Metric
-              label="Credit dari task iklan"
-              value={formatCompact(stats.ads.creditsOnAdTasks)}
-              hint={formatRupiah(creditsToRupiah(stats.ads.creditsOnAdTasks))}
-            />
-          </Section>
-        </div>
+      <Block title="Pengguna" note="Pertumbuhan dan akun yang perlu diawasi.">
+        <Line
+          label="Total akun"
+          value={formatCompact(stats.users.total)}
+          hint={stats.users.newToday > 0 ? `+${formatCredits(stats.users.newToday)} hari ini` : 'Belum ada pendaftar hari ini'}
+        />
+        <Line label="Aktif hari ini" value={formatCredits(stats.active.daily)} hint="menyelesaikan task" />
+        <Line
+          label="Aktif 7 / 30 hari"
+          value={`${formatCompact(stats.active.weekly)} / ${formatCompact(stats.active.monthly)}`}
+        />
+        <Line
+          label="Ditangguhkan"
+          value={formatCredits(stats.users.banned)}
+          hint={flagged > 0 ? `${formatCredits(flagged)} akun bersinyal` : 'Tidak ada akun bersinyal'}
+          urgent={flagged > 0}
+        />
+      </Block>
 
-        <ActivityFeed entries={activity} />
+      <Block title="Credit" note="Nilai yang sudah dibukukan dan yang masih beredar.">
+        <Line label="Task selesai" value={formatCompact(stats.tasks.total)} />
+        <Line
+          label="Credit dibayar"
+          value={formatCompact(stats.paid.totalCredits)}
+          hint={formatRupiah(creditsToRupiah(stats.paid.totalCredits))}
+        />
+        <Line
+          label="Saldo beredar"
+          value={formatCompact(stats.outstandingCredits)}
+          hint={`${formatRupiah(creditsToRupiah(stats.outstandingCredits))} belum ditarik`}
+        />
+        <Line
+          label="Payout selesai"
+          value={formatCredits(stats.payouts.paidCount)}
+          hint={`${formatCredits(stats.payouts.rejectedCount)} ditolak`}
+        />
+      </Block>
+
+      <Block title="Iklan · 7 hari" note="Seberapa jauh tiket iklan berubah jadi task dan credit.">
+        <Line
+          label="Tiket dibuka"
+          value={formatCompact(stats.ads.ticketsOpened)}
+          hint={`${formatCredits(stats.ads.ticketsReady)} siap dipakai`}
+        />
+        <Line
+          label="Pass terpakai"
+          value={formatCompact(stats.ads.passesConsumed)}
+          hint={`${formatCredits(Math.max(0, stats.ads.ticketsReady - stats.ads.passesConsumed))} tidak terpakai`}
+        />
+        <Line
+          label="Task lewat iklan"
+          value={formatCompact(stats.ads.tasksPaidByAd)}
+          hint={`${formatCompact(stats.ads.tasksPaidByEnergy)} lewat energi`}
+        />
+        <Line
+          label="Credit dari task iklan"
+          value={formatCompact(stats.ads.creditsOnAdTasks)}
+          hint={formatRupiah(creditsToRupiah(stats.ads.creditsOnAdTasks))}
+        />
+      </Block>
+
+      <Block title="Aktivitas terbaru" note="Peristiwa terakhir dari seluruh sistem.">
+        {activity.length === 0 ? (
+          <p className="admin-sub">Belum ada aktivitas tercatat.</p>
+        ) : (
+          activity.slice(0, 12).map((entry, index) => (
+            <div className="admin-row" key={`${entry.at}-${entry.userPublicId}-${index}`}>
+              <div className="admin-row-main">
+                <span className="admin-row-title truncate">{entry.userName}</span>
+                <span className="admin-sub">
+                  {ACTIVITY_LABEL[entry.kind]} · {formatHistoryTime(entry.at)}
+                </span>
+              </div>
+              {entry.amount === null ? null : (
+                <span className="admin-row-value">
+                  {entry.amount > 0 ? '+' : ''}
+                  {formatCredits(entry.amount)}
+                </span>
+              )}
+            </div>
+          ))
+        )}
+      </Block>
+
+      <div className="admin-card">
+        <SignOutButton adminName={user.firstName} />
       </div>
     </div>
   )
 }
 
-function Section({ title, description, children }: { title: string; description: string; children: ReactNode }) {
-  return (
-    <section className="admin-panel flex flex-col gap-4 p-4 sm:p-5">
-      <div>
-        <h2 className="font-display text-base font-bold text-foreground">{title}</h2>
-        <p className="pt-1 text-xs leading-relaxed text-muted-foreground">{description}</p>
-      </div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">{children}</div>
-    </section>
-  )
-}
-
-function Metric({
+function Stat({
   label,
   value,
   hint,
@@ -151,55 +164,53 @@ function Metric({
   urgent?: boolean
 }) {
   return (
-    <div className="flex min-h-28 flex-col justify-between gap-3 rounded-lg bg-muted p-3.5">
-      <span className="text-xs leading-tight text-muted-foreground">{label}</span>
+    <div className="admin-stat" data-urgent={urgent ? 'true' : undefined}>
+      <span className="admin-stat-k">{label}</span>
+      <span className="admin-stat-v">{value}</span>
+      {hint ? <span className="admin-stat-h">{hint}</span> : null}
+    </div>
+  )
+}
+
+function Block({ title, note, children }: { title: string; note: string; children: ReactNode }) {
+  return (
+    <section className="admin-card">
       <div>
-        <span className={urgent ? 'font-display text-2xl font-bold tabular-nums text-primary' : 'font-display text-2xl font-bold tabular-nums text-foreground'}>
-          {value}
-        </span>
-        {hint ? <span className="block pt-1 text-xs leading-relaxed text-muted-foreground">{hint}</span> : null}
+        <h2 className="admin-eyebrow text-foreground">{title}</h2>
+        <p className="admin-sub">{note}</p>
       </div>
+      <div className="admin-list">{children}</div>
+    </section>
+  )
+}
+
+function Line({
+  label,
+  value,
+  hint,
+  urgent = false,
+}: {
+  label: string
+  value: string
+  hint?: string
+  urgent?: boolean
+}) {
+  return (
+    <div className="admin-row">
+      <div className="admin-row-main">
+        <span className="admin-row-title">{label}</span>
+        {hint ? <span className="admin-sub">{hint}</span> : null}
+      </div>
+      <span className={urgent ? 'admin-row-value text-primary' : 'admin-row-value'}>{value}</span>
     </div>
   )
 }
 
 const ACTIVITY_LABEL: Record<AdminActivityEntry['kind'], string> = {
   signup: 'Mendaftar',
-  task: 'Menyelesaikan task',
+  task: 'Selesai task',
   commission: 'Komisi referral',
-  withdrawal_hold: 'Mengajukan penarikan',
+  withdrawal_hold: 'Ajukan penarikan',
   withdrawal_refund: 'Penarikan dikembalikan',
   adjustment: 'Koreksi saldo',
-}
-
-function ActivityFeed({ entries }: { entries: AdminActivityEntry[] }) {
-  return (
-    <section className="admin-panel flex flex-col gap-4 p-4 sm:p-5">
-      <div>
-        <h2 className="font-display text-base font-bold text-foreground">Aktivitas terbaru</h2>
-        <p className="pt-1 text-xs text-muted-foreground">Peristiwa terbaru dari seluruh sistem.</p>
-      </div>
-      {entries.length === 0 ? (
-        <p className="admin-empty">Belum ada aktivitas tercatat.</p>
-      ) : (
-        <ol className="flex flex-col divide-y divide-border">
-          {entries.map((entry, index) => (
-            <li key={`${entry.at}-${entry.userPublicId}-${index}`} className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="truncate text-sm font-semibold text-foreground">{entry.userName}</span>
-                {entry.amount === null ? null : (
-                  <span className="shrink-0 text-xs font-medium tabular-nums text-foreground">
-                    {entry.amount > 0 ? '+' : ''}{formatCredits(entry.amount)} credit
-                  </span>
-                )}
-              </div>
-              <p className="text-xs leading-relaxed text-muted-foreground">
-                {ACTIVITY_LABEL[entry.kind]} · {formatHistoryTime(entry.at)}
-              </p>
-            </li>
-          ))}
-        </ol>
-      )}
-    </section>
-  )
 }

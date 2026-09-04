@@ -61,24 +61,61 @@ describe('missions', () => {
     const allClaimed = buildMissionProgress({ tasks: 0, stars: 0, ads: 0 }, MISSION_KEYS)
     expect(hasUnclaimedMissions(allClaimed)).toBe(false)
   })
+
+  it('membedakan follow sekali dari post harian dan membawa cap waktu aksi', () => {
+    const startedAt = Date.now()
+    const list = buildMissionProgress(
+      { tasks: 0, stars: 0, ads: 0 },
+      ['twitter_follow'],
+      { twitter_post: startedAt },
+    )
+
+    expect(list.find((mission) => mission.key === 'twitter_follow')).toMatchObject({
+      kind: 'social',
+      cadence: 'once',
+      claimed: true,
+    })
+    expect(list.find((mission) => mission.key === 'twitter_post')).toMatchObject({
+      kind: 'social',
+      cadence: 'daily',
+      actionStartedAt: startedAt,
+      claimed: false,
+    })
+  })
 })
 
 describe('misi iklan mengikuti tombol mati iklan', () => {
   afterEach(() => setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG))
 
-  it('menerbitkan ketiganya selama iklan menyala', () => {
+  it('menerbitkan misi otomatis dan sosial selama iklan menyala', () => {
     setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, adsMaxViewsPerDay: 10 })
-    expect(missions().map((mission) => mission.key)).toEqual(['tasks', 'stars', 'ads'])
+    expect(missions().map((mission) => mission.key)).toEqual([
+      'tasks',
+      'stars',
+      'ads',
+      'twitter_follow',
+      'twitter_post',
+      'facebook_post',
+    ])
     expect(isMissionAvailable('ads')).toBe(true)
   })
 
   /** Misi yang mustahil lebih buruk daripada misi yang hilang: progresnya berhenti di 0/N selamanya, dan karena `hasUnclaimedMissions` menyala selama masih ada yang belum diklaim, titik pengingat di nav ikut menyala permanen tanpa satu pun cara membersihkannya. */
   it('berhenti menerbitkan misi iklan saat plafon tayangannya nol', () => {
     setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, adsMaxViewsPerDay: 0 })
-    expect(missions().map((mission) => mission.key)).toEqual(['tasks', 'stars'])
+    expect(missions().map((mission) => mission.key)).toEqual([
+      'tasks',
+      'stars',
+      'twitter_follow',
+      'twitter_post',
+      'facebook_post',
+    ])
     expect(isMissionAvailable('ads')).toBe(false)
 
-    const list = buildMissionProgress({ tasks: 0, stars: 0, ads: 0 }, ['tasks', 'stars'])
+    const list = buildMissionProgress(
+      { tasks: 0, stars: 0, ads: 0 },
+      ['tasks', 'stars', 'twitter_follow', 'twitter_post', 'facebook_post'],
+    )
     expect(hasUnclaimedMissions(list)).toBe(false)
   })
 

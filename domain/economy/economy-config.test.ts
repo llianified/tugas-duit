@@ -39,6 +39,7 @@ const HISTORIC: EconomyConfig = {
   missionTasksTarget: 5, missionTasksReward: 2,
   missionStarsTarget: 3, missionStarsReward: 2,
   missionAdsTarget: 3, missionAdsReward: 3,
+  missionSocialReward: 1,
   maxPayoutIdr: 2_000_000_000, referralCommissionPercent: 10, dailyCommissionCapIdr: 6_000,
   rankTier2Tasks: 100, rankTier3Tasks: 300, rankTier4Tasks: 700, rankTier5Tasks: 1_500,
   channelJoinBonusCredits: 25, channelGateEnabled: 1,
@@ -230,6 +231,12 @@ describe('invarian setelan panel yang baru dipindah dari kode', () => {
 
   it('menerima hadiah misi yang pas di kapasitas', () => {
     expect(validateEconomyConfig(withField({ maxEnergy: 5, missionAdsReward: 5 })).ok).toBe(true)
+  })
+
+  it('menerapkan batas kapasitas yang sama pada hadiah misi sosial', () => {
+    const result = validateEconomyConfig(withField({ maxEnergy: 5, missionSocialReward: 6 }))
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.missionSocialReward).toBeTruthy()
   })
 
   /** Jeda premium yang lebih panjang daripada jeda biasa membuat premium jadi kerugian: pembeli menunggu lebih lama daripada yang tidak membayar. Sebelum `withdrawalCooldownDays` bisa disetel, ini mustahil karena jeda biasa terpaku 7 di kode. */

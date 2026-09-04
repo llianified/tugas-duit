@@ -56,7 +56,7 @@ export async function PATCH(request: Request) {
 
     const body = await readJsonBody<{ config?: unknown; version?: unknown }>(request)
     if (!body || typeof body !== 'object') {
-      return apiError('VALIDATION_FAILED', 'Body tidak valid.', 400)
+      return apiError('VALIDATION_FAILED', 'Data yang dikirim nggak kebaca.', 400)
     }
     if (typeof body.version !== 'number' || !Number.isInteger(body.version)) {
       return apiError('VALIDATION_FAILED', 'Versi konfigurasi wajib disertakan.', 400)

@@ -56,7 +56,7 @@ export function CaptchaMeter({
       {capped ? (
         <p className="label-gap-t text-[11px] leading-tight text-muted-foreground">
           Stok reward kamu tinggal {formatCredits(payable)} credit, jadi segitu yang dibayar buat
-          task ini. Stoknya keisi lagi pelan-pelan.
+          soal ini. Stoknya keisi lagi pelan-pelan.
         </p>
       ) : null}
     </div>

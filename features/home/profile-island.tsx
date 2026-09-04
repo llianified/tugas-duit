@@ -52,7 +52,7 @@ export function ProfileIsland({
       pillTitle={user.firstName}
       openLabel="Buka ringkasan profil"
       closeLabel="Tutup ringkasan profil"
-      srSummary={`, ${user.firstName}, ${formatCredits(stats.completedCount)} task selesai`}
+      srSummary={`, ${user.firstName}, ${formatCredits(stats.completedCount)} soal selesai`}
       isOpen={isOpen}
       promoted={promoted}
       onToggle={onToggle}
@@ -94,7 +94,7 @@ export function ProfileIsland({
       />
       <IslandDivider />
       <IslandStat
-        label="Task selesai"
+        label="Soal selesai"
         value={`${formatCredits(stats.completedCount)} · ${formatCredits(stats.activeDays)} hari aktif`}
       />
       <IslandDivider />

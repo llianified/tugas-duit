@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       broadcastId?: unknown
     }>(request)
     if (!body || typeof body !== 'object') {
-      return apiError('VALIDATION_FAILED', 'Body tidak valid.', 400)
+      return apiError('VALIDATION_FAILED', 'Data yang dikirim nggak kebaca.', 400)
     }
 
     if (body.action === 'preview') {
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       return Response.json(await runBroadcast(body.broadcastId))
     }
 
-    return apiError('VALIDATION_FAILED', 'Aksi tidak valid.', 400)
+    return apiError('VALIDATION_FAILED', 'Aksinya nggak dikenali.', 400)
   } catch (error) {
     if (error instanceof Error && error.message === 'BROADCAST_NOT_FOUND') {
       return apiError('BROADCAST_NOT_FOUND', 'Siaran itu tidak ditemukan.', 404)

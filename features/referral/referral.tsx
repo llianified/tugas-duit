@@ -109,7 +109,7 @@ function CommissionSummary({
     <TotalSummary
       label="Total komisi referral"
       credits={summary.credits}
-      hint="Komisi dari semua task teman undangan. Masuk ke saldo tiap terkumpul 1 credit."
+      hint="Komisi dari semua soal yang dikerjain teman kamu. Masuk ke saldo tiap kekumpul 1 credit."
       note={note}
     />
   )
@@ -121,8 +121,8 @@ function CommissionEmpty({ hasReferrals }: { hasReferrals: boolean }) {
       <p className="text-base font-semibold tracking-tight">Belum ada komisi</p>
       <p className="stack-gap-t text-sm leading-relaxed text-muted-foreground text-pretty">
         {hasReferrals
-          ? 'Teman kamu belum ngerjain task. Komisi masuk otomatis saat mereka mulai.'
-          : 'Bagikan kode di bawah. Komisi task teman masuk otomatis.'}
+          ? 'Teman kamu belum ngerjain soal. Komisinya masuk otomatis begitu mereka mulai.'
+          : 'Bagikan kode di bawah. Komisi dari soal teman kamu masuk otomatis.'}
       </p>
     </section>
   )
@@ -234,10 +234,10 @@ function RuleNote() {
 
       <ol className="label-gap-t flex flex-col gap-2">
         <RuleStep step={1}>Bagikan kode ke teman.</RuleStep>
-        <RuleStep step={2}>Teman daftar pakai kode itu, lalu kerjakan task.</RuleStep>
+        <RuleStep step={2}>Teman daftar pakai kode itu, terus ngerjain soal.</RuleStep>
         <RuleStep step={3}>
           Kamu dapat <span className="font-medium text-foreground">{percent}%</span> dari setiap
-          reward task mereka.
+          reward soal mereka.
         </RuleStep>
       </ol>
     </section>
@@ -299,7 +299,7 @@ function ReferralListItem({
       title={referral.name}
       meta={
         isActive
-          ? `${referral.tasksCompleted} task · ${formatHistoryTime(lastTaskAt)}`
+          ? `${referral.tasksCompleted} soal · ${formatHistoryTime(lastTaskAt)}`
           : 'Belum mulai'
       }
       amount={

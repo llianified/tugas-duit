@@ -36,7 +36,7 @@ type RangeKey = (typeof RANGES)[number]['key']
 /** Semua angka datar halaman ini hidup di satu petak, bukan tersebar antara baris fakta inline, petak, dan daftar bertajuk seperti sebelumnya — tiga cara menampilkan pasangan label/nilai yang sama, ditumpuk berurutan. Hanya "Sebaran kesulitan" yang tetap jadi daftar karena tiap barisnya membawa dua nilai (jumlah dan credit), jadi memang tabular. */
 function factTiles(stats: UserStats) {
   const tiles: { label: string; value: string }[] = [
-    { label: 'Task selesai', value: formatCredits(stats.completedCount) },
+    { label: 'Soal selesai', value: formatCredits(stats.completedCount) },
     { label: 'Rata-rata bintang', value: stats.averageStars.toFixed(1) },
     { label: 'Streak', value: `${formatCredits(stats.streak)} hari` },
     { label: 'Hari aktif', value: `${formatCredits(stats.activeDays)} hari` },

@@ -54,8 +54,8 @@ export function WatchAdToPlay({
         meta={passSecondsLeft === null ? undefined : formatCountdown(passSecondsLeft)}
         aria-label={
           passSecondsLeft === null
-            ? 'Mulai task memakai tiket iklan'
-            : `Mulai task memakai tiket iklan, hangus dalam ${formatCountdown(passSecondsLeft)}`
+            ? 'Mulai soal pakai tiket iklan'
+            : `Mulai soal pakai tiket iklan, hangus dalam ${formatCountdown(passSecondsLeft)}`
         }
         onClick={() => {
           hapticTap()
@@ -105,7 +105,7 @@ export function WatchAdToPlay({
       label="Tonton iklan"
       /** Pecahan ringkas menyisakan ruang untuk label aksi tetap utuh sekaligus menunjukkan sisa dan total jatah. */
       meta={`${formatCredits(viewsLeft)}/${formatCredits(maxViews)}`}
-      aria-label={`Tonton iklan untuk memulai task tanpa energi, sisa ${formatCredits(viewsLeft)} kali hari ini`}
+      aria-label={`Tonton iklan buat mulai soal tanpa energi, sisa ${formatCredits(viewsLeft)} kali hari ini`}
       onClick={() => {
         hapticTap()
         onWatch()

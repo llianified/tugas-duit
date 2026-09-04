@@ -80,7 +80,7 @@ function AppShellInner() {
 
   useEffect(() => {
     if (!session.unauthenticated) return
-    showError('Sesi tidak dikenal. Buka Tugas Duit lewat Telegram.')
+    showError('Buka Tugas Duit dari Telegram ya.')
   }, [session.unauthenticated, showError])
 
   const effectiveView = session.view === 'captcha' && !activeChallenge ? 'home' : session.view

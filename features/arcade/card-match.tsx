@@ -160,7 +160,7 @@ export function CardMatch({
       </ul>
 
       <p className="text-center text-xs font-medium text-muted-foreground">
-        Dua kartu yang berbeda akan tertutup lagi.
+        Kalau kartunya beda, dua-duanya ketutup lagi.
       </p>
     </div>
   )

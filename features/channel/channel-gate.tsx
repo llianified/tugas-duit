@@ -50,7 +50,7 @@ export function ChannelGate({
         Join channel dulu ya
       </h1>
       <p className="stack-gap-t max-w-[17rem] text-sm leading-relaxed text-pretty text-muted-foreground">
-        Tugas Duit khusus anggota channel. Info pembayaran dan perubahan aturan ada di sana.
+        Tugas Duit khusus anggota channel. Kabar pembayaran dan perubahan aturan diumumin di sana.
         {onWithdraw ? ' Saldo yang sudah terkumpul tetap bisa ditarik.' : ''}
       </p>
 

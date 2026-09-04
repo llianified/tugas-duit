@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic'
 
 /** Satu pesan per sebab, karena obatnya berbeda-beda. `cooldown` lewat sendiri dalam hitungan menit, `daily_cap` baru lepas besok, dan `nothing_to_win` justru kabar baik yang terdengar seperti penolakan — stok dan energi sama-sama penuh, jadi tidak ada yang bisa ditambah. Menyatukannya jadi satu kalimat membuat user menunggu sesuatu yang tidak akan datang, kesalahan yang sama yang dihindari `QuotaRefusal`. */
 const REFUSAL: Record<string, { message: string; status: number }> = {
-  arcade_disabled: { message: 'Arena lagi ditutup.', status: 409 },
+  arcade_disabled: { message: 'Arena lagi tutup.', status: 409 },
   play_open: { message: 'Masih ada ronde yang belum kelar. Selesaikan dulu.', status: 409 },
   daily_cap: { message: 'Jatah main hari ini udah habis. Balik lagi besok ya.', status: 409 },
   cooldown: { message: 'Belum boleh main lagi. Tunggu jedanya kelar.', status: 409 },
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
     const body = await readJsonBody<{ game?: unknown }>(request)
     if (!isArcadeGame(body?.game)) {
-      return apiError('ARCADE_UNKNOWN_GAME', 'Permainannya nggak dikenal.', 400)
+      return apiError('ARCADE_UNKNOWN_GAME', 'Permainannya nggak ketemu. Muat ulang dulu ya.', 400)
     }
 
     const opened = await openArcadePlay(user.id, body.game)

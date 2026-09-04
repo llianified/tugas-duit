@@ -49,7 +49,7 @@ export function BalanceSummary({
               tone="neutral"
               hint={
                 <InfoHint label="Saldo reward">
-                  Credit yang bisa kamu tarik. Penarikan yang diproses sudah dipotong dari angka ini.
+                  Credit yang bisa kamu tarik. Penarikan yang lagi diproses udah dipotong dari angka ini.
                 </InfoHint>
               }
             />

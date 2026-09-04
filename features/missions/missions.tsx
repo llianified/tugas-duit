@@ -40,7 +40,7 @@ export function MissionsView({
       <section aria-label="Cara kerja misi" className="region-under-brand">
         <h2 className="text-base font-semibold tracking-tight">Cara kerjanya</h2>
         <p className="stack-gap-t text-sm leading-relaxed text-muted-foreground text-pretty">
-          Progres task tercatat otomatis. Misi sosial dibuka lewat tombolnya, lalu dikonfirmasi setelah selesai.
+          Progres soal tercatat otomatis. Misi sosial dibuka lewat tombolnya, terus dikonfirmasi kalau udah kelar.
         </p>
       </section>
 

@@ -50,20 +50,20 @@ export function assertSameOrigin(request: Request): Response | null {
         (suppliedOrigin === configuredOrigin || suppliedOrigin === requestOrigin),
     )
 
-  return allowed ? null : apiError('FORBIDDEN_ORIGIN', 'Aplikasinya dibuka dari tempat yang nggak dikenal.', 403)
+  return allowed ? null : apiError('FORBIDDEN_ORIGIN', 'Buka Tugas Duit dari Telegram ya.', 403)
 }
 
 export function assertNotCrossSite(request: Request): Response | null {
   const site = request.headers.get('sec-fetch-site')
   if (site === 'cross-site' || site === 'same-site') {
-    return apiError('FORBIDDEN_ORIGIN', 'Aplikasinya dibuka dari tempat yang nggak dikenal.', 403)
+    return apiError('FORBIDDEN_ORIGIN', 'Buka Tugas Duit dari Telegram ya.', 403)
   }
   return null
 }
 
 export function rateLimited(retryAfter: number): Response {
   return Response.json(
-    { error: { code: 'RATE_LIMITED', message: 'Kebanyakan permintaan. Tunggu sebentar ya.' } },
+    { error: { code: 'RATE_LIMITED', message: 'Kecepetan nih. Tunggu sebentar ya.' } },
     { status: 429, headers: { 'Retry-After': String(retryAfter) } },
   )
 }
@@ -89,7 +89,7 @@ export function handleRouteError(error: unknown): Response {
   if (error instanceof BannedError) return apiError('ACCOUNT_SUSPENDED', 'Akun kamu lagi dibekukan.', 403)
   if (error instanceof RateLimitedError) return rateLimited(error.retryAfter)
   console.error('[api] error tak tertangani:', error)
-  return apiError('INTERNAL', 'Ada yang error. Coba lagi ya.', 500)
+  return apiError('INTERNAL', 'Lagi ada gangguan. Coba lagi ya.', 500)
 }
 
 const MAX_UNAUTHENTICATED_BODY_BYTES = 16 * 1024

@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     if (await channelGateBlocks(user)) {
       return apiError(
         'CHANNEL_REQUIRED',
-        'Join channel Telegram dulu sebelum mulai task.',
+        'Join channel Telegram dulu sebelum mulai soal.',
         403,
       )
     }
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
           'Stok reward kosong. Energi tetap aman.',
           409,
         )
-      return apiError('CHALLENGE_NOT_STARTABLE', 'Soal gagal dimulai. Ambil soal baru.', 409)
+      return apiError('CHALLENGE_NOT_STARTABLE', 'Soalnya gagal dibuka. Ambil soal baru ya.', 409)
     }
     return Response.json(
       {

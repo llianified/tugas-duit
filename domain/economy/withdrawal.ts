@@ -181,16 +181,16 @@ function getAccountNumberError(channel: PayoutChannel, value: string): string | 
 function getAccountNameError(value: string): string | null {
   const name = value.trim()
   if (name === '') return 'Nama pemiliknya belum diisi.'
-  if (name.length < 3) return 'Namanya kependekan.'
+  if (name.length < 3) return 'Namanya kependekan, minimal 3 huruf.'
   if (name.length > 100) return 'Namanya kepanjangan.'
-  if (!/^[a-zA-Z .,'-]+$/.test(name)) return 'Nama hanya boleh berisi huruf dan spasi.'
+  if (!/^[a-zA-Z .,'-]+$/.test(name)) return 'Nama cuma boleh huruf dan spasi ya.'
   return null
 }
 
 function getAmountError(value: string, balance: number): string | null {
   const normalized = value.trim().replace(/[.\s]/g, '')
   if (normalized !== '' && !/^\d+$/.test(normalized)) {
-    return 'Jumlahnya harus angka bulat, nggak boleh koma.'
+    return 'Isi angka bulat aja ya, nggak pakai koma.'
   }
 
   const credits = parseCreditInput(value)

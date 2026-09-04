@@ -18,7 +18,7 @@ export function premiumBenefitList(perks: PremiumPerks): PremiumBenefit[] {
     {
       key: 'energy',
       title: `Energi ${formatCredits(perks.maxEnergy)}, isi tiap ${formatCredits(perks.energyRegenMinutes)} menit`,
-      detail: `Biasanya ${formatCredits(perks.baseMaxEnergy)} energi tiap ${formatCredits(perks.baseEnergyRegenMinutes)} menit. Jadi lebih cepat lanjut task.`,
+      detail: `Biasanya ${formatCredits(perks.baseMaxEnergy)} energi tiap ${formatCredits(perks.baseEnergyRegenMinutes)} menit. Jadi lebih cepat lanjut soal.`,
     },
     {
       key: 'pool',
@@ -29,7 +29,7 @@ export function premiumBenefitList(perks: PremiumPerks): PremiumBenefit[] {
     {
       key: 'ads',
       title: 'Iklan otomatis dimatikan',
-      detail: 'Iklan otomatis berhenti. Tombol iklan buat tambah jatah task tetap ada dan cuma jalan saat kamu tekan.',
+      detail: 'Iklan otomatis berhenti. Tombol iklan buat nambah jatah soal tetap ada, dan cuma jalan kalau kamu tekan.',
     },
     {
       key: 'withdraw',
@@ -38,8 +38,8 @@ export function premiumBenefitList(perks: PremiumPerks): PremiumBenefit[] {
     },
     {
       key: 'tasks',
-      title: `Batas task harian ${formatCredits(perks.maxTasksPerDay)}`,
-      detail: `Naik dari ${formatCredits(perks.baseMaxTasksPerDay)} task per hari.`,
+      title: `Batas soal harian ${formatCredits(perks.maxTasksPerDay)}`,
+      detail: `Naik dari ${formatCredits(perks.baseMaxTasksPerDay)} soal per hari.`,
     },
   ]
 }

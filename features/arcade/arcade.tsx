@@ -101,7 +101,7 @@ function ArcadeBody({
         <EmptyState
           icon={<GlyphPlay className="glyph-md text-muted-foreground" />}
           title="Arena lagi ditutup"
-          description="Nanti dibuka lagi. Sementara ini lanjut kerjakan task dulu."
+          description="Nanti dibuka lagi. Sementara ini lanjut ngerjain soal dulu ya."
         />
       </PageRegion>
     )
@@ -129,7 +129,7 @@ function ArcadeBody({
             <>
               {phase === 'playing' ? (
                 <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
-                  Hadiahnya sudah diacak. Pilih satu kotak untuk membukanya.
+                  Hadiahnya udah diacak. Pilih satu kotak buat bukanya.
                 </p>
               ) : null}
               <LuckyBoxes
@@ -152,7 +152,7 @@ function ArcadeBody({
                   Menghitung hasil
                 </span>
                 <span className="mt-1 block text-sm text-muted-foreground">
-                  Hadiahmu sedang dikonfirmasi.
+                  Hadiah kamu lagi diproses.
                 </span>
               </span>
             </div>
@@ -214,7 +214,7 @@ function ArcadeHero({ state }: { state: ArcadeStateResponse }) {
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-primary-foreground/75 text-pretty">
             Menangkan energi atau isi stok reward. Bukan credit instan, tapi kesempatan buat
-            lanjut ngerjain task hari ini.
+            lanjut ngerjain soal hari ini.
           </p>
         </div>
 
@@ -402,7 +402,7 @@ export function ArcadeClosed() {
       <EmptyState
         icon={<GlyphPlay className="glyph-md text-muted-foreground" />}
         title="Arena lagi ditutup"
-        description="Nanti dibuka lagi. Sementara ini lanjut kerjakan task dulu."
+        description="Nanti dibuka lagi. Sementara ini lanjut ngerjain soal dulu ya."
       />
     </div>
   )

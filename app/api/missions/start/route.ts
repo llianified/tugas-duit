@@ -14,8 +14,8 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const REFUSAL = {
-  unknown_mission: { message: 'Aksi sosialnya nggak dikenal.', status: 400 },
-  already_claimed: { message: 'Hadiah misi ini sudah kamu ambil.', status: 409 },
+  unknown_mission: { message: 'Misinya nggak ketemu. Muat ulang dulu ya.', status: 400 },
+  already_claimed: { message: 'Hadiah misi ini udah kamu ambil.', status: 409 },
 } as const
 
 export async function POST(request: Request) {

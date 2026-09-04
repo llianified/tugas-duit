@@ -37,14 +37,14 @@ export function ConfirmStep({
       </Surface>
 
       <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
-        {PAYOUT_ETA_TEXT} Kami kabari lewat bot setelah dikirim.
+        {PAYOUT_ETA_TEXT} Kami kabari lewat bot begitu dikirim.
       </p>
 
       <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
         {cooldownDays === null
-          ? 'Penarikan berikutnya tersedia setelah cooldown selesai.'
-          : `Penarikan berikutnya tersedia ${formatCredits(cooldownDays)} hari lagi.`}{' '}
-        Cooldown tetap jalan meski pengajuan ditolak.
+          ? 'Penarikan berikutnya baru bisa setelah jedanya kelar.'
+          : `Penarikan berikutnya baru bisa ${formatCredits(cooldownDays)} hari lagi.`}{' '}
+        Jedanya tetap jalan walau pengajuannya ditolak.
       </p>
 
       <div className="flex-1" />

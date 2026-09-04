@@ -32,7 +32,7 @@ export function StatsView({ stats }: StatsViewProps) {
       <TotalSummary
         label="Total penghasilan"
         credits={stats.earnedCredits}
-        hint="Semua credit dari task dan referral sejak awal. Tidak berkurang saat ditarik, jadi ini bukan saldo sekarang."
+        hint="Semua credit dari soal dan referral sejak awal. Nggak berkurang waktu ditarik, jadi ini bukan saldo sekarang."
         ariaLabel="Total penghasilan sejak awal"
         className="region-under-brand"
       />
@@ -46,7 +46,7 @@ type StatsPanel = 'progres' | 'task' | 'saldo' | 'tarik'
 
 const STATS_TABS: readonly SegmentedTab<StatsPanel>[] = [
   { value: 'progres', label: 'Progres' },
-  { value: 'task', label: 'Task' },
+  { value: 'task', label: 'Soal' },
   { value: 'saldo', label: 'Saldo' },
   { value: 'tarik', label: 'Tarik' },
 ]
@@ -123,14 +123,14 @@ function ProgressSection({ stats }: { stats: UserStats }) {
         valueText={
           atTop
             ? `Rank tertinggi: ${rank.name}`
-            : `${formatCredits(rankProgress)} dari ${formatCredits(rankSpan)} task menuju rank ${nextRank.name}`
+            : `${formatCredits(rankProgress)} dari ${formatCredits(rankSpan)} soal menuju rank ${nextRank.name}`
         }
         className="label-gap-t"
       />
       <StatList>
         <StatRow
-          label={atTop ? 'Jenjang rank' : `Task menuju rank ${nextRank.name}`}
-          value={atTop ? 'Sudah tertinggi' : `${formatCredits(tasksToNextRank)} task`}
+          label={atTop ? 'Jenjang rank' : `Soal menuju rank ${nextRank.name}`}
+          value={atTop ? 'Udah paling tinggi' : `${formatCredits(tasksToNextRank)} soal`}
           showDivider
         />
         <StatRow
@@ -156,7 +156,7 @@ function TaskSection({ stats }: { stats: UserStats }) {
       <StatList>
         <StatRow
           label="Selesai hari ini"
-          value={`${formatCredits(stats.todayCount)} task`}
+          value={`${formatCredits(stats.todayCount)} soal`}
           showDivider
         />
         <StatRow
@@ -174,9 +174,9 @@ function TaskSection({ stats }: { stats: UserStats }) {
           showDivider
         />
         <StatRow
-          label={`Task ${formatCredits(STAR_MAX)} bintang`}
-          value={`${formatCredits(stats.perfectCount)} task`}
-          note={hasTasks ? `${formatPercent(stats.perfectShare)} dari semua task` : undefined}
+          label={`Soal ${formatCredits(STAR_MAX)} bintang`}
+          value={`${formatCredits(stats.perfectCount)} soal`}
+          note={hasTasks ? `${formatPercent(stats.perfectShare)} dari semua soal` : undefined}
           showDivider
         />
         <StatRow
@@ -191,14 +191,14 @@ function TaskSection({ stats }: { stats: UserStats }) {
         />
         {hasTasks && stats.firstCompletedAt !== null ? (
           <StatRow
-            label="Task pertama"
+            label="Soal pertama"
             value={formatHistoryTime(stats.firstCompletedAt)}
             showDivider
           />
         ) : null}
         {hasTasks && stats.lastCompletedAt !== null ? (
           <StatRow
-            label="Task terakhir"
+            label="Soal terakhir"
             value={formatHistoryTime(stats.lastCompletedAt)}
             showDivider={false}
           />
@@ -206,7 +206,7 @@ function TaskSection({ stats }: { stats: UserStats }) {
       </StatList>
       {!hasTasks ? (
         <p className="label-gap-t text-xs leading-relaxed text-muted-foreground text-pretty">
-          Angkanya muncul setelah task pertama kamu selesai.
+          Angkanya muncul setelah soal pertama kamu kelar.
         </p>
       ) : null}
     </StatSection>
@@ -221,7 +221,7 @@ function DifficultySection({ stats }: { stats: UserStats }) {
           <StatRow
             key={row.difficulty}
             label={row.label}
-            value={`${formatCredits(row.count)} task`}
+            value={`${formatCredits(row.count)} soal`}
             note={
               row.count > 0
                 ? `${formatPercent(row.share)} · ${formatCredits(row.credits)} credit`
@@ -232,7 +232,7 @@ function DifficultySection({ stats }: { stats: UserStats }) {
             <ProgressBar
               value={row.share * 100}
               max={100}
-              valueText={`${row.label}: ${formatPercent(row.share)} dari semua task`}
+              valueText={`${row.label}: ${formatPercent(row.share)} dari semua soal`}
               className="label-gap-t"
             />
           </StatRow>
@@ -247,7 +247,7 @@ function BalanceSection({ stats }: { stats: UserStats }) {
     <StatSection label="Asal saldo">
       <StatList>
         <StatRow
-          label="Dari task sendiri"
+          label="Dari soal sendiri"
           value={`${formatCredits(stats.taskCredits)} credit`}
           showDivider
         />
@@ -284,12 +284,12 @@ function ReferralSection({ stats }: { stats: UserStats }) {
         <StatRow
           label="Teman aktif"
           value={`${formatCredits(stats.activeReferralCount)} teman`}
-          note="Sudah pernah mengerjakan task"
+          note="Udah pernah ngerjain soal"
           showDivider
         />
         <StatRow
-          label="Task teman"
-          value={`${formatCredits(stats.downlineTasks)} task`}
+          label="Soal teman"
+          value={`${formatCredits(stats.downlineTasks)} soal`}
           showDivider
         />
         <StatRow

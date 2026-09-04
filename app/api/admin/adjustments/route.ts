@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       requestId?: string
     } | null
     if (!body || typeof body !== 'object') {
-      return apiError('VALIDATION_FAILED', 'Body tidak valid.', 400)
+      return apiError('VALIDATION_FAILED', 'Data yang dikirim nggak kebaca.', 400)
     }
 
     if (typeof body.userId !== 'string' || !body.userId.trim()) {

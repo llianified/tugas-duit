@@ -151,18 +151,34 @@ describe('ADWATCH-3 — katup darurat', () => {
 })
 
 describe('ADWATCH-4 — galat yang bisa ditindaklanjuti', () => {
-  it.each([
-    ['no ads available', 'AD-NO-FILL'],
-    ['closed by user', 'AD-CLOSED'],
-    ['network timeout', 'AD-NETWORK'],
-    ['request blocked', 'AD-BLOCKED'],
-    ['unknown provider failure', 'AD-PROVIDER'],
-  ])('memetakan alasan "%s" ke kode %s', (reason, code) => {
-    expect(adFailureMessage(reason)).toContain(`Kode: ${code}.`)
+  const ALASAN = [
+    'no ads available',
+    'closed by user',
+    'network timeout',
+    'request blocked',
+    'unknown provider failure',
+  ]
+
+  it('memberi pesan yang berbeda untuk tiap jenis kegagalan', () => {
+    const pesan = ALASAN.map(adFailureMessage)
+    expect(new Set(pesan).size).toBe(ALASAN.length)
   })
 
-  it('selalu menjelaskan bahwa tiket belum masuk untuk penolakan tayangan', () => {
-    expect(adFailureMessage('unknown provider failure')).toContain('Tiket belum masuk')
+  /** Sisa sesi debugging double-fire yang sempat lolos ke produksi: tiap pesan berakhir dengan `Kode: AD-NO-FILL` dan sejenisnya. Bagi user itu terbaca seperti aplikasinya rusak parah, dan tidak satu pun dari mereka akan melaporkannya. Pelacakan kegagalan tempatnya di log. */
+  it('tidak membocorkan kode teknis ke layar user', () => {
+    for (const reason of ALASAN) {
+      expect(adFailureMessage(reason)).not.toMatch(/AD-[A-Z]/)
+      expect(adFailureMessage(reason)).not.toMatch(/\bKode\b/i)
+    }
+  })
+
+  /** Yang benar-benar dikhawatirkan orang saat iklan gagal cuma satu: jatahnya hangus atau tidak. */
+  it('selalu menutup dengan menenangkan soal jatah, dan tetap pendek', () => {
+    for (const reason of ALASAN) {
+      const pesan = adFailureMessage(reason)
+      expect(pesan.length).toBeLessThanOrEqual(90)
+      expect(/jatah kamu aman|coba lagi/i.test(pesan)).toBe(true)
+    }
   })
 })
 

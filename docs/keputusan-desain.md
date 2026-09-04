@@ -158,6 +158,52 @@ segitiga dengan titik di tengah — terbaca sebagai piramida bermata, dan pada
 
 | Panel admin punya **root layout dan CSP sendiri** | Dulu ada satu root layout untuk seluruh aplikasi, jadi SDK iklan Monetag ikut dieksekusi di `/admin/*` — same-origin dengan cookie sesi admin, sehingga satu skrip pihak ketiga yang bermusuhan bisa memanggil `/api/admin/*` dan lolos setiap penjagaan yang ada (semuanya dirancang untuk permintaan lintas-situs). Sekarang `app/(miniapp)/` dan `app/(admin)/` adalah dua root layout terpisah, dan `proxy.ts` mencabangkan CSP-nya. Rinciannya di `docs/adr/0005-panel-admin-di-root-layout-sendiri.md`. | `proxy.ts`; test `CSP-1`, `CSP-3` |
 
+## Suara aplikasi
+
+Yang memakai app ini bapak-bapak dan emak-emak yang membuka Telegram buat nambah
+penghasilan — bukan orang yang pernah membaca dokumentasi HTTP. Setiap kalimat di layar
+ditulis untuk mereka, dan itu bukan soal selera: pesan yang tidak dimengerti sama saja
+dengan pesan yang tidak ada, dan pada layar yang menyangkut uang itu berakhir jadi
+tiket support.
+
+**Aturannya:**
+
+1. **Kabar dulu, penjelasan belakangan.** "Cair! Dana udah kami kirim", bukan "Penarikan
+   Anda telah berhasil diproses". Kalau kalimat pertama sudah menjawab "jadi gimana?",
+   sisanya boleh dilewat pembaca.
+2. **Selalu ada langkah berikutnya.** Pesan yang cuma menyatakan keadaan bikin orang
+   berhenti. "Soalnya udah nggak ada. **Ambil soal baru ya.**"
+3. **Satu kalimat kalau bisa, dua kalau perlu.** Toast lewat dalam beberapa detik.
+4. **Sebut yang ditakutkan orang, lalu tenangkan.** Yang dikhawatirkan waktu iklan gagal
+   cuma satu: jatahnya hangus atau tidak. Jadi tiap pesan kegagalan iklan menutup dengan
+   "jatah kamu aman".
+5. **Tidak ada kode teknis di layar.** `Kode: AD-TIMEOUT` pernah lolos ke produksi sebagai
+   sisa sesi debugging; bagi user itu terbaca seperti aplikasinya rusak parah, dan tidak
+   satu pun dari mereka akan melaporkannya. Pelacakan kegagalan tempatnya di log.
+6. **Nama internal ≠ nama di layar.** Kode menyebut `task`, `challenge`, `pool`, `pass`;
+   layar menyebut **soal**, **stok**, **tiket**. Satu benda satu nama di layar — dulu
+   "task" dan "soal" dipakai bergantian untuk hal yang sama, bahkan dalam satu kalimat
+   ("Task-nya belum dimulai. Ambil soal baru ya."), dan pembaca yang tidak akrab teknologi
+   mengira itu dua hal berbeda. Dipilih **soal** karena Indonesia, karena sudah dominan di
+   pesan error, dan karena ia jelas berbeda dari **misi**.
+
+| Jangan | Pakai |
+| --- | --- |
+| cooldown | jeda |
+| clipboard | kesalin / salin teks |
+| task | soal |
+| sesi | sebut langkahnya: "Buka Tugas Duit dari Telegram ya." |
+| Anda, silakan, harap, mohon | kamu, kalimat perintah langsung |
+| tidak valid, Body tidak valid | nggak kebaca |
+| Kode: AD-XXXX | (buang) |
+
+Panel admin **di luar aturan ini**: ia dipakai satu orang yang tahu persis apa itu
+`rate_limits`, dan di sana ketepatan istilah lebih berharga daripada keakraban.
+
+Ditegakkan `COPY-1` di `tests/copy.test.ts`, yang menyapu seluruh permukaan peserta dan
+gagal kalau satu kata terlarang muncul lagi. Yang tidak bisa diuji mesin — panjang
+kalimat, urutan kabar lalu penjelasan — tidak dicoba diuji.
+
 ## Data & skema
 
 | Yang terlihat janggal | Kenapa memang begitu |

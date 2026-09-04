@@ -47,7 +47,7 @@ export function TurboRewardCard({
               <span className="num-display stamp-ink-fg text-[1.375rem]">
                 {formatRupiah(maxRewardIdr)}
               </span>
-              <span className="home-tag">per task</span>
+              <span className="home-tag">per soal</span>
             </span>
           </span>
 
@@ -119,12 +119,12 @@ export function TurboRewardCard({
                   {formatRupiah(maxRewardIdr)}
                 </p>
                 <p className="mt-0.5 text-xs leading-relaxed opacity-85">
-                  per task, berdasarkan tingkat kesulitan dan jumlah bintang.
+                  per soal, tergantung tingkat kesulitan dan jumlah bintang.
                 </p>
               </div>
 
               <h3 id="turbo-reward-table-title" className="mt-4 text-xs font-semibold text-foreground">
-                Reward setiap task
+                Reward tiap soal
               </h3>
               <div className="mt-2 overflow-hidden rounded-xl border border-border">
                 <table className="w-full table-fixed text-xs">
@@ -166,7 +166,7 @@ export function TurboRewardCard({
             </section>
 
             <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-              Reward aktual mengikuti stok yang tersedia, tingkat kesulitan, dan kecepatan pengerjaan.
+              Reward yang kamu dapat ngikutin sisa stok, tingkat kesulitan, dan kecepatan kamu jawab.
             </p>
           </div>
         </Dialog.Popup>

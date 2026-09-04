@@ -23,7 +23,7 @@ import { useToast } from '@/shell/toast'
 const X_FOLLOW_URL = 'https://twitter.com/intent/follow?screen_name=tugasduit'
 export const X_LIKE_REPOST_URL = 'https://x.com/TugasDuit/status/2095765886091276589'
 export const FACEBOOK_HOME_URL = 'https://www.facebook.com/'
-const AD_COPY = 'Kerjakan task singkat, kumpulkan energi, dan dapatkan reward'
+const AD_COPY = 'Kerjain soal singkat, kumpulin energi, dapetin reward'
 
 export function buildTwitterShareText(referralShareUrl: string): string {
   return `${AD_COPY} bareng @Tugasduit.\n\nCoba aplikasinya: ${referralShareUrl}`
@@ -58,33 +58,33 @@ export function secondsUntilConfirmation(
 export function contentFor(action: SocialMissionAction) {
   if (action === 'twitter_follow') {
     return {
-      instruction: 'Buka profil @tugasduit di X, lalu tekan Follow.',
+      instruction: 'Buka profil @tugasduit di X, terus tekan Follow.',
       actionLabel: 'Buka profil X',
-      confirmation: 'Sudah follow akun @tugasduit?',
-      confirmLabel: 'Ya, sudah follow',
+      confirmation: 'Udah follow @tugasduit?',
+      confirmLabel: 'Udah follow',
     }
   }
   if (action === 'twitter_like_repost') {
     return {
-      instruction: 'Buka postingan Tugas Duit di X, lalu Like dan Retweet postingan yang sama.',
+      instruction: 'Buka postingan Tugas Duit di X, terus Like dan Retweet postingan itu.',
       actionLabel: 'Buka postingan di X',
-      confirmation: 'Postingannya sudah di-Like dan di-Retweet?',
-      confirmLabel: 'Ya, keduanya sudah',
+      confirmation: 'Udah di-Like dan di-Retweet?',
+      confirmLabel: 'Udah keduanya',
     }
   }
   if (action === 'twitter_post') {
     return {
-      instruction: 'Tekan tombol dibawah, lalu post ke Twitter.',
+      instruction: 'Tekan tombol di bawah, terus posting ke X.',
       actionLabel: 'Buat post di Twitter',
-      confirmation: 'Post tentang Tugas Duit sudah terbit?',
-      confirmLabel: 'Ya, sudah diposting',
+      confirmation: 'Postingannya udah terbit?',
+      confirmLabel: 'Udah diposting',
     }
   }
   return {
-    instruction: 'Salin & buka tombol dibawah lalu posting ke grup manapun.',
-    actionLabel: 'Salin & buka Facebook',
-    confirmation: 'Teksnya sudah diposting di grup Facebook?',
-    confirmLabel: 'Ya, sudah diposting',
+    instruction: 'Tekan tombol di bawah — teksnya kesalin sendiri, terus tinggal tempel di grup Facebook mana pun.',
+    actionLabel: 'Salin teks dan buka Facebook',
+    confirmation: 'Teksnya udah kamu posting di grup?',
+    confirmLabel: 'Udah diposting',
   }
 }
 
@@ -137,7 +137,7 @@ export function SocialMissionSheet({
 
   async function beginAction() {
     if (needsReferralLink && !referralShareUrl) {
-      showError('Link referral masih disiapkan. Coba lagi sebentar.')
+      showError('Link kamu lagi disiapkan. Coba lagi sebentar ya.')
       return
     }
 
@@ -155,7 +155,7 @@ export function SocialMissionSheet({
     } else {
       copyRequest = navigator.clipboard?.writeText
         ? navigator.clipboard.writeText(shareText)
-        : Promise.reject(new Error('Clipboard tidak tersedia'))
+        : Promise.reject(new Error('Penyalinan teks tidak didukung peramban ini'))
       openExternal(FACEBOOK_HOME_URL)
     }
 
@@ -167,7 +167,7 @@ export function SocialMissionSheet({
         await copyRequest
         setCopied(true)
       } catch {
-        showError('Teks belum tersalin. Izinkan akses clipboard, lalu coba lagi.')
+        showError('Teksnya belum kesalin. Coba tekan tombolnya sekali lagi ya.')
       }
     }
   }
@@ -218,7 +218,7 @@ export function SocialMissionSheet({
                 </p>
                 <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-primary">
                   {copied ? <GlyphCheck className="size-3.5" /> : <GlyphCopy className="size-3.5" />}
-                  {copied ? 'Teks sudah disalin' : 'Teks akan disalin saat tombol ditekan'}
+                  {copied ? 'Teksnya udah kesalin' : 'Teksnya kesalin sendiri pas tombolnya ditekan'}
                 </p>
               </div>
             ) : null}
@@ -236,7 +236,7 @@ export function SocialMissionSheet({
                   <GlyphShare className="size-4" />
                 )}
                 {needsReferralLink && !referralShareUrl
-                  ? 'Menyiapkan link…'
+                  ? 'Bentar ya…'
                   : starting
                     ? 'Menyiapkan…'
                     : details.actionLabel}
@@ -247,7 +247,7 @@ export function SocialMissionSheet({
                   Tunggu {remaining} detik
                 </ActionButton>
                 <p role="status" className="mt-2 text-center text-xs leading-relaxed text-muted-foreground">
-                  Selesaikan aksinya di tab yang terbuka. Konfirmasi aktif setelah hitung mundur.
+                  Kelarin dulu di tab yang kebuka. Tombol konfirmasinya nyala setelah hitung mundurnya habis.
                 </p>
               </>
             ) : (

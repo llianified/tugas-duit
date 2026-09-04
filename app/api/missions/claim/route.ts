@@ -14,7 +14,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const REFUSAL: Record<string, { message: string; status: number }> = {
-  unknown_mission: { message: 'Misinya nggak dikenal.', status: 400 },
+  unknown_mission: { message: 'Misinya nggak ketemu. Muat ulang dulu ya.', status: 400 },
   not_done: { message: 'Misinya belum kelar. Lanjut dulu ya.', status: 409 },
   already_claimed: { message: 'Hadiah misi ini udah kamu ambil hari ini.', status: 409 },
   energy_full: {

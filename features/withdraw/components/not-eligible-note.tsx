@@ -39,7 +39,7 @@ export function NotEligibleNote({
             ? 'Hari aktif belum cukup'
             : reason === 'referrals'
               ? 'Referral belum cukup'
-              : 'Masih cooldown'
+              : 'Masih kena jeda'
 
   return (
     <Surface as="section" aria-label={title}>
@@ -53,8 +53,8 @@ export function NotEligibleNote({
       <p className="stack-gap-t text-xs leading-relaxed text-muted-foreground text-pretty">
         {reason === 'processing' ? (
           <>
-            Pengajuan sebelumnya masih diproses. Saldo ditahan dan dikembalikan kalau ditolak.
-            Hasilnya kami kirim lewat bot.
+            Pengajuan kamu yang sebelumnya masih diproses. Saldonya ditahan dulu, balik lagi kalau ditolak.
+            Hasilnya kami kabari lewat bot.
           </>
         ) : reason === 'balance' ? (
           <>
@@ -63,20 +63,20 @@ export function NotEligibleNote({
             bisa mempercepat.
           </>
         ) : reason === 'loading' ? (
-          <>Lagi cek syarat penarikan.</>
+          <>Bentar, lagi cek syaratnya.</>
         ) : reason === 'days' ? (
           <>
             Kamu punya {formatCredits(activeDays)} dari {formatCredits(requiredActiveDays)} hari
-            aktif. Satu hari dihitung kalau minimal 1 task selesai. Tidak harus beruntun.
+            aktif. Satu hari kehitung kalau ada minimal 1 soal kelar. Nggak harus beruntun.
           </>
         ) : reason === 'referrals' ? (
           <>
             Kamu punya {formatCredits(activeReferralCount)} dari {formatCredits(requiredActiveReferrals)}{' '}
-            referral aktif. Teman dihitung aktif setelah menyelesaikan 1 task.
+            teman aktif. Teman kehitung aktif setelah dia kelarin 1 soal.
           </>
         ) : (
           <>
-            Bisa tarik lagi {cooldownEndsAt ? formatHistoryTime(cooldownEndsAt) : 'setelah cooldown selesai'}.{' '}
+            Bisa tarik lagi {cooldownEndsAt ? formatHistoryTime(cooldownEndsAt) : 'setelah jedanya kelar'}.{' '}
             {cooldownDays === null
               ? 'Dihitung sejak pengajuan terakhir'
               : `${formatCredits(cooldownDays)} hari sejak pengajuan terakhir`}{' '}

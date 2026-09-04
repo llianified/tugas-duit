@@ -46,7 +46,7 @@ export function EnergyRecoverySheet({
   const close = () => onOpenChange(false)
   /** Barisnya dulu HILANG total begitu cooldown jalan atau jatah habis, dan itu justru kebalikan dari guna panel ini: user yang tinggal menunggu 40 detik melihat layar yang tampak tidak menawarkan apa-apa lalu menyimpulkan iklan memang tidak ada. Sekarang barisnya selalu ada selama iklan menyala — yang berubah cuma bisa-tidaknya diketuk, dan alasannya ikut tertulis. */
   const adBlockedNote = adEntryOpen
-    ? 'Selesaikan dulu task yang masih terbuka'
+    ? 'Selesaikan dulu soal yang masih kebuka'
     : watchingAd
       ? 'Iklannya lagi tayang'
       : adViewsLeft <= 0
@@ -101,7 +101,7 @@ export function EnergyRecoverySheet({
                     adPassReady
                       ? 'Tiket kamu sudah siap dipakai sekarang'
                       : (adBlockedNote ??
-                        `1 tiket buat 1 task · sisa ${formatCredits(adViewsLeft)} hari ini`)
+                        `1 tiket buat 1 soal · sisa ${formatCredits(adViewsLeft)} hari ini`)
                   }
                   disabled={!adPassReady && adBlockedNote !== null}
                   onClick={() => {

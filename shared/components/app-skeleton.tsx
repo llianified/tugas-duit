@@ -274,9 +274,9 @@ export function AppViewSkeleton() {
 
         <div className="region-gap-t">
           {/* Dua bagian karcis, sama seperti `ActiveTask`: paddingnya sekarang ada di `.ticket-part`, bukan di `.task-card`. Kerangka yang masih memakai satu kotak akan tergambar tanpa bidang kartu sama sekali. */}
-          <div className="task-card">
+          <div className="task-card active-task-card">
             <div className="ticket-part ticket-part-top">
-              {/* `TaskHeading`: baris cetakan (nomor seri + lencana kesulitan) DI ATAS judul 22px. Judulnya dulu tidak digambar sama sekali, jadi kartunya tumbuh ~28px begitu task-nya datang dan mendorong tombol CTA. */}
+              {/* `TaskHeading`: baris cetakan (nomor seri + lencana kesulitan) DI ATAS judul 20px. Judul ikut digambar agar tinggi karcis stabil saat data selesai dimuat. */}
               <div>
                 <div className="flex items-center justify-between gap-3">
                   <Line sample="KARCIS #A1B2C" className="home-tag" bar="h-2.5 w-24" />
@@ -284,7 +284,7 @@ export function AppViewSkeleton() {
                 </div>
                 <Line
                   sample="Judul task beranda"
-                  className="stack-gap-t text-[22px] font-bold leading-tight tracking-[-0.02em]"
+                  className="stack-gap-t text-xl font-bold leading-tight tracking-[-0.02em]"
                   bar="h-4 w-44"
                 />
               </div>
@@ -294,7 +294,7 @@ export function AppViewSkeleton() {
             </div>
 
             <div className="ticket-part ticket-part-bottom">
-              <div className="mt-3 grid grid-cols-3 gap-x-3">
+              <div className="grid grid-cols-3 gap-x-2">
                 {[0, 1, 2].map((column) => (
                   <div className="stat-tile" key={column}>
                     <Line sample="MAKS" className="home-tag" bar="h-2.5 w-8" tone="on-muted" />

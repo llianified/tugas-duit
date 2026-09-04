@@ -1687,6 +1687,22 @@
     radial-gradient(var(--ticket-hole) at 100% 0, #0000 98%, #000);
   mask-composite: intersect;
 }
+/* Kartu task utama dibuat lebih padat tanpa mengecilkan tinggi tombol. Token jarak dibatasi ke kartu ini agar kartu dan panel lain tetap memakai ritme global. */
+.home-skin .active-task-card {
+  --block-gap: 0.625rem;
+  --stack-gap: 0.25rem;
+  --cta-gap: 0.75rem;
+}
+.home-skin .active-task-card .ticket-part-top {
+  padding: 0.75rem 0.875rem 0;
+}
+.home-skin .active-task-card .ticket-part-bottom {
+  padding: 0.625rem 0.875rem 0.75rem;
+}
+.home-skin .active-task-card .stat-tile {
+  padding: 0.375rem 0.5rem 0.5rem;
+}
+
 .home-skin .ticket-part-bottom::before {
   top: 0;
   bottom: 1px;

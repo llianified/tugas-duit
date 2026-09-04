@@ -95,7 +95,7 @@ export function ActiveTask({
     <section aria-label="Task yang tersedia">
       {/* Karcisnya dua bagian yang berhimpit di perforasi, bukan satu kotak dengan garis di tengahnya. Pemisahan ini yang membuat sobekannya nyata: saat "Mulai" ditekan, pangkal dan sobekannya berjalan ke arah berlawanan dengan tepi bergerigi. Lihat `--tear-*` di `globals.css`. */}
       <div
-        className="task-card"
+        className="task-card active-task-card"
         data-tearing={tearing ? 'true' : undefined}
         style={{ '--tear-ms': `${TEAR_MS}ms` } as CSSProperties}
       >
@@ -187,7 +187,7 @@ function TaskHeading({
         </p>
         <DifficultyBadge difficulty={difficulty} />
       </div>
-      <h2 className="stack-gap-t min-w-0 text-[22px] font-bold leading-tight tracking-[-0.02em] text-balance text-foreground">
+      <h2 className="stack-gap-t min-w-0 text-xl font-bold leading-tight tracking-[-0.02em] text-balance text-foreground">
         {title}
       </h2>
     </div>
@@ -213,7 +213,7 @@ function TaskStats({
 }) {
   /* `relative` di sini yang menampung gelembung `InfoHint`: bubble-nya `inset-x-0 top-full`, jadi ia terbit selebar ketiga kolom di bawah barisnya — bukan terjepit di dalam tile selebar ~87px. */
   return (
-    <dl className="relative mt-3 grid grid-cols-3 gap-x-3">
+    <dl className="relative grid grid-cols-3 gap-x-2">
       <Stat
         label="Maks"
         value={`+${formatCredits(maxReward)}`}

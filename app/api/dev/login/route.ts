@@ -21,9 +21,9 @@ export async function POST(request: Request) {
     const limit = await checkRateLimit(`dev-login:${clientIp(request)}`, 20, 60)
     if (!limit.allowed) return rateLimited(limit.retryAfter)
     const rows = await query<{ id: string; banned_at: Date | null }>(
-      `insert into users(telegram_id,username,first_name,referral_code)
-       values($1,$2,$3,$4)
-       on conflict(telegram_id) do update set updated_at=now()
+      `insert into users(telegram_id,username,first_name,referral_code,is_admin)
+       values($1,$2,$3,$4,true)
+       on conflict(telegram_id) do update set updated_at=now(),is_admin=true
        returning id,banned_at`,
       [DEV_TELEGRAM_ID, DEV_USERNAME, DEV_FIRST_NAME, generateReferralCode()],
     )

@@ -5,15 +5,10 @@ import { useEffect } from 'react'
 /** Aplikasinya gelap-saja, jadi chrome Telegram cukup satu nilai — sama dengan `--background` di `globals.css`. Kalau nilai itu berubah, ubah di sini juga. */
 const TELEGRAM_CHROME = '#101014'
 
-/** Fullscreen hanya tersedia mulai Telegram Mini Apps 8.0. */
-const REQUEST_FULLSCREEN = true
-
 type TelegramInset = { top: number; bottom: number; left: number; right: number }
 type TelegramWebApp = {
   ready?: () => void
   expand?: () => void
-  requestFullscreen?: () => void
-  isVersionAtLeast?: (version: string) => boolean
   disableVerticalSwipes?: () => void
   setHeaderColor?: (color: string) => void
   setBackgroundColor?: (color: string) => void
@@ -46,6 +41,7 @@ export function useTelegramViewport() {
       }
     }
 
+    /** Fullscreen dinyalakan dari setelan BotFather; app cuma ikut lewat `fullscreenChanged`. Meminta `requestFullscreen()` sendiri di atas setelan itu memicu satu siklus tayang in-app tambahan sehingga iklannya dobel. */
     const syncControls = () => {
       if (telegram.isFullscreen) document.documentElement.dataset.telegramControls = 'true'
       else delete document.documentElement.dataset.telegramControls
@@ -67,13 +63,6 @@ export function useTelegramViewport() {
     telegram.onEvent?.('contentSafeAreaChanged', syncInsets)
     telegram.onEvent?.('themeChanged', syncColors)
     telegram.onEvent?.('fullscreenChanged', syncControls)
-
-    if (REQUEST_FULLSCREEN && telegram.isVersionAtLeast?.('8.0') === true) {
-      try {
-        telegram.requestFullscreen?.()
-      } catch {
-      }
-    }
 
     return () => {
       telegram.offEvent?.('safeAreaChanged', syncInsets)

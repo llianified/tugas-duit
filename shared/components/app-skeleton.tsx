@@ -294,7 +294,7 @@ export function AppViewSkeleton() {
             </div>
 
             <div className="ticket-part ticket-part-bottom">
-              <div className="grid grid-cols-3 gap-x-2">
+              <div className="grid grid-cols-3 gap-x-3">
                 {[0, 1, 2].map((column) => (
                   <div className="stat-tile" key={column}>
                     <Line sample="MAKS" className="home-tag" bar="h-2.5 w-8" tone="on-muted" />

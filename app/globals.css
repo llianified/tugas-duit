@@ -1694,13 +1694,10 @@
   --cta-gap: 0.75rem;
 }
 .home-skin .active-task-card .ticket-part-top {
-  padding: 0.75rem 0.875rem 0;
+  padding-block: 0.75rem 0;
 }
 .home-skin .active-task-card .ticket-part-bottom {
-  padding: 0.625rem 0.875rem 0.75rem;
-}
-.home-skin .active-task-card .stat-tile {
-  padding: 0.375rem 0.5rem 0.5rem;
+  padding-block: 0.625rem 0.75rem;
 }
 
 .home-skin .ticket-part-bottom::before {

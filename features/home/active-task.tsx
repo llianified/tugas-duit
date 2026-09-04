@@ -213,7 +213,7 @@ function TaskStats({
 }) {
   /* `relative` di sini yang menampung gelembung `InfoHint`: bubble-nya `inset-x-0 top-full`, jadi ia terbit selebar ketiga kolom di bawah barisnya — bukan terjepit di dalam tile selebar ~87px. */
   return (
-    <dl className="relative grid grid-cols-3 gap-x-2">
+    <dl className="relative grid grid-cols-3 gap-x-3">
       <Stat
         label="Maks"
         value={`+${formatCredits(maxReward)}`}

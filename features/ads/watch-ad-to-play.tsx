@@ -1,7 +1,6 @@
 'use client'
 
 import { GlyphPlay, GlyphSpinner } from '@/shared/components/glyph'
-import { MetaBadge } from '@/shared/components/meta-badge'
 import { TapAction, TapActionWaiting } from '@/shared/components/tap-action'
 import { hapticTap } from '@/shared/lib/haptic'
 import { formatCountdown, formatCredits } from '@/shared/lib/format'
@@ -102,8 +101,8 @@ export function WatchAdToPlay({
       compact
       tone="neutral"
       label="Tonton iklan"
-      /** "9/10" terbaca seperti kemajuan yang naik, padahal angkanya menghitung turun. Satuannya sekarang disebut supaya tidak ada yang perlu ditebak. */
-      meta={<MetaBadge>{formatCredits(viewsLeft)} tersisa</MetaBadge>}
+      /** Bentuk ringkas `7x` menyisakan ruang untuk label aksi tetap utuh. Makna lengkap jumlah kesempatan tetap tersedia lewat `aria-label`. */
+      meta={`${formatCredits(viewsLeft)}x`}
       aria-label={`Tonton iklan untuk memulai task tanpa energi, sisa ${formatCredits(viewsLeft)} kali hari ini`}
       onClick={() => {
         hapticTap()

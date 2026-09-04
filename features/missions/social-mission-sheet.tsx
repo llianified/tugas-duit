@@ -21,9 +21,16 @@ import { formatCredits } from '@/shared/lib/format'
 import { useToast } from '@/shell/toast'
 
 const X_FOLLOW_URL = 'https://twitter.com/intent/follow?screen_name=tugasduit'
-const FACEBOOK_GROUPS_URL = 'https://www.facebook.com/groups/feed/'
-const AD_COPY =
-  'Kerjakan task singkat, kumpulkan energi, dan dapatkan reward bareng Tugas Duit.'
+export const FACEBOOK_HOME_URL = 'https://www.facebook.com/'
+const AD_COPY = 'Kerjakan task singkat, kumpulkan energi, dan dapatkan reward'
+
+export function buildTwitterShareText(referralShareUrl: string): string {
+  return `${AD_COPY} bareng @Tugasduit.\n\nCoba aplikasinya: ${referralShareUrl}`
+}
+
+export function buildFacebookShareText(referralShareUrl: string): string {
+  return `${AD_COPY} bareng Tugas Duit.\n\nCoba aplikasinya: ${referralShareUrl}`
+}
 
 type TelegramWebApp = {
   openLink?: (url: string) => void
@@ -47,7 +54,7 @@ export function secondsUntilConfirmation(
   return Math.max(0, Math.ceil((timing.confirmAt - projectedServerNow) / 1_000))
 }
 
-function contentFor(action: SocialMissionAction) {
+export function contentFor(action: SocialMissionAction) {
   if (action === 'twitter_follow') {
     return {
       instruction: 'Buka profil @tugasduit di X, lalu tekan Follow.',
@@ -58,14 +65,14 @@ function contentFor(action: SocialMissionAction) {
   }
   if (action === 'twitter_post') {
     return {
-      instruction: 'Buka composer X dengan teks promosi yang sudah kami siapkan, lalu post.',
-      actionLabel: 'Buat post di X',
+      instruction: 'Tekan tombol dibawah, lalu post ke Twitter.',
+      actionLabel: 'Buat post di Twitter',
       confirmation: 'Post tentang Tugas Duit sudah terbit?',
       confirmLabel: 'Ya, sudah diposting',
     }
   }
   return {
-    instruction: 'Salin teks promosi, buka daftar grup Facebook, lalu tempel dan post manual.',
+    instruction: 'Salin & buka tombol dibawah lalu posting ke grup manapun.',
     actionLabel: 'Salin & buka Facebook',
     confirmation: 'Teksnya sudah diposting di grup Facebook?',
     confirmLabel: 'Ya, sudah diposting',
@@ -75,7 +82,7 @@ function contentFor(action: SocialMissionAction) {
 export function SocialMissionSheet({
   mission,
   clock,
-  botAppUrl,
+  referralShareUrl,
   starting,
   claiming,
   onOpenChange,
@@ -84,7 +91,7 @@ export function SocialMissionSheet({
 }: {
   mission: MissionProgress
   clock: MissionClockAnchor | null
-  botAppUrl: string | null
+  referralShareUrl: string
   starting: boolean
   claiming: boolean
   onOpenChange: (open: boolean) => void
@@ -104,9 +111,12 @@ export function SocialMissionSheet({
   const [remaining, setRemaining] = useState(() => secondsUntilConfirmation(timing))
   const [copied, setCopied] = useState(false)
   const showError = useToast()
-  const shareText = botAppUrl
-    ? `${AD_COPY}\n\nCoba aplikasinya: ${botAppUrl}`
-    : AD_COPY
+  const needsReferralLink =
+    mission.action === 'twitter_post' || mission.action === 'facebook_post'
+  const shareText =
+    mission.action === 'twitter_post'
+      ? buildTwitterShareText(referralShareUrl)
+      : buildFacebookShareText(referralShareUrl)
 
   useEffect(() => {
     if (timing === null) return
@@ -117,6 +127,11 @@ export function SocialMissionSheet({
   }, [timing])
 
   async function beginAction() {
+    if (needsReferralLink && !referralShareUrl) {
+      showError('Link referral masih disiapkan. Coba lagi sebentar.')
+      return
+    }
+
     const startRequest = onStart()
     let copyRequest: Promise<void> | null = null
 
@@ -130,7 +145,7 @@ export function SocialMissionSheet({
       copyRequest = navigator.clipboard?.writeText
         ? navigator.clipboard.writeText(shareText)
         : Promise.reject(new Error('Clipboard tidak tersedia'))
-      openExternal(FACEBOOK_GROUPS_URL)
+      openExternal(FACEBOOK_HOME_URL)
     }
 
     const nextTiming = await startRequest
@@ -198,13 +213,22 @@ export function SocialMissionSheet({
             ) : null}
 
             {timing === null ? (
-              <ActionButton className="mt-4" onClick={beginAction} disabled={starting} aria-busy={starting}>
-                {starting ? (
+              <ActionButton
+                className="mt-4"
+                onClick={beginAction}
+                disabled={starting || (needsReferralLink && !referralShareUrl)}
+                aria-busy={starting || (needsReferralLink && !referralShareUrl)}
+              >
+                {starting || (needsReferralLink && !referralShareUrl) ? (
                   <GlyphSpinner className="size-4 animate-spin motion-reduce:animate-none" />
                 ) : (
                   <GlyphShare className="size-4" />
                 )}
-                {starting ? 'Menyiapkan…' : details.actionLabel}
+                {needsReferralLink && !referralShareUrl
+                  ? 'Menyiapkan link…'
+                  : starting
+                    ? 'Menyiapkan…'
+                    : details.actionLabel}
               </ActionButton>
             ) : remaining > 0 ? (
               <>
@@ -228,7 +252,12 @@ export function SocialMissionSheet({
                   )}
                   {claiming ? 'Memeriksa…' : `${details.confirmLabel} · +${formatCredits(mission.reward)}`}
                 </ActionButton>
-                <ActionButton className="mt-2" variant="ghost" onClick={beginAction} disabled={starting}>
+                <ActionButton
+                  className="mt-2"
+                  variant="ghost"
+                  onClick={beginAction}
+                  disabled={starting || (needsReferralLink && !referralShareUrl)}
+                >
                   Buka lagi
                 </ActionButton>
               </>

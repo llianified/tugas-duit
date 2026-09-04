@@ -18,7 +18,7 @@ export function MissionsView({
   rewardPoolSecondsToNext,
   onClaimed,
   onOpenArcade,
-  botAppUrl,
+  referralShareUrl,
 }: {
   refreshKey: number
   economy: EconomyConfig
@@ -28,7 +28,7 @@ export function MissionsView({
   rewardPoolSecondsToNext: number | null
   onClaimed: () => Promise<unknown>
   onOpenArcade: () => void
-  botAppUrl: string | null
+  referralShareUrl: string
 }) {
   const turboReachable = economy.turboRewardEnabled === 1
   const arenaReachable = arcadeEnabled()
@@ -48,7 +48,7 @@ export function MissionsView({
         <MissionCard
           refreshKey={refreshKey}
           onClaimed={onClaimed}
-          botAppUrl={botAppUrl}
+          referralShareUrl={referralShareUrl}
           variant="page"
         />
       </div>

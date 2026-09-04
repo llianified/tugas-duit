@@ -16,12 +16,12 @@ import { cn } from '@/shared/lib/utils'
 export function MissionCard({
   refreshKey,
   onClaimed,
-  botAppUrl,
+  referralShareUrl,
   variant = 'card',
 }: {
   refreshKey: number
   onClaimed: () => Promise<unknown>
-  botAppUrl: string | null
+  referralShareUrl: string
   /** `page` dipakai saat daftar ini menjadi isi utama sebuah view, jadi permukaan kartu luar dilepas. */
   variant?: 'card' | 'page'
 }) {
@@ -79,7 +79,7 @@ export function MissionCard({
           key={selectedMission.key}
           mission={selectedMission}
           clock={clock}
-          botAppUrl={botAppUrl}
+          referralShareUrl={referralShareUrl}
           starting={starting === selectedMission.key}
           claiming={claiming === selectedMission.key}
           onOpenChange={(open) => {

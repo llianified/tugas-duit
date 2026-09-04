@@ -4,7 +4,6 @@ import { useCallback, useState, type CSSProperties, type ReactNode } from 'react
 import { WatchAdToPlay } from '@/features/ads/watch-ad-to-play'
 import { DifficultyBadge } from '@/features/captcha/components/difficulty-badge'
 import { EnergyRecoverySheet } from '@/features/home/energy-recovery-sheet'
-import { InfoHint } from '@/shared/components/info-hint'
 import { MetaBadge } from '@/shared/components/meta-badge'
 import { TapAction, TapActionWaiting } from '@/shared/components/tap-action'
 import { hapticTap } from '@/shared/lib/haptic'
@@ -211,21 +210,14 @@ function TaskStats({
   energyEmpty: boolean
   energyFill: EnergyFill
 }) {
-  /* `relative` di sini yang menampung gelembung `InfoHint`: bubble-nya `inset-x-0 top-full`, jadi ia terbit selebar ketiga kolom di bawah barisnya — bukan terjepit di dalam tile selebar ~87px. */
   return (
-    <dl className="relative grid grid-cols-3 gap-x-3">
+    <dl className="grid grid-cols-3 gap-x-3">
       <Stat
         label="Maks"
         value={`+${formatCredits(maxReward)}`}
         note={formatRupiah(creditsToRupiah(maxReward))}
-        hint="Reward maksimal task ini. Nilainya turun seiring waktu dan dibatasi stok reward."
       />
-      <Stat
-        label="Biaya"
-        value={formatCredits(energyCostPerTask())}
-        note="energi"
-        hint={`Setiap task memotong ${formatCredits(energyCostPerTask())} energi.`}
-      />
+      <Stat label="Biaya" value={formatCredits(energyCostPerTask())} note="energi" />
       <Stat
         label="Energi"
         value={
@@ -239,41 +231,18 @@ function TaskStats({
             ? 'penuh'
             : `penuh ${formatLongCountdown(energyFill.secondsToFull)}`
         }
-        /* Waktu penuhnya ikut disebut di sini karena catatan di bawah tile dipotong kalau kepanjangan — gelembung ini yang menampungnya utuh. */
-        hint={`Energi tersisa ${formatCredits(energy)} dari ${formatCredits(energyMax)}. Terisi sendiri tanpa perlu membuka aplikasi${
-          energyFill.secondsToFull === null
-            ? ', dan sekarang sudah penuh.'
-            : `, penuh dalam ${formatLongCountdown(energyFill.secondsToFull)}.`
-        }`}
       />
     </dl>
   )
 }
 
-function Stat({
-  label,
-  value,
-  note,
-  hint,
-}: {
-  label: string
-  value: ReactNode
-  note: string
-  hint: string
-}) {
-  /* Penjelasannya dulu dititipkan ke `title=`. Di WebView Telegram tidak ada hover, jadi kalimat itu tidak pernah bisa dibaca siapa pun — dan pada `<div>` yang bukan target fokus ia juga tidak terjangkau papan tombol maupun pembaca layar. `InfoHint` adalah jawaban yang sudah dipakai saldo dan papan peringkat: pemicu yang bisa disentuh, `aria-expanded`, tutup lewat Escape. */
+function Stat({ label, value, note }: { label: string; value: ReactNode; note: string }) {
   return (
     <div className="stat-tile">
-      <dt className="home-tag flex items-center">
-        {label}
-        <InfoHint label={label} className="ml-1">
-          {hint}
-        </InfoHint>
-      </dt>
+      <dt className="home-tag">{label}</dt>
       <dd className="mt-1 text-lg font-bold tracking-tight tabular-nums text-foreground">
         {value}
       </dd>
-      {/* Dua hal sekaligus di baris 11px ini. Warnanya tidak lagi diredam `/70`: pada bidang hero `#08080c` itu jatuh persis di 4,5:1, lolos AA tanpa sisa sama sekali — teks sekecil ini tidak punya alasan berdiri di garis. Dan `truncate`: kolomnya cuma ~87px, jadi kalau laju isi energi diubah di panel admin sampai catatannya berbunyi "penuh 2j 30m", teksnya akan membungkus dan MENINGGIKAN ketiga tile sekaligus karena barisnya satu grid. Keterangan panjangnya sudah ada di gelembung `InfoHint` di atasnya. */}
       <dd className="truncate text-[11px] font-normal tabular-nums text-muted-foreground">{note}</dd>
     </div>
   )

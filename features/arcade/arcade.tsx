@@ -116,7 +116,7 @@ function ArcadeBody({
         badge={phase === 'result' ? 'Selesai' : phase === 'settling' ? 'Menghitung' : 'Berlangsung'}
         className="region-under-brand"
       >
-        <div className={`${SURFACE_CARD_CLASS} flex flex-col gap-4`}>
+        <div className={`${SURFACE_CARD_CLASS} label-gap-t flex flex-col gap-4`}>
           {game === 'match' && phase === 'playing' ? (
             <CardMatch
               seconds={state.matchSeconds}

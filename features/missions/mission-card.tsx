@@ -206,7 +206,9 @@ function MissionAction({
           <GlyphBolt className="size-3.5" />+{formatCredits(mission.reward)}
         </span>
         {claiming ? (
-          <GlyphSpinner className="absolute size-3.5 animate-spin motion-reduce:animate-none" />
+          <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
+            <GlyphSpinner className="size-3.5 animate-spin motion-reduce:animate-none" />
+          </span>
         ) : null}
       </button>
     </div>

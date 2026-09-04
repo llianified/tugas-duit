@@ -6,6 +6,8 @@ import { economyConfig } from '../economy/economy-config.ts'
 export type AutomaticMissionKey = 'tasks' | 'stars' | 'ads'
 export type SocialMissionKey = 'twitter_follow' | 'twitter_post' | 'facebook_post'
 export type MissionKey = AutomaticMissionKey | SocialMissionKey
+
+export const AUTOMATIC_MISSION_KEYS: readonly AutomaticMissionKey[] = ['tasks', 'stars', 'ads']
 export type SocialMissionAction = 'twitter_follow' | 'twitter_post' | 'facebook_post'
 
 interface MissionDefinitionBase {

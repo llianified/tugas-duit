@@ -59,8 +59,14 @@ async function readAdView(id: string) {
     block_id: string
     consumed_at: Date | null
     ready_at: Date | null
+    client_claimed_at: Date | null
+    verified_at: Date | null
     expires_at: Date
-  }>('select state, block_id, consumed_at, ready_at, expires_at from ad_views where id=$1', [id])
+  }>(
+    `select state, block_id, consumed_at, ready_at, client_claimed_at, verified_at, expires_at
+       from ad_views where id=$1`,
+    [id],
+  )
   return rows[0]
 }
 
@@ -421,9 +427,9 @@ describe('ADS-DB-11 — ronde Arena menahan tiket berikutnya, sama seperti task'
   })
 })
 
-/** Gerbang postback: satu-satunya bagian dari alur iklan yang buktinya tidak lewat perangkat
- *  user. Yang diuji di sini persis dua celah yang jadi alasannya — tayangan yang tidak dibayar
- *  penyedia, dan klaim yang datang tanpa satu pun konfirmasi. */
+/** Gerbang postback menggabungkan dua bukti yang saling melengkapi: penyelesaian SDK dari klien
+ *  yang lolos durasi minimum dan konfirmasi tayangan berbayar dari Monetag. Tiket hanya menjadi
+ *  pass setelah keduanya ada, apa pun urutan request-nya. */
 describe('ADS-DB-12 — tiket hanya terbit setelah Monetag mengonfirmasi tayangan berbayar', () => {
   const postback = async (ticketId: string, query: string) => {
     const { parseAdPostback } = await import('@/domain/ads/postback')
@@ -440,23 +446,69 @@ describe('ADS-DB-12 — tiket hanya terbit setelah Monetag mengonfirmasi tayanga
     return opened.ticketId
   }
 
-  it('menahan klaim klien sampai konfirmasinya datang, lalu menerbitkan passnya', async () => {
-    withConfig({ adsPostbackRequired: 1 })
+  it('menerbitkan pass saat klaim yang cukup lama datang sebelum postback', async () => {
+    withConfig({ adsPostbackRequired: 1, adsMinWatchSeconds: 30 })
+    const { query } = await import('../platform/db')
     const { claimAdTicket, readAdsState } = await import('./ads')
     const userId = await makeUser(0)
     const ticketId = await openTicket(userId)
+    await query("update ad_views set created_at=now()-interval '31 seconds' where id=$1", [
+      ticketId,
+    ])
 
     expect(await claimAdTicket(userId, ticketId)).toEqual({
       ok: false,
       reason: 'awaiting_verification',
     })
+    expect((await readAdView(ticketId)).client_claimed_at).not.toBeNull()
     expect((await readAdsState(userId)).pass).toBeNull()
 
     expect(await postback(ticketId, 'event_type=impression&reward_event_type=yes')).toBe('granted')
 
     expect(await claimAdTicket(userId, ticketId)).toMatchObject({ ok: true })
     expect((await readAdsState(userId)).pass).not.toBeNull()
-    expect((await readAdView(ticketId)).state).toBe('ready')
+    expect(await readAdView(ticketId)).toMatchObject({ state: 'ready' })
+  })
+
+  it('mencatat postback cepat tanpa menerbitkan pass sebelum klaim klien', async () => {
+    withConfig({ adsPostbackRequired: 1, adsMinWatchSeconds: 30 })
+    const { claimAdTicket, readAdsState } = await import('./ads')
+    const userId = await makeUser(0)
+    const ticketId = await openTicket(userId)
+
+    expect(await postback(ticketId, 'event_type=impression&reward_event_type=yes')).toBe(
+      'awaiting_claim',
+    )
+    expect(await readAdView(ticketId)).toMatchObject({
+      state: 'pending',
+      client_claimed_at: null,
+    })
+    expect((await readAdView(ticketId)).verified_at).not.toBeNull()
+    expect((await readAdsState(userId)).pass).toBeNull()
+
+    expect(await claimAdTicket(userId, ticketId)).toEqual({
+      ok: false,
+      reason: 'watch_too_short',
+    })
+    expect((await readAdView(ticketId)).state).toBe('expired')
+  })
+
+  it('menerbitkan pass saat postback datang sebelum klaim yang cukup lama', async () => {
+    withConfig({ adsPostbackRequired: 1, adsMinWatchSeconds: 30 })
+    const { query } = await import('../platform/db')
+    const { claimAdTicket } = await import('./ads')
+    const userId = await makeUser(0)
+    const ticketId = await openTicket(userId)
+
+    expect(await postback(ticketId, 'event_type=impression&reward_event_type=yes')).toBe(
+      'awaiting_claim',
+    )
+    await query("update ad_views set created_at=now()-interval '31 seconds' where id=$1", [
+      ticketId,
+    ])
+
+    expect(await claimAdTicket(userId, ticketId)).toMatchObject({ ok: true })
+    expect(await readAdView(ticketId)).toMatchObject({ state: 'ready' })
   })
 
   it('menolak tayangan yang tidak dibayar penyedia — celah "tap iklan lalu back"', async () => {
@@ -484,9 +536,14 @@ describe('ADS-DB-12 — tiket hanya terbit setelah Monetag mengonfirmasi tayanga
   it('idempoten terhadap kiriman ulang', async () => {
     withConfig({ adsPostbackRequired: 1 })
     const { query } = await import('../platform/db')
+    const { claimAdTicket } = await import('./ads')
     const userId = await makeUser(0)
     const ticketId = await openTicket(userId)
 
+    expect(await claimAdTicket(userId, ticketId)).toEqual({
+      ok: false,
+      reason: 'awaiting_verification',
+    })
     expect(await postback(ticketId, 'event_type=impression&reward_event_type=yes')).toBe('granted')
     const first = await query<{ verified_at: Date; verify_event: string }>(
       'select verified_at, verify_event from ad_views where id=$1',
@@ -663,21 +720,18 @@ describe('ADS-DB-14 — dua penerbit pass tidak boleh saling menuduh', () => {
     return rows.map((row) => row.signal)
   }
 
-  /** `settleAdPostback` menerbitkan pass TANPA memeriksa `adsPostbackRequired`, jadi begitu URL
-   *  postback tertempel di dashboard ia berlomba dengan klaim yang berangkat dari perangkat user
-   *  — keduanya dipicu momen yang sama. Selama gerbangnya masih mati (bawaan, dan justru keadaan
-   *  yang dipakai membuktikan postback bekerja sebelum dinyalakan), jalur klaim lama membaca
-   *  baris 'ready' sebagai tiket karangan: user membaca "tiket tidak ketemu" untuk tiket yang
-   *  baru saja masuk, dan namanya ikut tercatat di `fraud_signals` — skor yang dibaca admin
-   *  tepat sebelum mentransfer uang. */
-  it('menyerahkan passnya saat postback menang balapan, tanpa menuduh siapa pun', async () => {
+  /** Postback dan klaim bisa tiba dalam urutan apa pun. Bahkan saat gerbangnya mati, postback
+   *  tidak lagi menerbitkan pass sendirian; ia menunggu bukti klien. Klaim yang menyusul tetap
+   *  mengenali tiket sah itu dan tidak menulis sinyal pemalsuan. */
+  it('menyerahkan passnya saat postback datang lebih dulu, tanpa menuduh siapa pun', async () => {
     withConfig({ adsPostbackRequired: 0 })
     const { claimAdTicket, openAdTicket } = await import('./ads')
     const userId = await makeUser(0)
     const opened = await openAdTicket(userId)
     if (!opened.ok) throw new Error(`tiket ditolak: ${opened.reason}`)
 
-    expect(await postback(opened.ticketId)).toBe('granted')
+    expect(await postback(opened.ticketId)).toBe('awaiting_claim')
+    expect((await readAdView(opened.ticketId)).state).toBe('pending')
 
     const claimed = await claimAdTicket(userId, opened.ticketId)
     expect(claimed.ok).toBe(true)
@@ -700,14 +754,10 @@ describe('ADS-DB-14 — dua penerbit pass tidak boleh saling menuduh', () => {
     expect(await forgerySignals(userId)).toEqual([])
   })
 
-  /** Kembaran `ADS-DB-13` untuk jalur postback: penjagaan slot `ad_views_one_ready` di sana
-   *  disalin dari `restoreAdPass`, jadi ia menanggung cacat yang sama. Bedanya di sini lebih
-   *  mahal — route menjawab 200 sehingga Monetag berhenti mengulang, dan saat gerbangnya
-   *  menyala tidak ada jalur lain yang bisa menyusul menerbitkan passnya. */
-  /** Kembaran `ADS-DB-13` untuk jalur postback: penjagaan slot `ad_views_one_ready` di sana
-   *  disalin dari `restoreAdPass`, jadi ia menanggung cacat yang sama. Bedanya di sini lebih
-   *  mahal — route menjawab 200 sehingga Monetag berhenti mengulang, dan saat gerbangnya
-   *  menyala tidak ada jalur lain yang bisa menyusul menerbitkan passnya.
+  /** Kembaran `ADS-DB-13` untuk jalur postback: tiket yang sudah punya dua bukti tetap tidak
+   *  boleh kalah oleh slot `ad_views_one_ready` yang sebenarnya sudah kedaluwarsa. Postback
+   *  adalah request yang memegang kunci saat bukti terakhir tiba, jadi ia menyapu slot mati
+   *  sebelum mencoba promosi.
    *
    *  Pass mati itu lahir dari `restoreAdPass`, yang mengembalikan pass memakai tenggat ASLINYA
    *  (`ADS-DB-9`). Jadi pass yang tinggal semenit bisa dihidupkan lagi, lalu mati, sementara
@@ -716,7 +766,7 @@ describe('ADS-DB-14 — dua penerbit pass tidak boleh saling menuduh', () => {
   it('menyapu pass mati lebih dulu supaya konfirmasi Monetag tidak berakhir sebagai noted', async () => {
     withConfig({ adsPostbackRequired: 0 })
     const { query, transaction } = await import('../platform/db')
-    const { openAdTicket } = await import('./ads')
+    const { claimAdTicket, openAdTicket } = await import('./ads')
     const { issueChallenge, startChallenge } = await import('../task/challenge')
     const { refundEntry } = await import('../economy/energy')
     const userId = await makeUser(5)
@@ -739,6 +789,10 @@ describe('ADS-DB-14 — dua penerbit pass tidak boleh saling menuduh', () => {
     expect((await readAdView(stale)).state).toBe('ready')
 
     withConfig({ adsPostbackRequired: 1 })
+    expect(await claimAdTicket(userId, opened.ticketId)).toEqual({
+      ok: false,
+      reason: 'awaiting_verification',
+    })
     expect(await postback(opened.ticketId)).toBe('granted')
     expect((await readAdView(stale)).state).toBe('expired')
     expect((await readAdView(opened.ticketId)).state).toBe('ready')
@@ -759,9 +813,11 @@ describe('ADS-DB-15 — tiket tidak terbit untuk tontonan yang terlalu pendek', 
    *  `ad_claim_too_fast` sudah menangkapnya sejak dulu, tapi cuma menulis baris lalu
    *  menerbitkan tiketnya. Sekarang ia menolak — dan penjagaan ini berdiri sendiri, tidak
    *  menanyakan apa pun ke penyedia iklan. */
-  it('menolak klaimnya, tetap mencatat sinyalnya, dan tidak meninggalkan pass', async () => {
-    withConfig({ adsMinWatchSeconds: 30 })
+  it('membatalkan klaim cepat sehingga menunggu atau menerima postback tetap tidak meloloskannya', async () => {
+    withConfig({ adsMinWatchSeconds: 30, adsPostbackRequired: 1 })
+    const { parseAdPostback } = await import('@/domain/ads/postback')
     const { claimAdTicket, openAdTicket, readAdsState } = await import('./ads')
+    const { settleAdPostback } = await import('./postback')
     const userId = await makeUser(0)
 
     const opened = await openAdTicket(userId)
@@ -771,9 +827,28 @@ describe('ADS-DB-15 — tiket tidak terbit untuk tontonan yang terlalu pendek', 
       ok: false,
       reason: 'watch_too_short',
     })
-    expect((await readAdView(opened.ticketId)).state).toBe('pending')
+    expect(await readAdView(opened.ticketId)).toMatchObject({
+      state: 'expired',
+      client_claimed_at: null,
+    })
     expect((await readAdsState(userId)).pass).toBeNull()
     expect(await readSignals(userId)).toEqual(['ad_claim_too_fast'])
+
+    expect(await claimAdTicket(userId, opened.ticketId)).toEqual({
+      ok: false,
+      reason: 'no_ticket',
+    })
+    expect(
+      await settleAdPostback(
+        parseAdPostback(
+          new URLSearchParams(
+            `ymid=${opened.ticketId}&event_type=impression&reward_event_type=yes`,
+          ),
+        ),
+      ),
+    ).toBe('noted')
+    expect((await readAdView(opened.ticketId)).state).toBe('expired')
+    expect((await readAdsState(userId)).pass).toBeNull()
   })
 
   /** Tanpa pass, ongkos masuk iklan tidak bisa dibayar — jadi task-nya memang tidak terbuka.

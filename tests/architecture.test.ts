@@ -156,4 +156,11 @@ describe('batas arsitektur', () => {
 
     expect(violations, violations.join('\n')).toEqual([])
   })
+
+  it('mengecualikan PGlite dari trace semua Function produksi', async () => {
+    const config = await readFile(path.join(ROOT, 'next.config.mjs'), 'utf8')
+
+    expect(config).toContain("outputFileTracingExcludes: { '/*': ['**/@electric-sql/pglite*'] }")
+    expect(config).not.toContain("outputFileTracingExcludes: { '**/*':")
+  })
 })

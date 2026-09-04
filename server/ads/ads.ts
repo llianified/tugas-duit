@@ -212,27 +212,7 @@ export type ClaimTicketResult =
 const CLAIM_BURST_WINDOW_MINUTES = 10
 const CLAIM_BURST_THRESHOLD = 5
 
-/** Gerbang postback menyala: klien tidak lagi menerbitkan pass, ia hanya bertanya apakah Monetag sudah mengonfirmasi tayangannya. Yang menerbitkan `settleAdPostback`, jadi jalur ini murni baca. | Sinyal `ad_claim_too_fast` dan `ad_claim_burst` sengaja tidak dipasang di sini: keduanya mengukur kecurigaan pada klaim yang dipercaya, dan di mode ini klaim tidak memberi apa pun. Yang tersisa cuma `ad_claim_without_ticket`, karena menanyakan tiket yang tidak pernah ada tetap berarti ada yang mengarang ticketId. */
-async function readVerifiedClaim(userId: number, ticketId: string): Promise<ClaimTicketResult> {
-  const rows = await query<{ state: string; expires_at: Date; now: Date }>(
-    'select state, expires_at, now() as now from ad_views where id=$1 and user_id=$2',
-    [ticketId, userId],
-  )
-  const row = rows[0]
-  if (!row) {
-    await transaction((tx) =>
-      recordAdClaimSignal(tx, userId, 'ad_claim_without_ticket', { ticketId, gated: true }),
-    )
-    return { ok: false, reason: 'no_ticket' }
-  }
-  if (row.state === 'ready') return { ok: true, pass: { expiresAt: row.expires_at.getTime() } }
-  /** Baris yang sudah `consumed` atau `expired` bukan tiket karangan — ia tiket yang riwayatnya sudah lewat, jadi tidak menerbitkan sinyal fraud. */
-  if (row.state !== 'pending') return { ok: false, reason: 'no_ticket' }
-  if (row.expires_at.getTime() <= row.now.getTime())
-    return { ok: false, reason: 'ticket_expired' }
-  return { ok: false, reason: 'awaiting_verification' }
-}
-
+/** Klaim dari klien dan postback adalah dua bukti yang berbeda: Promise SDK membuktikan pemutar selesai di perangkat, sedangkan postback membuktikan tayangannya dibayar penyedia. Saat gerbang postback aktif, tiket baru boleh menjadi pass setelah KEDUANYA tercatat. Seluruh keputusan dikunci pada baris tiket yang sama supaya urutan kedatangan dua request tidak membuka celah balapan. */
 export async function claimAdTicket(userId: number, ticketId: string): Promise<ClaimTicketResult> {
   if (!ticketId || !isTicketId(ticketId)) {
     await transaction((tx) =>
@@ -241,11 +221,17 @@ export async function claimAdTicket(userId: number, ticketId: string): Promise<C
     return { ok: false, reason: 'no_ticket' }
   }
 
-  if (adsPostbackRequired()) return readVerifiedClaim(userId, ticketId)
-
   return transaction(async (tx) => {
-    const locked = await tx.query<{ state: string; created_at: Date; expires_at: Date; now: Date }>(
-      'select state, created_at, expires_at, now() as now from ad_views where id=$1 and user_id=$2 for update',
+    const locked = await tx.query<{
+      state: string
+      created_at: Date
+      expires_at: Date
+      client_claimed_at: Date | null
+      verified_at: Date | null
+      now: Date
+    }>(
+      `select state, created_at, expires_at, client_claimed_at, verified_at, now() as now
+         from ad_views where id=$1 and user_id=$2 for update`,
       [ticketId, userId],
     )
     const row = locked.rows[0]
@@ -253,7 +239,6 @@ export async function claimAdTicket(userId: number, ticketId: string): Promise<C
       await recordAdClaimSignal(tx, userId, 'ad_claim_without_ticket', { ticketId, state: null })
       return { ok: false as const, reason: 'no_ticket' as const }
     }
-    /** Klasifikasinya dikembarkan dengan `readVerifiedClaim` di atas, dan itu bukan kerapian: sejak `settleAdPostback` bisa menerbitkan pass sendiri — dan ia jalan TANPA memeriksa `adsPostbackRequired` — baris 'ready' milik user ini berarti Monetag mengonfirmasi lebih dulu daripada klaim yang berangkat dari perangkatnya. Keduanya berangkat pada momen yang sama, jadi siapa yang menang murni balapan. Menjawabnya `no_ticket` membuat user membaca "tiket iklan tidak ketemu" tepat setelah menonton iklan penuh, sementara passnya justru sudah siap — dan menuliskan sinyal fraud atas orang yang tidak melakukan apa pun. Sinyal itu masuk `sum(f.severity)` yang jadi skor risiko di antrean payout, yaitu angka yang dibaca admin tepat sebelum mentransfer uang. */
     if (row.state === 'ready') {
       return { ok: true as const, pass: { expiresAt: row.expires_at.getTime() } }
     }
@@ -262,17 +247,34 @@ export async function claimAdTicket(userId: number, ticketId: string): Promise<C
 
     const now = row.now.getTime()
     if (row.expires_at.getTime() <= now) {
-      await tx.query('update ad_views set state=$2 where id=$1', [ticketId, 'expired'])
+      await tx.query("update ad_views set state='expired' where id=$1 and state='pending'", [
+        ticketId,
+      ])
       return { ok: false as const, reason: 'ticket_expired' as const }
     }
-    /** Dari mencatat jadi MENOLAK. Sinyalnya tetap ditulis — pola berulang tetap perlu terbaca admin — tapi tiketnya tidak lagi terbit. Ini penjaga yang berdiri sendiri: ia tidak menanyakan apa pun ke penyedia iklan, jadi ia tetap berlaku saat gerbang postback masih mati DAN saat penyedia ternyata membayar klik yang langsung ditutup. Diukur dari `created_at` (jam Postgres saat tiket dibuka) sampai `now()`, jadi satu-satunya cara melewatinya adalah benar-benar menunggu. */
-    if (adWatchTooShort(row.created_at.getTime(), now)) {
+
+    /** Hanya klaim pertama yang dinilai durasinya. Begitu satu klaim sah sudah menulis `client_claimed_at`, polling berikutnya tidak boleh dibatalkan hanya karena admin mengubah setelan minimum watch di tengah penantian postback. Klaim terlalu cepat langsung menghanguskan tiket: menutup iklan, menunggu, lalu mengirim ulang ticketId yang sama tidak akan pernah berubah menjadi pass. */
+    if (!row.client_claimed_at && adWatchTooShort(row.created_at.getTime(), now)) {
       await recordAdClaimSignal(tx, userId, 'ad_claim_too_fast', {
         ticketId,
         watchedMs: adWatchedMs(row.created_at.getTime(), now),
         minimumMs: adsMinWatchSeconds() * 1_000,
       })
+      await tx.query("update ad_views set state='expired' where id=$1 and state='pending'", [
+        ticketId,
+      ])
       return { ok: false as const, reason: 'watch_too_short' as const }
+    }
+
+    /** Simpan bukti klien memakai jam server. Pada mode postback wajib, baris tetap pending sampai bukti Monetag juga ada; `settleAdPostback` akan mempromosikannya jika ia datang belakangan. */
+    if (!row.client_claimed_at) {
+      await tx.query(
+        'update ad_views set client_claimed_at=now() where id=$1 and client_claimed_at is null',
+        [ticketId],
+      )
+    }
+    if (adsPostbackRequired() && !row.verified_at) {
+      return { ok: false as const, reason: 'awaiting_verification' as const }
     }
 
     const burst = await tx.query<{ recent: number }>(
@@ -291,12 +293,13 @@ export async function claimAdTicket(userId: number, ticketId: string): Promise<C
       const claimed = await tx.query<{ expires_at: Date }>(
         `update ad_views
            set state='ready', ready_at=now(), expires_at=now()+($3::int * interval '1 minute')
-         where id=$1 and user_id=$2 and state='pending'
+         where id=$1 and user_id=$2 and state='pending' and client_claimed_at is not null
+           and ($4::boolean = false or verified_at is not null)
          returning expires_at`,
-        [ticketId, userId, economyConfig().adsPassTtlMinutes],
+        [ticketId, userId, economyConfig().adsPassTtlMinutes, adsPostbackRequired()],
       )
       const updated = claimed.rows[0]
-      if (!updated) return { ok: false as const, reason: 'no_ticket' as const }
+      if (!updated) return { ok: false as const, reason: 'awaiting_verification' as const }
       return { ok: true as const, pass: { expiresAt: updated.expires_at.getTime() } }
     } catch (error) {
       if ((error as { code?: string }).code !== PG_UNIQUE_VIOLATION) throw error

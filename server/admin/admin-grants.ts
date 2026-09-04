@@ -36,8 +36,14 @@ export type AdminActionKind =
   | 'notifications_unmute'
   | 'notifications_mute'
   | 'channel_gate_reset'
+  /** Jalur identitas dan akses (`admin-users.ts`). Ledger mencatat uang dan `economy_config_audit` mencatat besaran; sebelum ini justru eskalasi hak — aksi paling sensitif di seluruh panel — yang tidak meninggalkan apa pun selain `users.updated_at`, sehingga sesudah insiden tidak ada cara menjawab "kapan akun ini jadi admin, dan atas perintah siapa". */
+  | 'admin_grant'
+  | 'admin_revoke'
+  | 'suspend'
+  | 'restore'
+  | 'profile_override'
 
-async function recordAdminAction(
+export async function recordAdminAction(
   tx: PoolClient,
   input: {
     adminId: number

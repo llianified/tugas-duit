@@ -84,6 +84,12 @@ describe('default config', () => {
     }
   })
 
+  /** ECONCFG-ARCADE-DEFAULT. `ARCADE-1` hanya menguji perilaku saat saklarnya DIMATIKAN — ia tidak pernah memeriksa nilai bawaannya, padahal `docs/keputusan-desain.md` sempat menyandarkan seluruh alasannya di situ. Asersi ini yang membuat pergeseran saklarnya terbaca sebagai keputusan ekonomi, bukan sebagai baris yang berubah diam-diam: Arena mengisi ulang kolam yang sudah habis, jadi menyalakannya menggeser plafon penghasilan per akun yang mendasari harga premium di migrasi `0027`. */
+  it('menyatakan saklar Arena secara eksplisit, karena ia menggeser plafon penghasilan', () => {
+    expect(DEFAULT_ECONOMY_CONFIG.arcadeEnabled).toBe(1)
+    expect(HISTORIC.arcadeEnabled).toBe(DEFAULT_ECONOMY_CONFIG.arcadeEnabled)
+  })
+
   it('arah risiko sejalan dengan kalimat dampaknya', () => {
     const menyimpang = ECONOMY_FIELDS.filter((field) => {
       if (field.riskyWhen === 'never') return false

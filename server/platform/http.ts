@@ -1,5 +1,6 @@
 import { env } from './env'
 import { BannedError, UnauthorizedError } from '../auth/session'
+import { RateLimitedError } from './ratelimit'
 
 export function apiError(code: string, message: string, status: number, fields?: Record<string, string | null>) {
   return Response.json(
@@ -69,10 +70,16 @@ export function rateLimited(retryAfter: number): Response {
 
 const IP_SHAPE = /^(?:\d{1,3}(?:\.\d{1,3}){3}|[0-9a-f:]{2,45})$/i
 
+/** Yang dipercaya adalah header yang DITULIS platform, bukan yang dikirim pemanggil.
+ * `x-vercel-forwarded-for` diisi Vercel sendiri dan tidak bisa dikarang klien, jadi ia dibaca
+ * lebih dulu. `x-forwarded-for` baru dipakai sebagai cadangan — dan entri paling kirinya adalah
+ * nilai yang benar HANYA selama proxy di depan menimpanya, seperti yang Vercel lakukan; di
+ * belakang proxy yang menambahkan alih-alih menimpa, nilai itu berasal dari klien. Plafon
+ * per-IP di `/api/auth/telegram` dan `/api/admin/login` bersandar pada asumsi ini. */
 export function clientIp(request: Request): string {
-  const forwarded = request.headers.get('x-forwarded-for')
-  const first = forwarded?.split(',')[0]?.trim()
-  const candidate = first || request.headers.get('x-real-ip')?.trim() || ''
+  const platform = request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim()
+  const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+  const candidate = platform || forwarded || request.headers.get('x-real-ip')?.trim() || ''
   if (!candidate) return 'unknown'
   return IP_SHAPE.test(candidate) ? candidate.toLowerCase() : 'malformed'
 }
@@ -80,6 +87,7 @@ export function clientIp(request: Request): string {
 export function handleRouteError(error: unknown): Response {
   if (error instanceof UnauthorizedError) return apiError('UNAUTHORIZED', 'Kamu perlu masuk lagi ya.', 401)
   if (error instanceof BannedError) return apiError('ACCOUNT_SUSPENDED', 'Akun kamu lagi dibekukan.', 403)
+  if (error instanceof RateLimitedError) return rateLimited(error.retryAfter)
   console.error('[api] error tak tertangani:', error)
   return apiError('INTERNAL', 'Ada yang error. Coba lagi ya.', 500)
 }

@@ -1,5 +1,5 @@
 import { query } from '../platform/db'
-import { requireAdmin } from '../auth/session'
+import { requireAdminRead } from '../auth/session'
 
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
 
@@ -30,7 +30,7 @@ export interface AdminDashboard {
 }
 
 export async function readAdminDashboard(): Promise<AdminDashboard> {
-  await requireAdmin()
+  await requireAdminRead()
 
   const rows = await query<Record<string, string>>(
     `select
@@ -138,7 +138,7 @@ export interface AdminActivityEntry {
 }
 
 export async function readAdminActivity(limit = 25): Promise<AdminActivityEntry[]> {
-  await requireAdmin()
+  await requireAdminRead()
 
   const rows = await query<{
     kind: AdminActivityEntry['kind']

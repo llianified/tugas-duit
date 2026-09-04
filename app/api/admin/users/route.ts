@@ -1,5 +1,5 @@
 import { searchAdminUsers } from '@/server/admin/admin-users'
-import { handleRouteError, rateLimited } from '@/server/platform/http'
+import { assertNotCrossSite, handleRouteError, rateLimited } from '@/server/platform/http'
 import { checkRateLimit } from '@/server/platform/ratelimit'
 import { requireUser } from '@/server/auth/session'
 
@@ -7,6 +7,8 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
+  const crossSite = assertNotCrossSite(request)
+  if (crossSite) return crossSite
   try {
     const admin = await requireUser()
     if (!admin.isAdmin) return new Response(null, { status: 404 })

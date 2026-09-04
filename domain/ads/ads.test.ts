@@ -28,7 +28,7 @@ const state = (patch: Partial<Parameters<typeof adOpenRefusal>[0]> = {}) => ({
 })
 
 describe('ADS-0 — konfigurasi provider rewarded', () => {
-  /** Zone ini menamai fungsi global yang dipanggil klien (`show_<zone>`), dipasang script tag di `app/layout.tsx`, dan tersimpan sebagai `ad_views.block_id`. Tiga tempat, satu angka — dipatok di sini supaya penggantiannya tidak pernah setengah jalan. */
+  /** Zone ini menamai fungsi global yang dipanggil klien (`show_<zone>`), dipasang script tag di `app/(miniapp)/layout.tsx`, dan tersimpan sebagai `ad_views.block_id`. Tiga tempat, satu angka — dipatok di sini supaya penggantiannya tidak pernah setengah jalan. */
   it('memakai zone Monetag yang disetujui untuk rewarded maupun in-app', () => {
     expect(MONETAG_DEFAULT_ZONE_ID).toBe('11615417')
     expect(monetagSdkName(MONETAG_DEFAULT_ZONE_ID)).toBe('show_11615417')

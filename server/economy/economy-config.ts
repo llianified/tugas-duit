@@ -9,7 +9,7 @@ import {
 } from '@/domain/economy/economy-config'
 import { query, transaction } from '../platform/db'
 import { env } from '../platform/env'
-import { requireAdmin } from '../auth/session'
+import { requireAdminRead } from '../auth/session'
 
 const CACHE_TTL_MS = 30_000
 
@@ -74,7 +74,7 @@ export interface EconomyConfigSnapshot {
 }
 
 export async function readEconomyConfigSnapshot(): Promise<EconomyConfigSnapshot> {
-  await requireAdmin()
+  await requireAdminRead()
   const rows = await query<StoredRow>(
     'select config, version, updated_at, updated_by from economy_config where id=1',
   )
@@ -176,7 +176,7 @@ export interface EconomyAuditEntry {
 }
 
 export async function readEconomyAudit(limit = 50): Promise<EconomyAuditEntry[]> {
-  await requireAdmin()
+  await requireAdminRead()
   const rows = await query<{
     field: string
     old_value: string

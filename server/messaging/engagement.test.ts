@@ -311,3 +311,35 @@ describe('ENG-10 — kebijakan pemuatan config sama dengan jalur request', () =>
     }
   })
 })
+
+/** P2-04: kueri kandidat pernah tanpa `limit` dan tanpa `order by`. Tanpa `limit` ia melewati `maxDuration = 60` begitu basis user tumbuh, dan lambda dibunuh sebelum satu pesan pun terkirim — sementara `runMaintenance` tetap melaporkan sukses. Tanpa `order by` himpunan yang dilayani ditentukan urutan pemindaian Postgres, jadi user yang sama tidak pernah kebagian. Keduanya tidak terlihat dari hasil test mana pun: yang bisa menahannya cuma membaca kueri itu sendiri. */
+describe('ENG-11 — kueri kandidat berbatas dan berurutan', () => {
+  it('membawa limit dan order by', async () => {
+    const { readFile } = await import('node:fs/promises')
+    const path = await import('node:path')
+    const source = await readFile(
+      path.join(process.cwd(), 'server/messaging/engagement.ts'),
+      'utf8',
+    )
+    const sql = /const CANDIDATE_SQL = `([\s\S]*?)`/.exec(source)?.[1] ?? ''
+
+    expect(sql).not.toBe('')
+    expect(sql).toMatch(/\border by\b/)
+    expect(sql).toMatch(/\blimit \$1\b/)
+  })
+
+  it('membayar subquery mahalnya hanya untuk kandidat yang sudah dipotong', async () => {
+    const { readFile } = await import('node:fs/promises')
+    const path = await import('node:path')
+    const source = await readFile(
+      path.join(process.cwd(), 'server/messaging/engagement.ts'),
+      'utf8',
+    )
+    const sql = /const CANDIDATE_SQL = `([\s\S]*?)`/.exec(source)?.[1] ?? ''
+    const setelahPotong = sql.slice(sql.indexOf('limit $1'))
+
+    // Seluruh subquery berkorelasi berdiri di atas `picked`, bukan di atas `users`.
+    expect(setelahPotong).toMatch(/from picked p/)
+    expect(setelahPotong).not.toMatch(/tc\.user_id=u\.id/)
+  })
+})

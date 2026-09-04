@@ -7,7 +7,7 @@ Telegram Mini App: user mengerjakan captcha → dapat credit → bisa ditarik ja
 
 | Path | Isi |
 | --- | --- |
-| `app/` | Route Next.js (App Router). `app/api/*` handler, `app/admin/*` panel admin. |
+| `app/` | Route Next.js (App Router). `app/(miniapp)/*` Mini App, `app/(admin)/admin/*` panel admin (root layout terpisah — lihat `proxy.ts`), `app/api/*` handler. |
 | `domain/` | Aturan dan tipe bisnis murni tanpa I/O: ekonomi, challenge, progression, statistik, referral, dan penarikan. |
 | `server/` | Akses DB dan orkestrasi server: ledger, payout, quota, challenge, session, fraud, serta integrasi eksternal. |
 | `features/` | UI per fitur: `captcha`, `home`, `history`, `stats`, `referral`, `withdraw`, `leaderboard`, `ads`. |
@@ -38,8 +38,8 @@ Lihat `.env.example` untuk daftar lengkap env var.
 - **Jangan pernah menyarankan instal Postgres/Docker/DB lain.** Kalau perlu `DATABASE_URL` untuk
   kerja dengan data/skema asli, langsung minta connection string Neon ke user — jangan tawarkan
   alternatif.
-- Tanpa `DATABASE_URL` di env, `server/db.ts` otomatis jatuh ke PGlite in-process
-  (`server/preview-db.ts`) untuk dev — ini sudah berjalan tanpa setup apa pun, bukan sesuatu
+- Tanpa `DATABASE_URL` di env, `server/platform/db.ts` otomatis jatuh ke PGlite in-process
+  (`server/platform/preview-db.ts`) untuk dev — ini sudah berjalan tanpa setup apa pun, bukan sesuatu
   yang perlu "diinstal" atau "disiapkan".
 - **Dua connection string, dua keperluan.** Runtime memakai endpoint *pooled* (`-pooler`);
   `pnpm db:migrate` memakai endpoint *langsung* lewat `DATABASE_URL_UNPOOLED`, karena
@@ -57,16 +57,16 @@ Lihat `.env.example` untuk daftar lengkap env var.
   lama — akan mematahkan deploy yang sedang berjalan di jendela itu, jadi pecah dua:
   tambah dulu, hapus di deploy berikutnya. Rollback deploy juga tidak me-rollback DB.
 - **Pekerjaan terjadwal lewat HTTP**, bukan proses terpisah: `app/api/cron/maintenance`,
-  dijaga `CRON_SECRET`, isinya `server/maintenance.ts`. `pnpm db:cleanup` menjalankan hal yang
+  dijaga `CRON_SECRET`, isinya `server/ops/maintenance.ts`. `pnpm db:cleanup` menjalankan hal yang
   persis sama dari CLI. Jadwalnya di `vercel.json` dan harus jatuh di dalam jam kirim
-  notifikasi (08:00–20:00 WIB, `server/engagement.ts`) — di luar itu pesan bot tidak terkirim
+  notifikasi (08:00–20:00 WIB, `server/messaging/engagement.ts`) — di luar itu pesan bot tidak terkirim
   sama sekali.
 
 ## Aturan keras
 
 1. **Setiap perubahan wajib dikonfirmasi pemilik repo dulu**, beserta alasan dan efeknya.
    Perubahan di luar rencana yang sudah disetujui ditanyakan terpisah, bukan diselipkan.
-2. **Jangan ubah angka ekonomi di kode.** Semua besaran datang dari `domain/economy-config.ts`,
+2. **Jangan ubah angka ekonomi di kode.** Semua besaran datang dari `domain/economy/economy-config.ts`,
    dipasang dari DB di server dan dari payload `/api/session` di klien. Menyetel ekonomi =
    lewat panel admin, bukan deploy.
 3. **Konversi credit → Rupiah hanya lewat `creditsToRupiah`.** Komponen tidak pernah
@@ -92,4 +92,4 @@ Lihat `.env.example` untuk daftar lengkap env var.
   `app/globals.css` — bukan dead code meski tak pernah diimpor dari `.ts`.
 - Ikon: SVG Tabler yang disalin manual ke `shared/components/glyph.tsx`. Tidak pakai `lucide`.
 - `next-env.d.ts` dan `*.tsbuildinfo` di-generate ulang, sudah di-gitignore.
-- Preview lokal tanpa Postgres memakai PGlite (`server/preview-db.ts`).
+- Preview lokal tanpa Postgres memakai PGlite (`server/platform/preview-db.ts`).

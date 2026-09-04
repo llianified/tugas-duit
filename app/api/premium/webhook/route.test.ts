@@ -41,17 +41,27 @@ describe('POST /api/premium/webhook', () => {
     expect(mocks.settlePremiumPayment).not.toHaveBeenCalled()
   })
 
-  it('mengembalikan 401 hanya untuk signature order yang salah', async () => {
+  /** P3-01. Balasan untuk signature yang salah harus SAMA dengan balasan untuk order yang tidak dikenal. `bad_signature` cuma mungkin terjadi kalau ordernya ada dan belum lunas, jadi status yang berbeda untuk kasus itu adalah oracle keberadaan — persis yang komentar di route-nya menjanjikan tidak ada. */
+  it('tidak membocorkan keberadaan order lewat status signature yang salah', async () => {
     mocks.webhookStatusIsPaid.mockReturnValue(true)
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    const kirim = async () =>
+      POST(
+        new Request('https://app.example/api/premium/webhook', {
+          method: 'POST',
+          body: JSON.stringify({ order_id: 'order-1', status: 'paid', signature: 'salah' }),
+        }),
+      )
+
     mocks.settlePremiumPayment.mockResolvedValue({ settled: false, reason: 'bad_signature' })
+    const adaTapiSalah = await kirim()
 
-    const response = await POST(
-      new Request('https://app.example/api/premium/webhook', {
-        method: 'POST',
-        body: JSON.stringify({ order_id: 'order-1', status: 'paid', signature: 'salah' }),
-      }),
-    )
+    mocks.settlePremiumPayment.mockResolvedValue({ settled: false, reason: 'not_found' })
+    const tidakAda = await kirim()
 
-    expect(response.status).toBe(401)
+    expect(adaTapiSalah.status).toBe(200)
+    expect(adaTapiSalah.status).toBe(tidakAda.status)
+    await expect(adaTapiSalah.json()).resolves.toEqual(await tidakAda.json())
   })
 })

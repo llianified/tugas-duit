@@ -10,7 +10,7 @@ import { readEnergy } from '@/server/economy/energy'
 import { env } from '@/server/platform/env'
 import { klikqrisConfigured } from '@/server/integrations/klikqris'
 import { readPendingInvoice } from '@/server/premium/premium-payment'
-import { assertSameOrigin, clientIp, handleRouteError, rateLimited } from '@/server/platform/http'
+import { assertNotCrossSite, assertSameOrigin, clientIp, handleRouteError, rateLimited } from '@/server/platform/http'
 import { readRewardPool } from '@/server/economy/reward-pool'
 import { checkRateLimit } from '@/server/platform/ratelimit'
 import { destroySession, getSessionUser } from '@/server/auth/session'
@@ -24,6 +24,8 @@ const BREAKDOWN_SQL = `select coalesce(sum(amount) filter(where kind='task'),0) 
   from credit_ledger where user_id=$1`
 
 export async function GET(request: Request) {
+  const crossSite = assertNotCrossSite(request)
+  if (crossSite) return crossSite
   try {
     await loadEconomyConfig()
     const user = await getSessionUser()

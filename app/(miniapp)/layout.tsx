@@ -6,7 +6,7 @@ import { Geist, Plus_Jakarta_Sans } from 'next/font/google'
 import Script from 'next/script'
 import { MONETAG_DEFAULT_ZONE_ID, monetagSdkName } from '@/domain/ads/ads'
 import { ADS_HINT_INIT_SCRIPT } from '@/shell/ads-hint'
-import './globals.css'
+import '../globals.css'
 
 const geistSans = Geist({
   subsets: ['latin'],

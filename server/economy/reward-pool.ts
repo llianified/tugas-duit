@@ -7,6 +7,7 @@ import {
   type RewardPoolSnapshot,
   type RewardPoolState,
 } from '@/domain/economy/reward-pool'
+import { economyConfig, rankMinTasks } from '@/domain/economy/economy-config'
 import { isPremiumActive } from '@/domain/economy/premium'
 import { getRank } from '@/domain/progression/progression'
 import { query } from '../platform/db'
@@ -24,10 +25,13 @@ type PoolRow = {
 const POOL_SELECT =
   'select reward_pool, reward_pool_updated_at, premium_until, now() as now from users where id=$1'
 
-/** Kapasitas dibaca terpisah dari stoknya karena ia bukan milik user, melainkan turunan rank dan streak. Dua query, bukan satu: baris `users` perlu dikunci `for update` saat belanja, dan `for update` tidak bisa hidup satu query dengan agregat penghitung rank. */
+/** Kapasitas dibaca terpisah dari stoknya karena ia bukan milik user, melainkan turunan rank dan streak. Dua query, bukan satu: baris `users` perlu dikunci `for update` saat belanja, dan `for update` tidak bisa hidup satu query dengan agregat penghitung rank.
+ *
+ * Kedua turunannya DIBATASI, dan batasnya tidak mengubah satu pun hasil. Bonus streak jenuh di `maxStreakCapBonus` begitu rentetannya melewati `maxStreakCapBonus x streakCapStepDays` hari, jadi hari aktif di luar jendela itu tidak bisa lagi menggeser kapasitas — dan rank berhenti naik di ambang tier tertinggi, jadi menghitung completion melebihi ambang itu hanya membeli angka yang dibuang `getRank`. Tanpa batas ini biaya keduanya adalah seluruh umur akun, dibayar di setiap `/api/session`, `task/start`, dan `task/submit`: user paling setia justru yang merasakan aplikasi paling lambat. `$2` dan `$3` datang dari `economy_config`, bukan konstanta — plafonnya ikut bergeser kalau angkanya disetel dari panel. */
 const CAPACITY_SQL = `with active_days as (
     select distinct (completed_at at time zone 'Asia/Jakarta')::date as day
-      from task_completions where user_id=$1
+      from task_completions
+     where user_id=$1 and completed_at > now() - ($2::int * interval '1 day')
   ), today as (
     select (now() at time zone 'Asia/Jakarta')::date as day
   ), streak_days as (
@@ -35,10 +39,22 @@ const CAPACITY_SQL = `with active_days as (
   ), ordered as (
     select day,(row_number() over(order by day desc))::int as rn from streak_days
   )
-  select (select count(*) from task_completions where user_id=$1)::int as completed_count,
+  select (select count(*) from
+            (select 1 from task_completions where user_id=$1 limit $3::int) as capped)::int
+           as completed_count,
          ${STREAK_EXPRESSION} as streak,
          (select premium_until from users where id=$1) as premium_until,
          now() as now`
+
+/** Hari terjauh yang masih bisa menggeser bonus streak, plus sepekan kelonggaran untuk selisih
+ * antara `now()` (UTC) dan batas hari WIB. */
+function streakLookbackDays(): number {
+  const config = economyConfig()
+  return Math.max(1, config.maxStreakCapBonus) * Math.max(1, config.streakCapStepDays) + 7
+}
+
+/** Completion di atas ambang tier tertinggi tidak lagi menaikkan rank. */
+const rankCountCap = () => Math.max(1, rankMinTasks(5))
 
 const snapshotOf = (row: PoolRow): RewardPoolSnapshot => ({
   credits: Number(row.reward_pool),
@@ -47,10 +63,10 @@ const snapshotOf = (row: PoolRow): RewardPoolSnapshot => ({
 
 async function run<T extends Record<string, unknown>>(
   sql: string,
-  userId: number,
+  params: unknown[],
   tx?: PoolClient,
 ): Promise<T[]> {
-  return tx ? (await tx.query<T>(sql, [userId])).rows : query<T>(sql, [userId])
+  return tx ? (await tx.query<T>(sql, params)).rows : query<T>(sql, params)
 }
 
 export async function readRewardPoolCapacity(userId: number, tx?: PoolClient): Promise<number> {
@@ -59,7 +75,7 @@ export async function readRewardPoolCapacity(userId: number, tx?: PoolClient): P
     streak: number
     premium_until: Date | null
     now: Date
-  }>(CAPACITY_SQL, userId, tx)
+  }>(CAPACITY_SQL, [userId, streakLookbackDays(), rankCountCap()], tx)
   const row = rows[0]
   if (!row) return rewardPoolCapacity({ rankTier: 1, streak: 0 })
   return rewardPoolCapacity({
@@ -74,7 +90,7 @@ export async function readRewardPoolCapacity(userId: number, tx?: PoolClient): P
 
 export async function readRewardPool(userId: number, tx?: PoolClient): Promise<RewardPoolView> {
   const [rows, capacity] = await Promise.all([
-    run<PoolRow>(POOL_SELECT, userId, tx),
+    run<PoolRow>(POOL_SELECT, [userId], tx),
     readRewardPoolCapacity(userId, tx),
   ])
   const row = rows[0]

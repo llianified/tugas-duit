@@ -2,26 +2,49 @@
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const MAX_BODY_BYTES = 64 * 1024
+/** Laporan CSP nyata muat jauh di bawah ini; 64 KB cuma memperbesar yang harus dibaca dan
+ * di-parse untuk setiap permintaan karangan. */
+const MAX_BODY_BYTES = 8 * 1024
 
 const LOG_LIMIT_PER_WINDOW = 50
 const LOG_WINDOW_MS = 60_000
 
+/** Plafon permintaan, bukan cuma plafon log. Endpoint ini publik dan tidak bersesi, jadi siapa pun
+ * bisa memakainya untuk mengamplifikasi tagihan lambda. Yang menahannya sengaja BUKAN
+ * `checkRateLimit`: penghitung itu menulis satu baris `rate_limits` per permintaan, jadi memasangnya
+ * di sini justru menaikkan ongkos per permintaan karangan dari "satu invocation" menjadi "satu
+ * invocation plus satu tulisan Neon". Penghitung di memori proses menolak banjirnya sebelum badan
+ * permintaannya dibaca sama sekali, dan nol tulisan adalah pertahanan yang tepat untuk sink yang
+ * memang fire-and-forget. Reset tiap instance dingin diterima: yang dijaga adalah biaya per
+ * instance, dan itulah satuan yang ditagih. */
+const REQUEST_LIMIT_PER_WINDOW = 500
+
 let windowStartedAt = 0
+let seenInWindow = 0
 let loggedInWindow = 0
 
-function shouldLog(): boolean {
+function rollWindow(): void {
   const now = Date.now()
   if (now - windowStartedAt > LOG_WINDOW_MS) {
     windowStartedAt = now
+    seenInWindow = 0
     loggedInWindow = 0
   }
-  loggedInWindow += 1
-  if (loggedInWindow === LOG_LIMIT_PER_WINDOW + 1) {
+}
+
+function accept(): boolean {
+  rollWindow()
+  seenInWindow += 1
+  if (seenInWindow === REQUEST_LIMIT_PER_WINDOW + 1) {
     console.warn(
-      `[csp] lebih dari ${LOG_LIMIT_PER_WINDOW} laporan dalam ${LOG_WINDOW_MS / 1000}s, sisanya tidak dicatat`,
+      `[csp] lebih dari ${REQUEST_LIMIT_PER_WINDOW} laporan dalam ${LOG_WINDOW_MS / 1000}s, sisanya ditolak tanpa dibaca`,
     )
   }
+  return seenInWindow <= REQUEST_LIMIT_PER_WINDOW
+}
+
+function shouldLog(): boolean {
+  loggedInWindow += 1
   return loggedInWindow <= LOG_LIMIT_PER_WINDOW
 }
 
@@ -67,6 +90,8 @@ function normalize(payload: unknown): Violation[] {
 
 export async function POST(request: Request) {
   const noContent = new Response(null, { status: 204 })
+
+  if (!accept()) return noContent
 
   const declaredLength = Number(request.headers.get('content-length') ?? '0')
   if (declaredLength > MAX_BODY_BYTES) return noContent

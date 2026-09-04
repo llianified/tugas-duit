@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import type { PoolClient } from 'pg'
 import { transaction } from '../platform/db'
 type LedgerKind = 'task'|'commission'|'withdrawal_hold'|'withdrawal_refund'|'adjustment'
@@ -14,12 +13,14 @@ export async function appendLedger(tx: PoolClient, entry: { userId:number; kind:
   return { balance, ledgerId:Number(inserted.rows[0].id) }
 }
 
+/** `requestId` datang dari klien, dan itu memang syaratnya. Setiap jalur uang lain memakai kunci deterministik — `task:<challengeId>`, `commission:<commissionId>`, `withdrawal:<id>` — sehingga permintaan yang diulang membaca baris yang sudah ada alih-alih membayar dua kali. Koreksi admin tidak punya id alami seperti itu: yang menandai "koreksi yang sama" cuma satu klik yang sama, dan hanya klien yang tahu itu. UUID yang dibuat server tidak pernah bisa cocok dengan dirinya sendiri, jadi mekanisme idempotensi `appendLedger` tidak pernah berlaku untuknya — dan klik ganda mencetak koreksi kedua senilai penuh. */
 export async function recordAdjustment(input: {
   adminId: number
   adminName: string
   userPublicId: string
   credits: number
   note: string
+  requestId: string
 }): Promise<{ balance: number; ledgerId: number } | null> {
   return transaction(async (tx) => {
     const found = await tx.query<{ id: string }>('select id from users where public_id=$1', [input.userPublicId])
@@ -28,7 +29,7 @@ export async function recordAdjustment(input: {
       userId: Number(found.rows[0].id),
       kind: 'adjustment',
       amount: input.credits,
-      idempotencyKey: `adjustment:${randomUUID()}`,
+      idempotencyKey: `adjustment:${input.requestId}`,
       referenceId: String(input.adminId),
       note: `${input.note} — oleh ${input.adminName} (#${input.adminId})`,
     })

@@ -203,19 +203,68 @@ describe('RL-4 — plafon efektif saat lease tersebar ke beberapa instance', () 
 describe('RL-2 — setiap route bersesi wajib punya rate limit', () => {
   /** `GET /api/withdrawals` sempat jadi satu-satunya baca milik user tanpa plafon, padahal ia yang paling berat — dan seluruh permukaan admin yang sudah terautentikasi juga kosong. Keduanya tidak terlihat saat membaca satu berkas; yang menemukannya justru membandingkan semua route sekaligus. Test ini melakukan perbandingan itu setiap kali. Aturannya: kalau sebuah route memakai sesi (`requireUser`/`requireAdmin`), ia harus memanggil `checkRateLimit`. Webhook dan probe tidak bersesi, jadi terkecualikan dengan sendirinya tanpa perlu daftar pengecualian yang harus dirawat. */
   it('tidak menyisakan route bersesi yang tanpa plafon', async () => {
-    const root = path.join(process.cwd(), 'app/api')
-    const entries = await readdir(root, { recursive: true })
-    const routes = entries.filter((entry) => entry.endsWith('route.ts')).sort()
+    // `app/(admin)` ikut disapu meski hari ini tidak berisi satu pun route handler: panel admin
+    // punya root layout dan CSP sendiri, dan route yang lahir di sana tidak boleh diam-diam
+    // berada di luar jangkauan aturan ini.
+    const roots = ['app/api', 'app/(admin)'].map((relative) => path.join(process.cwd(), relative))
+
+    const routes: { root: string; relative: string }[] = []
+    for (const root of roots) {
+      const entries = await readdir(root, { recursive: true })
+      for (const entry of entries.filter((name) => name.endsWith('route.ts')).sort()) {
+        routes.push({ root, relative: entry })
+      }
+    }
 
     expect(routes.length).toBeGreaterThan(20)
 
     const tanpaPlafon: string[] = []
-    for (const relative of routes) {
+    for (const { root, relative } of routes) {
       const source = await readFile(path.join(root, relative), 'utf8')
       const bersesi = source.includes('requireUser') || source.includes('requireAdmin')
       if (bersesi && !source.includes('checkRateLimit')) tanpaPlafon.push(relative)
     }
 
     expect(tanpaPlafon).toEqual([])
+  })
+})
+
+describe('RL-5 — setiap pembacaan panel admin wajib lewat requireAdminRead', () => {
+  /** RL-2 hanya melihat `app/api`, dan itu memang seluruh permukaan yang dilihatnya — panel admin adalah React Server Component, jadi `router.refresh()` memukul endpoint RSC dan memanggil fungsi datanya langsung tanpa melewati satu pun route handler. Plafonnya karena itu harus duduk di fungsi datanya, bukan di halamannya. Aturannya: fungsi baca (`read*`, `search*`, `get*`, `list*`) yang menjaga dirinya dengan sesi admin harus memakai `requireAdminRead()`, bukan `requireAdmin()` polos. Jalur tulis tidak ikut — plafonnya sudah ada di route API-nya. */
+  const BERKAS_BACA_ADMIN = [
+    'server/admin/admin-stats.ts',
+    'server/admin/admin-ops.ts',
+    'server/admin/admin-users.ts',
+    'server/admin/admin-grants.ts',
+    'server/payout/payout.ts',
+    'server/economy/economy-config.ts',
+    'server/messaging/broadcast.ts',
+  ]
+
+  it('tidak menyisakan fungsi baca admin yang memakai requireAdmin polos', async () => {
+    const tanpaPlafon: string[] = []
+
+    for (const relative of BERKAS_BACA_ADMIN) {
+      const source = await readFile(path.join(process.cwd(), relative), 'utf8')
+      for (const chunk of source.split(/(?=export async function )/)) {
+        const nama = /^export async function (\w+)/.exec(chunk)?.[1]
+        if (!nama || !/^(read|search|get|list)/.test(nama)) continue
+        if (/requireAdmin\(\)/.test(chunk)) tanpaPlafon.push(`${relative}:${nama}`)
+      }
+    }
+
+    expect(tanpaPlafon).toEqual([])
+  })
+
+  it('menutup jalur bacanya, bukan cuma satu berkas', async () => {
+    const terjaga: string[] = []
+    for (const relative of BERKAS_BACA_ADMIN) {
+      const source = await readFile(path.join(process.cwd(), relative), 'utf8')
+      if (source.includes('requireAdminRead()')) terjaga.push(relative)
+    }
+
+    // `admin-grants.ts` hanya menulis; bacanya (`readAdminActions`) selalu lewat
+    // `getAdminUserDetail` yang sudah berplafon, jadi ia tidak ikut dihitung.
+    expect(terjaga.length).toBe(BERKAS_BACA_ADMIN.length - 1)
   })
 })

@@ -10,6 +10,8 @@ export const dynamic = 'force-dynamic'
 
 const ADJUSTMENT_NOTE_MAX = 280
 
+const UUID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export async function POST(request: Request) {
   const origin = assertSameOrigin(request)
   if (origin) return origin
@@ -24,6 +26,7 @@ export async function POST(request: Request) {
       userId?: string
       credits?: number
       note?: string
+      requestId?: string
     } | null
     if (!body || typeof body !== 'object') {
       return apiError('VALIDATION_FAILED', 'Body tidak valid.', 400)
@@ -38,6 +41,14 @@ export async function POST(request: Request) {
     }
     if (Math.abs(credits) > maxPayoutCredits()) {
       return apiError('VALIDATION_FAILED', 'credits melebihi batas koreksi.', 400)
+    }
+
+    /** Kunci idempotensi dibuat klien saat formulirnya dibuka, bukan server saat permintaannya
+     * mendarat — lihat `recordAdjustment`. Tanpa itu klik ganda mencetak koreksi kedua senilai
+     * penuh, dan ledger yang append-only mencatat keduanya selamanya. */
+    const requestId = typeof body.requestId === 'string' ? body.requestId.trim() : ''
+    if (!UUID_SHAPE.test(requestId)) {
+      return apiError('VALIDATION_FAILED', 'Muat ulang halamannya, lalu ulangi koreksinya.', 400)
     }
 
     const note = body.note?.trim() ?? ''
@@ -55,6 +66,7 @@ export async function POST(request: Request) {
       userPublicId: body.userId.trim(),
       credits,
       note,
+      requestId,
     })
     if (!result) return new Response(null, { status: 404 })
 

@@ -1,7 +1,7 @@
 import { BROADCAST_BODY_MAX, type BroadcastSegment } from '@/domain/messaging/broadcast'
 import { withdrawalMinimumCredits } from '@/domain/economy/economy'
 import { query } from '../platform/db'
-import { requireAdmin } from '../auth/session'
+import { requireAdmin, requireAdminRead } from '../auth/session'
 import { escapeTelegramHtml, openAppMarkup, sendTelegramMessage } from '../integrations/telegram'
 
 /** Pesan siaran dari panel. Ini satu-satunya fitur di panel yang tidak bisa dibatalkan setelah dijalankan, dan risikonya bukan cuma malu: Telegram membekukan bot yang dilaporkan spam, dan bot yang beku berarti notifikasi penarikan ikut mati — jalur uang berhenti. Karena itu bentuknya sengaja lebih ketat daripada fitur panel lain: - `/stop` SELALU dihormati. Tidak ada segmen yang bisa menembusnya, dan tidak ada saklar untuk mematikan penjagaan itu. User yang minta berhenti sudah menjawab. - Jumlah penerima dihitung dan ditampilkan SEBELUM satu pesan pun berangkat, dari query yang persis sama dengan yang dipakai mengirim. - Penanda per user ditulis ke `bot_notifications` sebelum kirim, dengan `dedupe_key` berisi id siaran. Menekan "Kirim" dua kali karena ragu tidak mengirim dua kali ke siapa pun. - Satu putaran berhenti di anggaran waktunya sendiri dan melaporkan sisanya. Menekan lagi MELANJUTKAN, bukan mengulang — bentuk yang sama dengan `runEngagementNotifications`. Yang membedakannya dari `engagement.ts`: di sana pesannya dipilih sistem menurut keadaan user, di sini teksnya ditulis manusia. Jadi tidak ada `pickMessage`, dan tidak ada urutan prioritas — yang ada cuma segmen dan satu badan pesan. */
@@ -173,7 +173,7 @@ export interface BroadcastSummary {
 }
 
 export async function readBroadcasts(limit = 20): Promise<BroadcastSummary[]> {
-  await requireAdmin()
+  await requireAdminRead()
   const rows = await query<{
     id: string
     segment: string

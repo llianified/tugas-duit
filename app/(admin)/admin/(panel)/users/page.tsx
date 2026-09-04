@@ -412,6 +412,11 @@ const ADMIN_ACTION_LABEL: Record<string, string> = {
   notifications_mute: 'Pesan ajakan disetop',
   notifications_unmute: 'Pesan ajakan dinyalakan',
   channel_gate_reset: 'Cache gerbang channel direset',
+  admin_grant: 'Hak admin diberikan',
+  admin_revoke: 'Hak admin dicabut',
+  suspend: 'Akun ditangguhkan',
+  restore: 'Penangguhan dicabut',
+  profile_override: 'Profil disunting',
 }
 
 const LEDGER_LABEL: Record<string, string> = {

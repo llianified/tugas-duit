@@ -16,7 +16,7 @@ import {
   requiredActiveReferrals,
   withdrawalCooldownMsForBase,
 } from './payout-rules'
-import { requireAdmin, UnauthorizedError } from '../auth/session'
+import { requireAdminRead, UnauthorizedError } from '../auth/session'
 
 export class PayoutError extends Error {
   code: string
@@ -383,7 +383,7 @@ interface PendingPayoutPage {
 }
 
 export async function listPendingPayouts(offset = 0): Promise<PendingPayoutPage> {
-  await requireAdmin()
+  await requireAdminRead()
 
   const rows = await query<{
     id: string

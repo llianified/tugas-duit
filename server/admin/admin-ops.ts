@@ -1,5 +1,5 @@
 import { query } from '../platform/db'
-import { requireAdmin } from '../auth/session'
+import { requireAdminRead } from '../auth/session'
 import { likeEscaped } from './like'
 
 /** Pembacaan operasional yang tidak muat di halaman lain: tagihan premium, akun bersinyal, dan riwayat penarikan yang sudah selesai. Ketiganya jawaban atas pertanyaan yang sebelumnya hanya bisa dijawab lewat SQL manual. Antrean payout hanya menampilkan `processing`, jadi begitu satu pengajuan diputuskan ia hilang dari pandangan; dashboard menghitung akun bersinyal tanpa menyebut siapa; dan pembayaran premium tidak punya permukaan sama sekali walau ia satu-satunya pemasukan langsung dari user. */
@@ -18,7 +18,7 @@ export interface AdminPremiumInvoice {
 }
 
 export async function readPremiumInvoices(limit = 50): Promise<AdminPremiumInvoice[]> {
-  await requireAdmin()
+  await requireAdminRead()
   const rows = await query<{
     order_id: string
     public_id: string
@@ -66,7 +66,7 @@ export interface AdminFlaggedUser {
 
 /** Akun bersinyal tujuh hari terakhir, diurutkan dari skor tertinggi. `hasPendingPayout` ikut dibaca karena itu yang menentukan mendesak atau tidak: akun bersinyal yang tidak sedang menarik apa-apa bisa ditinjau kapan saja, sementara yang antre payout menuntut keputusan sebelum uangnya keluar. */
 export async function readFlaggedUsers(limit = 50): Promise<AdminFlaggedUser[]> {
-  await requireAdmin()
+  await requireAdminRead()
   const rows = await query<{
     public_id: string
     first_name: string
@@ -132,7 +132,7 @@ export async function readPayoutHistory(input: {
   term: string
   offset: number
 }): Promise<{ entries: AdminPayoutHistoryEntry[]; hasMore: boolean }> {
-  await requireAdmin()
+  await requireAdminRead()
   const term = input.term.trim()
   const rows = await query<{
     id: string

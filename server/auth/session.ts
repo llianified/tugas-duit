@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { cookies, headers } from 'next/headers'
 import { isPreviewShell, query } from '../platform/db'
 import { env } from '../platform/env'
+import { enforceRateLimit } from '../platform/ratelimit'
 
 const COOKIE_NAME = 'td_session'
 
@@ -124,6 +125,23 @@ export async function requireAdmin() {
   const user = await requireUser()
   if (!user.isAdmin) throw new UnauthorizedError()
   return user
+}
+
+/** Plafon untuk permukaan BACA panel admin. Halamannya React Server Component, jadi
+ * `router.refresh()` memukul endpoint RSC — bukan `/api/admin/*` — dan plafon yang terpasang di
+ * route API tidak pernah berlaku untuknya. Sementara kueri di baliknya adalah yang terberat di
+ * aplikasi: agregat tanpa batas waktu atas seluruh tabel, dijalankan berkali-kali per menit
+ * selama satu tab ditinggal terbuka. Satu ember per admin, bukan per permukaan: yang dijaga
+ * adalah beban database, dan beban itu dijumlahkan lintas tab. Angkanya jauh di atas pemakaian
+ * manusia — ia hanya menghentikan tab yang lepas kendali. Jalur TULIS tetap `requireAdmin()`
+ * biasa; plafonnya sudah ada di route API-nya masing-masing. */
+const ADMIN_READ_LIMIT = 900
+const ADMIN_READ_WINDOW_SECONDS = 3_600
+
+export async function requireAdminRead() {
+  const admin = await requireAdmin()
+  await enforceRateLimit(`admin-read:${admin.id}`, ADMIN_READ_LIMIT, ADMIN_READ_WINDOW_SECONDS)
+  return admin
 }
 
 export async function destroySession() {

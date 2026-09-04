@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { ApiError, sendJson } from '@/shell/api-client'
 import { formatCredits, formatDateTime } from '@/shared/lib/format'
 
@@ -73,6 +73,10 @@ function AdjustBalance({
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
   const [state, setState] = useState<ActionState>({ pending: false })
+  /** Satu kunci per koreksi, dibuat saat formulirnya dibuka dan diganti hanya setelah koreksinya
+   * benar-benar tercatat. Itu yang membuat klik ganda, jaringan lambat yang dicoba ulang, dan
+   * permintaan yang diulang browser mendarat sebagai satu entri ledger. */
+  const requestId = useRef(crypto.randomUUID())
 
   const parsed = Number(amount)
   const valid =
@@ -89,7 +93,9 @@ function AdjustBalance({
         userId: publicId,
         credits: parsed,
         note: note.trim(),
+        requestId: requestId.current,
       })
+      requestId.current = crypto.randomUUID()
       setAmount('')
       setNote('')
       setState({ pending: false, notice: 'Koreksi tercatat di ledger.' })
@@ -233,13 +239,15 @@ function AdminFlag({
   isSelf: boolean
 }) {
   const router = useRouter()
+  const [reason, setReason] = useState('')
   const [state, setState] = useState<ActionState>({ pending: false })
 
   async function submit(action: 'grant-admin' | 'revoke-admin') {
     setState({ pending: true })
     try {
-      await sendJson(`/api/admin/users/${publicId}`, 'PATCH', { action })
+      await sendJson(`/api/admin/users/${publicId}`, 'PATCH', { action, reason: reason.trim() })
       setState({ pending: false })
+      setReason('')
       router.refresh()
     } catch (cause) {
       setState({ pending: false, error: describe(cause) })
@@ -249,7 +257,7 @@ function AdminFlag({
   return (
     <Card
       title="Hak admin"
-      description="Berlaku seketika — hak admin dibaca dari database di setiap request, jadi tidak ada sesi yang perlu dicabut."
+      description="Berlaku seketika — hak admin dibaca dari database di setiap request, jadi tidak ada sesi yang perlu dicabut. Setiap perpindahannya tercatat di jejak aksi dan dikabarkan ke pemilik."
     >
       {isAdminByEnv ? (
         <p className="text-sm text-muted-foreground">
@@ -263,14 +271,27 @@ function AdminFlag({
           semua orang, dan pemulihannya hanya lewat shell.
         </p>
       ) : null}
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="font-medium text-foreground">Alasan (wajib)</span>
+        <input
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          maxLength={500}
+          placeholder="Ikut memproses antrean payout selama cuti."
+          className="focus-ring rounded-md bg-background px-3 py-2 text-foreground"
+        />
+      </label>
       <Feedback state={state} />
       <Actions>
         {isAdminFlag ? (
-          <Danger onClick={() => submit('revoke-admin')} disabled={state.pending || isSelf}>
+          <Danger
+            onClick={() => submit('revoke-admin')}
+            disabled={state.pending || isSelf || !reason.trim()}
+          >
             {state.pending ? 'Menyimpan…' : `Cabut hak admin ${firstName}`}
           </Danger>
         ) : (
-          <Primary onClick={() => submit('grant-admin')} disabled={state.pending}>
+          <Primary onClick={() => submit('grant-admin')} disabled={state.pending || !reason.trim()}>
             {state.pending ? 'Menyimpan…' : `Jadikan ${firstName} admin`}
           </Primary>
         )}

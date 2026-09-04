@@ -314,7 +314,7 @@ export function AppViewSkeleton() {
                 ))}
               </div>
 
-              {/* Dua tombol berdampingan, sesuai `ActiveTask`: "Mulai" selalu ada, tombol iklan hanya muncul kalau iklan menyala. Slot iklan disembunyikan lewat `data-ads-hint` yang dipasang script di `app/layout.tsx` dari tontonan terakhir user, bukan lewat state React — sesi belum termuat saat kerangka ini tergambar, dan membaca localStorage saat render akan membuat HTML server dan klien berbeda. */}
+              {/* Dua tombol berdampingan, sesuai `ActiveTask`: "Mulai" selalu ada, tombol iklan hanya muncul kalau iklan menyala. Slot iklan disembunyikan lewat `data-ads-hint` yang dipasang script di `app/(miniapp)/layout.tsx` dari tontonan terakhir user, bukan lewat state React — sesi belum termuat saat kerangka ini tergambar, dan membaca localStorage saat render akan membuat HTML server dan klien berbeda. */}
               <div className="cta-gap flex items-stretch gap-2 [&>*]:min-w-0 [&>*]:flex-1">
                 <Bar className="cta-h rounded-cta" />
                 <Bar className="skeleton-ad-slot cta-h rounded-cta" />

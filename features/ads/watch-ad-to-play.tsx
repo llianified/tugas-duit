@@ -9,6 +9,7 @@ import { formatCountdown, formatCredits } from '@/shared/lib/format'
 export function WatchAdToPlay({
   enabled,
   viewsLeft,
+  maxViews,
   cooldownSecondsLeft,
   passReady,
   passSecondsLeft,
@@ -19,6 +20,7 @@ export function WatchAdToPlay({
 }: {
   enabled: boolean
   viewsLeft: number
+  maxViews: number
   cooldownSecondsLeft: number
   passReady: boolean
   /** Sisa umur tiket, diproyeksikan klien dari `pass.expiresAt`. */
@@ -101,8 +103,8 @@ export function WatchAdToPlay({
       compact
       tone="neutral"
       label="Tonton iklan"
-      /** Bentuk ringkas `7x` menyisakan ruang untuk label aksi tetap utuh. Makna lengkap jumlah kesempatan tetap tersedia lewat `aria-label`. */
-      meta={`${formatCredits(viewsLeft)}x`}
+      /** Pecahan ringkas menyisakan ruang untuk label aksi tetap utuh sekaligus menunjukkan sisa dan total jatah. */
+      meta={`${formatCredits(viewsLeft)}/${formatCredits(maxViews)}`}
       aria-label={`Tonton iklan untuk memulai task tanpa energi, sisa ${formatCredits(viewsLeft)} kali hari ini`}
       onClick={() => {
         hapticTap()

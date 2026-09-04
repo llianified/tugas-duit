@@ -36,6 +36,7 @@ export function ActiveTask({
   rewardPoolSecondsToNext,
   adsEnabled,
   adViewsLeft,
+  adViewsMax,
   adCooldownSecondsLeft,
   adPassReady,
   adPassSecondsLeft,
@@ -55,6 +56,7 @@ export function ActiveTask({
   rewardPoolSecondsToNext: number | null
   adsEnabled: boolean
   adViewsLeft: number
+  adViewsMax: number
   adCooldownSecondsLeft: number
   adPassReady: boolean
   adPassSecondsLeft: number | null
@@ -133,6 +135,7 @@ export function ActiveTask({
             <WatchAdToPlay
               enabled={adsEnabled}
               viewsLeft={adViewsLeft}
+              maxViews={adViewsMax}
               cooldownSecondsLeft={adCooldownSecondsLeft}
               passReady={adPassReady}
               passSecondsLeft={adPassSecondsLeft}

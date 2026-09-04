@@ -128,6 +128,7 @@ export function HomeView({
             rewardPoolSecondsToNext={rewardPoolSecondsToNext}
             adsEnabled={adsEnabled}
             adViewsLeft={adViewsLeft}
+            adViewsMax={economy.adsMaxViewsPerDay}
             adCooldownSecondsLeft={adCooldownSecondsLeft}
             adPassReady={adPassReady}
             adPassSecondsLeft={adPassSecondsLeft}

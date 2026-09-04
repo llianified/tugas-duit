@@ -47,6 +47,7 @@ export interface EconomyConfig {
   adsTicketTtlSeconds: number
   adsPassTtlMinutes: number
   adsPostbackRequired: number
+  adsMinWatchSeconds: number
   inAppAdsFrequency: number
   inAppAdsCappingMinutes: number
   inAppAdsIntervalSeconds: number
@@ -138,6 +139,7 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   adsTicketTtlSeconds: 300,
   adsPassTtlMinutes: 30,
   adsPostbackRequired: 0,
+  adsMinWatchSeconds: 3,
   inAppAdsFrequency: 2,
   inAppAdsCappingMinutes: 6,
   inAppAdsIntervalSeconds: 30,
@@ -397,6 +399,12 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     description: 'Isi 1 supaya tiket iklan hanya terbit setelah Monetag mengonfirmasi tayangannya lewat postback server-ke-server, dan menandainya berbayar. Isi 0 untuk kembali percaya laporan dari perangkat user. Nyalakan hanya setelah URL postback terisi di dashboard Monetag dan kolom verified_at pada ad_views terbukti mulai terisi — menyalakannya sebelum itu membuat tidak ada satu pun tiket bisa terbit.',
     impact: 'Menurunkannya membuka kembali celah "tap iklan lalu back": tayangan yang tidak dibayar penyedia tetap menerbitkan tiket.',
     min: 0, max: 1, riskyWhen: 'lower',
+  },
+  {
+    key: 'adsMinWatchSeconds', group: 'ads', label: 'Minimum lama tontonan', unit: 'detik',
+    description: 'Tiket ditolak kalau jarak antara tiket dibuka dan klaimnya masuk lebih pendek dari ini. Diukur dua-duanya dengan jam server, jadi tidak bisa dikarang klien — satu-satunya cara melewatinya adalah benar-benar menunggu. Ini penjaga yang tidak bergantung penyedia iklan: tetap berlaku saat gerbang postback mati. Jendelanya ikut memuat waktu memuat SDK, jadi setel dari sebaran ready_at - created_at yang sudah tercatat di ad_views, bukan dari perkiraan durasi iklan. Isi 0 untuk mematikannya.',
+    impact: 'Menurunkannya membuka kembali celah "tap iklan lalu back": tontonan sekejap tetap menerbitkan tiket. Menaikkannya terlalu jauh menolak tontonan yang sah — tiket berhenti terbit sementara impresinya tetap dibayar penyedia, jadi kedua arah punya biayanya sendiri.',
+    min: 0, max: 120, riskyWhen: 'lower',
   },
   {
     key: 'inAppAdsFrequency', group: 'ads', label: 'Interstitial per jendela', unit: 'iklan',

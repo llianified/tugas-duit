@@ -12,11 +12,14 @@ const REFUSAL_MESSAGE: Record<string, string> = {
   ticket_expired: 'Tiket iklan kedaluwarsa. Tonton lagi.',
   pass_ready: 'Tiket iklan kamu sudah siap dipakai.',
   awaiting_verification: 'Menunggu konfirmasi penyedia iklan.',
+  watch_too_short: 'Iklannya harus ditonton sampai selesai. Tiket belum masuk — coba lagi dan jangan tutup iklannya lebih awal.',
 }
 
 /** Menunggu konfirmasi bukan penolakan yang sama dengan yang lain: klien harus tahu bahwa mencoba lagi sebentar lagi memang berguna, dan itu hanya terbaca kalau kodenya berbeda. */
 const REFUSAL_CODE: Record<string, string> = {
   awaiting_verification: 'AD_CLAIM_AWAITING_VERIFICATION',
+  /** Kodenya dibedakan supaya klien tidak menganggapnya sebagai kegagalan jaringan yang layak diulang sendiri: yang harus berubah perilaku user, bukan permintaannya. */
+  watch_too_short: 'AD_CLAIM_WATCH_TOO_SHORT',
 }
 
 export async function POST(request: Request) {

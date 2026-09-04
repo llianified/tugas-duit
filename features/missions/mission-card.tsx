@@ -4,7 +4,7 @@ import type { MissionProgress } from '@/domain/progression/missions'
 import { useMissions } from '@/features/missions/use-missions'
 import { MissionListSkeleton } from '@/shared/components/app-skeleton'
 import { EmptyState } from '@/shared/components/empty-state'
-import { GlyphBolt, GlyphCheck } from '@/shared/components/glyph'
+import { GlyphBolt, GlyphCheck, GlyphSpinner } from '@/shared/components/glyph'
 import { MetaBadge } from '@/shared/components/meta-badge'
 import { SectionLabel } from '@/shared/components/section-label'
 import { SURFACE_CARD_CLASS } from '@/shared/components/surface-card'
@@ -192,14 +192,20 @@ function MissionAction({
         type="button"
         onClick={onClaim}
         disabled={claiming}
+        aria-busy={claiming}
         aria-label={`Ambil ${formatCredits(mission.reward)} energi dari misi ${mission.title}`}
         className={cn(
           box,
           'focus-ring transition-ui press-scale-soft btn-glass bg-primary text-primary-foreground',
         )}
       >
-        <GlyphBolt className="size-3.5" />
-        {claiming ? '…' : `+${formatCredits(mission.reward)}`}
+        {claiming ? (
+          <GlyphSpinner className="size-3.5 animate-spin motion-reduce:animate-none" />
+        ) : (
+          <>
+            <GlyphBolt className="size-3.5" />+{formatCredits(mission.reward)}
+          </>
+        )}
       </button>
     </div>
   )

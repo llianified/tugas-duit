@@ -1,7 +1,7 @@
 import { loadEconomyConfig } from '@/server/economy/economy-config'
 import { query } from '@/server/platform/db'
 import { env } from '@/server/platform/env'
-import { handleRouteError, rateLimited } from '@/server/platform/http'
+import { assertNotCrossSite, handleRouteError, rateLimited } from '@/server/platform/http'
 import { checkRateLimit } from '@/server/platform/ratelimit'
 import { requireUser } from '@/server/auth/session'
 
@@ -13,7 +13,9 @@ function referralShareUrl(code: string): string {
   return bot ? `https://t.me/${bot}/app?startapp=${code}` : ''
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const crossSite = assertNotCrossSite(request)
+  if (crossSite) return crossSite
   try {
     await loadEconomyConfig()
     const user = await requireUser()

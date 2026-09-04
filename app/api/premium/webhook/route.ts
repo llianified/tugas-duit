@@ -37,7 +37,13 @@ export async function POST(request: Request) {
     )
 
     if (!settled.settled) {
-      if (settled.reason === 'bad_signature') return new Response(null, { status: 401 })
+      /** 200 juga untuk signature yang salah. `bad_signature` hanya mungkin terjadi kalau ordernya
+       * ADA dan belum lunas, jadi membalas 401 khusus untuk kasus itu adalah oracle keberadaan —
+       * persis yang komentar di atas menjanjikan tidak ada. Gateway tetap berhenti mengulang, dan
+       * kegagalannya tetap terlihat lewat log. */
+      if (settled.reason === 'bad_signature') {
+        console.warn('[premium] signature webhook tidak cocok untuk order %s', orderId)
+      }
       return ok()
     }
 

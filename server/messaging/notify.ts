@@ -130,3 +130,51 @@ export async function notifyAdminLogin(input: { telegramId: string; ip: string; 
     'admin-login',
   )
 }
+
+/** Ember kegagalan global tidak lagi bisa menutup pintu masuk admin (lihat komentar di
+ * `app/api/admin/login/route.ts`), tapi penuhnya tetap berarti ada yang sedang menebak sandi dari
+ * banyak IP sekaligus. Tanpa pesan ini kejadiannya hanya tertulis di log yang tidak dibaca siapa
+ * pun saat sedang berlangsung. */
+export async function notifyAdminLoginFlood(input: {
+  telegramId: string
+  failures: number
+  ip: string
+  userAgent: string | null
+}) {
+  await send(
+    input.telegramId,
+    [
+      '<b>Banjir percobaan login admin ⚠️</b>',
+      '',
+      `Lebih dari ${input.failures} sandi salah dalam satu jam terakhir.`,
+      `IP terakhir: ${escapeHtml(input.ip)}`,
+      `Perangkat: ${escapeHtml(input.userAgent ?? 'tidak diketahui')}`,
+      '',
+      'Sandi yang benar tetap bisa masuk. Kalau ini berlanjut, ganti ADMIN_PASSWORD.',
+    ].join('\n'),
+    'admin-login-flood',
+  )
+}
+
+/** Hak admin yang berpindah adalah aksi paling sensitif di panel, dan satu-satunya yang efeknya bertahan setelah penyerangnya hilang. Pemilik dikabari langsung, bukan cuma dicatat di `admin_actions` — jejak audit menjawab pertanyaan sesudah insiden, pesan ini yang memberi kesempatan menghentikannya saat masih berlangsung. */
+export async function notifyAdminRightsChanged(input: {
+  telegramId: string
+  granted: boolean
+  targetName: string
+  byName: string
+  reason: string
+}) {
+  await send(
+    input.telegramId,
+    [
+      input.granted ? '<b>Hak admin diberikan 🔑</b>' : '<b>Hak admin dicabut 🔒</b>',
+      '',
+      `Akun: ${escapeHtml(input.targetName)}`,
+      `Oleh: ${escapeHtml(input.byName)}`,
+      `Alasan: ${escapeHtml(input.reason)}`,
+      '',
+      'Kalau ini bukan kamu, cabut haknya sekarang dan ganti ADMIN_PASSWORD.',
+    ].join('\n'),
+    'admin-rights',
+  )
+}

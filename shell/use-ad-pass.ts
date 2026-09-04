@@ -39,6 +39,10 @@ export function useAdPass({
   refreshSession: () => Promise<unknown>
 }) {
   const [watchingAd, setWatchingAd] = useState(false)
+  /** Penjaga sinkron; `watchingAd` hanya menggerakkan tombolnya. Dua ketukan cepat terjadi sebelum
+   * render berikutnya, jadi keduanya membaca `watchingAd` yang masih `false` dan sama-sama membuka
+   * tiket. Pola yang sama dipakai `shell/use-task-flow.ts`. */
+  const watchingAdRef = useRef(false)
   /** Dinaikkan tiap kali tontonan baru dimulai. Klaim susulan memakainya untuk mundur: tiket yang sama sedang ditonton ulang, dan tontonan kedua itu yang berhak mengklaimnya. Tanpa penanda ini keduanya berlomba, yang kalah menerima `no_ticket`, dan user membaca "tiket tidak ketemu" untuk tiket yang justru baru saja masuk. */
   const watchGeneration = useRef(0)
 
@@ -97,9 +101,10 @@ export function useAdPass({
   )
 
   const watchAd = useCallback(async (): Promise<boolean> => {
-    if (watchingAd) return false
+    if (watchingAdRef.current) return false
     if (passUsable()) return true
     const generation = (watchGeneration.current += 1)
+    watchingAdRef.current = true
     setWatchingAd(true)
     try {
       const ticket = await sendJson<AdTicketResponse>('/api/ads/ticket', 'POST')
@@ -125,10 +130,11 @@ export function useAdPass({
       notifyError(userFacingMessage(error))
       return false
     } finally {
+      watchingAdRef.current = false
       setWatchingAd(false)
       await refreshSession()
     }
-  }, [claimTicket, claimWhenLate, getPlayer, notifyError, passUsable, refreshSession, watchingAd])
+  }, [claimTicket, claimWhenLate, getPlayer, notifyError, passUsable, refreshSession])
 
   return { watchAd, watchingAd, hasPass }
 }

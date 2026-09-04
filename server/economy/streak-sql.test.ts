@@ -66,4 +66,18 @@ describe('ECON-10 — streak reward-pool.ts vs stats.ts', () => {
     expect(await streakFromStats(userId)).toBe(1)
     expect(await streakBonusFromPool(userId)).toBe(0)
   })
+
+  /** `CAPACITY_SQL` hanya memindai hari aktif di dalam jendela yang masih bisa menggeser bonus,
+   * bukan seluruh umur akun. Rentetan yang jauh lebih panjang dari jendela itu harus tetap
+   * membaca bonus maksimum — kalau tidak, penghematannya dibayar dengan hasil yang salah. */
+  it('tetap membaca bonus maksimum untuk rentetan yang jauh melampaui jendelanya', async () => {
+    const { economyConfig } = await import('@/domain/economy/economy-config')
+    const { maxStreakCapBonus, streakCapStepDays } = economyConfig()
+    const userId = await makeUser()
+    for (let day = 1; day <= maxStreakCapBonus * streakCapStepDays * 2; day++) {
+      await completeTaskDaysAgo(userId, day)
+    }
+
+    expect(await streakBonusFromPool(userId)).toBe(maxStreakCapBonus)
+  })
 })

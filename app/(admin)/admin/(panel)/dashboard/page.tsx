@@ -10,7 +10,7 @@ import { AutoRefresh } from '../auto-refresh'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const DASHBOARD_REFRESH_SECONDS = 30
+const DASHBOARD_REFRESH_SECONDS = 120
 
 export default async function AdminDashboardPage() {
   const user = await getSessionUser()

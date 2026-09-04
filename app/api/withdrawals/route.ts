@@ -1,6 +1,6 @@
 import { loadEconomyConfig } from '@/server/economy/economy-config'
 import { sanitizeAccountNumber } from '@/domain/economy/withdrawal'
-import { apiError, assertSameOrigin, handleRouteError, rateLimited } from '@/server/platform/http'
+import { apiError, assertNotCrossSite, assertSameOrigin, handleRouteError, rateLimited } from '@/server/platform/http'
 import { notifyWithdrawalRequested } from '@/server/messaging/notify'
 import { createPayout, getPayouts, PayoutError } from '@/server/payout/payout'
 import { checkRateLimit } from '@/server/platform/ratelimit'
@@ -10,7 +10,9 @@ import { formatCredits } from '@/shared/lib/format'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: Request) {
+  const crossSite = assertNotCrossSite(request)
+  if (crossSite) return crossSite
   try {
     await loadEconomyConfig()
     const user = await requireUser()

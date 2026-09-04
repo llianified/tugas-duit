@@ -1,8 +1,9 @@
-import { readAdminActions, type AdminActionEntry } from './admin-grants'
+import { readAdminActions, recordAdminAction, type AdminActionEntry } from './admin-grants'
 import { likeEscaped } from './like'
 import { query, transaction } from '../platform/db'
 import { env } from '../platform/env'
-import { requireAdmin } from '../auth/session'
+import { requireAdmin, requireAdminRead } from '../auth/session'
+import { notifyAdminRightsChanged } from '../messaging/notify'
 import { STREAK_EXPRESSION } from '../economy/streak-sql'
 
 const SEARCH_LIMIT = 25
@@ -90,7 +91,7 @@ const asTime = (value: Date | string | null): number | null =>
   value === null ? null : new Date(value).getTime()
 
 export async function searchAdminUsers(term: string): Promise<AdminUserSummary[]> {
-  await requireAdmin()
+  await requireAdminRead()
 
   const trimmed = term.trim()
   if (!trimmed) return []
@@ -130,7 +131,7 @@ export async function searchAdminUsers(term: string): Promise<AdminUserSummary[]
 }
 
 export async function getAdminUserDetail(publicId: string): Promise<AdminUserDetail | null> {
-  await requireAdmin()
+  await requireAdminRead()
   if (!UUID_SHAPE.test(publicId.trim())) return null
   const id = publicId.trim()
 
@@ -337,27 +338,47 @@ export async function setUserSuspension(input: {
       throw new AdminUserError('SELF_SUSPENSION_FORBIDDEN', 400)
     }
 
+    let revokedSessions = 0
     if (input.suspended) {
-      await tx.query(
+      const revoked = await tx.query(
         'update sessions set revoked_at=now() where user_id=$1 and revoked_at is null',
         [row.id],
       )
+      revokedSessions = revoked.rowCount ?? 0
     }
+
+    await recordAdminAction(tx, {
+      adminId: admin.id,
+      targetUserId: Number(row.id),
+      action: input.suspended ? 'suspend' : 'restore',
+      detail: { revokedSessions },
+      // Penangguhan sudah mewajibkan alasan di atas; pemulihan tidak, dan
+      // `admin_actions_reason_present` tetap menuntut baris auditnya terisi.
+      reason: input.reason?.trim() || 'Penangguhan dicabut tanpa catatan.',
+    })
+
     return { suspended: row.banned_at !== null }
   })
 }
 
+/** Aksi paling sensitif di panel, jadi ia yang paling ketat: alasannya wajib, jejaknya ditulis di transaksi yang sama dengan perubahannya, dan pemilik dikabari di luar transaksi — hak admin yang berpindah tanpa sepengetahuan pemilik adalah persis bentuk serangan yang paling ingin diketahui lebih awal. */
 export async function setUserAdminFlag(input: {
   adminId: number
   publicId: string
   isAdmin: boolean
+  reason: string | null
 }): Promise<{ isAdmin: boolean } | null> {
   const admin = await requireAdmin()
   if (!UUID_SHAPE.test(input.publicId.trim())) return null
 
-  return transaction(async (tx) => {
-    const updated = await tx.query<{ id: string; is_admin: boolean }>(
-      `update users set is_admin=$2,updated_at=now() where public_id=$1 returning id,is_admin`,
+  const reason = input.reason?.trim() ?? ''
+  if (!reason) throw new AdminUserError('REASON_REQUIRED', 400)
+  if (reason.length > BAN_REASON_MAX) throw new AdminUserError('REASON_TOO_LONG', 400)
+
+  const changed = await transaction(async (tx) => {
+    const updated = await tx.query<{ id: string; is_admin: boolean; first_name: string; telegram_id: string }>(
+      `update users set is_admin=$2,updated_at=now()
+        where public_id=$1 returning id,is_admin,first_name,telegram_id`,
       [input.publicId.trim(), input.isAdmin],
     )
     const row = updated.rows[0]
@@ -365,16 +386,41 @@ export async function setUserAdminFlag(input: {
     if (Number(row.id) === admin.id && !input.isAdmin) {
       throw new AdminUserError('SELF_DEMOTION_FORBIDDEN', 400)
     }
-    return { isAdmin: row.is_admin }
+
+    await recordAdminAction(tx, {
+      adminId: admin.id,
+      targetUserId: Number(row.id),
+      action: input.isAdmin ? 'admin_grant' : 'admin_revoke',
+      detail: { targetName: row.first_name, targetTelegramId: row.telegram_id },
+      reason,
+    })
+
+    return { isAdmin: row.is_admin, targetName: row.first_name }
   })
+
+  if (!changed) return null
+
+  const owner = env.adminTelegramIdOrNull
+  if (owner) {
+    await notifyAdminRightsChanged({
+      telegramId: owner,
+      granted: changed.isAdmin,
+      targetName: changed.targetName,
+      byName: admin.firstName,
+      reason,
+    })
+  }
+
+  return { isAdmin: changed.isAdmin }
 }
 
 export async function updateAdminUserProfile(input: {
+  adminId: number
   publicId: string
   firstName: string
   username: string | null
 }): Promise<{ firstName: string; username: string | null } | null> {
-  await requireAdmin()
+  const admin = await requireAdmin()
   if (!UUID_SHAPE.test(input.publicId.trim())) return null
 
   const firstName = input.firstName.trim()
@@ -386,11 +432,36 @@ export async function updateAdminUserProfile(input: {
     throw new AdminUserError('INVALID_USERNAME', 400)
   }
 
-  const rows = await query<{ first_name: string; username: string | null }>(
-    `update users set first_name=$2,username=$3,profile_overridden_at=now(),updated_at=now()
-     where public_id=$1 returning first_name,username`,
-    [input.publicId.trim(), firstName, username],
-  )
-  const row = rows[0]
-  return row ? { firstName: row.first_name, username: row.username } : null
+  return transaction(async (tx) => {
+    // Baris dikunci lebih dulu supaya nilai "sebelum" yang tercatat di audit benar-benar
+    // nilai yang ditimpa update ini, bukan yang sempat digeser penyunting lain.
+    const before = await tx.query<{ id: string; first_name: string; username: string | null }>(
+      'select id, first_name, username from users where public_id=$1 for update',
+      [input.publicId.trim()],
+    )
+    const previous = before.rows[0]
+    if (!previous) return null
+
+    const updated = await tx.query<{ first_name: string; username: string | null }>(
+      `update users set first_name=$2,username=$3,profile_overridden_at=now(),updated_at=now()
+        where id=$1 returning first_name,username`,
+      [previous.id, firstName, username],
+    )
+    const row = updated.rows[0]
+
+    await recordAdminAction(tx, {
+      adminId: admin.id,
+      targetUserId: Number(previous.id),
+      action: 'profile_override',
+      detail: {
+        from: { firstName: previous.first_name, username: previous.username },
+        to: { firstName: row.first_name, username: row.username },
+      },
+      // Suntingan profil tidak menuntut alasan di UI-nya; yang menjelaskan barisnya
+      // adalah nilai sebelum dan sesudah di `detail`.
+      reason: 'Suntingan profil dari panel admin.',
+    })
+
+    return { firstName: row.first_name, username: row.username }
+  })
 }

@@ -14,7 +14,38 @@ const DEV_FRAME_ANCESTORS = [
   'http://localhost:*',
 ]
 
-function buildCsp(nonce: string, isDev: boolean) {
+/** Panel admin punya kebijakannya sendiri karena ia permukaan yang berbeda: yang di sini
+ * menyetujui uang, dan satu-satunya alasan Mini App melonggarkan `script-src`, `img-src`, dan
+ * teman-temannya adalah jaringan iklan — yang tidak pernah dirender di sini. `'strict-dynamic'`
+ * tanpa host iklan berarti tidak ada satu pun kode pihak ketiga yang boleh dieksekusi di halaman
+ * yang membawa cookie sesi admin. `frame-ancestors 'none'` menutup clickjacking terhadap tombol
+ * yang menandai payout lunas; daftar dev tetap dipertahankan di luar produksi supaya pratinjau
+ * tidak ikut mati. */
+function buildCsp(nonce: string, isDev: boolean, isAdmin: boolean) {
+  if (isAdmin) {
+    return [
+      "default-src 'self'",
+      isDev
+        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+        : `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+      "style-src 'self' 'unsafe-inline'",
+      "style-src-attr 'unsafe-inline'",
+      "img-src 'self' data: blob:",
+      "media-src 'self'",
+      "frame-src 'none'",
+      "worker-src 'self' blob:",
+      "font-src 'self'",
+      `connect-src 'self'${isDev ? ' ws: wss:' : ''}`,
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      `frame-ancestors ${isDev ? DEV_FRAME_ANCESTORS.join(' ') : "'none'"}`,
+      ...(isDev ? [] : ['upgrade-insecure-requests']),
+      `report-uri ${REPORT_PATH}`,
+      `report-to ${REPORT_GROUP}`,
+    ].join('; ')
+  }
+
   const frameAncestors = [
     "'self'",
     'https://web.telegram.org',
@@ -57,10 +88,21 @@ function buildCsp(nonce: string, isDev: boolean) {
   ].join('; ')
 }
 
+/** Permukaan admin adalah halaman panelnya sekaligus API-nya: keduanya hanya boleh dicapai dari
+ * dokumen yang tidak pernah memuat kode pihak ketiga. */
+export function isAdminPath(pathname: string): boolean {
+  return (
+    pathname === '/admin' ||
+    pathname.startsWith('/admin/') ||
+    pathname === '/api/admin' ||
+    pathname.startsWith('/api/admin/')
+  )
+}
+
 export function proxy(request: NextRequest) {
   const nonce = crypto.randomUUID().replaceAll('-', '')
   const isDev = process.env.NODE_ENV === 'development'
-  const csp = buildCsp(nonce, isDev)
+  const csp = buildCsp(nonce, isDev, isAdminPath(request.nextUrl.pathname))
 
   const headerName = REPORT_ONLY
     ? 'Content-Security-Policy-Report-Only'

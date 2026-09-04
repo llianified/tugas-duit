@@ -1,6 +1,6 @@
 import { loadEconomyConfig } from '@/server/economy/economy-config'
 import { leaderboardEnabled } from '@/features/leaderboard/availability'
-import { handleRouteError, rateLimited } from '@/server/platform/http'
+import { assertNotCrossSite, handleRouteError, rateLimited } from '@/server/platform/http'
 import { getLeaderboard } from '@/server/task/leaderboard'
 import { checkRateLimit } from '@/server/platform/ratelimit'
 import { requireUser } from '@/server/auth/session'
@@ -8,7 +8,9 @@ import { requireUser } from '@/server/auth/session'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: Request) {
+  const crossSite = assertNotCrossSite(request)
+  if (crossSite) return crossSite
   try {
     await loadEconomyConfig()
     if (!leaderboardEnabled()) return new Response('Not Found', { status: 404 })

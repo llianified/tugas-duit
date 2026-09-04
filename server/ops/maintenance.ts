@@ -2,6 +2,21 @@ import { execute, query, transaction } from '../platform/db.ts'
 import { runEngagementNotifications } from '../messaging/engagement.ts'
 import { sweepFraudSignals } from '../task/fraud.ts'
 
+/** Angka-angka ini menyatakan kapan sebuah baris BERHENTI BERGUNA, bukan seberapa cepat ia
+ * hilang. Yang menentukan yang kedua adalah jadwal sapuannya, dan jadwal yang benar-benar
+ * terdaftar cuma satu: cron harian di `vercel.json` (plan Hobby membatasi cron bawaan ke sekali
+ * sehari). Jadi `rate_limits` dan `used_init_data` — dua yang retensinya dihitung dalam jam —
+ * pada praktiknya menahan sampai ±24 jam baris mati sebelum disapu, bukan 2 jam dan 1 jam.
+ * Keduanya tetap murah dihapus karena kolom retensinya berindeks (`rate_limits_window_idx`,
+ * `used_init_data_expires_idx`), dan tidak ada satu pun jalur baca yang terganggu baris mati:
+ * `checkRateLimit` memilih per `window_start` yang tepat, dan `verifyInitData` sudah menolak
+ * payload kedaluwarsa lebih dulu lewat umurnya sendiri. Yang dibayar hanya penyimpanan.
+ *
+ * Angkanya tidak dinaikkan untuk "menjujurkan" jadwal, karena itu justru menahan lebih banyak.
+ * Kalau penyimpanannya mulai terasa, yang diubah adalah frekuensinya — mendaftarkan pemicu
+ * eksternal per jam ke `app/api/cron/maintenance` (jalur yang sudah diantisipasi route-nya)
+ * langsung membuat nilai-nilai di bawah ini berlaku apa adanya, tanpa satu pun baris kode
+ * berubah. */
 const CHALLENGE_RETENTION = '7 days'
 
 const RATE_LIMIT_RETENTION = '2 hours'

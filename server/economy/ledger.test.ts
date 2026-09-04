@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { beforeAll, describe, expect, it } from 'vitest'
 
 beforeAll(async () => {
@@ -69,6 +70,7 @@ describe('ECON-5 — jalur koreksi adjustment', () => {
       userPublicId: user.publicId,
       credits: 25,
       note: 'koreksi salah tandai',
+      requestId: randomUUID(),
     })
     expect(result?.balance).toBe(75)
 
@@ -86,6 +88,7 @@ describe('ECON-5 — jalur koreksi adjustment', () => {
     const user = await makeUser(50)
     const result = await recordAdjustment({
       adminId: 1, adminName: 'Admin', userPublicId: user.publicId, credits: -20, note: 'tarik kembali',
+      requestId: randomUUID(),
     })
     expect(result?.balance).toBe(30)
   })
@@ -94,7 +97,10 @@ describe('ECON-5 — jalur koreksi adjustment', () => {
     const { recordAdjustment } = await import('./ledger')
     const user = await makeUser(10)
     await expect(
-      recordAdjustment({ adminId: 1, adminName: 'Admin', userPublicId: user.publicId, credits: -50, note: 'terlalu besar' }),
+      recordAdjustment({
+        adminId: 1, adminName: 'Admin', userPublicId: user.publicId, credits: -50,
+        note: 'terlalu besar', requestId: randomUUID(),
+      }),
     ).rejects.toMatchObject({ code: '23514' })
   })
 
@@ -103,9 +109,41 @@ describe('ECON-5 — jalur koreksi adjustment', () => {
     const result = await recordAdjustment({
       adminId: 1, adminName: 'Admin',
       userPublicId: '00000000-0000-0000-0000-000000000000',
-      credits: 5, note: 'tidak ada',
+      credits: 5, note: 'tidak ada', requestId: randomUUID(),
     })
     expect(result).toBeNull()
+  })
+
+  /** P3-03: kuncinya dulu UUID yang dibuat server, jadi mekanisme idempotensi `appendLedger` tidak pernah bisa berlaku untuk koreksi admin — klik ganda mencetak koreksi kedua senilai penuh, dan ledger yang append-only mencatat keduanya selamanya. */
+  it('tidak membayar dua kali untuk requestId yang sama', async () => {
+    const { recordAdjustment } = await import('./ledger')
+    const user = await makeUser(50)
+    const requestId = randomUUID()
+    const koreksi = {
+      adminId: 1, adminName: 'Admin', userPublicId: user.publicId, credits: 30,
+      note: 'klik ganda', requestId,
+    }
+
+    const pertama = await recordAdjustment(koreksi)
+    const kedua = await recordAdjustment(koreksi)
+
+    expect(pertama?.balance).toBe(80)
+    expect(kedua?.balance).toBe(80)
+    expect(kedua?.ledgerId).toBe(pertama?.ledgerId)
+  })
+
+  it('membayar dua kali kalau memang dua koreksi berbeda', async () => {
+    const { recordAdjustment } = await import('./ledger')
+    const user = await makeUser(50)
+    const koreksi = {
+      adminId: 1, adminName: 'Admin', userPublicId: user.publicId, credits: 30,
+      note: 'dua koreksi',
+    }
+
+    await recordAdjustment({ ...koreksi, requestId: randomUUID() })
+    const kedua = await recordAdjustment({ ...koreksi, requestId: randomUUID() })
+
+    expect(kedua?.balance).toBe(110)
   })
 })
 

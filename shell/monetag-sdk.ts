@@ -15,7 +15,7 @@ export interface RewardedShowParams {
 
 export type MonetagShowParams = InAppShowParams | RewardedShowParams
 
-/** Akses ke SDK Monetag. SDK menempel satu fungsi global per zone dari atribut `data-sdk` di `app/layout.tsx`, dengan bentuk `show_<zone>`. */
+/** Akses ke SDK Monetag. SDK menempel satu fungsi global per zone dari atribut `data-sdk` di `app/(miniapp)/layout.tsx`, dengan bentuk `show_<zone>`. */
 export type MonetagShow = (params?: MonetagShowParams) => Promise<unknown>
 
 export function rewardedShowParams(ticketId: string): RewardedShowParams {

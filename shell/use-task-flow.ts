@@ -54,6 +54,13 @@ export function useTaskFlow({
   const [taskElapsedMs, setTaskElapsedMs] = useState(0)
   const [startingTask, setStartingTask] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  /** Penjaga kirim-ganda yang sebenarnya. `setStartingTask(true)` tidak terlihat oleh pemanggil
+   * kedua yang terjadi sebelum render berikutnya, jadi dua ketukan cepat sama-sama lolos state-nya
+   * — dan yang kedua terhitung sebagai percobaan salah di `challenges.attempts`. State-nya tetap
+   * ada karena ia yang menggerakkan tombol; ref inilah yang menutup pintunya, mengikuti pola
+   * `submittingRef` di `features/withdraw/components/withdraw-form.tsx`. */
+  const startingTaskRef = useRef(false)
+  const submittingRef = useRef(false)
 
   const beginChallenge = useCallback(
     async (candidate: Challenge, payWith: TaskPayment = 'energy') => {
@@ -98,12 +105,13 @@ export function useTaskFlow({
   /** `hold` datang dari animasi sobekan karcis di beranda (`ActiveTask`). Permintaan ke server dan animasinya jalan BERBARENGAN; yang ditunggu di sini hanya sisa waktu animasi setelah server menjawab, jadi ketukan tidak pernah jadi lebih lambat dari salah satu di antaranya. Kembaliannya dipakai pemanggil untuk memulihkan karcis kalau task gagal dimulai. */
   const startTask = useCallback(
     async (payWith: TaskPayment = 'energy', hold?: Promise<unknown>): Promise<boolean> => {
-      if (!task || startingTask) return false
+      if (!task || startingTaskRef.current) return false
       const refusal = entryRefusal(task, payWith)
       if (refusal) {
         notifyError(refusal)
         return false
       }
+      startingTaskRef.current = true
       setStartingTask(true)
       try {
         try {
@@ -129,24 +137,17 @@ export function useTaskFlow({
           void mutateSession()
         return false
       } finally {
+        startingTaskRef.current = false
         setStartingTask(false)
       }
     },
-    [
-      beginChallenge,
-      entryRefusal,
-      mutateSession,
-      mutateTask,
-      notifyError,
-      selectView,
-      startingTask,
-      task,
-    ],
+    [beginChallenge, entryRefusal, mutateSession, mutateTask, notifyError, selectView, task],
   )
 
   const completeTask = useCallback(
     async (answer: string): Promise<TaskSubmission | null> => {
-      if (!activeChallenge || submitting) return null
+      if (!activeChallenge || submittingRef.current) return null
+      submittingRef.current = true
       setSubmitting(true)
       try {
         const result = await sendJson<SubmitResponse>('/api/task/submit', 'POST', {
@@ -174,10 +175,11 @@ export function useTaskFlow({
         ])
         return outcome
       } finally {
+        submittingRef.current = false
         setSubmitting(false)
       }
     },
-    [activeChallenge, submitting, mutateHistory, mutateReferral, mutateSession, mutateStats, mutateTask],
+    [activeChallenge, mutateHistory, mutateReferral, mutateSession, mutateStats, mutateTask],
   )
 
   /** "Lanjut" di layar hasil membayar dengan energi, dan penjaganya dipakai ulang di sini bukan demi kerapian: user yang baru saja menyelesaikan task berbayar tiket justru sedang kehabisan energi, jadi tanpa pemeriksaan ini tombol utama layar kemenangan dijamin ditolak server lalu melempar mereka ke beranda dengan toast merah. Alasannya sekarang terbaca sebelum mereka pindah layar, dan tombol tiket di beranda tetap jalan keluarnya. */

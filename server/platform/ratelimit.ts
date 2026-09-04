@@ -225,3 +225,21 @@ export async function recordRateLimitHit(bucket: string, windowSeconds: number) 
     [bucket, windowSeconds],
   )
 }
+
+/** Dilempar, bukan dikembalikan, supaya jalur yang bukan route handler ikut terjaga: React Server
+ * Component memanggil fungsi datanya langsung, jadi tidak ada tempat untuk membaca `allowed`
+ * dan membalas 429. `handleRouteError` menerjemahkannya kembali jadi 429 untuk jalur API. */
+export class RateLimitedError extends Error {
+  retryAfter: number
+
+  constructor(retryAfter: number) {
+    super('RATE_LIMITED')
+    this.name = 'RateLimitedError'
+    this.retryAfter = retryAfter
+  }
+}
+
+export async function enforceRateLimit(bucket: string, limit: number, windowSeconds: number) {
+  const result = await checkRateLimit(bucket, limit, windowSeconds)
+  if (!result.allowed) throw new RateLimitedError(result.retryAfter)
+}

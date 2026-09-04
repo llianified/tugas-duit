@@ -24,7 +24,7 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const MESSAGE: Record<string, string> = {
-  REASON_REQUIRED: 'Alasan penangguhan wajib diisi.',
+  REASON_REQUIRED: 'Alasannya wajib diisi.',
   REASON_TOO_LONG: `Alasan maksimum ${BAN_REASON_MAX} karakter (aksi hibah: ${GRANT_REASON_MAX}).`,
   SELF_SUSPENSION_FORBIDDEN:
     'Akun sendiri tidak bisa ditangguhkan — panel ini akan langsung tertutup.',
@@ -92,12 +92,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ pu
           adminId: admin.id,
           publicId,
           isAdmin: body.action === 'grant-admin',
+          reason: body.reason?.trim() || null,
         })
         if (!result) return new Response(null, { status: 404 })
         return Response.json(result)
       }
       case 'profile': {
         const result = await updateAdminUserProfile({
+          adminId: admin.id,
           publicId,
           firstName: body.firstName ?? '',
           username: body.username ?? null,

@@ -41,40 +41,62 @@ export const DEFAULT_SEND_BUDGET_MS = 30_000
 
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
 
-const CANDIDATE_SQL = `select
-    u.id,
-    u.telegram_id,
-    u.balance_credits,
-    u.energy,
-    u.energy_updated_at,
-    u.reward_pool,
-    u.reward_pool_updated_at,
-    u.premium_until,
-    (select count(*) from task_completions tc where tc.user_id=u.id)::int completed_count,
+/** Berapa kandidat yang boleh dibaca satu putaran. Lebih besar dari `MAX_SENDS_PER_RUN` karena sebagian besar kandidat tidak punya pesan apa pun untuk hari itu — `pickMessage` mengembalikan `null` dan mereka dilewati tanpa memakai jatah kirim. Dua kali lipat memberi ruang itu tanpa mengembalikan biayanya ke seluruh basis user. */
+const CANDIDATE_LIMIT = MAX_SENDS_PER_RUN * 2
+
+/** Kandidat dipilih dulu, baru datanya dihitung. Bentuk lamanya menjalankan sebelas subquery berkorelasi untuk SETIAP user yang pernah menyelesaikan satu task, tanpa `limit`, di dalam lambda ber-`maxDuration = 60` — dan begitu kueri itu melewati satu menit, prosesnya dibunuh sebelum satu pesan pun terkirim, sementara `runMaintenance` tetap melaporkan sukses. Sekarang `picked` menyaring dan memotongnya lebih dulu dengan kolom yang murah, dan sebelas subquery itu hanya dibayar untuk baris yang benar-benar terpakai.
+ *
+ * Urutannya juga bukan lagi urutan pemindaian Postgres. Yang paling lama tidak dikirimi pesan didahulukan, dan di dalam kelompok yang belum pernah dikirimi sama sekali urutannya diacak — tanpa pengacakan itu himpunan 500 pertama adalah himpunan yang sama setiap hari, jadi user yang kebetulan di luar sana tidak pernah menerima "saldo kamu sudah bisa dicairkan" seumur hidupnya. */
+const CANDIDATE_SQL = `with notified as (
+    select user_id, max(sent_at) as at from bot_notifications group by user_id
+  ), picked as (
+    select u.id,
+           u.telegram_id,
+           u.balance_credits,
+           u.energy,
+           u.energy_updated_at,
+           u.reward_pool,
+           u.reward_pool_updated_at,
+           u.premium_until
+      from users u
+      left join notified n on n.user_id = u.id
+     where u.banned_at is null
+       and u.notifications_muted_at is null
+       and exists (select 1 from task_completions tc where tc.user_id=u.id)
+     order by coalesce(n.at, 'epoch'::timestamptz) asc, random()
+     limit $1
+  )
+  select
+    p.id,
+    p.telegram_id,
+    p.balance_credits,
+    p.energy,
+    p.energy_updated_at,
+    p.reward_pool,
+    p.reward_pool_updated_at,
+    p.premium_until,
+    (select count(*) from task_completions tc where tc.user_id=p.id)::int completed_count,
     (select count(*) from task_completions tc
-      where tc.user_id=u.id and tc.completed_at <= now() - interval '24 hours')::int
+      where tc.user_id=p.id and tc.completed_at <= now() - interval '24 hours')::int
       completed_count_before,
-    (select max(completed_at) from task_completions tc where tc.user_id=u.id) last_task_at,
+    (select max(completed_at) from task_completions tc where tc.user_id=p.id) last_task_at,
     (select count(*) from task_completions tc
-      where tc.user_id=u.id and (tc.completed_at at time zone 'Asia/Jakarta')::date = ${TODAY})::int
+      where tc.user_id=p.id and (tc.completed_at at time zone 'Asia/Jakarta')::date = ${TODAY})::int
       tasks_today,
-    (select count(distinct rc.downline_id) from referral_commissions rc where rc.upline_id=u.id)::int
+    (select count(distinct rc.downline_id) from referral_commissions rc where rc.upline_id=p.id)::int
       active_referrals,
     (select count(distinct (tc.completed_at at time zone 'Asia/Jakarta')::date)
-       from task_completions tc where tc.user_id=u.id)::int active_days,
-    (select max(w.requested_at) from withdrawals w where w.user_id=u.id) last_withdrawal_at,
-    (select count(*) from withdrawals w where w.user_id=u.id and w.state='processing')::int
+       from task_completions tc where tc.user_id=p.id)::int active_days,
+    (select max(w.requested_at) from withdrawals w where w.user_id=p.id) last_withdrawal_at,
+    (select count(*) from withdrawals w where w.user_id=p.id and w.state='processing')::int
       processing_withdrawals,
     coalesce((select dq.commission_credits from daily_quotas dq
-       where dq.user_id=u.id and dq.quota_date=${TODAY}), 0)::int commission_today,
+       where dq.user_id=p.id and dq.quota_date=${TODAY}), 0)::int commission_today,
     (select count(*) from users d
-      where d.referred_by=u.id and (d.created_at at time zone 'Asia/Jakarta')::date = ${TODAY})::int
+      where d.referred_by=p.id and (d.created_at at time zone 'Asia/Jakarta')::date = ${TODAY})::int
       new_referrals_today,
     now() as now
-  from users u
-  where u.banned_at is null
-    and u.notifications_muted_at is null
-    and exists (select 1 from task_completions tc where tc.user_id=u.id)`
+  from picked p`
 
 /** Rentetan hari aktif yang berakhir **kemarin**, bukan yang berakhir hari ini: pesannya justru untuk user yang belum menyentuh task hari ini, jadi hari ini tidak boleh ikut dihitung. Bentuk kolomnya sengaja sama dengan `STREAK_EXPRESSION` di `streak-sql.ts` — batas hari WIB, baris pertama yang tidak jatuh tepat `rn - 1` hari sebelum acuan adalah tempat putusnya. */
 const STREAK_SQL = `with active as (
@@ -350,7 +372,7 @@ export async function runEngagementNotifications(
   }
 
   const [candidates, streaks] = await Promise.all([
-    query<CandidateRow>(CANDIDATE_SQL),
+    query<CandidateRow>(CANDIDATE_SQL, [CANDIDATE_LIMIT]),
     query<{ user_id: string; streak: number }>(STREAK_SQL, [STREAK_LOOKBACK_DAYS]),
   ])
   const streakOf = new Map(streaks.map((row) => [String(row.user_id), Number(row.streak)]))
@@ -362,6 +384,7 @@ export async function runEngagementNotifications(
       console.warn(`[engagement] batas ${MAX_SENDS_PER_RUN} pesan per putaran tercapai, sisanya putaran berikutnya`)
       break
     }
+
     if (Date.now() >= deadline) {
       console.warn(
         `[engagement] anggaran ${budgetMs}ms habis setelah ${total} pesan, sisanya putaran berikutnya`,

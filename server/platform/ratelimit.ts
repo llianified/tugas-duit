@@ -12,7 +12,7 @@ interface Lease {
   blocked: boolean
 }
 
-/** Token yang belum terpakai dibuang 2 detik sebelum window benar-benar berakhir. Selisih jam antara Node dan Postgres selalu ada, dan tanpa jaga-jaga ini token dari window lama bisa ikut dibelanjakan di window berikutnya — satu-satunya arah kesalahan yang tidak boleh terjadi. Konsekuensinya cuma beberapa write ekstra di ujung window. */
+/** Token yang belum terpakai dibuang 2 detik sebelum window benar-benar berakhir. Selisih jam antara Node dan Postgres selalu ada, dan tanpa jaga-jaga ini token dari window lama bisa ikut dibelanjakan di window berikutnya — satu-satunya arah kesalahan yang tidak boleh terjadi. Di dalam rentang ini reservasi dimatikan sama sekali dan request dilayani jalur eksak: memesan lease baru di sini hanya melahirkan lease yang langsung kena guard-nya sendiri, jadi tokennya hangus tanpa pernah terpakai dan request berputar sampai `MAX_ACQUIRE_ATTEMPTS`. */
 const LEASE_GUARD_MS = 2_000
 
 /** Di bawah plafon ini reservasi tidak dipakai sama sekali: bucket kecil justru yang paling sensitif (`withdraw` 5/jam, `premium:checkout` 10/600s, `admin:maintenance` 6/jam, `task:submit` 30/60s) dan penghematannya paling tidak berarti karena volumenya memang kecil. */
@@ -44,6 +44,17 @@ function windowEnd(windowEpoch: number, windowSeconds: number): number {
 
 function retryAfterFrom(windowEndMs: number, now: number): number {
   return Math.max(1, Math.ceil((windowEndMs - now) / 1_000))
+}
+
+/** Sisa window menurut jam Node, dipakai saat belum ada lease sama sekali sehingga batas versi Postgres belum diketahui. Batas window-nya kelipatan `windowSeconds` sejak epoch — rumus yang sama dengan `floor(extract(epoch from now())/$2)*$2` di Postgres — jadi keduanya hanya berbeda sebesar selisih jam. Angka ini cuma memilih jalur, tidak pernah memutuskan lolos atau tidak, jadi salah tebak paling jauh berarti request memakai jalur eksak yang selalu benar. */
+function windowRemainingMs(windowSeconds: number, now: number): number {
+  const span = windowSeconds * 1_000
+  return span - (now % span)
+}
+
+/** Di ekor window jangan pesan lease: pakai jalur eksak. */
+function inLeaseGuard(windowSeconds: number, now: number): boolean {
+  return windowRemainingMs(windowSeconds, now) <= LEASE_GUARD_MS
 }
 
 /** Satu pernyataan atomik, dan tetap satu-satunya sumber kebenaran. `$3` token dibayar di muka sekaligus, jadi dua instance tidak pernah bisa memesan rentang token yang sama. `window_start` dihitung jam Postgres lalu dikembalikan supaya cache lokal memakai batas window versi database, bukan versi `Date.now()`. */
@@ -78,15 +89,16 @@ function setLease(key: string, lease: Lease): void {
   leases.set(key, lease)
 }
 
-/** Ambil satu token dari lease yang sudah dibayar. `null` berarti "belum punya hak, pesan dulu" — bukan "boleh". */
-function takeFromLease(key: string): RateLimitVerdict | null {
+/** Ambil satu token dari lease yang sudah dibayar. `null` berarti "belum punya hak, pesan dulu" dan `'guard'` berarti "jangan pesan, window hampir habis" — keduanya bukan "boleh". */
+function takeFromLease(key: string): RateLimitVerdict | 'guard' | null {
   const lease = leases.get(key)
   if (!lease) return null
 
   const now = Date.now()
+  /** Batas versi Postgres, jadi ini yang menentukan — bukan tebakan `windowRemainingMs`. */
   if (now >= lease.windowEndMs - LEASE_GUARD_MS) {
     leases.delete(key)
-    return null
+    return 'guard'
   }
 
   const retryAfter = retryAfterFrom(lease.windowEndMs, now)
@@ -156,6 +168,18 @@ async function reserveExact(
  * satu-satunya adalah lebih ketat: token yang belum terpakai bisa hangus saat window
  * berganti atau instance mati.
  *
+ * Konsekuensi yang harus disadari: **plafon efektif bisa lebih rendah dari `limit`**. Lease
+ * dipegang per proses, jadi kalau request satu bucket tersebar ke beberapa instance, tiap
+ * instance bisa menganggur sambil masih memegang token — paling banyak `leaseSize - 1` token
+ * hangus per instance, atau `(instance - 1) × (leaseSize - 1)` untuk satu window. Semua bucket
+ * di `app/api` berkunci per pemakai (`user.id`, `admin.id`, atau IP), jadi yang terkena hanya
+ * satu pemakai yang request-nya berpindah instance dalam satu window; tidak ada bucket global
+ * yang dibagi banyak pemakai. Yang paling lebar plafonnya `admin:economy|users|withdrawals`
+ * 300/jam dengan lease 10, artinya paling buruk ~282 dari 300 (94%) kalau request satu admin
+ * tersebar ke tiga instance. Toleransi ini yang dikunci `RL-4`. Bucket yang menuntut plafon
+ * eksak harus di bawah `LEASE_MIN_LIMIT` — di sana reservasi memang tidak dipakai sama sekali —
+ * atau memakai jalur `peekRateLimit`/`recordRateLimitHit` seperti penghitung login admin.
+ *
  * Kegagalan database tetap dilempar seperti sebelumnya. Rate limiter tidak boleh fail-open.
  */
 export async function checkRateLimit(
@@ -166,8 +190,13 @@ export async function checkRateLimit(
   const key = `${bucket}|${windowSeconds}`
 
   for (let attempt = 0; attempt < MAX_ACQUIRE_ATTEMPTS; attempt++) {
-    const verdict = takeFromLease(key)
-    if (verdict) return verdict
+    const held = takeFromLease(key)
+    if (held === 'guard') return reserveExact(bucket, limit, windowSeconds)
+    if (held) return held
+    /** Belum ada lease dan window hampir habis: lease yang dipesan sekarang akan langsung kena guard-nya sendiri, jadi tokennya hangus dan request ini berputar sampai fallback. Bayar satu token saja. */
+    if (inLeaseGuard(windowSeconds, Date.now())) {
+      return reserveExact(bucket, limit, windowSeconds)
+    }
     await reserveTokens(key, bucket, limit, windowSeconds)
   }
 

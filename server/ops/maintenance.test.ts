@@ -24,6 +24,7 @@ describe('MAINT-1 — seluruh pernyataan pemeliharaan jalan di database', () => 
 
     expect(summary).toMatchObject({
       challenges: expect.any(Number),
+      challengePayloads: expect.any(Number),
       rateLimits: expect.any(Number),
       sessions: expect.any(Number),
       initData: expect.any(Number),
@@ -65,6 +66,58 @@ describe('MAINT-1 — seluruh pernyataan pemeliharaan jalan di database', () => 
     const sisa = await query('select 1 from rate_limits where bucket=$1', [bucket])
     expect(sisa).toHaveLength(1)
   })
+})
+
+describe('MAINT-4 — isi soal selesai dilepas, soal aktif tidak', () => {
+  /** `payload` soal yang sudah ditutup adalah pos terbesar di database, dan baris induknya
+   * sendiri tidak bisa dihapus karena `task_completions` menahannya dengan `ON DELETE
+   * RESTRICT`. Dua test di bawah menjaga kedua sisi yang membuat pelepasannya aman: yang
+   * ditutup kehilangan isinya, dan yang masih berjalan mempertahankannya — sebab kalau sisi
+   * kedua ikut terbawa, soal yang sedang dikerjakan pemain berubah jadi soal tanpa
+   * pertanyaan. */
+  const seedChallenge = async (submitted: boolean) => {
+    const { query } = await import('../platform/db')
+    const { generateReferralCode } = await import('../economy/referral')
+    const user = await query<{ id: string }>(
+      `insert into users(telegram_id,first_name,referral_code)
+       values($1,'Uji payload',$2) returning id`,
+      [800_100_000_000_000 + Math.floor(Math.random() * 1_000_000_000), generateReferralCode()],
+    )
+    const rows = await query<{ id: string }>(
+      `insert into challenges(user_id,type,difficulty,payload,answer_hash,max_reward,expires_at,submitted_at)
+       values($1,'text','Easy','{"pertanyaan":"2+2"}','\\x00',1,now(),${submitted ? 'now()' : 'null'})
+       returning id`,
+      [user[0].id],
+    )
+    return rows[0].id
+  }
+
+  const payloadOf = async (id: string) => {
+    const { query } = await import('../platform/db')
+    const rows = await query<{ payload: Record<string, unknown> }>(
+      'select payload from challenges where id=$1',
+      [id],
+    )
+    return rows[0].payload
+  }
+
+  it('mengosongkan payload soal yang sudah disubmit', async () => {
+    const { runMaintenance } = await import('./maintenance')
+    const id = await seedChallenge(true)
+
+    await runMaintenance()
+
+    expect(await payloadOf(id)).toEqual({})
+  }, 60_000)
+
+  it('mempertahankan payload soal yang belum disubmit', async () => {
+    const { runMaintenance } = await import('./maintenance')
+    const id = await seedChallenge(false)
+
+    await runMaintenance()
+
+    expect(await payloadOf(id)).toEqual({ pertanyaan: '2+2' })
+  }, 60_000)
 })
 
 describe('MAINT-2 — jadwal cron jatuh di dalam jam kirim WIB', () => {

@@ -19,6 +19,31 @@ import { sweepFraudSignals } from '../task/fraud.ts'
  * berubah. */
 const CHALLENGE_RETENTION = '7 days'
 
+/** `challenges` adalah tabel terbesar di database (49 MB dari 131 MB), dan 28 MB di antaranya
+ * hanya kolom `payload` milik soal yang sudah ditutup. Sapuan di atas tidak bisa
+ * mengambilnya: `task_completions.challenge_id` menunjuk ke sini dengan `ON DELETE RESTRICT`,
+ * dan SETIAP soal ber-`solved` punya baris completion — jadi `and solved = false` di sana
+ * bukan kelalaian melainkan satu-satunya bentuk yang tidak melempar pelanggaran FK dan
+ * menggagalkan seluruh putaran pemeliharaan. Konsekuensinya 95% baris `challenges` memang
+ * tidak punya jalan keluar, dan yang bisa dilepas dari baris yang menetap itu cuma isinya.
+ *
+ * Yang dilepas hanya `payload`, dan hanya setelah `submitted_at` terisi. Tidak ada satu pun
+ * jalur baca yang kehilangan sesuatu: ketiga tempat yang menyeleksi `payload`
+ * (`readActiveChallenge`, `startChallenge`, `submitChallenge`) semuanya menolak baris
+ * ber-`submitted_at` lebih dulu — lewat filter `submitted_at is null`, lewat `startable`, dan
+ * lewat `already_submitted`. Kolomnya `not null`, jadi yang ditulis `'{}'` bukan `null`.
+ * Statistik admin dan sapuan `fraud_signals` tetap utuh karena keduanya membaca `solved`,
+ * `attempts`, dan `ad_view_id`, bukan `payload`.
+ *
+ * Syarat `payload <> '{}'` bukan hiasan: tanpa itu setiap putaran harian menulis ulang ~97 ribu
+ * baris yang sudah kosong, menumpuk dead tuple dan WAL sebesar tabelnya sendiri setiap hari —
+ * persis biaya yang sedang dikurangi. Dengan syarat itu, putaran berikutnya hanya menyentuh
+ * soal yang ditutup sejak putaran sebelumnya. */
+const CHALLENGE_PAYLOAD_SCRUB = `update challenges
+      set payload = '{}'::jsonb
+    where submitted_at is not null
+      and payload <> '{}'::jsonb`
+
 const RATE_LIMIT_RETENTION = '2 hours'
 
 const SESSION_RETENTION = '30 days'
@@ -34,6 +59,7 @@ const BALANCE_CHECK_WINDOW = '3 days'
 
 export type MaintenanceSummary = {
   challenges: number
+  challengePayloads: number
   rateLimits: number
   sessions: number
   initData: number
@@ -52,6 +78,9 @@ export async function runMaintenance(): Promise<MaintenanceSummary> {
         and issued_at < now() - interval '${CHALLENGE_RETENTION}'`,
   )
   console.log(`[maintenance] ${challenges} soal kedaluwarsa dihapus`)
+
+  const challengePayloads = await execute(CHALLENGE_PAYLOAD_SCRUB)
+  console.log(`[maintenance] ${challengePayloads} isi soal selesai dikosongkan`)
 
   const rateLimits = await execute(
     `delete from rate_limits where window_start < now() - interval '${RATE_LIMIT_RETENTION}'`,
@@ -120,6 +149,7 @@ export async function runMaintenance(): Promise<MaintenanceSummary> {
 
   return {
     challenges,
+    challengePayloads,
     rateLimits,
     sessions,
     initData,

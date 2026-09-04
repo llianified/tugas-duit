@@ -34,129 +34,184 @@ export default async function AdminOpsPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="admin-page">
-      <header className="admin-page-header">
-        <h1 className="admin-page-title">Pusat operasi</h1>
-        <p className="admin-page-description">
-          Tinjau anomali, arsip transaksi, siaran pengguna, dan pemeliharaan sistem tanpa bercampur dengan pengaturan ekonomi.
-        </p>
-      </header>
+      <div className="admin-head">
+        <h1 className="admin-head-title">Operasi</h1>
+        {flagged.length > 0 ? (
+          <span className="chip chip-destructive">{formatCredits(flagged.length)} bersinyal</span>
+        ) : null}
+      </div>
 
-      <section aria-labelledby="ops-priority-heading" className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-primary">Prioritas</p>
-            <h2 id="ops-priority-heading" className="pt-1 font-display text-lg font-bold text-foreground">Akun bersinyal · 7 hari</h2>
+      <Block
+        title="Akun bersinyal · 7 hari"
+        note="Sinyal tidak menghukum otomatis. Yang sedang antre payout ada di atas karena perlu ditinjau sebelum uang keluar."
+        empty={flagged.length === 0 ? 'Tidak ada akun bersinyal dalam tujuh hari terakhir.' : undefined}
+      >
+        {flagged.map((user) => (
+          <div className="admin-row" key={user.publicId}>
+            <div className="admin-row-main">
+              <Link
+                href={`/admin/users?q=${encodeURIComponent(user.publicId)}&id=${user.publicId}`}
+                className="focus-ring admin-row-title truncate"
+              >
+                {user.firstName}
+              </Link>
+              <span className="admin-sub">{user.signals.join(', ')}</span>
+              <span className="admin-sub tabular-nums">
+                {formatCredits(user.signalCount)} sinyal · saldo {formatCredits(user.balanceCredits)} ·{' '}
+                {formatDateTime(user.lastSignalAt)}
+              </span>
+            </div>
+            <span className={user.hasPendingPayout ? 'chip chip-destructive' : 'chip chip-muted'}>
+              {user.hasPendingPayout ? 'Payout antre' : `Skor ${formatCredits(user.score)}`}
+            </span>
           </div>
-          <p className="text-xs text-muted-foreground">{formatCredits(flagged.length)} akun perlu konteks</p>
-        </div>
-        <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          Sinyal tidak menghukum akun secara otomatis. Pengguna yang sedang antre payout ditempatkan di atas karena perlu ditinjau sebelum uang keluar.
-        </p>
-        {flagged.length === 0 ? <Empty>Tidak ada akun bersinyal dalam tujuh hari terakhir.</Empty> : (
-          <ul className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
-            {flagged.map((user) => (
-              <li key={user.publicId} className={user.hasPendingPayout ? 'admin-panel flex flex-col gap-3 border-destructive p-4' : 'admin-panel flex flex-col gap-3 p-4'}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <Link href={`/admin/users?q=${encodeURIComponent(user.publicId)}&id=${user.publicId}`} className="focus-ring rounded font-semibold text-foreground hover:text-primary hover:underline">
-                      {user.firstName}
-                    </Link>
-                    <p className="pt-1 text-xs text-muted-foreground">Terakhir {formatDateTime(user.lastSignalAt)}</p>
-                  </div>
-                  <span className={user.hasPendingPayout ? 'rounded-md border border-destructive px-2 py-1 text-xs font-semibold text-destructive' : 'rounded-md bg-muted px-2 py-1 text-xs font-semibold text-foreground'}>
-                    {user.hasPendingPayout ? 'Payout menunggu' : `Skor ${formatCredits(user.score)}`}
-                  </span>
-                </div>
-                <p className="text-sm leading-relaxed text-muted-foreground">{user.signals.join(', ')}</p>
-                <div className="flex items-center justify-between gap-3 border-t border-border pt-3 text-xs text-muted-foreground">
-                  <span>{formatCredits(user.signalCount)} sinyal</span>
-                  <span className="tabular-nums">Saldo {formatCredits(user.balanceCredits)} credit</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+        ))}
+      </Block>
 
-      <Section title="Arsip penarikan" note="Cari keputusan payout terdahulu dan cocokkan rekening dengan bukti transfer saat terjadi sengketa.">
-        <form action="/admin/ops" className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <label className="flex min-w-0 flex-1 flex-col gap-1.5 text-sm">
-            <span className="font-semibold text-foreground">Cari transaksi</span>
-            <input name="q" defaultValue={term} placeholder="Rekening, penerima, atau nama akun" className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 text-foreground" />
+      <section className="admin-card">
+        <div>
+          <h2 className="admin-eyebrow text-foreground">Arsip penarikan</h2>
+          <p className="admin-sub">Cocokkan rekening dengan bukti transfer saat terjadi sengketa.</p>
+        </div>
+
+        <form action="/admin/ops" className="flex flex-col gap-2.5">
+          <label className="admin-field">
+            <span className="admin-field-k">Cari transaksi</span>
+            <input
+              name="q"
+              defaultValue={term}
+              placeholder="Rekening, penerima, atau nama akun"
+              className="focus-ring admin-input"
+            />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-semibold text-foreground">Status</span>
-            <select name="state" defaultValue={filter} className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 text-foreground">
+          <label className="admin-field">
+            <span className="admin-field-k">Status</span>
+            <select name="state" defaultValue={filter} className="focus-ring admin-input">
               <option value="semua">Semua status</option>
               <option value="processing">Diproses</option>
               <option value="paid">Terkirim</option>
               <option value="rejected">Ditolak</option>
             </select>
           </label>
-          <button type="submit" className="focus-ring transition-ui rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover">Terapkan filter</button>
+          <button type="submit" className="focus-ring transition-ui admin-btn admin-btn-primary">
+            Terapkan filter
+          </button>
         </form>
 
-        {payouts.entries.length === 0 ? <Empty>Tidak ada penarikan yang cocok.</Empty> : (
-          <ul className="flex flex-col divide-y divide-border">
+        {payouts.entries.length === 0 ? (
+          <p className="admin-sub">Tidak ada penarikan yang cocok.</p>
+        ) : (
+          <div className="admin-list">
             {payouts.entries.map((payout) => (
-              <li key={payout.id} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Link href={`/admin/users?q=${encodeURIComponent(payout.userPublicId)}&id=${payout.userPublicId}`} className="focus-ring rounded text-sm font-semibold text-foreground hover:text-primary hover:underline">{payout.userName}</Link>
-                  <span className="text-sm font-semibold tabular-nums text-foreground">{formatRupiah(payout.amountIdr)} · {STATE_LABEL[payout.state] ?? payout.state}</span>
+              <div className="admin-row" key={payout.id}>
+                <div className="admin-row-main">
+                  <Link
+                    href={`/admin/users?q=${encodeURIComponent(payout.userPublicId)}&id=${payout.userPublicId}`}
+                    className="focus-ring admin-row-title truncate"
+                  >
+                    {payout.userName}
+                  </Link>
+                  <span className="admin-sub tabular-nums">
+                    {getPayoutChannel(payout.channelId).name} {payout.accountNumber} · {payout.accountName}
+                  </span>
+                  <span className="admin-sub tabular-nums">
+                    Diajukan {formatDateTime(payout.requestedAt)}
+                    {payout.settledAt ? ` · diputuskan ${formatDateTime(payout.settledAt)}` : ''}
+                    {payout.processedBy ? ` oleh ${payout.processedBy}` : ''}
+                    {payout.hasProof ? ' · bukti tersedia' : ''}
+                  </span>
+                  {payout.rejectReason ? (
+                    <span className="text-xs text-destructive">Alasan: {payout.rejectReason}</span>
+                  ) : null}
                 </div>
-                <p className="text-xs tabular-nums text-muted-foreground">{getPayoutChannel(payout.channelId).name} {payout.accountNumber} · {payout.accountName}</p>
-                <p className="text-xs leading-relaxed tabular-nums text-muted-foreground">Diajukan {formatDateTime(payout.requestedAt)}{payout.settledAt ? ` · diputuskan ${formatDateTime(payout.settledAt)}` : ''}{payout.processedBy ? ` oleh ${payout.processedBy}` : ''}{payout.hasProof ? ' · bukti tersedia' : ''}</p>
-                {payout.rejectReason ? <p className="text-xs text-destructive">Alasan: {payout.rejectReason}</p> : null}
-              </li>
+                <div className="shrink-0 text-right">
+                  <p className="admin-row-value">{formatRupiah(payout.amountIdr)}</p>
+                  <p className="admin-sub">{STATE_LABEL[payout.state] ?? payout.state}</p>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
-        {payouts.hasMore ? <p className="text-xs text-muted-foreground">Menampilkan {formatCredits(payouts.entries.length)} hasil teratas. Persempit pencarian untuk melihat sisanya.</p> : null}
-      </Section>
+        {payouts.hasMore ? (
+          <p className="admin-sub">
+            Menampilkan {formatCredits(payouts.entries.length)} hasil teratas. Persempit pencarian untuk sisanya.
+          </p>
+        ) : null}
+      </section>
 
-      <div className="grid items-start gap-4 xl:grid-cols-2">
-        <Section title="Tagihan premium" note="Pantau pemasukan langsung dan pastikan premium aktif setelah pembayaran lunas.">
-          {invoices.length === 0 ? <Empty>Belum ada tagihan premium.</Empty> : (
-            <ul className="flex flex-col divide-y divide-border">
-              {invoices.map((invoice) => (
-                <li key={invoice.orderId} className="flex flex-col gap-1.5 py-3 first:pt-0 last:pb-0">
-                  <div className="flex flex-wrap items-center justify-between gap-2"><Link href={`/admin/users?q=${encodeURIComponent(invoice.userPublicId)}&id=${invoice.userPublicId}`} className="focus-ring rounded text-sm font-semibold text-foreground hover:text-primary hover:underline">{invoice.userName}</Link><span className="text-sm font-semibold tabular-nums text-foreground">{formatRupiah(invoice.totalAmountIdr)} · {invoice.state}</span></div>
-                  <p className="text-xs tabular-nums text-muted-foreground">{formatCredits(invoice.months)} bulan · {invoice.orderId}</p>
-                  <p className="text-xs leading-relaxed tabular-nums text-muted-foreground">Dibuat {formatDateTime(invoice.createdAt)}{invoice.paidAt ? ` · lunas ${formatDateTime(invoice.paidAt)}` : ''}{invoice.grantedUntil ? ` · aktif sampai ${formatDateTime(invoice.grantedUntil)}` : ''}</p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
-
-        <MaintenanceButton />
-      </div>
+      <Block
+        title="Tagihan premium"
+        note="Pemasukan langsung dan status aktivasi setelah pembayaran lunas."
+        empty={invoices.length === 0 ? 'Belum ada tagihan premium.' : undefined}
+      >
+        {invoices.map((invoice) => (
+          <div className="admin-row" key={invoice.orderId}>
+            <div className="admin-row-main">
+              <Link
+                href={`/admin/users?q=${encodeURIComponent(invoice.userPublicId)}&id=${invoice.userPublicId}`}
+                className="focus-ring admin-row-title truncate"
+              >
+                {invoice.userName}
+              </Link>
+              <span className="admin-sub tabular-nums">
+                {formatCredits(invoice.months)} bulan · {invoice.state} · {invoice.orderId}
+              </span>
+              <span className="admin-sub tabular-nums">
+                Dibuat {formatDateTime(invoice.createdAt)}
+                {invoice.paidAt ? ` · lunas ${formatDateTime(invoice.paidAt)}` : ''}
+                {invoice.grantedUntil ? ` · aktif sampai ${formatDateTime(invoice.grantedUntil)}` : ''}
+              </span>
+            </div>
+            <span className="admin-row-value">{formatRupiah(invoice.totalAmountIdr)}</span>
+          </div>
+        ))}
+      </Block>
 
       <BroadcastComposer />
 
-      <Section title="Siaran terakhir" note="Sepuluh pengiriman terbaru beserta hasilnya.">
-        {broadcasts.length === 0 ? <Empty>Belum pernah mengirim siaran.</Empty> : (
-          <ul className="grid gap-3 lg:grid-cols-2">
-            {broadcasts.map((broadcast) => (
-              <li key={broadcast.id} className="rounded-lg bg-muted p-3.5 text-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-foreground">{SEGMENT_LABEL.get(broadcast.segment) ?? broadcast.segment}</span><span className="text-xs tabular-nums text-foreground">{formatCredits(broadcast.sentCount)} terkirim{broadcast.failedCount > 0 ? ` · ${formatCredits(broadcast.failedCount)} gagal` : ''}</span></div>
-                <p className="line-clamp-3 whitespace-pre-wrap pt-2 text-sm leading-relaxed text-muted-foreground">{broadcast.body}</p>
-                <p className="pt-2 text-xs tabular-nums text-muted-foreground">{formatDateTime(broadcast.createdAt)}{broadcast.createdBy ? ` · oleh ${broadcast.createdBy}` : ''} · {broadcast.finishedAt ? 'selesai' : 'berjalan'}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Section>
+      <Block
+        title="Siaran terakhir"
+        note="Sepuluh pengiriman terbaru beserta hasilnya."
+        empty={broadcasts.length === 0 ? 'Belum pernah mengirim siaran.' : undefined}
+      >
+        {broadcasts.map((broadcast) => (
+          <div className="admin-row" key={broadcast.id}>
+            <div className="admin-row-main">
+              <span className="admin-row-title">
+                {SEGMENT_LABEL.get(broadcast.segment) ?? broadcast.segment}
+              </span>
+              <span className="admin-sub line-clamp-3 whitespace-pre-wrap">{broadcast.body}</span>
+              <span className="admin-sub tabular-nums">
+                {formatDateTime(broadcast.createdAt)}
+                {broadcast.createdBy ? ` · oleh ${broadcast.createdBy}` : ''} ·{' '}
+                {broadcast.finishedAt ? 'selesai' : 'berjalan'}
+              </span>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="admin-row-value">{formatCredits(broadcast.sentCount)}</p>
+              <p className="admin-sub">
+                {broadcast.failedCount > 0 ? `${formatCredits(broadcast.failedCount)} gagal` : 'terkirim'}
+              </p>
+            </div>
+          </div>
+        ))}
+      </Block>
+
+      <MaintenanceButton />
     </div>
   )
 }
 
 const STATE_LABEL: Record<string, string> = { processing: 'Diproses', paid: 'Terkirim', rejected: 'Ditolak' }
 
-function Section({ title, note, children }: { title: string; note: string; children: ReactNode }) {
-  return <section className="admin-panel flex flex-col gap-4 p-4 sm:p-5"><div><h2 className="font-display text-base font-bold text-foreground">{title}</h2><p className="pt-1 text-sm leading-relaxed text-muted-foreground">{note}</p></div>{children}</section>
-}
-
-function Empty({ children }: { children: ReactNode }) {
-  return <p className="admin-empty">{children}</p>
+function Block({ title, note, empty, children }: { title: string; note: string; empty?: string; children: ReactNode }) {
+  return (
+    <section className="admin-card">
+      <div>
+        <h2 className="admin-eyebrow text-foreground">{title}</h2>
+        <p className="admin-sub">{note}</p>
+      </div>
+      {empty ? <p className="admin-sub">{empty}</p> : <div className="admin-list">{children}</div>}
+    </section>
+  )
 }

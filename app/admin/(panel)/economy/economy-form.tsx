@@ -215,26 +215,22 @@ export function EconomyForm({ snapshot }: { snapshot: EconomyConfigSnapshot }) {
 
   return (
     <div className="admin-page">
-      <header className="admin-page-header">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="admin-page-title">Pengaturan ekonomi</h1>
-          <span className="rounded-md border border-border bg-card px-2 py-1 text-xs font-medium text-muted-foreground">
-            Versi {saved.version}
-          </span>
-        </div>
-        <p className="admin-page-description">
-          Atur reward, batas, dan akses fitur. Perubahan baru aktif setelah tombol Terapkan ditekan.
-        </p>
-        <p className="text-xs text-muted-foreground">Terakhir diperbarui {formatDateTime(saved.updatedAt)}</p>
-      </header>
+      <div className="admin-head">
+        <h1 className="admin-head-title">Ekonomi</h1>
+        <span className="chip chip-muted">Versi {saved.version}</span>
+      </div>
+
+      <p className="admin-sub">
+        Perubahan aktif setelah Terapkan ditekan. Terakhir diperbarui {formatDateTime(saved.updatedAt)}.
+      </p>
 
       {notice ? (
-        <p role="status" className={cn('admin-panel px-4 py-3 text-sm', Object.keys(errors).length > 0 ? 'text-destructive' : 'text-foreground')}>
+        <p role="status" className="admin-note" data-tone={Object.keys(errors).length > 0 ? 'danger' : 'success'}>
           {notice}
         </p>
       ) : null}
       {errors._ ? (
-        <p role="alert" className="admin-panel px-4 py-3 text-sm font-medium text-destructive">
+        <p role="alert" className="admin-note" data-tone="danger">
           {errors._}
         </p>
       ) : null}
@@ -263,7 +259,7 @@ export function EconomyForm({ snapshot }: { snapshot: EconomyConfigSnapshot }) {
             >
               {GROUP_LABEL[entry]}
               {count > 0 ? (
-                <span aria-label={`${count} perubahan belum diterapkan`} className="rounded bg-background/20 px-1.5 text-xs tabular-nums">
+                <span aria-label={`${count} perubahan belum diterapkan`} className="admin-tab-count">
                   {count}
                 </span>
               ) : null}
@@ -277,19 +273,17 @@ export function EconomyForm({ snapshot }: { snapshot: EconomyConfigSnapshot }) {
         id="economy-panel"
         aria-labelledby={`economy-tab-${group}`}
         tabIndex={0}
-        className="focus-ring flex flex-col gap-3"
+        className="focus-ring flex flex-col gap-2.5"
       >
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <h2 className="font-display text-lg font-bold text-foreground">{GROUP_LABEL[group]}</h2>
-            <p className="text-sm leading-relaxed text-muted-foreground">{GROUP_DESCRIPTION[group]}</p>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {visibleFields.length} setelan{visibleChanges > 0 ? ` · ${visibleChanges} diubah` : ''}
-          </p>
+        <div>
+          <h2 className="admin-eyebrow text-foreground">
+            {GROUP_LABEL[group]} · {visibleFields.length} setelan
+            {visibleChanges > 0 ? ` · ${visibleChanges} diubah` : ''}
+          </h2>
+          <p className="admin-sub">{GROUP_DESCRIPTION[group]}</p>
         </div>
 
-        <ul className="grid gap-3 xl:grid-cols-2">
+        <ul className="flex flex-col gap-2.5">
           {visibleFields.map((field) => {
             const changed = changedKeys.has(field.key)
             const invalid = Boolean(errors[field.key])
@@ -300,17 +294,17 @@ export function EconomyForm({ snapshot }: { snapshot: EconomyConfigSnapshot }) {
               <li
                 key={field.key}
                 className={cn(
-                  'admin-panel flex flex-col gap-3 p-4',
+                  'admin-card',
                   changed && 'ring-1 ring-primary',
                   invalid && 'ring-1 ring-destructive',
                 )}
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <label htmlFor={`economy-${field.key}`} className="text-sm font-semibold text-foreground">
+                    <label htmlFor={`economy-${field.key}`} className="admin-row-title">
                       {field.label}
                     </label>
-                    <p className="pt-1 text-xs leading-relaxed text-muted-foreground">{field.description}</p>
+                    <p className="admin-sub">{field.description}</p>
                   </div>
 
                   {binary ? (
@@ -327,12 +321,12 @@ export function EconomyForm({ snapshot }: { snapshot: EconomyConfigSnapshot }) {
                       >
                         <span className="admin-switch-thumb" />
                       </button>
-                      <span className={cn('text-xs font-semibold', checked ? 'text-primary' : 'text-muted-foreground')}>
+                      <span className={cn('text-xs font-bold', checked ? 'text-primary' : 'text-muted-foreground')}>
                         {checked ? 'Aktif' : 'Nonaktif'}
                       </span>
                     </div>
                   ) : (
-                    <div className="flex w-28 shrink-0 flex-col items-end gap-1.5">
+                    <div className="flex shrink-0 flex-col items-end gap-1">
                       <input
                         id={`economy-${field.key}`}
                         type="number"
@@ -344,27 +338,29 @@ export function EconomyForm({ snapshot }: { snapshot: EconomyConfigSnapshot }) {
                         onChange={(event) => updateField(field.key, event.target.value)}
                         aria-invalid={invalid}
                         aria-describedby={`economy-${field.key}-meta economy-${field.key}-impact`}
-                        className="focus-ring w-full rounded-lg border border-border bg-background px-3 py-2 text-right text-sm font-semibold tabular-nums text-foreground"
+                        className="focus-ring admin-input admin-input-num"
                       />
-                      <span id={`economy-${field.key}-meta`} className="text-right text-xs text-muted-foreground">
+                      <span id={`economy-${field.key}-meta`} className="admin-stat-h text-right">
                         {field.unit} · {field.min}–{field.max}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <p id={`economy-${field.key}-impact`} className="border-t border-border pt-3 text-xs leading-relaxed text-muted-foreground">
-                  <span className="font-medium text-foreground">Dampak: </span>
+                <p id={`economy-${field.key}-impact`} className="admin-sub border-t border-border pt-2.5">
+                  <span className="font-bold text-foreground">Dampak: </span>
                   {field.impact}
                 </p>
 
                 {changed ? (
-                  <p className="text-xs font-medium text-primary">
+                  <p className="text-xs font-bold text-primary">
                     Sebelumnya {formatValue({ field, value: saved.config[field.key] })}
                   </p>
                 ) : null}
                 {invalid ? (
-                  <p role="alert" className="text-xs font-medium text-destructive">{errors[field.key]}</p>
+                  <p role="alert" className="text-xs font-bold text-destructive">
+                    {errors[field.key]}
+                  </p>
                 ) : null}
               </li>
             )
@@ -374,18 +370,14 @@ export function EconomyForm({ snapshot }: { snapshot: EconomyConfigSnapshot }) {
 
       {changes.length > 0 ? (
         <>
-          <div aria-hidden="true" className="h-16" />
+          <div aria-hidden="true" className="h-14" />
           <div className="admin-savebar">
             <div className="admin-savebar-row">
-              <div className="hidden min-w-0 flex-1 px-2 sm:block">
-                <p className="text-sm font-semibold text-foreground">{changes.length} perubahan</p>
-                <p className="truncate text-xs text-muted-foreground">Belum diterapkan ke pengguna</p>
-              </div>
               <button
                 type="button"
                 disabled={pending}
                 onClick={resetDraft}
-                className="focus-ring transition-ui rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="focus-ring transition-ui admin-btn admin-btn-ghost admin-btn-sm"
               >
                 Batalkan
               </button>
@@ -393,7 +385,7 @@ export function EconomyForm({ snapshot }: { snapshot: EconomyConfigSnapshot }) {
                 type="button"
                 disabled={pending}
                 onClick={onSubmit}
-                className="focus-ring transition-ui flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:bg-muted disabled:text-muted-foreground sm:flex-none"
+                className="focus-ring transition-ui admin-btn admin-btn-primary admin-btn-sm admin-btn-grow"
               >
                 {pending ? 'Menyimpan…' : `Terapkan ${changes.length} perubahan`}
               </button>
@@ -419,47 +411,49 @@ function ConfirmPanel({
   onConfirm: () => void
 }) {
   return (
-    <div className="admin-page max-w-3xl">
-      <header className="admin-page-header">
-        <p className="text-xs font-bold uppercase tracking-wider text-destructive">Perlu konfirmasi</p>
-        <h1 className="admin-page-title">Perubahan dapat menaikkan pengeluaran</h1>
-        <p className="admin-page-description">
-          {risky.length} dari {changes.length} perubahan berpotensi menambah pembayaran ke pengguna. Periksa nilai berikut sebelum melanjutkan.
-        </p>
-      </header>
+    <div className="admin-page">
+      <div className="admin-head">
+        <h1 className="admin-head-title">Perlu konfirmasi</h1>
+        <span className="chip chip-destructive">{risky.length} berisiko</span>
+      </div>
 
-      <ul className="admin-panel divide-y divide-border">
+      <p className="admin-note" data-tone="danger">
+        {risky.length} dari {changes.length} perubahan berpotensi menambah pembayaran ke pengguna. Periksa nilainya
+        sebelum melanjutkan.
+      </p>
+
+      <ul className="admin-card admin-list">
         {changes.map(({ field, before, after }) => {
           const isRisky = risky.some((entry) => entry.field.key === field.key)
           return (
-            <li key={field.key} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">{field.label}</p>
-                {isRisky ? <p className="pt-1 text-xs leading-relaxed text-destructive">{field.impact}</p> : null}
+            <li key={field.key} className="admin-row">
+              <div className="admin-row-main">
+                <span className="admin-row-title">{field.label}</span>
+                {isRisky ? <span className="text-xs leading-relaxed text-destructive">{field.impact}</span> : null}
               </div>
-              <p className="shrink-0 text-sm tabular-nums text-muted-foreground">
-                {formatValue({ field, value: before })} <span aria-hidden="true">→</span>{' '}
-                <span className="font-semibold text-foreground">{formatValue({ field, value: after })}</span>
-              </p>
+              <span className="admin-row-value">
+                <span className="font-normal text-muted-foreground">{formatValue({ field, value: before })} </span>
+                <span aria-hidden="true">→</span> {formatValue({ field, value: after })}
+              </span>
             </li>
           )
         })}
       </ul>
 
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <div className="admin-actions">
         <button
           type="button"
           disabled={pending}
           onClick={onCancel}
-          className="focus-ring transition-ui rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="focus-ring transition-ui admin-btn admin-btn-quiet"
         >
-          Kembali periksa
+          Kembali
         </button>
         <button
           type="button"
           disabled={pending}
           onClick={onConfirm}
-          className="focus-ring transition-ui rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+          className="focus-ring transition-ui admin-btn admin-btn-primary admin-btn-grow"
         >
           {pending ? 'Menyimpan…' : 'Konfirmasi dan terapkan'}
         </button>

@@ -4,7 +4,14 @@ import { useState } from 'react'
 import { ApiError, sendJson } from '@/shell/api-client'
 import { formatCredits } from '@/shared/lib/format'
 
-type Summary = { durationMs: number; challenges: number; rateLimits: number; sessions: number; balanceDrift: number; notified: Record<string, number> }
+type Summary = {
+  durationMs: number
+  challenges: number
+  rateLimits: number
+  sessions: number
+  balanceDrift: number
+  notified: Record<string, number>
+}
 
 export function MaintenanceButton() {
   const [pending, setPending] = useState(false)
@@ -24,36 +31,55 @@ export function MaintenanceButton() {
   }
 
   return (
-    <section className="admin-panel flex flex-col gap-4 p-4 sm:p-5">
+    <section className="admin-card">
       <div>
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Alat sistem</p>
-        <h2 className="pt-1 font-display text-base font-bold text-foreground">Pemeliharaan manual</h2>
-        <p className="pt-1 text-sm leading-relaxed text-muted-foreground">
-          Jalankan tugas cron sekarang untuk membersihkan data kedaluwarsa, rekonsiliasi saldo, menyapu sinyal fraud, dan mengirim ajakan yang jatuh tempo.
+        <h2 className="admin-eyebrow text-foreground">Pemeliharaan manual</h2>
+        <p className="admin-sub">
+          Jalankan tugas cron sekarang: bersihkan data kedaluwarsa, rekonsiliasi saldo, sapu sinyal fraud, dan kirim
+          ajakan yang jatuh tempo.
         </p>
       </div>
 
-      {error ? <p role="alert" className="rounded-lg border border-destructive px-3 py-2.5 text-sm font-medium text-destructive">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="admin-note" data-tone="danger">
+          {error}
+        </p>
+      ) : null}
 
       {summary ? (
-        <div className="flex flex-col gap-3">
-          <p role="status" className="text-xs font-semibold text-success">Pemeliharaan selesai dalam {formatCredits(summary.durationMs)} ms</p>
-          <dl className="grid grid-cols-2 gap-2 text-sm">
+        <>
+          <p role="status" className="admin-note" data-tone="success">
+            Selesai dalam {formatCredits(summary.durationMs)} ms
+          </p>
+          <div className="admin-stats">
             <Fact label="Selisih saldo" value={formatCredits(summary.balanceDrift)} urgent={summary.balanceDrift > 0} />
             <Fact label="Soal dihapus" value={formatCredits(summary.challenges)} />
             <Fact label="Sesi dihapus" value={formatCredits(summary.sessions)} />
-            <Fact label="Pesan terkirim" value={formatCredits(Object.values(summary.notified ?? {}).reduce((sum, count) => sum + count, 0))} />
-          </dl>
-        </div>
+            <Fact
+              label="Pesan terkirim"
+              value={formatCredits(Object.values(summary.notified ?? {}).reduce((sum, count) => sum + count, 0))}
+            />
+          </div>
+        </>
       ) : null}
 
-      <button type="button" onClick={run} disabled={pending} className="focus-ring transition-ui self-start rounded-lg border border-border bg-muted px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-background disabled:opacity-50">
-        {pending ? 'Menjalankan pemeriksaan…' : 'Jalankan pemeliharaan'}
+      <button
+        type="button"
+        onClick={run}
+        disabled={pending}
+        className="focus-ring transition-ui admin-btn admin-btn-quiet"
+      >
+        {pending ? 'Menjalankan…' : 'Jalankan pemeliharaan'}
       </button>
     </section>
   )
 }
 
 function Fact({ label, value, urgent }: { label: string; value: string; urgent?: boolean }) {
-  return <div className="flex min-h-20 flex-col justify-center gap-1 rounded-lg bg-muted p-3"><dt className="text-xs text-muted-foreground">{label}</dt><dd className={urgent ? 'font-display text-lg font-bold tabular-nums text-destructive' : 'font-display text-lg font-bold tabular-nums text-foreground'}>{value}</dd></div>
+  return (
+    <div className="admin-stat" data-urgent={urgent ? 'danger' : undefined}>
+      <span className="admin-stat-k">{label}</span>
+      <span className="admin-stat-v">{value}</span>
+    </div>
+  )
 }

@@ -1,12 +1,13 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useId, useRef, useState } from 'react'
+import { useId, useRef, useState, type ReactNode } from 'react'
 import { PAYOUT_PROOF_ACCEPT, WITHDRAWAL_REJECT_REASON_MAX } from '@/domain/economy/withdrawal'
 import { ApiError, sendFormData, sendJson } from '@/shell/api-client'
 
 type Mode = 'idle' | 'confirm-paid' | 'reject'
 
+/** Keputusan payout dibuka langsung di dalam kartu antrean, bukan di dialog: di layar ponsel admin perlu tetap melihat nominal dan rekening yang sedang ia putuskan sambil mengetik alasan atau melampirkan bukti. */
 export function PayoutActions({
   id,
   userName,
@@ -62,78 +63,117 @@ export function PayoutActions({
 
   if (mode === 'confirm-paid') {
     return (
-      <ActionPanel title="Konfirmasi transfer" description={`Tandai ${amountLabel} ke ${accountLabel} untuk ${userName} sebagai terkirim.`}>
-        <p className="rounded-lg border border-destructive px-3 py-2.5 text-xs leading-relaxed text-destructive">
-          Lanjutkan hanya jika transfer sudah benar-benar berhasil. Status ini tidak dapat dibatalkan dari panel.
+      <div className="flex flex-col gap-2.5 border-t border-border pt-2.5">
+        <p className="admin-note" data-tone="danger">
+          Tandai {amountLabel} ke {accountLabel} sebagai terkirim. Lanjutkan hanya jika transfer benar-benar berhasil —
+          status ini tidak bisa dibatalkan.
         </p>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <ProofField file={proof} onChange={setProof} disabled={pending} />
-          <NoteField value={note} onChange={setNote} disabled={pending} />
-        </div>
+        <ProofField file={proof} onChange={setProof} disabled={pending} />
+        <NoteField value={note} onChange={setNote} disabled={pending} />
         {error ? <ErrorText>{error}</ErrorText> : null}
-        <Row>
-          <GhostButton onClick={() => changeMode('idle')} disabled={pending}>Batal</GhostButton>
-          <PrimaryButton onClick={() => submit('paid')} disabled={pending}>
-            {pending ? 'Menyimpan…' : 'Konfirmasi sudah terkirim'}
-          </PrimaryButton>
-        </Row>
-      </ActionPanel>
+        <div className="admin-actions">
+          <button
+            type="button"
+            onClick={() => changeMode('idle')}
+            disabled={pending}
+            className="focus-ring transition-ui admin-btn admin-btn-quiet"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            onClick={() => submit('paid')}
+            disabled={pending}
+            className="focus-ring transition-ui admin-btn admin-btn-primary admin-btn-grow"
+          >
+            {pending ? 'Menyimpan…' : 'Sudah terkirim'}
+          </button>
+        </div>
+      </div>
     )
   }
 
   if (mode === 'reject') {
     const trimmed = reason.trim()
     return (
-      <ActionPanel title="Tolak pengajuan" description={`Saldo ${userName} akan dikembalikan dan alasan dikirim lewat Telegram.`}>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="font-semibold text-foreground">Alasan penolakan</span>
-            <textarea
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              rows={3}
-              maxLength={WITHDRAWAL_REJECT_REASON_MAX}
-              disabled={pending}
-              placeholder="Contoh: nama pemilik rekening tidak cocok."
-              className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 text-foreground disabled:opacity-50"
-            />
-            <span className="text-right text-xs tabular-nums text-muted-foreground">{reason.length}/{WITHDRAWAL_REJECT_REASON_MAX}</span>
-          </label>
-          <NoteField value={note} onChange={setNote} disabled={pending} />
-        </div>
+      <div className="flex flex-col gap-2.5 border-t border-border pt-2.5">
+        <p className="admin-note">Saldo {userName} dikembalikan dan alasan di bawah dikirim lewat Telegram.</p>
+        <label className="admin-field">
+          <span className="admin-field-k">Alasan penolakan</span>
+          <textarea
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+            rows={3}
+            maxLength={WITHDRAWAL_REJECT_REASON_MAX}
+            disabled={pending}
+            placeholder="Contoh: nama pemilik rekening tidak cocok."
+            className="focus-ring admin-input"
+          />
+          <span className="admin-sub text-right tabular-nums">
+            {reason.length}/{WITHDRAWAL_REJECT_REASON_MAX}
+          </span>
+        </label>
+        <NoteField value={note} onChange={setNote} disabled={pending} />
         {error ? <ErrorText>{error}</ErrorText> : null}
-        <Row>
-          <GhostButton onClick={() => changeMode('idle')} disabled={pending}>Batal</GhostButton>
-          <DangerButton onClick={() => submit('rejected')} disabled={pending || !trimmed}>
-            {pending ? 'Menyimpan…' : 'Tolak dan kembalikan saldo'}
-          </DangerButton>
-        </Row>
-      </ActionPanel>
+        <div className="admin-actions">
+          <button
+            type="button"
+            onClick={() => changeMode('idle')}
+            disabled={pending}
+            className="focus-ring transition-ui admin-btn admin-btn-quiet"
+          >
+            Batal
+          </button>
+          <button
+            type="button"
+            onClick={() => submit('rejected')}
+            disabled={pending || !trimmed}
+            className="focus-ring transition-ui admin-btn admin-btn-danger admin-btn-grow"
+          >
+            {pending ? 'Menyimpan…' : 'Tolak dan kembalikan'}
+          </button>
+        </div>
+      </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-3 border-t border-border p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-      <div>
-        <p className="text-sm font-semibold text-foreground">Keputusan payout</p>
-        <p className="pt-0.5 text-xs text-muted-foreground">Selesaikan setelah transfer, atau tolak dengan alasan yang jelas.</p>
-      </div>
-      <div className="flex flex-col-reverse gap-2 sm:flex-row">
-        <GhostButton onClick={() => changeMode('reject')}>Tolak</GhostButton>
-        <PrimaryButton onClick={() => changeMode('confirm-paid')}>Tandai terkirim</PrimaryButton>
-      </div>
+    <div className="admin-actions border-t border-border pt-2.5">
+      <button
+        type="button"
+        onClick={() => changeMode('reject')}
+        className="focus-ring transition-ui admin-btn admin-btn-quiet admin-btn-grow"
+      >
+        Tolak
+      </button>
+      <button
+        type="button"
+        onClick={() => changeMode('confirm-paid')}
+        className="focus-ring transition-ui admin-btn admin-btn-primary admin-btn-grow"
+      >
+        Tandai terkirim
+      </button>
     </div>
   )
 }
 
-function ProofField({ file, onChange, disabled }: { file: File | null; onChange: (file: File | null) => void; disabled: boolean }) {
+function ProofField({
+  file,
+  onChange,
+  disabled,
+}: {
+  file: File | null
+  onChange: (file: File | null) => void
+  disabled: boolean
+}) {
   const inputRef = useRef<HTMLInputElement>(null)
   const fieldId = useId()
 
   return (
-    <div className="flex flex-col gap-1.5 text-sm">
-      <label htmlFor={fieldId} className="font-semibold text-foreground">Bukti transfer <span className="font-normal text-muted-foreground">(opsional)</span></label>
-      <p className="text-xs leading-relaxed text-muted-foreground">JPEG, PNG, atau WebP hingga 5 MB. Gambar dikirim ke chat pengguna.</p>
+    <div className="admin-field">
+      <label htmlFor={fieldId} className="admin-field-k">
+        Bukti transfer <span className="font-normal text-muted-foreground">opsional · dikirim ke chat user</span>
+      </label>
       <input
         id={fieldId}
         ref={inputRef}
@@ -141,12 +181,20 @@ function ProofField({ file, onChange, disabled }: { file: File | null; onChange:
         accept={PAYOUT_PROOF_ACCEPT}
         disabled={disabled}
         onChange={(event) => onChange(event.target.files?.[0] ?? null)}
-        className="focus-ring rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-2 file:py-1 file:text-xs file:font-semibold file:text-foreground disabled:opacity-50"
+        className="focus-ring admin-input file:mr-2.5 file:rounded-md file:border-0 file:bg-muted file:px-2 file:py-1 file:text-xs file:font-bold file:text-foreground"
       />
       {file ? (
-        <span className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-          <span className="truncate">{file.name}</span>
-          <button type="button" onClick={() => { if (inputRef.current) inputRef.current.value = ''; onChange(null) }} disabled={disabled} className="focus-ring shrink-0 rounded font-medium text-destructive hover:underline disabled:opacity-50">
+        <span className="flex items-center justify-between gap-2">
+          <span className="admin-sub truncate">{file.name}</span>
+          <button
+            type="button"
+            onClick={() => {
+              if (inputRef.current) inputRef.current.value = ''
+              onChange(null)
+            }}
+            disabled={disabled}
+            className="focus-ring shrink-0 rounded text-xs font-bold text-destructive"
+          >
             Hapus
           </button>
         </span>
@@ -155,46 +203,36 @@ function ProofField({ file, onChange, disabled }: { file: File | null; onChange:
   )
 }
 
-function NoteField({ value, onChange, disabled }: { value: string; onChange: (value: string) => void; disabled: boolean }) {
+function NoteField({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string
+  onChange: (value: string) => void
+  disabled: boolean
+}) {
   return (
-    <label className="flex flex-col gap-1.5 text-sm">
-      <span className="font-semibold text-foreground">Catatan internal <span className="font-normal text-muted-foreground">(opsional)</span></span>
-      <span className="text-xs leading-relaxed text-muted-foreground">Simpan nomor referensi atau konteks untuk admin lain.</span>
-      <input type="text" value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 text-foreground disabled:opacity-50" />
+    <label className="admin-field">
+      <span className="admin-field-k">
+        Catatan internal <span className="font-normal text-muted-foreground">opsional</span>
+      </span>
+      <input
+        type="text"
+        value={value}
+        disabled={disabled}
+        placeholder="Nomor referensi transfer"
+        onChange={(event) => onChange(event.target.value)}
+        className="focus-ring admin-input"
+      />
     </label>
   )
 }
 
-function ActionPanel({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+function ErrorText({ children }: { children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-4 border-t border-border bg-muted p-4 sm:p-5">
-      <div>
-        <h3 className="font-display text-base font-bold text-foreground">{title}</h3>
-        <p className="pt-1 text-sm leading-relaxed text-muted-foreground">{description}</p>
-      </div>
+    <p role="alert" className="admin-note" data-tone="danger">
       {children}
-    </section>
+    </p>
   )
-}
-
-function Row({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">{children}</div>
-}
-
-function ErrorText({ children }: { children: React.ReactNode }) {
-  return <p role="alert" className="rounded-lg border border-destructive px-3 py-2.5 text-sm font-medium text-destructive">{children}</p>
-}
-
-const BUTTON_BASE = 'focus-ring transition-ui rounded-lg px-4 py-2.5 text-sm font-semibold disabled:opacity-50'
-
-function PrimaryButton({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
-  return <button type="button" onClick={onClick} disabled={disabled} className={`${BUTTON_BASE} bg-primary text-primary-foreground hover:bg-primary-hover`}>{children}</button>
-}
-
-function DangerButton({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
-  return <button type="button" onClick={onClick} disabled={disabled} className={`${BUTTON_BASE} bg-destructive text-background hover:opacity-90`}>{children}</button>
-}
-
-function GhostButton({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
-  return <button type="button" onClick={onClick} disabled={disabled} className={`${BUTTON_BASE} border border-border text-muted-foreground hover:bg-card hover:text-foreground`}>{children}</button>
 }

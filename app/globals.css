@@ -1196,6 +1196,19 @@
     text-wrap: pretty;
     color: var(--muted-foreground);
   }
+  /* Baris hasil pencarian: satu ketukan penuh selebar kartu, dengan nada terpilih dari border primary supaya admin tahu profil mana yang sedang dibuka di bawahnya. */
+  .admin-result {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.6875rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background-color: var(--card);
+  }
+  .admin-result[data-selected='true'] {
+    border-color: var(--primary);
+  }
   .admin-field {
     display: flex;
     flex-direction: column;

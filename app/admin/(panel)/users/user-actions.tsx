@@ -35,35 +35,28 @@ export function UserActions({
   channelMember: boolean | null
 }) {
   return (
-    <section className="flex flex-col gap-4" aria-labelledby="user-actions-heading">
-      <div>
-        <h3 id="user-actions-heading" className="font-display text-lg font-bold text-foreground">Alat administrasi</h3>
-        <p className="pt-1 text-sm text-muted-foreground">Aksi dikelompokkan berdasarkan tujuan. Setiap perubahan tetap dicatat oleh server.</p>
-      </div>
+    <section className="flex flex-col gap-2.5" aria-labelledby="user-actions-heading">
+      <h3 id="user-actions-heading" className="admin-eyebrow pt-1">
+        Saldo dan fasilitas
+      </h3>
+      <AdjustBalance publicId={publicId} balanceCredits={balanceCredits} maxAdjust={maxAdjust} />
+      <Premium publicId={publicId} firstName={firstName} premiumUntil={premiumUntil} active={premiumActive} />
+      <TopUp publicId={publicId} />
 
-      <div className="grid items-start gap-4 xl:grid-cols-2">
-        <div className="flex flex-col gap-3">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Saldo dan fasilitas</p>
-          <AdjustBalance publicId={publicId} balanceCredits={balanceCredits} maxAdjust={maxAdjust} />
-          <Premium publicId={publicId} firstName={firstName} premiumUntil={premiumUntil} active={premiumActive} />
-          <TopUp publicId={publicId} />
-        </div>
+      <h3 className="admin-eyebrow pt-1">Profil dan komunikasi</h3>
+      <Profile publicId={publicId} firstName={firstName} username={username} />
+      <Notifications publicId={publicId} muted={notificationsMuted} />
+      <ChannelGate publicId={publicId} channelMember={channelMember} />
 
-        <div className="flex flex-col gap-3">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Profil dan komunikasi</p>
-          <Profile publicId={publicId} firstName={firstName} username={username} />
-          <Notifications publicId={publicId} muted={notificationsMuted} />
-          <ChannelGate publicId={publicId} channelMember={channelMember} />
-        </div>
-
-        <div className="flex flex-col gap-3 xl:col-span-2">
-          <p className="text-xs font-bold uppercase tracking-wider text-destructive">Akses sensitif</p>
-          <div className="grid items-start gap-3 xl:grid-cols-2">
-            <Suspension publicId={publicId} firstName={firstName} isSuspended={isSuspended} isSelf={isSelf} />
-            <AdminFlag publicId={publicId} firstName={firstName} isAdminFlag={isAdminFlag} isAdminByEnv={isAdminByEnv} isSelf={isSelf} />
-          </div>
-        </div>
-      </div>
+      <h3 className="admin-eyebrow pt-1 text-destructive">Akses sensitif</h3>
+      <Suspension publicId={publicId} firstName={firstName} isSuspended={isSuspended} isSelf={isSelf} />
+      <AdminFlag
+        publicId={publicId}
+        firstName={firstName}
+        isAdminFlag={isAdminFlag}
+        isAdminByEnv={isAdminByEnv}
+        isSelf={isSelf}
+      />
     </section>
   )
 }
@@ -109,30 +102,30 @@ function AdjustBalance({
 
   return (
     <Card title="Koreksi saldo" description={`Ditulis sebagai entri ledger "adjustment". Maksimum ${formatCredits(maxAdjust)} credit per koreksi, boleh negatif.`}>
-      <div className="flex flex-wrap gap-3">
-        <label className="flex min-w-40 flex-1 flex-col gap-1 text-sm">
-          <span className="font-medium text-foreground">Jumlah credit</span>
+      <div className="flex flex-wrap gap-2.5">
+        <label className="admin-field">
+          <span className="admin-field-k">Jumlah credit</span>
           <input
             inputMode="numeric"
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
             placeholder="mis. 250 atau -250"
-            className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 tabular-nums text-foreground"
+            className="focus-ring admin-input tabular-nums"
           />
         </label>
-        <label className="flex min-w-56 flex-[2] flex-col gap-1 text-sm">
-          <span className="font-medium text-foreground">Catatan (wajib)</span>
+        <label className="admin-field">
+          <span className="admin-field-k">Catatan (wajib)</span>
           <input
             value={note}
             onChange={(event) => setNote(event.target.value)}
             maxLength={280}
             placeholder="Backfill reward task 12 Agu yang gagal tercatat"
-            className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 text-foreground"
+            className="focus-ring admin-input"
           />
         </label>
       </div>
       {valid ? (
-        <p className="text-sm text-muted-foreground tabular-nums">
+        <p className="admin-sub tabular-nums">
           Saldo setelah koreksi: {formatCredits(balanceCredits + parsed)} credit
         </p>
       ) : null}
@@ -201,19 +194,19 @@ function Suspension({
       description="Seluruh sesi aktifnya dicabut di transaksi yang sama. Saldo dan riwayatnya tidak dihapus."
     >
       {isSelf ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="admin-sub">
           Ini akunmu sendiri — menangguhkannya akan langsung menutup panel ini, jadi aksinya
           dimatikan.
         </p>
       ) : (
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="font-medium text-foreground">Alasan (wajib)</span>
+        <label className="admin-field">
+          <span className="admin-field-k">Alasan (wajib)</span>
           <input
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             maxLength={500}
             placeholder="Beberapa akun menarik ke rekening yang sama."
-            className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 text-foreground"
+            className="focus-ring admin-input"
           />
         </label>
       )}
@@ -260,13 +253,13 @@ function AdminFlag({
       description="Berlaku seketika — hak admin dibaca dari database di setiap request, jadi tidak ada sesi yang perlu dicabut."
     >
       {isAdminByEnv ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="admin-sub">
           Akun ini juga admin karena `ADMIN_TELEGRAM_ID` menunjuk ke telegram_id-nya. Hak itu tidak
           bisa dicabut dari sini — ubah env var-nya.
         </p>
       ) : null}
       {isSelf && isAdminFlag ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="admin-sub">
           Hak admin sendiri tidak bisa dicabut dari sini: satu klik akan menutup panel ini untuk
           semua orang, dan pemulihannya hanya lewat shell.
         </p>
@@ -323,24 +316,24 @@ function Profile({
       title="Profil"
       description="Suntingan di sini permanen: begitu disimpan, login berikutnya berhenti menimpa nama dan username dari Telegram untuk akun ini. Foto profil tetap ikut Telegram."
     >
-      <div className="flex flex-wrap gap-3">
-        <label className="flex min-w-40 flex-1 flex-col gap-1 text-sm">
-          <span className="font-medium text-foreground">Nama tampilan</span>
+      <div className="flex flex-wrap gap-2.5">
+        <label className="admin-field">
+          <span className="admin-field-k">Nama tampilan</span>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
             maxLength={64}
-            className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 text-foreground"
+            className="focus-ring admin-input"
           />
         </label>
-        <label className="flex min-w-40 flex-1 flex-col gap-1 text-sm">
-          <span className="font-medium text-foreground">Username (opsional)</span>
+        <label className="admin-field">
+          <span className="admin-field-k">Username (opsional)</span>
           <input
             value={handle}
             onChange={(event) => setHandle(event.target.value)}
             maxLength={64}
             placeholder="tanpa @"
-            className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 text-foreground"
+            className="focus-ring admin-input"
           />
         </label>
       </div>
@@ -403,24 +396,24 @@ function Premium({
           : 'Belum premium. Penambahan dihitung dari hari ini.'
       }
     >
-      <div className="flex flex-wrap gap-3">
-        <label className="flex min-w-32 flex-col gap-1 text-sm">
-          <span className="font-medium text-foreground">Berapa hari</span>
+      <div className="flex flex-wrap gap-2.5">
+        <label className="admin-field">
+          <span className="admin-field-k">Berapa hari</span>
           <input
             inputMode="numeric"
             value={days}
             onChange={(event) => setDays(event.target.value)}
-            className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 tabular-nums text-foreground"
+            className="focus-ring admin-input tabular-nums"
           />
         </label>
-        <label className="flex min-w-56 flex-[2] flex-col gap-1 text-sm">
-          <span className="font-medium text-foreground">Alasan (wajib)</span>
+        <label className="admin-field">
+          <span className="admin-field-k">Alasan (wajib)</span>
           <input
             value={reason}
             onChange={(event) => setReason(event.target.value)}
             maxLength={280}
             placeholder="Hadiah giveaway Agustus"
-            className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 text-foreground"
+            className="focus-ring admin-input"
           />
         </label>
       </div>
@@ -478,34 +471,34 @@ function TopUp({ publicId }: { publicId: string }) {
       title="Energi & stok reward"
       description="Memulihkan kesempatan menghasilkan, bukan mencetak credit. Keduanya dijepit di kapasitas user — kelebihannya tidak disimpan."
     >
-      <div className="flex flex-wrap gap-3">
-        <label className="flex min-w-32 flex-col gap-1 text-sm">
-          <span className="font-medium text-foreground">Energi</span>
+      <div className="flex flex-wrap gap-2.5">
+        <label className="admin-field">
+          <span className="admin-field-k">Energi</span>
           <input
             inputMode="numeric"
             value={energy}
             onChange={(event) => setEnergy(event.target.value)}
-            className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 tabular-nums text-foreground"
+            className="focus-ring admin-input tabular-nums"
           />
         </label>
-        <label className="flex min-w-32 flex-col gap-1 text-sm">
-          <span className="font-medium text-foreground">Stok reward (credit)</span>
+        <label className="admin-field">
+          <span className="admin-field-k">Stok reward (credit)</span>
           <input
             inputMode="numeric"
             value={credits}
             onChange={(event) => setCredits(event.target.value)}
-            className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 tabular-nums text-foreground"
+            className="focus-ring admin-input tabular-nums"
           />
         </label>
       </div>
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-foreground">Alasan (wajib)</span>
+      <label className="admin-field">
+        <span className="admin-field-k">Alasan (wajib)</span>
         <input
           value={reason}
           onChange={(event) => setReason(event.target.value)}
           maxLength={280}
           placeholder="Kompensasi gangguan 3 Sep"
-          className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 text-foreground"
+          className="focus-ring admin-input"
         />
       </label>
       <Feedback state={state} />
@@ -556,17 +549,17 @@ function Notifications({ publicId, muted }: { publicId: string; muted: boolean }
           : 'Pesan ajakan menyala. Mematikannya dari sini setara dengan user mengirim /stop.'
       }
     >
-      <p className="text-xs font-semibold text-foreground">
+      <p className="admin-field-k">
         Status: <span className={muted ? 'text-muted-foreground' : 'text-success'}>{muted ? 'Nonaktif' : 'Aktif'}</span>
       </p>
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-foreground">Alasan (wajib)</span>
+      <label className="admin-field">
+        <span className="admin-field-k">Alasan (wajib)</span>
         <input
           value={reason}
           onChange={(event) => setReason(event.target.value)}
           maxLength={280}
           placeholder={muted ? 'User minta dinyalakan lagi lewat chat' : 'User minta disetop'}
-          className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 text-foreground"
+          className="focus-ring admin-input"
         />
       </label>
       <Feedback state={state} />
@@ -613,14 +606,14 @@ function ChannelGate({
       title="Gerbang channel"
       description={`Hasil tersimpan: ${label}. Hasil "anggota" bertahan berjam-jam, jadi user yang keluar channel atau tercatat salah saat Telegram bermasalah butuh reset ini.`}
     >
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-foreground">Alasan (wajib)</span>
+      <label className="admin-field">
+        <span className="admin-field-k">Alasan (wajib)</span>
         <input
           value={reason}
           onChange={(event) => setReason(event.target.value)}
           maxLength={280}
           placeholder="User lapor tertahan gerbang padahal sudah join"
-          className="focus-ring rounded-lg border border-border bg-background px-3 py-2.5 text-foreground"
+          className="focus-ring admin-input"
         />
       </label>
       <Feedback state={state} />
@@ -654,10 +647,10 @@ function Card({
   children: ReactNode
 }) {
   return (
-    <section className="admin-panel flex flex-col gap-4 p-4 sm:p-5">
-      <div className="flex flex-col gap-1">
-        <h4 className="font-display text-base font-bold text-foreground">{title}</h4>
-        <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
+    <section className="admin-card">
+      <div>
+        <h4 className="admin-row-title">{title}</h4>
+        <p className="admin-sub">{description}</p>
       </div>
       {children}
     </section>
@@ -665,22 +658,34 @@ function Card({
 }
 
 function Actions({ children }: { children: ReactNode }) {
-  return <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">{children}</div>
+  return <div className="admin-actions">{children}</div>
 }
 
 function Feedback({ state }: { state: ActionState }) {
   if (state.error) {
-    return <p role="alert" className="rounded-lg border border-destructive px-3 py-2.5 text-sm font-medium text-destructive">{state.error}</p>
+    return (
+      <p role="alert" className="admin-note" data-tone="danger">
+        {state.error}
+      </p>
+    )
   }
-  if (state.notice) return <p role="status" className="rounded-lg bg-muted px-3 py-2.5 text-sm text-foreground">{state.notice}</p>
+  if (state.notice) {
+    return (
+      <p role="status" className="admin-note" data-tone="success">
+        {state.notice}
+      </p>
+    )
+  }
   return null
 }
 
 function Alert({ children }: { children: ReactNode }) {
-  return <p className="rounded-lg border border-destructive px-3 py-2.5 text-sm font-medium text-destructive">{children}</p>
+  return (
+    <p className="admin-note" data-tone="danger">
+      {children}
+    </p>
+  )
 }
-
-const BUTTON_BASE = 'focus-ring transition-ui rounded-lg px-4 py-2.5 text-sm font-semibold disabled:opacity-50'
 
 function Primary({
   children,
@@ -696,7 +701,7 @@ function Primary({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`${BUTTON_BASE} bg-primary text-primary-foreground hover:bg-primary-hover`}
+      className="focus-ring transition-ui admin-btn admin-btn-primary admin-btn-grow"
     >
       {children}
     </button>
@@ -717,7 +722,7 @@ function Danger({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`${BUTTON_BASE} bg-destructive text-background hover:opacity-90`}
+      className="focus-ring transition-ui admin-btn admin-btn-danger admin-btn-grow"
     >
       {children}
     </button>

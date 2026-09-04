@@ -203,7 +203,7 @@ function ArcadeHero({ state }: { state: ArcadeStateResponse }) {
           <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-foreground/10">
             <GlyphTrophy className="size-5" />
           </span>
-          <MetaBadge className="bg-primary-foreground/10 text-primary-foreground ring-primary-foreground/15">
+          <MetaBadge className="bg-primary-foreground/10 !text-primary-foreground ring-primary-foreground/15">
             2 permainan
           </MetaBadge>
         </div>

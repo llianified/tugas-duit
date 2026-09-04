@@ -119,6 +119,7 @@ export function AppViewRouter({
         rewardPoolSecondsToNext={session.rewardPoolSecondsToNext}
         onClaimed={session.refreshSession}
         onOpenArcade={session.openArcade}
+        botAppUrl={session.botAppUrl}
       />
     )
   }

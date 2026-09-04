@@ -192,4 +192,71 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
       setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
     }
   })
+
+  it('menolak misi sosial yang belum dibuka dan yang cooldown-nya belum selesai', async () => {
+    const { claimMission, startMissionAction } = await import('./missions')
+    const userId = await makeUser(0)
+
+    expect(await claimMission(userId, 'twitter_post')).toEqual({
+      ok: false,
+      reason: 'action_required',
+    })
+
+    const started = await startMissionAction(userId, 'twitter_post')
+    expect(started).toMatchObject({ ok: true })
+    expect(await claimMission(userId, 'twitter_post')).toEqual({
+      ok: false,
+      reason: 'action_cooldown',
+    })
+  })
+
+  it('memberi satu energi setelah cooldown server dan menolak klaim post kedua hari itu', async () => {
+    const { claimMission, startMissionAction } = await import('./missions')
+    const { query } = await import('../platform/db')
+    const userId = await makeUser(0)
+
+    await startMissionAction(userId, 'facebook_post')
+    await query(
+      `update social_mission_attempts
+        set started_at=now()-interval '11 seconds'
+        where user_id=$1 and mission_key='facebook_post'`,
+      [userId],
+    )
+
+    const first = await claimMission(userId, 'facebook_post')
+    expect(first).toMatchObject({ ok: true, energyGranted: 1 })
+    expect(await readEnergyValue(userId)).toBe(1)
+    expect(await claimMission(userId, 'facebook_post')).toEqual({
+      ok: false,
+      reason: 'already_claimed',
+    })
+  })
+
+  it('menganggap follow yang pernah diklaim sebagai selesai untuk selamanya', async () => {
+    const { claimMission, readMissions, startMissionAction } = await import('./missions')
+    const { query } = await import('../platform/db')
+    const userId = await makeUser(0)
+
+    await startMissionAction(userId, 'twitter_follow')
+    await query(
+      `update social_mission_attempts
+        set started_at=now()-interval '11 seconds'
+        where user_id=$1 and mission_key='twitter_follow'`,
+      [userId],
+    )
+    expect(await claimMission(userId, 'twitter_follow')).toMatchObject({ ok: true })
+
+    await query(
+      `update mission_claims
+        set quota_date=(now() at time zone 'Asia/Jakarta')::date-1
+        where user_id=$1 and mission_key='twitter_follow'`,
+      [userId],
+    )
+    const follow = (await readMissions(userId)).find((mission) => mission.key === 'twitter_follow')
+    expect(follow).toMatchObject({ claimed: true, cadence: 'once' })
+    expect(await startMissionAction(userId, 'twitter_follow')).toEqual({
+      ok: false,
+      reason: 'already_claimed',
+    })
+  })
 })

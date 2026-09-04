@@ -21,6 +21,14 @@ const REFUSAL: Record<string, { message: string; status: number }> = {
     message: 'Energi bakal kelebihan. Pakai dulu, lalu klaim.',
     status: 409,
   },
+  action_required: {
+    message: 'Buka dulu aksi sosialnya sebelum konfirmasi.',
+    status: 409,
+  },
+  action_cooldown: {
+    message: 'Tunggu hitung mundurnya selesai sebelum konfirmasi.',
+    status: 409,
+  },
 }
 
 export async function POST(request: Request) {

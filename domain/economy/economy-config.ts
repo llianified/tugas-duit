@@ -64,6 +64,9 @@ export interface EconomyConfig {
   missionStarsReward: number
   missionAdsTarget: number
   missionAdsReward: number
+  missionTwitterFollowReward: number
+  missionTwitterPostReward: number
+  missionFacebookPostReward: number
   referralCommissionPercent: number
   dailyCommissionCapIdr: number
   rankTier2Tasks: number
@@ -156,6 +159,9 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   missionStarsReward: 2,
   missionAdsTarget: 3,
   missionAdsReward: 3,
+  missionTwitterFollowReward: 1,
+  missionTwitterPostReward: 1,
+  missionFacebookPostReward: 1,
   referralCommissionPercent: 10,
   dailyCommissionCapIdr: 6_000,
   rankTier2Tasks: 100,
@@ -558,6 +564,18 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
       min: 1, max: 10, riskyWhen: 'higher',
     },
   ]),
+  ...(
+    [
+      ['missionTwitterFollowReward', 'Follow Twitter', 'sekali per akun'],
+      ['missionTwitterPostReward', 'Post Twitter', 'sekali per hari WIB'],
+      ['missionFacebookPostReward', 'Post Facebook', 'sekali per hari WIB'],
+    ] as [EconomyConfigKey, string, string][]
+  ).map(([key, label, cadence]): EconomyFieldMeta => ({
+    key, group: 'mission', label: `Hadiah · ${label}`, unit: 'energi',
+    description: `Energi yang diberikan untuk misi "${label}". Misi ini tersedia ${cadence}; konfirmasi baru aktif setelah aksi sosial dibuka selama 10 detik.`,
+    impact: 'Menaikkannya menambah energi gratis dari aksi sosial, sehingga user sampai ke plafon kolamnya lebih cepat.',
+    min: 1, max: 10, riskyWhen: 'higher',
+  })),
   {
     key: 'leaderboardEnabled', group: 'feature', label: 'Papan peringkat', unit: '0/1',
     description: 'Isi 1 untuk menyalakan view Peringkat beserta umpan aktivitasnya, 0 untuk menggantinya dengan layar "segera hadir". Papan ini memajang nama depan, foto Telegram, dan status premium ke seluruh user — itu satu-satunya permukaan publik di aplikasi ini.',
@@ -765,6 +783,9 @@ export function validateEconomyConfig(
     ['missionTasksReward', 'Selesaikan task'],
     ['missionStarsReward', 'Task bintang tiga'],
     ['missionAdsReward', 'Tonton iklan'],
+    ['missionTwitterFollowReward', 'Follow Twitter'],
+    ['missionTwitterPostReward', 'Post Twitter'],
+    ['missionFacebookPostReward', 'Post Facebook'],
   ]
   for (const [key, label] of missionRewards) {
     if (config[key] > config.maxEnergy) {

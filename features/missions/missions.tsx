@@ -18,6 +18,7 @@ export function MissionsView({
   rewardPoolSecondsToNext,
   onClaimed,
   onOpenArcade,
+  botAppUrl,
 }: {
   refreshKey: number
   economy: EconomyConfig
@@ -27,6 +28,7 @@ export function MissionsView({
   rewardPoolSecondsToNext: number | null
   onClaimed: () => Promise<unknown>
   onOpenArcade: () => void
+  botAppUrl: string | null
 }) {
   const turboReachable = economy.turboRewardEnabled === 1
   const arenaReachable = arcadeEnabled()
@@ -38,12 +40,17 @@ export function MissionsView({
       <section aria-label="Cara kerja misi" className="region-under-brand">
         <h2 className="text-base font-semibold tracking-tight">Cara kerjanya</h2>
         <p className="stack-gap-t text-sm leading-relaxed text-muted-foreground text-pretty">
-          Progres misi tercatat otomatis dari task. Target tercapai? Ambil energinya di bawah.
+          Progres task tercatat otomatis. Misi sosial dibuka lewat tombolnya, lalu dikonfirmasi setelah selesai.
         </p>
       </section>
 
       <div className="region-t">
-        <MissionCard refreshKey={refreshKey} onClaimed={onClaimed} variant="page" />
+        <MissionCard
+          refreshKey={refreshKey}
+          onClaimed={onClaimed}
+          botAppUrl={botAppUrl}
+          variant="page"
+        />
       </div>
 
       {turboReachable || arenaReachable ? (

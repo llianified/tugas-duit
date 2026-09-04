@@ -409,29 +409,31 @@ export function LeaderboardSkeleton() {
         </CardRail>
       </section>
 
-      {/* "Posisi kamu": kartu berisi satu baris papan — bingkai avatar 40px, nama, meta, nominal di kanan. Dulu digambar sebagai hero angka raksasa. */}
-      <section className="region-under-brand task-card">
+      {/* "Posisi kamu": label berdiri di atas kartu seperti label Podium, lalu kartunya berisi satu baris papan — bingkai avatar 40px, nama, meta, nominal di kanan. Dulu digambar sebagai hero angka raksasa. */}
+      <section className="region-under-brand">
         <Line
           sample="Posisi kamu"
           className="font-display text-[13px] font-bold tracking-tight"
           bar="h-3 w-24"
           tone="default"
         />
-        <div className="label-gap-t flex items-center gap-3">
-          <Bar className="size-10 shrink-0 rounded-full" />
-          <div className="min-w-0 flex-1">
-            {/* Chip "Kamu" milik `MetaBadge` berdiri SEBARIS dengan nama, dan tingginya (≈20px) melebihi line box `text-[15px]` — baris yang digambar tanpa chip itu lahir beberapa piksel lebih pendek, lalu kartunya tersentak tumbuh begitu posisinya masuk. */}
-            <span className="flex min-w-0 items-center gap-1.5 text-[15px] font-semibold tracking-tight">
-              <Line sample="Nama kamu" bar="h-3.5 w-28" />
-              <Bar className="h-5 w-12 shrink-0 rounded-[var(--chip-radius)]" />
-            </span>
-            <Line
-              sample="#3 dari 1.284 peserta"
-              className="mt-0.5 text-[13px]"
-              bar="h-3 w-36"
-            />
+        <div className="label-gap-t task-card">
+          <div className="flex items-center gap-3">
+            <Bar className="size-10 shrink-0 rounded-full" />
+            <div className="min-w-0 flex-1">
+              {/* Chip "Kamu" milik `MetaBadge` berdiri SEBARIS dengan nama, dan tingginya (≈20px) melebihi line box `text-[15px]` — baris yang digambar tanpa chip itu lahir beberapa piksel lebih pendek, lalu kartunya tersentak tumbuh begitu posisinya masuk. */}
+              <span className="flex min-w-0 items-center gap-1.5 text-[15px] font-semibold tracking-tight">
+                <Line sample="Nama kamu" bar="h-3.5 w-28" />
+                <Bar className="h-5 w-12 shrink-0 rounded-[var(--chip-radius)]" />
+              </span>
+              <Line
+                sample="#3 dari 1.284 peserta"
+                className="mt-0.5 text-[13px]"
+                bar="h-3 w-36"
+              />
+            </div>
+            <Line sample="1.284 credit" className="shrink-0 text-[15px] font-bold" bar="h-3.5 w-16" />
           </div>
-          <Line sample="1.284 credit" className="shrink-0 text-[15px] font-bold" bar="h-3.5 w-16" />
         </div>
       </section>
 

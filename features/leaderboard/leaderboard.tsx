@@ -210,14 +210,14 @@ function YourPosition({
 }) {
   if (!you) {
     return (
-      <section aria-label="Posisi kamu" className="region-under-brand task-card">
-        <SectionLabel>Posisi kamu</SectionLabel>
-        <p className="label-gap-t text-base font-semibold tracking-tight">
-          Belum masuk papan
-        </p>
-        <p className="stack-gap-t text-sm leading-relaxed text-muted-foreground text-pretty">
-          Selesaikan 1 task buat masuk bersama {formatCredits(participants)} peserta lain.
-        </p>
+      <section aria-label="Posisi kamu" className="region-under-brand">
+        <SectionLabel as="h2">Posisi kamu</SectionLabel>
+        <div className="label-gap-t task-card">
+          <p className="text-base font-semibold tracking-tight">Belum masuk papan</p>
+          <p className="stack-gap-t text-sm leading-relaxed text-muted-foreground text-pretty">
+            Selesaikan 1 task buat masuk bersama {formatCredits(participants)} peserta lain.
+          </p>
+        </div>
       </section>
     )
   }
@@ -225,9 +225,9 @@ function YourPosition({
   const rank = getRank(you.taskCount)
 
   return (
-    <section aria-label="Posisi kamu" className="region-under-brand task-card">
+    <section aria-label="Posisi kamu" className="region-under-brand">
       <div className="relative">
-        <SectionLabel>
+        <SectionLabel as="h2">
           Posisi kamu
           <InfoHint label="Posisi kamu">
             Urutan berdasarkan total credit, bukan jumlah task. Posisi berubah saat peserta lain
@@ -240,31 +240,33 @@ function YourPosition({
       nama, meta, nilai di kanan — karena ini memang baris papan yang sama, cuma
       diangkat ke kartu. Angka `#` raksasa yang dulu di sini membaca seperti metrik
       hero, padahal yang dicari user adalah "di mana aku di daftar ini". */}
-      <div className="label-gap-t flex items-center gap-3">
-        <BoardFrame
-          position={you.position}
-          tier={rank.tier}
-          premium={you.premium}
-          photoUrl={you.photoUrl}
-        />
+      <div className="label-gap-t task-card">
+        <div className="flex items-center gap-3">
+          <BoardFrame
+            position={you.position}
+            tier={rank.tier}
+            premium={you.premium}
+            photoUrl={you.photoUrl}
+          />
 
-        <div className="min-w-0 flex-1">
-          <p className="flex min-w-0 items-center gap-1.5 text-[15px] font-semibold tracking-tight">
-            <span className="truncate">{you.displayName}</span>
-            {you.premium ? (
-              <GlyphCrown className="size-3.5 shrink-0 text-premium" aria-label="Anggota premium" />
-            ) : null}
-            <MetaBadge tone="primary">Kamu</MetaBadge>
-          </p>
-          {/* Jumlah task tidak ikut di baris ini. Pada 384px kolom nama tinggal ~200px
-          setelah avatar dan nilai, dan "#3 dari 1.284 peserta · 326 task" terpotong di
-          tengah — hitungan task-nya sudah tampil di baris papan user ini juga. */}
-          <p className="mt-0.5 truncate text-[13px] tabular-nums text-muted-foreground">
-            #{formatCredits(you.position)} dari {formatCredits(participants)} peserta
-          </p>
+          <div className="min-w-0 flex-1">
+            <p className="flex min-w-0 items-center gap-1.5 text-[15px] font-semibold tracking-tight">
+              <span className="truncate">{you.displayName}</span>
+              {you.premium ? (
+                <GlyphCrown className="size-3.5 shrink-0 text-premium" aria-label="Anggota premium" />
+              ) : null}
+              <MetaBadge tone="primary">Kamu</MetaBadge>
+            </p>
+            {/* Jumlah task tidak ikut di baris ini. Pada 384px kolom nama tinggal ~200px
+            setelah avatar dan nilai, dan "#3 dari 1.284 peserta · 326 task" terpotong di
+            tengah — hitungan task-nya sudah tampil di baris papan user ini juga. */}
+            <p className="mt-0.5 truncate text-[13px] tabular-nums text-muted-foreground">
+              #{formatCredits(you.position)} dari {formatCredits(participants)} peserta
+            </p>
+          </div>
+
+          <DataListAmount value={formatCredits(you.credits)} tone="neutral" />
         </div>
-
-        <DataListAmount value={formatCredits(you.credits)} tone="neutral" />
       </div>
     </section>
   )

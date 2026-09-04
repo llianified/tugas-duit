@@ -41,7 +41,7 @@ export default async function AdminWithdrawalsPage({
         <>
           <p className="admin-empty">
             {offset === 0
-              ? 'Antrean bersih. Tidak ada pengajuan yang menunggu.'
+              ? 'Tidak ada pengajuan payout yang menunggu.'
               : 'Halaman ini sudah kosong karena antrean berubah.'}
           </p>
           {offset > 0 ? <PageLink offset={0}>Kembali ke awal antrean</PageLink> : null}

@@ -221,7 +221,8 @@ export function EconomyForm({ snapshot }: { snapshot: EconomyConfigSnapshot }) {
       </div>
 
       <p className="admin-sub">
-        Perubahan aktif setelah Terapkan ditekan. Terakhir diperbarui {formatDateTime(saved.updatedAt)}.
+        Geser kategori untuk melihat semua setelan. Perubahan aktif setelah Terapkan ditekan. Terakhir diperbarui{' '}
+        {formatDateTime(saved.updatedAt)}.
       </p>
 
       {notice ? (

@@ -8,7 +8,7 @@ import { GlyphBolt, GlyphChart, GlyphUsers, GlyphWallet, GlyphWithdraw } from '@
 const AREAS = [
   { href: '/admin/dashboard', label: 'Pantau', icon: GlyphChart },
   { href: '/admin/withdrawals', label: 'Payout', icon: GlyphWithdraw },
-  { href: '/admin/users', label: 'User', icon: GlyphUsers },
+  { href: '/admin/users', label: 'Pengguna', icon: GlyphUsers },
   { href: '/admin/economy', label: 'Ekonomi', icon: GlyphWallet },
   { href: '/admin/ops', label: 'Operasi', icon: GlyphBolt },
 ] as const

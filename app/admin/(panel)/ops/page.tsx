@@ -99,7 +99,7 @@ export default async function AdminOpsPage({ searchParams }: { searchParams: Pro
         </form>
 
         {payouts.entries.length === 0 ? (
-          <p className="admin-sub">Tidak ada penarikan yang cocok.</p>
+          <p className="admin-empty">Tidak ada penarikan yang cocok dengan filter ini.</p>
         ) : (
           <div className="admin-list">
             {payouts.entries.map((payout) => (

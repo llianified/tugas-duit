@@ -28,7 +28,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
   return (
     <div className="admin-page">
       <div className="admin-head">
-        <h1 className="admin-head-title">User</h1>
+        <h1 className="admin-head-title">Pengguna</h1>
         {term ? <span className="chip chip-muted">{formatCredits(results.length)} hasil</span> : null}
       </div>
 

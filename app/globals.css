@@ -1713,10 +1713,11 @@
   );
 }
 
-/* Garis perforasi: titik-titik yang duduk persis di tepi bawah pangkal karcis, jadi ia berhimpit dengan lubang sobek di kedua ujungnya. */
+/* Garis perforasi dibuat full-bleed melewati padding konten agar benar-benar bertemu lubang sobek di kedua ujungnya tanpa menyisakan celah. */
 .home-skin .ticket-perf {
   position: relative;
   height: 1px;
+  margin-inline: -1rem;
   background-image: repeating-linear-gradient(
     90deg,
     var(--perf) 0 0.25rem,

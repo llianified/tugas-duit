@@ -3,6 +3,7 @@ import {
   MONETAG_DEFAULT_ZONE_ID,
   adCooldownSecondsLeft,
   adPassUsable,
+  adWatchTooShort,
   adOpenRefusal,
   adViewsLeft,
   adsConfigured,
@@ -102,5 +103,29 @@ describe('ADS-6 — tiket di potret sesi belum tentu masih hidup', () => {
   it('menjawab false saat memang tidak ada tiket', () => {
     expect(adPassUsable(null, NOW)).toBe(false)
     expect(adPassUsable(undefined, NOW)).toBe(false)
+  })
+})
+
+describe('ADS-7 — lama tontonan minimum benar-benar menahan, bukan cuma dicatat', () => {
+  /** Sebelumnya angkanya konstanta `MIN_WATCH_MS` yang hanya menulis sinyal fraud lalu tetap
+   *  menerbitkan tiket, jadi "tap iklan lalu back" terdeteksi tapi selalu lolos. Penjaga ini
+   *  sengaja tidak menanyakan apa pun ke penyedia iklan: ia berlaku juga saat gerbang postback
+   *  mati, dan tetap berlaku kalau penyedia ternyata membayar klik yang langsung ditutup. */
+  it('menolak klaim yang datang lebih cepat dari lantainya', () => {
+    withConfig({ adsMinWatchSeconds: 10 })
+    expect(adWatchTooShort(NOW - 9_999, NOW)).toBe(true)
+    expect(adWatchTooShort(NOW - 10_000, NOW)).toBe(false)
+    expect(adWatchTooShort(NOW - 30_000, NOW)).toBe(false)
+  })
+
+  /** Jam yang mundur tidak boleh jadi tiket gratis. */
+  it('membaca selisih negatif sebagai nol, bukan sebagai tontonan panjang', () => {
+    withConfig({ adsMinWatchSeconds: 10 })
+    expect(adWatchTooShort(NOW + 60_000, NOW)).toBe(true)
+  })
+
+  it('nol mematikan penjagaannya sepenuhnya', () => {
+    withConfig({ adsMinWatchSeconds: 0 })
+    expect(adWatchTooShort(NOW, NOW)).toBe(false)
   })
 })

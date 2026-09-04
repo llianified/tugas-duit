@@ -82,8 +82,19 @@ export function adOpenRefusal(state: AdOpenState, now: number): AdRefusal | null
   return null
 }
 
-const MIN_WATCH_MS = 3_000
+/** Lantai lama tinggal jadi bawaannya. Angkanya dulu konstanta yang hanya MENCATAT sinyal fraud lalu tetap menerbitkan tiket — jadi "tap iklan lalu back" terdeteksi tapi tidak pernah ditahan. Sekarang ia setelan panel dan benar-benar menolak. */
+export function adsMinWatchSeconds(): number {
+  return economyConfig().adsMinWatchSeconds
+}
 
-export function adClaimTooFast(openedAt: number, now: number): boolean {
-  return now - openedAt < MIN_WATCH_MS
+/** Lama tontonan yang benar-benar terjadi, diukur dari saat tiket dibuka sampai klaimnya masuk. Kedua ujungnya jam Postgres (`ad_views.created_at` dan `now()`), bukan jam perangkat — klien tidak bisa mengarangnya, dan satu-satunya cara memperbesarnya adalah benar-benar menunggu. */
+export function adWatchedMs(openedAt: number, now: number): number {
+  return Math.max(0, now - openedAt)
+}
+
+/** Tontonan yang terlalu pendek untuk mungkin nyata. Ini penjaga yang TIDAK bergantung pada Monetag: ia tetap berlaku saat gerbang postback mati, dan tetap berlaku kalau penyedia iklan ternyata membayar klik yang langsung ditutup. | Jendelanya ikut memuat waktu memuat SDK (`waitForShow`), jadi angka yang disetel selalu lebih longgar daripada durasi kreatifnya sendiri — pilih dari sebaran `ready_at - created_at` yang sudah tercatat, bukan dari durasi iklan yang diperkirakan. | Nol mematikan penjagaan ini sepenuhnya. */
+export function adWatchTooShort(openedAt: number, now: number): boolean {
+  const floorMs = adsMinWatchSeconds() * 1_000
+  if (floorMs <= 0) return false
+  return adWatchedMs(openedAt, now) < floorMs
 }

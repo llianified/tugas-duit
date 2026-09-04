@@ -1,11 +1,13 @@
 import type { PoolClient } from 'pg'
 import {
-  adClaimTooFast,
   adCooldownSecondsLeft,
   adCooldownUntil,
   adOpenRefusal,
   adViewsLeft,
+  adWatchedMs,
+  adWatchTooShort,
   adsConfigured,
+  adsMinWatchSeconds,
   adsPostbackRequired,
   isTicketId,
   type AdProvider,
@@ -199,7 +201,12 @@ export type ClaimTicketResult =
   | { ok: true; pass: { expiresAt: number } }
   | {
       ok: false
-      reason: 'no_ticket' | 'ticket_expired' | 'pass_ready' | 'awaiting_verification'
+      reason:
+        | 'no_ticket'
+        | 'ticket_expired'
+        | 'pass_ready'
+        | 'awaiting_verification'
+        | 'watch_too_short'
     }
 
 const CLAIM_BURST_WINDOW_MINUTES = 10
@@ -258,11 +265,14 @@ export async function claimAdTicket(userId: number, ticketId: string): Promise<C
       await tx.query('update ad_views set state=$2 where id=$1', [ticketId, 'expired'])
       return { ok: false as const, reason: 'ticket_expired' as const }
     }
-    if (adClaimTooFast(row.created_at.getTime(), now)) {
+    /** Dari mencatat jadi MENOLAK. Sinyalnya tetap ditulis — pola berulang tetap perlu terbaca admin — tapi tiketnya tidak lagi terbit. Ini penjaga yang berdiri sendiri: ia tidak menanyakan apa pun ke penyedia iklan, jadi ia tetap berlaku saat gerbang postback masih mati DAN saat penyedia ternyata membayar klik yang langsung ditutup. Diukur dari `created_at` (jam Postgres saat tiket dibuka) sampai `now()`, jadi satu-satunya cara melewatinya adalah benar-benar menunggu. */
+    if (adWatchTooShort(row.created_at.getTime(), now)) {
       await recordAdClaimSignal(tx, userId, 'ad_claim_too_fast', {
         ticketId,
-        watchedMs: now - row.created_at.getTime(),
+        watchedMs: adWatchedMs(row.created_at.getTime(), now),
+        minimumMs: adsMinWatchSeconds() * 1_000,
       })
+      return { ok: false as const, reason: 'watch_too_short' as const }
     }
 
     const burst = await tx.query<{ recent: number }>(

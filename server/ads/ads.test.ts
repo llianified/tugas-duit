@@ -13,8 +13,17 @@ beforeAll(async () => {
 
 afterEach(() => setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG))
 
+/** `adsMinWatchSeconds: 0` sebelum `patch` — mati secara bawaan, tapi bisa dinyalakan tiap
+ *  skenario. Suite ini penuh helper yang membuka lalu langsung mengklaim tiket, dan itu memang
+ *  cara yang benar untuk menguji siklus pass, pengembalian, dan Arena: aturan lama tontonan
+ *  bukan urusan mereka. Yang menegakkannya diuji sendiri di `ADS-DB-15`. */
 const withConfig = (patch: Partial<EconomyConfig>) =>
-  setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, ...patch, adsCooldownSeconds: 0 })
+  setActiveEconomyConfig({
+    ...DEFAULT_ECONOMY_CONFIG,
+    adsMinWatchSeconds: 0,
+    ...patch,
+    adsCooldownSeconds: 0,
+  })
 
 async function makeUser(energy = 5): Promise<number> {
   const { query } = await import('../platform/db')
@@ -735,3 +744,72 @@ describe('ADS-DB-14 — dua penerbit pass tidak boleh saling menuduh', () => {
     expect((await readAdView(opened.ticketId)).state).toBe('ready')
   })
 })
+
+describe('ADS-DB-15 — tiket tidak terbit untuk tontonan yang terlalu pendek', () => {
+  const readSignals = async (userId: number) => {
+    const { query } = await import('../platform/db')
+    const rows = await query<{ signal: string }>(
+      "select signal from fraud_signals where user_id=$1 and signal='ad_claim_too_fast'",
+      [userId],
+    )
+    return rows.map((row) => row.signal)
+  }
+
+  /** Inti keluhannya: "tap iklan lalu back" selama ini tetap membuka task. Sinyal
+   *  `ad_claim_too_fast` sudah menangkapnya sejak dulu, tapi cuma menulis baris lalu
+   *  menerbitkan tiketnya. Sekarang ia menolak — dan penjagaan ini berdiri sendiri, tidak
+   *  menanyakan apa pun ke penyedia iklan. */
+  it('menolak klaimnya, tetap mencatat sinyalnya, dan tidak meninggalkan pass', async () => {
+    withConfig({ adsMinWatchSeconds: 30 })
+    const { claimAdTicket, openAdTicket, readAdsState } = await import('./ads')
+    const userId = await makeUser(0)
+
+    const opened = await openAdTicket(userId)
+    if (!opened.ok) throw new Error(`tiket ditolak: ${opened.reason}`)
+
+    expect(await claimAdTicket(userId, opened.ticketId)).toEqual({
+      ok: false,
+      reason: 'watch_too_short',
+    })
+    expect((await readAdView(opened.ticketId)).state).toBe('pending')
+    expect((await readAdsState(userId)).pass).toBeNull()
+    expect(await readSignals(userId)).toEqual(['ad_claim_too_fast'])
+  })
+
+  /** Tanpa pass, ongkos masuk iklan tidak bisa dibayar — jadi task-nya memang tidak terbuka.
+   *  Ini yang benar-benar diminta: bukan sekadar klaim ditolak, tapi menu task tetap tertutup. */
+  it('membuat task berbayar tiket ikut tertolak', async () => {
+    withConfig({ adsMinWatchSeconds: 30 })
+    const { claimAdTicket, openAdTicket } = await import('./ads')
+    const { issueChallenge, startChallenge } = await import('../task/challenge')
+    const userId = await makeUser(5)
+
+    const opened = await openAdTicket(userId)
+    if (!opened.ok) throw new Error(`tiket ditolak: ${opened.reason}`)
+    expect((await claimAdTicket(userId, opened.ticketId)).ok).toBe(false)
+
+    const challenge = await issueChallenge(userId)
+    const started = await startChallenge(userId, challenge.id, 'ad')
+    expect(started).toMatchObject({ ok: false, reason: 'ad_pass_missing' })
+  })
+
+  /** Tontonan yang cukup lama tetap lolos seperti biasa — penjaganya menahan yang pendek,
+   *  bukan menahan semua. */
+  it('meloloskan tontonan yang cukup lama', async () => {
+    withConfig({ adsMinWatchSeconds: 30 })
+    const { query } = await import('../platform/db')
+    const { claimAdTicket, openAdTicket } = await import('./ads')
+    const userId = await makeUser(0)
+
+    const opened = await openAdTicket(userId)
+    if (!opened.ok) throw new Error(`tiket ditolak: ${opened.reason}`)
+    await query("update ad_views set created_at = now() - interval '31 seconds' where id=$1", [
+      opened.ticketId,
+    ])
+
+    expect((await claimAdTicket(userId, opened.ticketId)).ok).toBe(true)
+    expect((await readAdView(opened.ticketId)).state).toBe('ready')
+    expect(await readSignals(userId)).toEqual([])
+  })
+})
+

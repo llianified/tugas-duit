@@ -27,14 +27,18 @@ Berkas `.env*` sudah di-gitignore kecuali `.env.example`.
 
 ## Sebelum menyatakan selesai
 
-Empat-empatnya harus hijau. CI menjalankan hal yang sama, jadi menjalankannya
-lokal cuma mempercepat umpan balik.
+Hanya perubahan backend yang perlu dicek lokal. CI menjalankan seluruh suite
+di tiap PR, jadi tidak perlu diulang di sini.
+
+Kerja UI — `features/`, `shell/`, `shared/components/`, `navigation/`,
+styling, copy, layout — tidak perlu menjalankan apa pun.
+
+Kerja backend — `domain/`, `server/`, `app/api/`, `db/migrations/`,
+`scripts/`, `proxy.ts`:
 
 ```
 pnpm exec tsc --noEmit
-pnpm lint
-pnpm test
-pnpm build
+pnpm test   # bila menyentuh domain/ atau server/
 ```
 
 `pnpm test` termasuk `tests/architecture.test.ts`, yang menegakkan batas layer.
@@ -101,6 +105,7 @@ Isi seluruh template PR, terutama bagian **Dampak ke uang nyata** — jawab
 perubahan; jangan campur refactor dengan perbaikan perilaku, karena reviewer
 tidak akan bisa memisahkan mana yang mengubah uang.
 
-## Melaporkan kerentanan
+## Keamanan
 
-Jangan lewat issue publik. Lihat `SECURITY.md`.
+Daftar permukaan serang jalur uang ada di `SECURITY.md`. Baca sebelum
+menyentuh ledger, payout, auth, atau panel admin.

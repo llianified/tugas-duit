@@ -78,14 +78,14 @@ Jangan commit file environment atau rahasia.
 | `pnpm db:grant-admin` | Memberi akses admin. |
 | `pnpm db:ban-user` | Memblokir user. |
 
-Sebelum mengirim perubahan, jalankan:
+Sebelum mengirim perubahan backend, jalankan:
 
 ```sh
 pnpm exec tsc --noEmit --incremental false
-pnpm lint
 pnpm test
-pnpm build
 ```
+
+Perubahan UI tidak perlu dicek lokal; CI menjalankan seluruh suite di tiap PR.
 
 ## Database dan deployment
 
@@ -111,4 +111,4 @@ Perubahan pada saldo, payout, referral, auth, atau monetisasi harus mempertahank
 - `docs/keputusan-desain.md` — perilaku yang tampak janggal tetapi disengaja;
 - `docs/adr/0001-csp-jaringan-iklan.md` — batas CSP dan prosedur audit provider iklan;
 - `docs/adr/0002-sesi-di-iframe.md` — cookie CHIPS dan fallback sesi khusus preview;
-- `CLAUDE.md` — peta repo, aturan keras, serta panduan kerja untuk contributor dan agent.
+- `CLAUDE.md` — peta repo, aturan keras, serta panduan kerja pemilik repo dan agent.

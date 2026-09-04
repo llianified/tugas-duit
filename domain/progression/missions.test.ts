@@ -62,18 +62,24 @@ describe('missions', () => {
     expect(hasUnclaimedMissions(allClaimed)).toBe(false)
   })
 
-  it('membedakan follow sekali dari post harian dan membawa waktu konfirmasi', () => {
+  it('membedakan misi sekali per akun dari post harian dan membawa waktu konfirmasi', () => {
     const confirmAt = Date.now() + 10_000
     const list = buildMissionProgress(
       { tasks: 0, stars: 0, ads: 0 },
       ['twitter_follow'],
-      { twitter_post: confirmAt },
+      { twitter_like_repost: confirmAt, twitter_post: confirmAt },
     )
 
     expect(list.find((mission) => mission.key === 'twitter_follow')).toMatchObject({
       kind: 'social',
       cadence: 'once',
       claimed: true,
+    })
+    expect(list.find((mission) => mission.key === 'twitter_like_repost')).toMatchObject({
+      kind: 'social',
+      cadence: 'once',
+      confirmAt,
+      claimed: false,
     })
     expect(list.find((mission) => mission.key === 'twitter_post')).toMatchObject({
       kind: 'social',
@@ -87,13 +93,15 @@ describe('missions', () => {
     setActiveEconomyConfig({
       ...DEFAULT_ECONOMY_CONFIG,
       missionTwitterFollowReward: 2,
-      missionTwitterPostReward: 3,
-      missionFacebookPostReward: 4,
+      missionTwitterLikeRepostReward: 3,
+      missionTwitterPostReward: 4,
+      missionFacebookPostReward: 5,
     })
     try {
       expect(missionDefinition('twitter_follow').reward).toBe(2)
-      expect(missionDefinition('twitter_post').reward).toBe(3)
-      expect(missionDefinition('facebook_post').reward).toBe(4)
+      expect(missionDefinition('twitter_like_repost').reward).toBe(3)
+      expect(missionDefinition('twitter_post').reward).toBe(4)
+      expect(missionDefinition('facebook_post').reward).toBe(5)
     } finally {
       setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
     }
@@ -110,6 +118,7 @@ describe('misi iklan mengikuti tombol mati iklan', () => {
       'stars',
       'ads',
       'twitter_follow',
+      'twitter_like_repost',
       'twitter_post',
       'facebook_post',
     ])
@@ -123,6 +132,7 @@ describe('misi iklan mengikuti tombol mati iklan', () => {
       'tasks',
       'stars',
       'twitter_follow',
+      'twitter_like_repost',
       'twitter_post',
       'facebook_post',
     ])
@@ -130,7 +140,14 @@ describe('misi iklan mengikuti tombol mati iklan', () => {
 
     const list = buildMissionProgress(
       { tasks: 0, stars: 0, ads: 0 },
-      ['tasks', 'stars', 'twitter_follow', 'twitter_post', 'facebook_post'],
+      [
+        'tasks',
+        'stars',
+        'twitter_follow',
+        'twitter_like_repost',
+        'twitter_post',
+        'facebook_post',
+      ],
     )
     expect(hasUnclaimedMissions(list)).toBe(false)
   })

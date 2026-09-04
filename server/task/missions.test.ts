@@ -260,6 +260,36 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
     })
   })
 
+  it('menganggap Like & Retweet yang pernah diklaim sebagai selesai untuk selamanya', async () => {
+    const { claimMission, readMissions, startMissionAction } = await import('./missions')
+    const { query } = await import('../platform/db')
+    const userId = await makeUser(0)
+
+    await startMissionAction(userId, 'twitter_like_repost')
+    await query(
+      `update social_mission_attempts
+        set started_at=now()-interval '11 seconds'
+        where user_id=$1 and mission_key='twitter_like_repost'`,
+      [userId],
+    )
+    expect(await claimMission(userId, 'twitter_like_repost')).toMatchObject({ ok: true })
+
+    await query(
+      `update mission_claims
+        set quota_date=(now() at time zone 'Asia/Jakarta')::date-1
+        where user_id=$1 and mission_key='twitter_like_repost'`,
+      [userId],
+    )
+    const mission = (await readMissions(userId)).find(
+      (item) => item.key === 'twitter_like_repost',
+    )
+    expect(mission).toMatchObject({ claimed: true, cadence: 'once' })
+    expect(await startMissionAction(userId, 'twitter_like_repost')).toEqual({
+      ok: false,
+      reason: 'already_claimed',
+    })
+  })
+
   it('menyimpan confirmAt yang sama saat aksi dimulai ulang dan memulihkannya setelah reload', async () => {
     const { readMissions, startMissionAction } = await import('./missions')
     const userId = await makeUser(0)
@@ -333,19 +363,27 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
     expect(Number(claims[0].count)).toBe(1)
   })
 
-  it('membayar tiga reward sosial dari key masing-masing tanpa menyentuh credit ledger', async () => {
+  it('membayar empat reward sosial dari key masing-masing tanpa menyentuh credit ledger', async () => {
     const { claimMission, startMissionAction } = await import('./missions')
     const { query } = await import('../platform/db')
     const userId = await makeUser(0)
     setActiveEconomyConfig({
       ...DEFAULT_ECONOMY_CONFIG,
       missionTwitterFollowReward: 1,
-      missionTwitterPostReward: 2,
+      missionTwitterLikeRepostReward: 1,
+      missionTwitterPostReward: 1,
       missionFacebookPostReward: 2,
     })
 
+    const socialKeys = [
+      'twitter_follow',
+      'twitter_like_repost',
+      'twitter_post',
+      'facebook_post',
+    ] as const
+
     try {
-      for (const key of ['twitter_follow', 'twitter_post', 'facebook_post'] as const) {
+      for (const key of socialKeys) {
         await startMissionAction(userId, key)
       }
       await query(
@@ -355,7 +393,7 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
         [userId],
       )
 
-      for (const key of ['twitter_follow', 'twitter_post', 'facebook_post'] as const) {
+      for (const key of socialKeys) {
         expect(await claimMission(userId, key)).toMatchObject({ ok: true })
       }
 
@@ -367,7 +405,8 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
       expect(grants.map((row) => [row.mission_key, Number(row.energy_granted)])).toEqual([
         ['facebook_post', 2],
         ['twitter_follow', 1],
-        ['twitter_post', 2],
+        ['twitter_like_repost', 1],
+        ['twitter_post', 1],
       ])
       expect(await readEnergyValue(userId)).toBe(5)
 

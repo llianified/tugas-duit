@@ -65,6 +65,7 @@ export interface EconomyConfig {
   missionAdsTarget: number
   missionAdsReward: number
   missionTwitterFollowReward: number
+  missionTwitterLikeRepostReward: number
   missionTwitterPostReward: number
   missionFacebookPostReward: number
   referralCommissionPercent: number
@@ -160,6 +161,7 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   missionAdsTarget: 3,
   missionAdsReward: 3,
   missionTwitterFollowReward: 1,
+  missionTwitterLikeRepostReward: 1,
   missionTwitterPostReward: 1,
   missionFacebookPostReward: 1,
   referralCommissionPercent: 10,
@@ -567,6 +569,7 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
   ...(
     [
       ['missionTwitterFollowReward', 'Follow Twitter', 'sekali per akun'],
+      ['missionTwitterLikeRepostReward', 'Like & Retweet di X', 'sekali per akun'],
       ['missionTwitterPostReward', 'Post Twitter', 'sekali per hari WIB'],
       ['missionFacebookPostReward', 'Post Facebook', 'sekali per hari WIB'],
     ] as [EconomyConfigKey, string, string][]
@@ -784,6 +787,7 @@ export function validateEconomyConfig(
     ['missionStarsReward', 'Task bintang tiga'],
     ['missionAdsReward', 'Tonton iklan'],
     ['missionTwitterFollowReward', 'Follow Twitter'],
+    ['missionTwitterLikeRepostReward', 'Like & Retweet di X'],
     ['missionTwitterPostReward', 'Post Twitter'],
     ['missionFacebookPostReward', 'Post Facebook'],
   ]

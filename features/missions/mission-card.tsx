@@ -25,7 +25,7 @@ export function MissionCard({
   /** `page` dipakai saat daftar ini menjadi isi utama sebuah view, jadi permukaan kartu luar dilepas. */
   variant?: 'card' | 'page'
 }) {
-  const { missions, claiming, starting, startAction, claim } = useMissions({
+  const { missions, clock, claiming, starting, startAction, claim } = useMissions({
     refreshKey,
     onClaimed,
   })
@@ -78,6 +78,7 @@ export function MissionCard({
         <SocialMissionSheet
           key={selectedMission.key}
           mission={selectedMission}
+          clock={clock}
           botAppUrl={botAppUrl}
           starting={starting === selectedMission.key}
           claiming={claiming === selectedMission.key}

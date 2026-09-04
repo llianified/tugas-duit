@@ -36,7 +36,10 @@ const CLAIMED_SQL = `select mission_key from mission_claims
   where user_id=$1
     and (quota_date = ${TODAY} or mission_key = 'twitter_follow')`
 
-const ATTEMPTS_SQL = `select mission_key, started_at from social_mission_attempts
+const ATTEMPTS_SQL = `select
+    mission_key,
+    started_at + $2 * interval '1 millisecond' as confirm_at
+  from social_mission_attempts
   where user_id=$1 and quota_date = ${TODAY}`
 
 async function readCounts(userId: number, tx?: PoolClient): Promise<MissionCounts> {
@@ -58,27 +61,44 @@ async function readClaimed(userId: number, tx?: PoolClient): Promise<MissionKey[
   return rows.map((row) => row.mission_key).filter(isMissionKey)
 }
 
-async function readActionStarts(
+async function readConfirmTimes(
   userId: number,
   tx?: PoolClient,
 ): Promise<Partial<Record<SocialMissionKey, number>>> {
+  const params = [userId, SOCIAL_MISSION_COOLDOWN_MS]
   const rows = tx
-    ? (await tx.query<{ mission_key: string; started_at: Date }>(ATTEMPTS_SQL, [userId])).rows
-    : await query<{ mission_key: string; started_at: Date }>(ATTEMPTS_SQL, [userId])
-  const starts: Partial<Record<SocialMissionKey, number>> = {}
+    ? (await tx.query<{ mission_key: string; confirm_at: Date }>(ATTEMPTS_SQL, params)).rows
+    : await query<{ mission_key: string; confirm_at: Date }>(ATTEMPTS_SQL, params)
+  const confirmTimes: Partial<Record<SocialMissionKey, number>> = {}
   for (const row of rows) {
-    if (isSocialMissionKey(row.mission_key)) starts[row.mission_key] = row.started_at.getTime()
+    if (isSocialMissionKey(row.mission_key)) {
+      confirmTimes[row.mission_key] = row.confirm_at.getTime()
+    }
   }
-  return starts
+  return confirmTimes
+}
+
+export interface MissionSnapshot {
+  missions: MissionProgress[]
+  serverNow: number
+}
+
+/** `serverNow` dan `confirmAt` sama-sama berasal dari Postgres, sehingga klien dapat menghitung countdown tanpa mempercayai jam perangkat. */
+export async function readMissionSnapshot(userId: number): Promise<MissionSnapshot> {
+  const [counts, claimed, confirmTimes, clockRows] = await Promise.all([
+    readCounts(userId),
+    readClaimed(userId),
+    readConfirmTimes(userId),
+    query<{ now: Date }>('select now() as now'),
+  ])
+  return {
+    missions: buildMissionProgress(counts, claimed, confirmTimes),
+    serverNow: clockRows[0]?.now.getTime() ?? Date.now(),
+  }
 }
 
 export async function readMissions(userId: number): Promise<MissionProgress[]> {
-  const [counts, claimed, actionStarts] = await Promise.all([
-    readCounts(userId),
-    readClaimed(userId),
-    readActionStarts(userId),
-  ])
-  return buildMissionProgress(counts, claimed, actionStarts)
+  return (await readMissionSnapshot(userId)).missions
 }
 
 async function isAlreadyClaimed(
@@ -97,7 +117,7 @@ async function isAlreadyClaimed(
 }
 
 export type MissionActionStartResult =
-  | { ok: true; confirmAvailableAt: number }
+  | { ok: true; confirmAt: number; serverNow: number }
   | { ok: false; reason: 'unknown_mission' | 'already_claimed' }
 
 /** Menulis cap waktu di server sebelum link sosial dibuka. Upsert-nya sengaja tidak mengubah `started_at`: mengetuk link lagi tidak mereset cooldown yang sudah dilewati. */
@@ -122,15 +142,21 @@ export async function startMissionAction(
        on conflict(user_id,quota_date,mission_key) do nothing`,
       [userId, key],
     )
-    const attempt = await tx.query<{ started_at: Date }>(
-      `select started_at from social_mission_attempts
+    const attempt = await tx.query<{ confirm_at: Date; now: Date }>(
+      `select
+          started_at + $3 * interval '1 millisecond' as confirm_at,
+          now() as now
+        from social_mission_attempts
         where user_id=$1 and quota_date=${TODAY} and mission_key=$2`,
-      [userId, key],
+      [userId, key, SOCIAL_MISSION_COOLDOWN_MS],
     )
+    const timing = attempt.rows[0]
+    if (!timing) return { ok: false as const, reason: 'unknown_mission' as const }
 
     return {
       ok: true as const,
-      confirmAvailableAt: attempt.rows[0].started_at.getTime() + SOCIAL_MISSION_COOLDOWN_MS,
+      confirmAt: timing.confirm_at.getTime(),
+      serverNow: timing.now.getTime(),
     }
   })
 }
@@ -177,16 +203,17 @@ export async function claimMission(userId: number, key: string): Promise<Mission
         return { ok: false as const, reason: 'not_done' as const }
       }
     } else {
-      const attempt = await tx.query<{ started_at: Date }>(
-        `select started_at from social_mission_attempts
+      const attempt = await tx.query<{ confirm_at: Date }>(
+        `select started_at + $3 * interval '1 millisecond' as confirm_at
+          from social_mission_attempts
           where user_id=$1 and quota_date=${TODAY} and mission_key=$2`,
-        [userId, key],
+        [userId, key, SOCIAL_MISSION_COOLDOWN_MS],
       )
-      const startedAt = attempt.rows[0]?.started_at.getTime()
-      if (startedAt === undefined) {
+      const confirmAt = attempt.rows[0]?.confirm_at.getTime()
+      if (confirmAt === undefined) {
         return { ok: false as const, reason: 'action_required' as const }
       }
-      if (row.now.getTime() - startedAt < SOCIAL_MISSION_COOLDOWN_MS) {
+      if (row.now.getTime() < confirmAt) {
         return { ok: false as const, reason: 'action_cooldown' as const }
       }
     }

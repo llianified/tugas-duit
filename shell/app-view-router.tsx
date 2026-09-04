@@ -200,8 +200,6 @@ export function AppViewRouter({
       energyMax={session.energyMax}
       energyFill={session.energyFill}
       rewardPoolCredits={session.rewardPoolCredits}
-      rewardPoolMax={session.rewardPoolMax}
-      rewardPoolRegenCredits={session.rewardPoolRegenCredits}
       rewardPoolSecondsToNext={session.rewardPoolSecondsToNext}
       economy={session.economy}
       adsEnabled={session.adsEnabled}
@@ -218,7 +216,6 @@ export function AppViewRouter({
       onSubmitWithdrawal={session.submitWithdrawal}
       onOpenHistory={session.openHistory}
       onOpenMissions={session.openMissions}
-      onOpenArcade={session.openArcade}
       premium={session.premium}
       channelBonus={session.channelBonus}
       onRefreshSession={session.refreshSession}

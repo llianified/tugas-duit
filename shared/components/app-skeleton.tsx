@@ -266,8 +266,8 @@ export function AppViewSkeleton() {
         {/* Mengikuti `BalanceSummary`: nominal + ekor Rupiah di kiri, SATU tombol "Tarik dana" di kanan. Tombol ikon Riwayat yang dulu digambar di sini sudah pindah ke kepala daftar transaksi, dan judul "Saldo kamu" sudah dilepas — kerangka yang masih membawa keduanya menggeser seluruh hero saat data masuk. */}
         <div className="flex items-end gap-3">
           <div className="min-w-0 flex-1">
-            {/* `CreditAmount` size `display`: `heroFontSize()` memuncak di 3rem dengan line-height 1, jadi 48px pada lebar penuh. */}
-            <Bar className="h-12 w-28" />
+            {/* `CreditAmount` size `display` memuncak di 30px. Bar 28px + jarak 6px + ekor 14px menjaga blok ini di bawah CTA 52px. */}
+            <Bar className="h-7 w-28" />
             <Line
               sample="Rp 1.234.567 · +120 hari ini"
               className="stack-gap-t text-sm leading-none"

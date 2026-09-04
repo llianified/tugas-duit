@@ -8,6 +8,10 @@ const REPAIR_SQL_PATH = path.join(
   process.cwd(),
   'db/migrations/0028_premium_seed_relative_to_base.sql',
 )
+const SOCIAL_REWARD_REPAIR_SQL_PATH = path.join(
+  process.cwd(),
+  'db/migrations/0045_social_mission_reward_keys.sql',
+)
 
 const PRODUKSI: EconomyConfig = {
   ...DEFAULT_ECONOMY_CONFIG,
@@ -38,10 +42,24 @@ async function writeConfig(config: EconomyConfig) {
   invalidateEconomyConfigCache()
 }
 
+async function writeRawConfig(config: Record<string, number>) {
+  const { query } = await import('../platform/db')
+  const { invalidateEconomyConfigCache } = await import('./economy-config')
+  await query('update economy_config set config=$1::jsonb where id=1', [JSON.stringify(config)])
+  invalidateEconomyConfigCache()
+}
+
 async function runRepair() {
   const { query } = await import('../platform/db')
   const { invalidateEconomyConfigCache } = await import('./economy-config')
   await query(await readFile(REPAIR_SQL_PATH, 'utf8'))
+  invalidateEconomyConfigCache()
+}
+
+async function runSocialRewardRepair() {
+  const { query } = await import('../platform/db')
+  const { invalidateEconomyConfigCache } = await import('./economy-config')
+  await query(await readFile(SOCIAL_REWARD_REPAIR_SQL_PATH, 'utf8'))
   invalidateEconomyConfigCache()
 }
 
@@ -113,5 +131,41 @@ describe('ECON-6 — seed premium yang menabrak setelan admin memadamkan seluruh
     expect(loaded.premiumMaxTasksPerDay).toBe(100_000)
     expect(loaded.premiumEnergyRegenMinutes).toBe(1)
     expect(loaded.premiumMaxEnergy).toBe(10)
+  })
+})
+
+describe('ECON-7 — reward sosial lama dipisah menjadi tiga key runtime', () => {
+  it('menyalin key lama ke tiga reward dan menghapus key yatim', async () => {
+    const legacy = { ...DEFAULT_ECONOMY_CONFIG } as Record<string, number>
+    delete legacy.missionTwitterFollowReward
+    delete legacy.missionTwitterPostReward
+    delete legacy.missionFacebookPostReward
+    legacy.missionSocialReward = 4
+    await writeRawConfig(legacy)
+
+    await runSocialRewardRepair()
+
+    const stored = (await readStored()) as EconomyConfig & Record<string, number>
+    expect(stored.missionTwitterFollowReward).toBe(4)
+    expect(stored.missionTwitterPostReward).toBe(4)
+    expect(stored.missionFacebookPostReward).toBe(4)
+    expect(stored.missionSocialReward).toBeUndefined()
+  })
+
+  it('mempertahankan key yang sudah diubah admin dan membatasi fallback ke kapasitas energi', async () => {
+    const partial = { ...DEFAULT_ECONOMY_CONFIG } as Record<string, number>
+    delete partial.missionTwitterPostReward
+    delete partial.missionFacebookPostReward
+    partial.maxEnergy = 3
+    partial.missionTwitterFollowReward = 2
+    partial.missionSocialReward = 5
+    await writeRawConfig(partial)
+
+    await runSocialRewardRepair()
+
+    const stored = await readStored()
+    expect(stored.missionTwitterFollowReward).toBe(2)
+    expect(stored.missionTwitterPostReward).toBe(3)
+    expect(stored.missionFacebookPostReward).toBe(3)
   })
 })

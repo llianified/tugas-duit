@@ -177,7 +177,7 @@ export function buildMissionProgress(
       claimed: isClaimed,
       action: mission.kind === 'social' ? mission.action : null,
       cadence: mission.kind === 'social' ? mission.cadence : null,
-      actionStartedAt: mission.kind === 'social' ? (actionStartedAt[mission.key] ?? null) : null,
+      confirmAt: mission.kind === 'social' ? (confirmAt[mission.key] ?? null) : null,
     }
   })
 }

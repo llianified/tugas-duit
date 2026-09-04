@@ -20,13 +20,13 @@ const HERO_SEPARATOR_EM = 0.375 // titik ribuan / koma — lebih sempit dari ang
 /* Satuan "credit" TIDAK ikut mengecil bersama nominalnya: ukurannya dipatok `text-sm` sama seperti hero referral, jadi lebarnya konstan (≈42px) dan masuk ke bagian tetap di bawah, bukan ke lebar-per-em. */
 const HERO_FIXED_PX = 76 // satuan + ikon hint (ukurannya tetap) + gap + sisa aman
 
-/** Ukuran angka hero, dihitung dari ruang yang benar-benar tersedia. Dua hal menentukan apakah "3.646 credit" masih muat satu baris: lebar kolomnya dan panjang nominalnya. Untuk yang pertama, satuan viewport tidak bisa dipakai — shell aplikasi ini dikunci `max-w-md`, jadi di layar lebar `vw` terus tumbuh sementara kolomnya diam di tempat, dan angkanya malah kebesaran saat layarnya lega. Patokannya `cqi`: 100cqi = lebar kolom hero itu sendiri, berapa pun jendelanya. Untuk yang kedua, nominal dipecah jadi angka dan pemisah karena keduanya tidak sama lebar. Dari situ ketemu lebar yang dibutuhkan per satu satuan ukuran huruf, dan ukuran huruf terbesar yang masih muat adalah (lebar kolom − bagian yang tak mengecil) ÷ lebar-per-em itu. Hasilnya: saldo pendek tetap tampil besar, saldo panjang mengecil sendiri — dan tidak ada nominal yang memaksa "credit" turun ke baris berikutnya. */
+/** Ukuran angka hero, dihitung dari ruang yang benar-benar tersedia. Dua hal menentukan apakah "3.646 credit" masih muat satu baris: lebar kolomnya dan panjang nominalnya. Untuk yang pertama, satuan viewport tidak bisa dipakai — shell aplikasi ini dikunci `max-w-md`, jadi di layar lebar `vw` terus tumbuh sementara kolomnya diam di tempat, dan angkanya malah kebesaran saat layarnya lega. Patokannya `cqi`: 100cqi = lebar kolom hero itu sendiri, berapa pun jendelanya. Untuk yang kedua, nominal dipecah jadi angka dan pemisah karena keduanya tidak sama lebar. Dari situ ketemu lebar yang dibutuhkan per satu satuan ukuran huruf, dan ukuran huruf terbesar yang masih muat adalah (lebar kolom − bagian yang tak mengecil) ÷ lebar-per-em itu. Batas 1,875rem menyisakan 6px untuk jarak dan 14px untuk baris pendukung, sehingga seluruh blok kiri maksimal 50px dan tidak melampaui CTA 52px. Hasilnya: saldo pendek tetap tampil menonjol, saldo panjang mengecil sendiri, dan tidak ada nominal yang memaksa "credit" turun ke baris berikutnya. */
 function heroFontSize(text: string) {
   const digits = text.replace(/\D/g, '').length
   const separators = text.length - digits
   const widthPerEm = HERO_DIGIT_EM * digits + HERO_SEPARATOR_EM * separators
 
-  return `clamp(1.25rem, calc((100cqi - ${HERO_FIXED_PX}px) / ${widthPerEm.toFixed(3)}), 3rem)`
+  return `clamp(1.25rem, calc((100cqi - ${HERO_FIXED_PX}px) / ${widthPerEm.toFixed(3)}), 1.875rem)`
 }
 
 const CREDIT_UNIT_CLASS = {

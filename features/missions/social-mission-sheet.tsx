@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
-import {
-  SOCIAL_MISSION_COOLDOWN_MS,
-  type MissionProgress,
-  type SocialMissionAction,
-} from '@/domain/progression/missions'
+import type { MissionProgress, SocialMissionAction } from '@/domain/progression/missions'
+import type {
+  MissionActionTiming,
+  MissionClockAnchor,
+} from '@/features/missions/use-missions'
 import { ActionButton } from '@/shared/components/action-button'
 import {
   GlyphBolt,
@@ -38,6 +38,15 @@ function openExternal(url: string): void {
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
+export function secondsUntilConfirmation(
+  timing: MissionActionTiming | null,
+  deviceNow = Date.now(),
+): number {
+  if (!timing) return 0
+  const projectedServerNow = timing.serverNow + (deviceNow - timing.receivedAt)
+  return Math.max(0, Math.ceil((timing.confirmAt - projectedServerNow) / 1_000))
+}
+
 function contentFor(action: SocialMissionAction) {
   if (action === 'twitter_follow') {
     return {
@@ -65,6 +74,7 @@ function contentFor(action: SocialMissionAction) {
 
 export function SocialMissionSheet({
   mission,
+  clock,
   botAppUrl,
   starting,
   claiming,
@@ -73,22 +83,25 @@ export function SocialMissionSheet({
   onConfirm,
 }: {
   mission: MissionProgress
+  clock: MissionClockAnchor | null
   botAppUrl: string | null
   starting: boolean
   claiming: boolean
   onOpenChange: (open: boolean) => void
-  onStart: () => Promise<number | null>
+  onStart: () => Promise<MissionActionTiming | null>
   onConfirm: () => Promise<boolean>
 }) {
   const details = contentFor(mission.action as SocialMissionAction)
-  const [availableAt, setAvailableAt] = useState<number | null>(() =>
-    mission.actionStartedAt === null
-      ? null
-      : mission.actionStartedAt + SOCIAL_MISSION_COOLDOWN_MS,
-  )
-  const [remaining, setRemaining] = useState(() =>
-    availableAt === null ? 0 : Math.max(0, Math.ceil((availableAt - Date.now()) / 1_000)),
-  )
+  const [timing, setTiming] = useState<MissionActionTiming | null>(() => {
+    if (mission.confirmAt === null) return null
+    const receivedAt = clock?.receivedAt ?? Date.now()
+    return {
+      confirmAt: mission.confirmAt,
+      serverNow: clock?.serverNow ?? receivedAt,
+      receivedAt,
+    }
+  })
+  const [remaining, setRemaining] = useState(() => secondsUntilConfirmation(timing))
   const [copied, setCopied] = useState(false)
   const showError = useToast()
   const shareText = botAppUrl
@@ -96,12 +109,12 @@ export function SocialMissionSheet({
     : AD_COPY
 
   useEffect(() => {
-    if (availableAt === null) return
-    const tick = () => setRemaining(Math.max(0, Math.ceil((availableAt - Date.now()) / 1_000)))
+    if (timing === null) return
+    const tick = () => setRemaining(secondsUntilConfirmation(timing))
     tick()
     const timer = window.setInterval(tick, 250)
     return () => window.clearInterval(timer)
-  }, [availableAt])
+  }, [timing])
 
   async function beginAction() {
     const startRequest = onStart()
@@ -120,8 +133,8 @@ export function SocialMissionSheet({
       openExternal(FACEBOOK_GROUPS_URL)
     }
 
-    const nextAvailableAt = await startRequest
-    if (nextAvailableAt !== null) setAvailableAt(nextAvailableAt)
+    const nextTiming = await startRequest
+    if (nextTiming !== null) setTiming(nextTiming)
 
     if (copyRequest) {
       try {
@@ -184,7 +197,7 @@ export function SocialMissionSheet({
               </div>
             ) : null}
 
-            {availableAt === null ? (
+            {timing === null ? (
               <ActionButton className="mt-4" onClick={beginAction} disabled={starting} aria-busy={starting}>
                 {starting ? (
                   <GlyphSpinner className="size-4 animate-spin motion-reduce:animate-none" />

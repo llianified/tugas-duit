@@ -1,4 +1,4 @@
-import { getActivityFeed } from '@/server/task/activity'
+import { getCachedActivityFeed } from '@/server/task/activity-cache'
 import { leaderboardEnabled } from '@/features/leaderboard/availability'
 import { loadEconomyConfig } from '@/server/economy/economy-config'
 import { handleRouteError, rateLimited } from '@/server/platform/http'
@@ -20,7 +20,8 @@ export async function GET() {
     if (!limit.allowed) return rateLimited(limit.retryAfter)
 
     return Response.json(
-      { entries: await getActivityFeed() },
+      /** Gerbang, autentikasi, dan plafon tetap dijalankan per request — yang dibagi hanya isi umpannya, dan isinya global untuk semua user. `no-store` tetap ada: cache-nya di server, bukan di browser atau CDN, jadi staleness-nya punya satu batas yang bisa dipertanggungjawabkan (20 detik) alih-alih tersebar di cache tiap klien. */
+      { entries: await getCachedActivityFeed() },
       { headers: { 'Cache-Control': 'no-store' } },
     )
   } catch (error) {

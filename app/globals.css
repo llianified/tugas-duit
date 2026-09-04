@@ -1497,6 +1497,47 @@
     -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
   }
+  /** Layar masuk memakai bahasa panel yang sama: satu kolom selebar ponsel, satu kartu, tanpa kolom promosi di sisi kanan. Admin membuka panel ini dari ponsel dan yang dibutuhkan hanya satu bidang kata sandi, jadi tidak ada gunanya menahan setengah layar untuk teks pemasaran internal. */
+  .admin-auth {
+    --admin-px: 1rem;
+    display: flex;
+    min-height: 100dvh;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem var(--admin-px);
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    background-color: var(--background);
+  }
+  .admin-auth-col {
+    display: flex;
+    width: 100%;
+    max-width: 22rem;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+  .admin-auth-title {
+    font-family: var(--font-plus-jakarta), var(--font-sans);
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+    color: var(--foreground);
+  }
+  .admin-mark {
+    display: inline-flex;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    background-color: var(--primary);
+    font-family: var(--font-plus-jakarta), var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--primary-foreground);
+  }
   @media (min-width: 30rem) {
     .admin-stats {
       grid-template-columns: repeat(3, minmax(0, 1fr));

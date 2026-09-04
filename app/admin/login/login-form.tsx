@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { ApiError, sendJson } from '@/shell/api-client'
 
+/** Satu bidang, satu tombol selebar kartu. Kesalahan muncul di antara keduanya supaya terbaca tanpa menggeser posisi tombol yang sedang disentuh. */
 export function LoginForm() {
   const router = useRouter()
   const [password, setPassword] = useState('')
@@ -28,9 +29,9 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-semibold text-foreground">Kata sandi admin</span>
+    <form onSubmit={submit} className="flex flex-col gap-2.5">
+      <label className="admin-field">
+        <span className="admin-field-k">Kata sandi admin</span>
         <input
           type="password"
           name="password"
@@ -40,13 +41,21 @@ export function LoginForm() {
           autoFocus
           required
           aria-invalid={Boolean(error)}
-          className="focus-ring rounded-lg border border-border bg-background px-3 py-3 text-foreground"
+          className="focus-ring admin-input"
         />
       </label>
 
-      {error ? <p role="alert" className="rounded-lg border border-destructive px-3 py-2.5 text-sm font-medium text-destructive">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="admin-note" data-tone="danger">
+          {error}
+        </p>
+      ) : null}
 
-      <button type="submit" disabled={pending || !password} className="focus-ring transition-ui rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:bg-muted disabled:text-muted-foreground">
+      <button
+        type="submit"
+        disabled={pending || !password}
+        className="focus-ring transition-ui admin-btn admin-btn-primary"
+      >
         {pending ? 'Memeriksa akses…' : 'Masuk ke panel'}
       </button>
     </form>

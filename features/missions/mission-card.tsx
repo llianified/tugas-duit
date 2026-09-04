@@ -154,7 +154,7 @@ function MissionAction({
 }) {
   const slot = 'flex h-8 min-w-[3.75rem] shrink-0 items-center justify-end'
   const box =
-    'btn-label flex h-8 items-center gap-1 rounded-md px-2.5 font-bold tabular-nums'
+    'btn-label relative flex h-8 items-center gap-1 rounded-md px-2.5 font-bold tabular-nums'
 
   if (mission.claimed) {
     return (
@@ -199,13 +199,15 @@ function MissionAction({
           'focus-ring transition-ui press-scale-soft btn-glass bg-primary text-primary-foreground',
         )}
       >
+        <span
+          aria-hidden={claiming}
+          className={cn('flex items-center gap-1', claiming && 'invisible')}
+        >
+          <GlyphBolt className="size-3.5" />+{formatCredits(mission.reward)}
+        </span>
         {claiming ? (
-          <GlyphSpinner className="size-3.5 animate-spin motion-reduce:animate-none" />
-        ) : (
-          <>
-            <GlyphBolt className="size-3.5" />+{formatCredits(mission.reward)}
-          </>
-        )}
+          <GlyphSpinner className="absolute size-3.5 animate-spin motion-reduce:animate-none" />
+        ) : null}
       </button>
     </div>
   )

@@ -1140,6 +1140,9 @@
     border-radius: 0.75rem;
     background-color: var(--muted);
   }
+  .admin-stat:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
   .admin-stat-k {
     font-size: 0.6875rem;
     line-height: 1.3;

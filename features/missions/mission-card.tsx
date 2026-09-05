@@ -26,27 +26,22 @@ export function MissionCard({
   /** `page` dipakai saat daftar ini menjadi isi utama sebuah view, jadi permukaan kartu luar dilepas. */
   variant?: 'card' | 'page'
 }) {
-  const { missions, clock, claiming, starting, startAction, claim } = useMissions({
-    refreshKey,
-    onClaimed,
-  })
-  const [socialMissionKey, setSocialMissionKey] = useState<string | null>(null)
   /** Nominal yang sedang dirayakan bingkisan, `null` kalau tidak ada. Ia hidup di sini, bukan di
    * dalam baris misinya: barisnya ikut hilang begitu daftar disegarkan setelah klaim, dan overlay
    * yang dirender oleh elemen yang sedang dilepas React akan mati di frame pertama. */
   const [revealAmount, setRevealAmount] = useState<number | null>(null)
-
-  /** Satu pintu klaim untuk dua jalur — tombol di baris dan konfirmasi di sheet misi sosial —
-   * supaya bingkisannya tidak perlu dipasang dua kali. Nilai baliknya tetap boolean karena
-   * `SocialMissionSheet` memakainya untuk menutup dirinya sendiri. Energi 0 (kapasitas user sudah
-   * penuh) tidak dirayakan: bingkisan yang dibuka lalu mengeluarkan "+0" lebih buruk daripada
-   * tidak ada bingkisan. */
-  const claimAndReveal = async (key: string): Promise<boolean> => {
-    const granted = await claim(key)
-    if (granted === null) return false
-    if (granted > 0) setRevealAmount(granted)
-    return true
-  }
+  const { missions, clock, claiming, starting, startAction, claim } = useMissions({
+    refreshKey,
+    onClaimed,
+    /** Penjagaan `> 0` murni sabuk pengaman. Server MENOLAK klaim yang akan melebihi kapasitas
+     * energi (`MISSION_CLAIM_REFUSED`, 409) alih-alih memberi nol, jadi jalur ini semestinya tidak
+     * pernah terpakai — tapi bingkisan yang dibuka lalu mengeluarkan "+0" adalah kegagalan yang
+     * lebih buruk daripada tidak ada bingkisan sama sekali. */
+    onGranted: (granted) => {
+      if (granted > 0) setRevealAmount(granted)
+    },
+  })
+  const [socialMissionKey, setSocialMissionKey] = useState<string | null>(null)
   const page = variant === 'page'
   const selectedMission = missions?.find((mission) => mission.key === socialMissionKey) ?? null
 
@@ -84,7 +79,7 @@ export function MissionCard({
               key={mission.key}
               mission={mission}
               claiming={claiming === mission.key}
-              onClaim={() => void claimAndReveal(mission.key)}
+              onClaim={() => void claim(mission.key)}
               onOpenSocial={() => setSocialMissionKey(mission.key)}
             />
           ))}
@@ -103,7 +98,7 @@ export function MissionCard({
             if (!open) setSocialMissionKey(null)
           }}
           onStart={() => startAction(selectedMission.key)}
-          onConfirm={() => claimAndReveal(selectedMission.key)}
+          onConfirm={() => claim(selectedMission.key)}
         />
       ) : null}
 

@@ -1,8 +1,9 @@
 import { loadEconomyConfig } from '@/server/economy/economy-config'
-import { submitAnswer } from '@/server/task/challenge'
+import { issueChallenge, submitAnswer } from '@/server/task/challenge'
 import { apiError, assertSameOrigin, handleRouteError, rateLimited } from '@/server/platform/http'
 import { checkRateLimit } from '@/server/platform/ratelimit'
 import { requireUser } from '@/server/auth/session'
+import { getStats } from '@/server/task/stats'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -26,7 +27,23 @@ export async function POST(request: Request) {
     }
 
     const result = await submitAnswer(user.id, body.challengeId ?? '', body.answer ?? '')
-    if (result.ok) return Response.json(result)
+    if (result.ok) {
+      /** Statistik dan soal berikutnya dititipkan di respons ini supaya klien tidak menembak
+       * `/api/stats` dan `/api/task` lagi untuk hal yang sama — dua dari lima penyegaran yang dulu
+       * mengekor tiap jawaban benar. Keduanya SESUDAH transaksinya commit dan sengaja best-effort:
+       * pembayarannya sudah tercatat sebelum baris ini, jadi kegagalan di sini tidak boleh
+       * menjatuhkan respons yang membawa saldo barunya. `null` adalah jalur mundurnya — klien
+       * menyegarkan sendiri persis seperti sebelumnya. `issueChallenge` aman dipanggil dua kali:
+       * ia mengembalikan soal aktif yang sudah ada sebelum membuat yang baru. */
+      const [stats, challenge] = await Promise.all([
+        getStats(user.id, result.balance).catch(() => null),
+        issueChallenge(user.id).catch(() => null),
+      ])
+      return Response.json(
+        { ...result, stats, challenge },
+        { headers: { 'Cache-Control': 'no-store' } },
+      )
+    }
 
     if (result.reason === 'daily_task_cap') {
       return apiError(

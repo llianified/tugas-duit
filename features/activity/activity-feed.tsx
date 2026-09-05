@@ -77,7 +77,7 @@ function FeedItem({ entry, showDivider }: { entry: ActivityEntry; showDivider: b
       <div className="thread-line ml-5 pt-2 pl-5">
         <p className="text-[13px] leading-relaxed">
           <span className="font-bold tabular-nums text-success">
-            {payout ? formatRupiah(entry.amount) : `+${formatCredits(entry.amount)} credit`}
+            {payout ? formatRupiah(entry.amount) : `+${formatCredits(entry.amount)} TD`}
           </span>
           <span className="text-muted-foreground">
             {payout ? ' · penarikan dibayar' : ' · soal bintang tiga'}

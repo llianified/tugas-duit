@@ -153,7 +153,7 @@ function RewardPoolRegion({
         <ProgressBar
           value={poolLeft}
           max={rewardPoolMax}
-          valueText={`${formatCredits(poolLeft)} dari ${formatCredits(rewardPoolMax)} credit stok reward tersisa`}
+          valueText={`${formatCredits(poolLeft)} dari ${formatCredits(rewardPoolMax)} TD stok reward tersisa`}
           accentSweep={isOpen}
         />
       }

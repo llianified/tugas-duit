@@ -26,13 +26,13 @@ const TABS: readonly SegmentedTab<HistoryTab>[] = [
 const SUMMARY = {
   task: {
     label: 'Total didapat',
-    ariaLabel: 'Total credit dari soal',
-    hint: 'Semua credit dari soal sejak awal. Ini bukan sisa saldo kamu.',
+    ariaLabel: 'Total TD dari soal',
+    hint: 'Semua TD dari soal sejak awal. Ini bukan sisa saldo kamu.',
   },
   withdrawal: {
     label: 'Total ditarik',
-    ariaLabel: 'Total credit yang sudah ditarik',
-    hint: 'Credit yang sudah terkirim ke rekening atau e-wallet. Yang diproses belum dihitung.',
+    ariaLabel: 'Total TD yang sudah ditarik',
+    hint: 'TD yang sudah terkirim ke rekening atau e-wallet. Yang diproses belum dihitung.',
   },
 } as const
 
@@ -71,7 +71,7 @@ export function HistoryView({
         ariaLabel={summary.ariaLabel}
         note={
           tab === 'withdrawal' && processingCredits > 0
-            ? `${formatCreditsPrecise(processingCredits)} credit masih diproses admin.`
+            ? `${formatCreditsPrecise(processingCredits)} TD masih diproses admin.`
             : undefined
         }
         className="region-under-brand"

@@ -118,16 +118,36 @@ describe('withdrawalRequirements', () => {
     expect(keys).toEqual(['balance', 'referrals'])
   })
 
-  it('menampilkan baris premium sejak awal saat syaratnya menyala', () => {
+  /** Tiga kasus di bawah adalah satu aturan yang sama dilihat dari tiga tahap: daftarnya berhenti
+   * di gerbang pertama yang belum tercapai. Ditulis terpisah supaya kegagalannya menyebut tahap
+   * mana yang bocor, bukan sekadar "daftarnya salah". */
+  it('menyembunyikan referral dan premium selama saldonya belum cukup', () => {
     const list = withdrawalRequirements({
       balance: 0,
+      eligibility: { ...eligibility, activeReferralCount: 0, requiresPremium: true },
+    })
+    expect(list.map((r) => r.key)).toEqual(['balance'])
+    expect(list[0].done).toBe(false)
+  })
+
+  it('memunculkan referral setelah saldonya cukup, premium masih ditahan', () => {
+    const list = withdrawalRequirements({
+      balance: 1_000,
+      eligibility: { ...eligibility, activeReferralCount: 0, requiresPremium: true },
+    })
+    expect(list.map((r) => r.key)).toEqual(['balance', 'referrals'])
+    expect(list.find((r) => r.key === 'balance')?.done).toBe(true)
+  })
+
+  it('memunculkan premium setelah referralnya genap', () => {
+    const list = withdrawalRequirements({
+      balance: 1_000,
       eligibility: { ...eligibility, requiresPremium: true },
     })
     expect(list.map((r) => r.key)).toEqual(['balance', 'referrals', 'premium'])
-    /** Saldonya masih nol — dan barisnya sudah ada. Itu seluruh maksudnya: harganya terbaca
-     * sebelum kerjanya dimulai, bukan setelah. */
-    expect(list.find((r) => r.key === 'balance')?.done).toBe(false)
-    expect(list.find((r) => r.key === 'premium')?.done).toBe(false)
+    /** Dua yang di atasnya tetap bercentang: daftarnya jejak progres, bukan satu baris berganti. */
+    expect(list.slice(0, 2).every((r) => r.done)).toBe(true)
+    expect(list[2].done).toBe(false)
   })
 
   it('menandai premium selesai saat user sudah premium', () => {

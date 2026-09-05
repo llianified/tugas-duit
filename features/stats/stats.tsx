@@ -32,7 +32,7 @@ export function StatsView({ stats }: StatsViewProps) {
       <TotalSummary
         label="Total penghasilan"
         credits={stats.earnedCredits}
-        hint="Semua credit dari soal dan referral sejak awal. Nggak berkurang waktu ditarik, jadi ini bukan saldo sekarang."
+        hint="Semua TD dari soal dan referral sejak awal. Nggak berkurang waktu ditarik, jadi ini bukan saldo sekarang."
         ariaLabel="Total penghasilan sejak awal"
         className="region-under-brand"
       />
@@ -181,12 +181,12 @@ function TaskSection({ stats }: { stats: UserStats }) {
         />
         <StatRow
           label="Reward terbaik"
-          value={hasTasks ? `${formatCredits(stats.bestReward)} credit` : '—'}
+          value={hasTasks ? `${formatCredits(stats.bestReward)} TD` : '—'}
           showDivider
         />
         <StatRow
           label="Rata-rata reward"
-          value={hasTasks ? `${formatCreditsDecimal(stats.averageReward)} credit` : '—'}
+          value={hasTasks ? `${formatCreditsDecimal(stats.averageReward)} TD` : '—'}
           showDivider={hasTasks}
         />
         {hasTasks && stats.firstCompletedAt !== null ? (
@@ -224,7 +224,7 @@ function DifficultySection({ stats }: { stats: UserStats }) {
             value={`${formatCredits(row.count)} soal`}
             note={
               row.count > 0
-                ? `${formatPercent(row.share)} · ${formatCredits(row.credits)} credit`
+                ? `${formatPercent(row.share)} · ${formatCredits(row.credits)} TD`
                 : 'Belum pernah'
             }
             showDivider={index !== stats.byDifficulty.length - 1}
@@ -248,26 +248,26 @@ function BalanceSection({ stats }: { stats: UserStats }) {
       <StatList>
         <StatRow
           label="Dari soal sendiri"
-          value={`${formatCredits(stats.taskCredits)} credit`}
+          value={`${formatCredits(stats.taskCredits)} TD`}
           showDivider
         />
         <StatRow
           label="Komisi referral"
-          value={`${formatCreditsPrecise(stats.referralCredits)} credit`}
+          value={`${formatCreditsPrecise(stats.referralCredits)} TD`}
           showDivider
         />
         <StatRow
           label="Sudah ditarik"
           value={
             stats.withdrawnCredits > 0
-              ? `−${formatCredits(stats.withdrawnCredits)} credit`
-              : `${formatCredits(0)} credit`
+              ? `−${formatCredits(stats.withdrawnCredits)} TD`
+              : `${formatCredits(0)} TD`
           }
           showDivider
         />
         <StatRow
           label="Saldo sekarang"
-          value={`${formatCreditsPrecise(stats.balance)} credit`}
+          value={`${formatCreditsPrecise(stats.balance)} TD`}
           note={formatRupiah(creditsToRupiah(stats.balance))}
           emphasis
           showDivider={false}
@@ -294,7 +294,7 @@ function ReferralSection({ stats }: { stats: UserStats }) {
         />
         <StatRow
           label="Komisi referral"
-          value={`${formatCreditsPrecise(stats.referralCredits)} credit`}
+          value={`${formatCreditsPrecise(stats.referralCredits)} TD`}
           note="Seluruh komisi langsung masuk ke saldo"
           showDivider={false}
         />
@@ -317,14 +317,14 @@ function PayoutSection({ stats }: { stats: UserStats }) {
           value={`${formatCredits(stats.processingPayoutCount)} pengajuan`}
           note={
             stats.processingCredits > 0
-              ? `${formatCredits(stats.processingCredits)} credit di jalan`
+              ? `${formatCredits(stats.processingCredits)} TD di jalan`
               : undefined
           }
           showDivider
         />
         <StatRow
           label="Total ditarik"
-          value={`${formatCredits(stats.withdrawnCredits)} credit`}
+          value={`${formatCredits(stats.withdrawnCredits)} TD`}
           note={formatRupiah(creditsToRupiah(stats.withdrawnCredits))}
           showDivider={false}
         />

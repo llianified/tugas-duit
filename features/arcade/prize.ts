@@ -4,7 +4,7 @@ import { formatCredits, formatRupiah } from '@/shared/lib/format'
 
 /** Satu-satunya tempat hadiah Arena diterjemahkan jadi teks. Nominal rupiahnya lewat `creditsToRupiah`, tidak pernah dikalikan sendiri di komponen — aturan keras #3 di `CLAUDE.md`. */
 export function prizeLabel(prize: ArcadePrize): string {
-  if (prize.kind === 'pool') return `Stok +${formatCredits(prize.amount)} credit`
+  if (prize.kind === 'pool') return `Stok +${formatCredits(prize.amount)} TD`
   if (prize.kind === 'energy') return `+${formatCredits(prize.amount)} energi`
   return 'Zonk'
 }

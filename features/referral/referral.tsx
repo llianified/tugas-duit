@@ -102,14 +102,14 @@ function CommissionSummary({
 
   const note =
     summary.pendingUnits > 0
-      ? `${formatCredits(summary.pendingUnits)}/100 unit terkumpul menuju 1 credit berikutnya.`
+      ? `${formatCredits(summary.pendingUnits)}/100 unit terkumpul menuju 1 TD berikutnya.`
       : undefined
 
   return (
     <TotalSummary
       label="Total komisi referral"
       credits={summary.credits}
-      hint="Komisi dari semua soal yang dikerjain teman kamu. Masuk ke saldo tiap kekumpul 1 credit."
+      hint="Komisi dari semua soal yang dikerjain teman kamu. Masuk ke saldo tiap kekumpul 1 TD."
       note={note}
     />
   )

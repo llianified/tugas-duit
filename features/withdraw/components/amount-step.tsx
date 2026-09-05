@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { ActionButton } from '@/shared/components/action-button'
 import { KEYPAD_HEIGHT_CLASS } from '@/shared/components/keypad-frame'
 import { NumericKeypad } from '@/shared/components/numeric-keypad'
+import { TokenMark } from '@/shared/components/token-mark'
 import { ChannelSelect } from '@/features/withdraw/components/channel-picker'
 import { creditsToRupiah } from '@/domain/economy/economy'
 import { formatCredits, formatRupiah } from '@/shared/lib/format'
@@ -67,18 +68,19 @@ function AmountDisplay({ value, credits }: { value: string; credits: number }) {
   return (
     <div className="text-center">
       <p aria-live="polite" className="sr-only">
-        {formatCredits(credits)} credit, {formatRupiah(creditsToRupiah(credits))}
+        {formatCredits(credits)} TD, {formatRupiah(creditsToRupiah(credits))}
       </p>
 
       <p
         aria-hidden="true"
         className="flex items-baseline justify-center gap-2 text-5xl font-semibold leading-none tracking-[-0.02em] tabular-nums"
       >
+        <TokenMark className={empty ? 'text-muted-foreground/40' : 'text-foreground'} />
         <span className={empty ? 'text-muted-foreground/40' : 'text-foreground'}>
           {empty ? '0' : formatCredits(credits)}
         </span>
         <span className="animate-caret-blink h-9 w-0.5 shrink-0 self-center rounded-full bg-primary" />
-        <span className="text-sm font-medium text-muted-foreground">credit</span>
+        <span className="text-sm font-medium text-muted-foreground">TD</span>
       </p>
 
       <p
@@ -120,7 +122,7 @@ function AmountPresets({
                 : 'btn-glass-quiet text-foreground hover:bg-muted-foreground/15',
             )}
           >
-            {formatCredits(credits)} credit
+            {formatCredits(credits)} TD
           </button>
         )
       })}

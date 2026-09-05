@@ -22,7 +22,7 @@ export function premiumBenefitList(perks: PremiumPerks): PremiumBenefit[] {
     },
     {
       key: 'pool',
-      title: `Stok reward +${formatCredits(perks.poolCapBonus)} credit`,
+      title: `Stok reward +${formatCredits(perks.poolCapBonus)} TD`,
       detail: 'Stok lebih besar, jadi kamu bisa kumpulin lebih banyak sebelum habis.',
     },
     /** Judulnya sengaja tidak berbunyi "bebas iklan". Premium hanya mematikan interstitial otomatis; tiket berhadiah tetap hidup karena impresinya yang membayari fitur ini. Menjanjikan nol iklan lalu tetap merender tombol iklan adalah bentuk kebohongan yang paling mahal — user membayar, melihat tombolnya, dan menyimpulkan seluruh daftar ini tidak bisa dipercaya. Kalimat terakhir menutup celah itu di depan, bukan di ulasan. */

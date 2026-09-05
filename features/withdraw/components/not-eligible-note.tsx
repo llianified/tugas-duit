@@ -30,22 +30,18 @@ function requirementValue(requirement: WithdrawalRequirement): string {
   return `${formatCredits(current)} / ${formatCredits(required)}`
 }
 
-/** Sebaris keterangan untuk syarat yang belum kelar — cuma untuk yang paling atas yang belum
- * terpenuhi, supaya daftarnya tetap bisa dipindai sekilas. */
+/** Sebaris keterangan untuk syarat yang belum kelar. Daftarnya sudah dipotong di gerbang itu, jadi
+ * yang belum terpenuhi selalu baris terakhir — keterangannya menutup daftar, bukan menyela. */
 function requirementHint(requirement: WithdrawalRequirement): string | null {
   if (requirement.done) return null
   if (requirement.key === 'balance') return 'Kerjain soal buat nambah saldo.'
   if (requirement.key === 'referrals') return 'Teman kehitung aktif setelah dia kelarin 1 soal.'
-  return 'Berlaku selama premium kamu masih aktif.'
+  return 'Aktifin Premium buat buka penarikan. Berlaku selama premiumnya masih aktif.'
 }
 
-/** Seluruh syarat sekaligus, bukan satu penghalang teratas.
- *
- * Bentuk lamanya menyajikan satu alasan pada satu waktu, dan itu menyembunyikan sisanya: user
- * membaca "kumpulkan saldo dulu", memenuhinya setelah berminggu-minggu, lalu menemukan syarat
- * berikutnya. Untuk syarat berbayar, urutan itu berubah jadi tagihan yang muncul setelah kerjanya
- * selesai — dan pada gate referral, setelah ia mengajak lima orang lain ke syarat yang ia sendiri
- * belum tahu ada. Daftar utuh membuat seluruh harganya terbaca sejak layar pertama. */
+/** Syarat sampai gerbang yang sedang dihadapi, dengan yang sudah lewat tetap bercentang. Yang
+ * memotong daftarnya `withdrawalRequirements`, bukan komponen ini — di sini tidak ada logika
+ * urutan gerbang sama sekali, cuma penyajian apa pun yang dikirim. */
 export function NotEligibleNote({
   reason = 'balance',
   requirements = [],

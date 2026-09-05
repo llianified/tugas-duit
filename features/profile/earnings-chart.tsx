@@ -38,7 +38,7 @@ export function EarningsChart({ series }: { series: EarningsPoint[] }) {
   if (!shape) {
     return (
       <div className="flex h-24 items-center justify-center text-[13px] text-muted-foreground">
-        Belum ada credit yang masuk di rentang ini.
+        Belum ada TD yang masuk di rentang ini.
       </div>
     )
   }
@@ -48,7 +48,7 @@ export function EarningsChart({ series }: { series: EarningsPoint[] }) {
     <div className="relative h-24">
       <svg
         role="img"
-        aria-label="Grafik perolehan credit 30 hari terakhir"
+        aria-label="Grafik perolehan TD 30 hari terakhir"
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         preserveAspectRatio="none"
         className="h-full w-full overflow-visible"

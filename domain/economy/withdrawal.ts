@@ -198,12 +198,12 @@ function getAmountError(value: string, balance: number): string | null {
 
   const credits = parseCreditInput(value)
   if (credits < withdrawalMinimumCredits()) {
-    return `Minimum penarikan ${formatCreditsForMessage(withdrawalMinimumCredits())} credit (${formatRupiahForMessage(
+    return `Minimum penarikan ${formatCreditsForMessage(withdrawalMinimumCredits())} TD (${formatRupiahForMessage(
       creditsToRupiah(withdrawalMinimumCredits()),
     )}).`
   }
   if (credits > maxPayoutCredits()) {
-    return `Maksimum penarikan ${formatCreditsForMessage(maxPayoutCredits())} credit per pengajuan.`
+    return `Maksimum penarikan ${formatCreditsForMessage(maxPayoutCredits())} TD per pengajuan.`
   }
   if (credits > balance) return 'Jumlahnya lebih besar dari saldo kamu.'
   return null
@@ -258,13 +258,20 @@ export interface WithdrawalRequirement {
   required: number | null
 }
 
-/** Seluruh syarat penarikan sekaligus, bukan satu alasan yang menghalangi saat ini.
+/** Syarat penarikan sampai gerbang yang sedang dihadapi user, bukan seluruh daftarnya sekaligus.
  *
- * Bentuk lamanya menyajikan satu penghalang teratas, dan itu menyembunyikan sisanya: user membaca
- * "kumpulkan saldo dulu", memenuhinya setelah berminggu-minggu, lalu menemukan syarat kedua — dan
- * kalau syarat terakhirnya berbayar, ia menemukannya setelah mengumpulkan saldo DAN mengajak lima
- * teman. Daftar utuh membuat harganya terbaca sejak hari pertama, dan orang yang tetap
- * mengumpulkan sambil tahu ada premium di ujungnya adalah calon pembeli, bukan calon komplain. */
+ * Urutannya tetap saldo → referral → premium, dan yang belum tercapai dipotong di gerbang pertama:
+ * saldo di bawah minimum hanya melihat baris saldo, referral baru muncul setelah saldonya cukup,
+ * premium baru muncul setelah referralnya genap. Yang sudah lewat tetap tampil bercentang — itu
+ * jejak progres, dan tanpanya daftar ini berhenti terbaca sebagai kemajuan.
+ *
+ * Ini membalik keputusan sebelumnya yang menampilkan ketiganya sejak layar pertama. Alasan lama
+ * masih berlaku sebagian — syarat berbayar yang muncul di ujung bisa terbaca sebagai tagihan
+ * mendadak — dan yang menukarnya adalah beban tiga syarat sekaligus di layar user yang saldonya
+ * masih nol: satu tugas pada satu waktu jauh lebih mungkin dikerjakan daripada tiga sekaligus.
+ * Karena itu premium tidak boleh mengejutkan dari tempat lain: kartu premium di beranda dan
+ * daftar manfaatnya tetap menyebut jeda penarikan, jadi gerbangnya sudah pernah dibaca sebelum
+ * ia menjadi baris terakhir di sini. */
 export function withdrawalRequirements(input: {
   balance: number
   eligibility: WithdrawalEligibility | null
@@ -301,7 +308,11 @@ export function withdrawalRequirements(input: {
     })
   }
 
-  return list
+  /** Pemotongannya di sini, bukan di komponen: ia aturan urutan gerbang — sama seperti
+   * `withdrawalGatingReason` — jadi ia bisa diuji tanpa merender apa pun, dan tidak ada penyaji
+   * yang bisa diam-diam membocorkan gerbang berikutnya. */
+  const firstPending = list.findIndex((requirement) => !requirement.done)
+  return firstPending === -1 ? list : list.slice(0, firstPending + 1)
 }
 
 /** Alasan penarikan belum bisa diajukan, atau `null` kalau formulirnya boleh dibuka. Aturan, bukan penyajian, jadi ia tinggal di sini bersama `validateWithdrawalDraft` — dan bisa diuji tanpa merender apa pun.

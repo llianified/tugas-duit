@@ -65,7 +65,7 @@ export function TurboRewardCard({
             <strong className="font-semibold text-foreground">
               {rewardPoolCredits === null
                 ? 'memuat…'
-                : `${formatCredits(poolCurrent)}/${formatCredits(poolMax)} credit`}
+                : `${formatCredits(poolCurrent)}/${formatCredits(poolMax)} TD`}
             </strong>
             . Isi ulang +{formatRupiah(regenIdr)}{' '}
             {poolFull

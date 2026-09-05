@@ -32,7 +32,7 @@ const destination = (notice: WithdrawalNotice) =>
   `${getPayoutChannel(notice.channelId).name} · ${maskAccountNumber(notice.accountNumber)}`
 
 const amount = (notice: WithdrawalNotice) =>
-  `${formatCredits(notice.credits)} credit (${formatRupiah(notice.amountIdr)})`
+  `${formatCredits(notice.credits)} TD (${formatRupiah(notice.amountIdr)})`
 
 export async function notifyWithdrawalRequested(notice: WithdrawalNotice) {
   await send(
@@ -48,7 +48,7 @@ export async function notifyWithdrawalRequested(notice: WithdrawalNotice) {
       `Oh iya, penarikan berikutnya baru kebuka ${formatCredits(notice.cooldownDays)} hari lagi.`,
     ].join('\n'),
     'requested',
-    openAppMarkup('🎮 Lanjut cari credit'),
+    openAppMarkup('🎮 Lanjut cari TD'),
   )
 }
 

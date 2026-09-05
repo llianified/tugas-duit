@@ -21,6 +21,8 @@ const API_ROOT = 'app/api'
 /** Kata yang tidak boleh sampai ke layar peserta, beserta gantinya. Bukan daftar gaya bahasa — daftar kata yang TIDAK DIMENGERTI orang yang aplikasinya dipakai: bapak-bapak dan emak-emak yang membuka Telegram buat nambah penghasilan, bukan orang yang pernah membaca dokumentasi HTTP. */
 const TERLARANG: { pola: RegExp; ganti: string }[] = [
   { pola: /\bcooldown\b/i, ganti: 'jeda' },
+  /** Satuan saldo bernama TD, dan nama lamanya tidak boleh menyelinap balik lewat copy baru: satu layar yang masih bilang "credit" membuat user mengira ada dua hal berbeda. Yang ditahan cuma kata utuhnya — `formatCredits`, `credits`, dan `credit_ledger` tetap lolos karena mereka nama kode, bukan bacaan. */
+  { pola: /\bcredit\b/i, ganti: `satuannya sekarang TD (lihat TOKEN_SYMBOL)` },
   { pola: /\bclipboard\b/i, ganti: 'salin teks / kesalin' },
   { pola: /\btask\b/i, ganti: 'soal' },
   { pola: /\bsesi\b/i, ganti: 'sebut apa yang harus dilakukan, bukan namanya' },

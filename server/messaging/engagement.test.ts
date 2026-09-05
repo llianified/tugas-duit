@@ -70,7 +70,7 @@ describe('ENG-1 — pesan energi penuh', () => {
 })
 
 describe('ENG-2 — stok reward penuh menang atas energi penuh', () => {
-  it('menyebut sisa credit yang siap diambil', () => {
+  it('menyebut sisa TD yang siap diambil', () => {
     const now = NOON_WIB
     const row = candidate({
       reward_pool: 30,
@@ -79,7 +79,7 @@ describe('ENG-2 — stok reward penuh menang atas energi penuh', () => {
     })
     const message = pickMessage(row, 0)
     expect(message?.kind).toBe('pool_full')
-    expect(message?.text).toContain('30 credit')
+    expect(message?.text).toContain('30 TD')
   })
 })
 
@@ -173,10 +173,10 @@ describe('ENG-6 — winback memakai tanggal aktif terakhir sebagai kunci dedup',
 })
 
 describe('ENG-7 — ringkasan komisi dan referral baru', () => {
-  it('menyebut komisi hari ini dalam credit dan Rupiah', () => {
+  it('menyebut komisi hari ini dalam TD dan Rupiah', () => {
     const message = pickMessage(candidate({ commission_today: 12 }), 0)
     expect(message?.kind).toBe('commission_digest')
-    expect(message?.text).toContain('12 credit (Rp1.200)')
+    expect(message?.text).toContain('12 TD (Rp1.200)')
   })
 
   it('menghitung teman baru yang mendaftar hari ini', () => {

@@ -19,7 +19,7 @@ const CREDIT_STACKED = { sm: false, xl: true, '2xl': false, display: false } as 
 const HERO_DIGIT_EM = 0.571 // satu angka
 const HERO_SEPARATOR_EM = 0.375 // titik ribuan / koma — lebih sempit dari angka
 /* Mark TD justru IKUT mengecil: ukurannya relatif terhadap nominal, jadi ia masuk ke lebar-per-em, bukan ke bagian tetap. Kalau ia dipatok px seperti satuannya, saldo panjang akan mengecilkan angkanya sampai mark-nya jadi lebih tinggi daripada digit di sebelahnya. */
-const HERO_MARK_EM = 0.82 // sama dengan `size-[0.82em]` di `TokenMark`
+const HERO_MARK_EM = 1.03 // lebar mark, sama dengan `w-[1.03em]` di `TokenMark`
 /* Satuan TIDAK ikut mengecil bersama nominalnya: ukurannya dipatok `text-sm` sama seperti hero referral, jadi lebarnya konstan dan masuk ke bagian tetap di bawah. Angka ini turun dari 76 ke 60 saat satuannya berganti dari "credit" (≈42px) ke "TD" (≈20px); +6px-nya jarak tambahan untuk mark di depan nominal, yang jaraknya tetap sementara mark-nya sendiri tidak. */
 const HERO_FIXED_PX = 60 // satuan + ikon hint (ukurannya tetap) + dua gap + sisa aman
 

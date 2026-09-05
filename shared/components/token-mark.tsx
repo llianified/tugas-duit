@@ -5,34 +5,36 @@ import { cn } from '@/shared/lib/utils'
  * sedangkan ini mark isi dengan lubang — menumpangkannya berarti memberi `GlyphSvg` satu cabang
  * khusus untuk satu pemakai.
  *
- * Monokrom dan mengikuti `currentColor`, bukan dua warna brand. Aplikasi ini gelap-saja
- * (`--background: #101014`), jadi bagian hitam logo aslinya akan hilang di latar, dan birunya
- * (≈`#5b4bff`) hampir sama dengan `--primary` sehingga ikut lenyap begitu mark-nya duduk di atas
- * bidang aksen. Mengikuti warna teks membuatnya aman di ketiga tempat: angka biru, teks putih,
- * dan di dalam tombol.
+ * Monokrom dan mengikuti `currentColor`, bukan dua warna aslinya. Aplikasi ini gelap-saja
+ * (`--background: #101014`), jadi huruf A yang aslinya `#151515` praktis hilang di latar, dan
+ * segitiga `#4A3AF7` lenyap begitu mark-nya duduk di atas bidang `--primary` (`#4f56f2`) — dua
+ * warna yang di kertas putih saling memisahkan, di sini justru saling menghapus. Mengikuti warna
+ * teks membuatnya aman di ketiganya: angka biru, teks putih, dan di dalam tombol.
  *
- * Ukurannya relatif (`em`), bukan tetap: itu satu-satunya cara ia tetap seimbang di hero beranda,
- * yang ukuran hurufnya dihitung dari lebar kolom dan berubah mengikuti panjang saldo. Angkanya
- * 0,82em, bukan 1em — kotak em sebuah huruf lebih tinggi daripada angkanya sendiri (tinggi digit
- * ≈0,7em), jadi mark setinggi 1em akan menjulang di atas deretan angka yang ia dampingi.
+ * `viewBox` dipotong ke kotak gambarnya sendiri, bukan `0 0 1536 1536` bawaan berkas aslinya: di
+ * kotak itu gambarnya cuma mengisi 62% lebar dan 43% tinggi, jadi mark 11px akan menggambar huruf
+ * setinggi 5px dengan sisanya udara. Ukurannya lalu dipatok dari TINGGI (0,72em, setinggi angka di
+ * sebelahnya) dengan lebar mengikuti rasio aslinya 1,428 — bukan kotak persegi, karena marknya
+ * memang lebih lebar daripada tinggi.
  *
- * `fill-rule="evenodd"` mengerjakan seluruh bentuknya dalam satu path: segitiga luar terisi,
- * segitiga tengah melubanginya, segitiga kecil di dalam lubang terisi lagi karena berada di
- * silangan ketiga. */
+ * Celah antara huruf dan segitiga di dalamnya 11,6% dari lebar mark, jadi di ukuran inline (~11px)
+ * ia tinggal 1,3px dan kedua bidang mulai menyatu jadi satu siluet. Itu diterima: pada ukuran itu
+ * detail apa pun hilang, dan yang perlu terbaca cuma bentuk A-nya. Celahnya kembali jelas di
+ * nominal besar — hero beranda dan papan tombol penarikan. */
 export function TokenMark({ className }: { className?: string }) {
   return (
     <svg
-      viewBox="0 0 24 24"
+      viewBox="292 432 951 666"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
       focusable="false"
-      className={cn('size-[0.82em] shrink-0 self-center', className)}
+      className={cn('h-[0.72em] w-[1.03em] shrink-0 self-center', className)}
     >
       <path
         fill="currentColor"
-        fillRule="evenodd"
-        d="M12 2.4 23 21.6H1L12 2.4ZM12 9.2 6.2 21.6h11.6L12 9.2ZM12 13.4l4.3 8.2H7.7l4.3-8.2Z"
+        d="M292 1096 L668 440 Q674 432 682 432 L849 432 Q858 432 864 440 L1243 1098 L1049 1096 L769 609 Q765 602 760 609 L485 1098 Z"
       />
+      <path fill="currentColor" d="M767 798 L939 1098 L596 1098 Z" />
     </svg>
   )
 }

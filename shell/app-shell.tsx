@@ -2,6 +2,7 @@
 
 import { MotionConfig } from 'motion/react'
 import { useEffect, useMemo, useState } from 'react'
+import { SWRConfig } from 'swr'
 import { economyConfig } from '@/domain/economy/economy-config'
 import { getWithdrawalStatus } from '@/domain/economy/economy'
 import { inAppAdsSettings } from '@/domain/ads/in-app-ads'
@@ -19,13 +20,24 @@ import { useTelegramViewport } from '@/shell/telegram-viewport'
 import { inAppZoneId, useInAppAds } from '@/shell/use-in-app-ads'
 import { useRewardSession } from '@/shell/use-reward-session'
 
+/** Jendela throttle `revalidateOnFocus`, dan default SWR 5 detik bocor besar di Mini App: alur
+ * intinya menonton iklan, tiap tayangan mengembalikan fokus ke dokumen, dan tiap kembalinya itu
+ * menembakkan ulang SELURUH kunci SWR yang sedang terpasang sekaligus. Terbaca di Observability
+ * sebagai `/api/withdrawals` 18K melawan `/` 4,5K — satu endpoint tanpa polling dan tanpa pemanggil
+ * lain, ditembak empat kali per app dibuka. Yang dijaga di sini pengalinya, bukan `revalidateOnFocus`
+ * itu sendiri: jalur itu yang menangkap pembayaran premium saat user balik dari aplikasi banknya,
+ * dan pembayaran tidak pernah selesai di bawah semenit. */
+const FOCUS_THROTTLE_MS = 60_000
+
 export function AppShell() {
   return (
-    <MotionConfig reducedMotion="user">
-      <ToastProvider>
-        <AppShellInner />
-      </ToastProvider>
-    </MotionConfig>
+    <SWRConfig value={{ focusThrottleInterval: FOCUS_THROTTLE_MS }}>
+      <MotionConfig reducedMotion="user">
+        <ToastProvider>
+          <AppShellInner />
+        </ToastProvider>
+      </MotionConfig>
+    </SWRConfig>
   )
 }
 
@@ -181,7 +193,14 @@ function AppShellInner() {
             <ChannelGate
               gate={session.channelGate}
               onVerified={session.refreshSession}
-              onWithdraw={gateWithdrawReachable ? () => setGateWithdrawOpen(true) : null}
+              onWithdraw={
+                gateWithdrawReachable
+                  ? () => {
+                      session.primeWithdrawals()
+                      setGateWithdrawOpen(true)
+                    }
+                  : null
+              }
             />
             {/* Dialognya dirender di sini, bukan di dalam `ChannelGate`, supaya lapisan `features` tidak saling mengimpor — komposisi lintas fitur memang tugas `shell`. */}
             <WithdrawDialog

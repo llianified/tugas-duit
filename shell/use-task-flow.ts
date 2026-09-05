@@ -9,7 +9,6 @@ import type { AppView } from '@/navigation/app-view'
 import { ApiError, sendJson, userFacingMessage } from '@/shell/api-client'
 import type {
   HistoryResponse,
-  ReferralResponse,
   SessionResponse,
   StartTaskResponse,
   StatsResponse,
@@ -33,7 +32,6 @@ export function useTaskFlow({
   mutateTask,
   mutateHistory,
   mutateStats,
-  mutateReferral,
 }: {
   view: AppView
   task: Challenge | null
@@ -48,7 +46,6 @@ export function useTaskFlow({
   mutateTask: KeyedMutator<TaskResponse>
   mutateHistory: SWRInfiniteKeyedMutator<HistoryResponse[]>
   mutateStats: KeyedMutator<StatsResponse>
-  mutateReferral: KeyedMutator<ReferralResponse>
 }) {
   const [activeChallenge, setActiveChallenge] = useState<Challenge | null>(null)
   const [taskElapsedMs, setTaskElapsedMs] = useState(0)
@@ -166,20 +163,45 @@ export function useTaskFlow({
           stars: result.stars,
           reward: result.reward,
         }
-        await Promise.all([
-          mutateSession(),
-          mutateHistory(),
-          mutateStats(),
-          mutateReferral(),
-          mutateTask(),
-        ])
+        /** Dulu lima penyegaran mengekor tiap jawaban benar — sesi, riwayat, statistik, referral, dan
+         * soal berikutnya — tujuh permintaan per soal bersama `start` dan `submit` sendiri. Empat di
+         * antaranya menanyakan hal yang jawabannya sudah ikut pulang bersama respons submit, dan
+         * yang kelima menanyakan hal yang tidak berubah: komisi referral jatuh ke PENGUNDANG user
+         * ini, bukan ke dirinya, jadi panelnya tidak pernah bergerak karena ia menyelesaikan soal.
+         * Penyegaran hanya disisakan sebagai jalur mundur saat server gagal menitipkan datanya. */
+        void mutateSession(
+          (previous) =>
+            previous?.user
+              ? {
+                  ...previous,
+                  user: { ...previous.user, balance: result.balance },
+                  breakdown: previous.breakdown && {
+                    ...previous.breakdown,
+                    taskCredits: previous.breakdown.taskCredits + result.reward,
+                  },
+                  rewardPool: { ...result.pool, receivedAt: Date.now() },
+                }
+              : previous,
+          { revalidate: false },
+        )
+        void mutateHistory(
+          (pages) =>
+            pages && pages.length > 0
+              ? [{ ...pages[0], entries: [result.entry, ...pages[0].entries] }, ...pages.slice(1)]
+              : pages,
+          { revalidate: false },
+        )
+        const stats = result.stats
+        void (stats ? mutateStats({ stats }, { revalidate: false }) : mutateStats())
+        const challenge = result.challenge
+        void (challenge ? mutateTask({ challenge }, { revalidate: false }) : mutateTask())
         return outcome
       } finally {
         submittingRef.current = false
         setSubmitting(false)
       }
     },
-    [activeChallenge, mutateHistory, mutateReferral, mutateSession, mutateStats, mutateTask],
+    [activeChallenge, mutateHistory, mutateSession, mutateStats, mutateTask],
   )
 
   /** "Lanjut" di layar hasil membayar dengan energi, dan penjaganya dipakai ulang di sini bukan demi kerapian: user yang baru saja menyelesaikan task berbayar tiket justru sedang kehabisan energi, jadi tanpa pemeriksaan ini tombol utama layar kemenangan dijamin ditolak server lalu melempar mereka ke beranda dengan toast merah. Alasannya sekarang terbaca sebelum mereka pindah layar, dan tombol tiket di beranda tetap jalan keluarnya. */

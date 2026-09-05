@@ -4,6 +4,7 @@ import {
   type Challenge,
   type Difficulty,
   type DistributiveOmit,
+  withVariantDefaults,
 } from '@/domain/task/challenge'
 import { getStarReward, getStars, type StarCount } from '@/domain/progression/stars'
 import { economyConfig } from '@/domain/economy/economy-config'
@@ -35,7 +36,7 @@ type Row = {
 const hashAnswer = (id: string, answer: string) =>
   createHash('sha256').update(`${id}:${answer.trim().toUpperCase()}`).digest()
 const toPublic = (row: Row): PublicChallenge => ({
-  ...row.payload,
+  ...withVariantDefaults(row.payload),
   id: row.id,
   issuedAt: row.issued_at.getTime(),
   startedAt: row.started_at ? row.started_at.getTime() : null,
@@ -236,7 +237,7 @@ export async function submitAnswer(
       [id],
     )
     const elapsedMs = marked.rows[0].elapsed_ms
-    const stars = getStars(elapsedMs, c.difficulty),
+    const stars = getStars(elapsedMs, c.difficulty, withVariantDefaults(c.payload).parScale),
       reward = Math.min(getStarReward(c.difficulty, stars), c.max_reward)
     const quota = await consumeQuota(tx, userId, reward)
     if (quota.refusal) {

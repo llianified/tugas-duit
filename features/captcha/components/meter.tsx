@@ -9,16 +9,19 @@ import { getLiveStarState } from '@/domain/progression/stars'
 
 export function CaptchaMeter({
   difficulty,
+  parScale = 1,
   elapsedMs,
   rewardPoolCredits,
   onRewardChange,
 }: {
   difficulty: Difficulty
+  /** Pengali par time varian soal ini; meter harus memakai jendela yang sama dengan yang dipakai server menilai. */
+  parScale?: number
   elapsedMs: number
   rewardPoolCredits: number | null
   onRewardChange: (reward: number) => void
 }) {
-  const { stars, reward, remainingRatio } = getLiveStarState(elapsedMs, difficulty)
+  const { stars, reward, remainingRatio } = getLiveStarState(elapsedMs, difficulty, parScale)
   const payable =
     rewardPoolCredits === null ? reward : Math.max(0, Math.min(reward, rewardPoolCredits))
   const capped = payable < reward

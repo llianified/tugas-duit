@@ -4,6 +4,15 @@ import { mathCeiling, mathDigits, selectOptionCount, textLength } from '@/domain
 
 type CaptchaType = 'text' | 'math' | 'select'
 
+/** Aturan main di dalam satu tipe soal. Ditambahkan karena isinya yang habis, bukan ekonominya:
+ * tiga tipe kali tiga kesulitan cuma sembilan bentuk, dan user yang bertahan sampai hari ke-14
+ * sudah mengerjakan seratusan task — tiap bentuk belasan kali. Varian menumpang tipe yang sudah
+ * ada supaya `captcha_type` di database tidak perlu ikut berubah untuk menambah isi. */
+export type TextVariant = 'copy' | 'reverse' | 'letters'
+export type MathVariant = 'result' | 'missing'
+export type SelectVariant = 'shape' | 'duplicate' | 'odd'
+export type ChallengeVariant = TextVariant | MathVariant | SelectVariant
+
 export type Difficulty = 'Easy' | 'Medium' | 'Hard'
 
 export type ShapeKey =
@@ -28,6 +37,11 @@ interface ChallengeBase {
   difficulty: Difficulty
   maxReward: number
   instruction: string
+  variant: ChallengeVariant
+  /** Pengali par time varian ini. Varian yang lebih lambat dikerjakan mendapat jendela bintang
+   * yang lebih panjang, supaya menambah isi tidak diam-diam menurunkan laju bintang — dan dengan
+   * begitu reward — untuk pekerjaan yang sama beratnya. Satu berarti secepat varian aslinya. */
+  parScale: number
   issuedAt: number
   startedAt: number | null
   expiresAt: number
@@ -38,6 +52,10 @@ export type Challenge = ChallengeBase &
     | {
         type: 'text'
         display: string
+        /** Panjang jawaban, yang tidak selalu sama dengan panjang `display`: varian `letters`
+         * membuang angkanya. Dikirim eksplisit supaya jumlah kotak jawaban tidak perlu ditebak
+         * dari tampilannya. */
+        answerLength: number
       }
     | {
         type: 'math'
@@ -50,7 +68,7 @@ export type Challenge = ChallengeBase &
       }
   )
 
-type GeneratedByFactory = 'id' | 'title' | 'difficulty' | 'maxReward' | 'type'
+type GeneratedByFactory = 'id' | 'difficulty' | 'maxReward' | 'type'
 
 export type DistributiveOmit<T, K extends keyof never> = T extends unknown ? Omit<T, K> : never
 
@@ -102,6 +120,8 @@ const CAPTCHA_TYPES: CaptchaType[] = ['text', 'math', 'select']
 const DIFFICULTIES: Difficulty[] = ['Easy', 'Medium', 'Hard']
 
 export const TEXT_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+const TEXT_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+const TEXT_DIGITS = '23456789'
 
 const SELECT_ITEMS: { label: string; key: ShapeKey }[] = [
   { label: 'Lingkaran', key: 'circle' },
@@ -147,54 +167,107 @@ function shuffle<T>(items: readonly T[]): T[] {
   return result
 }
 
-function createTextChallenge(difficulty: Difficulty): DraftFor<'text'> {
+/** Tiap varian memilih sendiri judul, instruksi, dan pengali par time-nya. Par time bukan selera:
+ * angkanya diturunkan dari berapa lama varian itu benar-benar dikerjakan dibanding varian asalnya,
+ * dan dari headroom yang sudah ada di produksi — median pengerjaan Mudah 6,9 detik pada par 9 detik,
+ * Sedang 8,6 pada 15, Sulit 11,6 pada 23. Yang paling sempit Mudah, jadi varian yang lebih berat
+ * di situ butuh pengali yang lebih besar, bukan lebih kecil. */
+
+function createTextChallenge(difficulty: Difficulty, variant: TextVariant): DraftFor<'text'> {
   const length = textLength(difficulty)
-  let value = ''
-  for (let i = 0; i < length; i++) value += TEXT_CHARS[randomInt(TEXT_CHARS.length)]
+  const pick = (pool: string) => pool[randomInt(pool.length)]
+
+  if (variant === 'letters') {
+    /** Dijamin ada huruf dan ada angka: tanpa angka soalnya berubah jadi `copy` biasa, dan tanpa
+     * huruf tidak ada yang bisa diketik sama sekali. */
+    const digits = randomBetween(1, Math.max(1, Math.floor(length / 2)))
+    const chars = [
+      ...Array.from({ length: length - digits }, () => pick(TEXT_LETTERS)),
+      ...Array.from({ length: digits }, () => pick(TEXT_DIGITS)),
+    ]
+    const display = shuffle(chars).join('')
+    const answer = display.replace(/[^A-Z]/g, '')
+    return {
+      title: 'Saring Huruf',
+      variant,
+      parScale: 1.6,
+      instruction: 'Ketik hurufnya saja, lewati angkanya.',
+      display,
+      answerLength: answer.length,
+      answer,
+    }
+  }
+
+  let display = ''
+  for (let i = 0; i < length; i++) display += TEXT_CHARS[randomInt(TEXT_CHARS.length)]
+
+  if (variant === 'reverse') {
+    const answer = [...display].reverse().join('')
+    return {
+      title: 'Ketik Terbalik',
+      variant,
+      parScale: 1.7,
+      instruction: 'Ketik karakter di bawah ini dari belakang ke depan.',
+      display,
+      answerLength: answer.length,
+      answer,
+    }
+  }
 
   return {
+    title: CHALLENGE_TITLE.text,
+    variant,
+    parScale: 1,
     instruction: 'Ketik ulang karakter di bawah ini.',
-    display: value,
-    answer: value.toUpperCase(),
+    display,
+    answerLength: display.length,
+    answer: display.toUpperCase(),
   }
 }
 
-function createMathChallenge(difficulty: Difficulty): DraftFor<'math'> {
+function createMathChallenge(difficulty: Difficulty, variant: MathVariant): DraftFor<'math'> {
   const digits = mathDigits(difficulty)
   const minResult = 10 ** (digits - 1)
   const maxResult = Math.min(10 ** digits - 1, mathCeiling(difficulty))
 
+  if (variant === 'missing') {
+    /** Hanya tambah dan kurang: operan yang hilang pada perkalian menuntut pembagian, dan itu
+     * lompatan kesulitan yang jauh lebih besar daripada yang dimaksud varian ini.
+     *
+     * Yang dijaga jumlah digitnya adalah ANGKA YANG HILANG, bukan hasil penjumlahannya — di varian
+     * ini jawabannyalah yang diketik user, jadi `mathDigits` harus mengikat di situ supaya arti
+     * field itu di panel tetap sama untuk semua varian. */
+    const missing = randomBetween(minResult, maxResult)
+    const known = randomBetween(1, maxResult)
+    const sum = known + missing
+    return {
+      title: 'Angka Hilang',
+      variant,
+      parScale: 1.4,
+      instruction: 'Cari angka yang hilang.',
+      expression: randomInt(2) === 0 ? `${known} + ? = ${sum}` : `${sum} - ? = ${known}`,
+      answerLength: digits,
+      answer: String(missing),
+    }
+  }
+
   const operator = pickOne(difficulty === 'Hard' ? ['+', '-', '×'] : ['+', '-'])
+  const base = { title: CHALLENGE_TITLE.math, variant, parScale: 1, instruction: 'Hitung dan masukkan hasilnya.' } as const
 
   if (operator === '×') {
     const [x, y] = pickFactorPair(minResult, maxResult)
-    return {
-      instruction: 'Hitung dan masukkan hasilnya.',
-      expression: `${x} × ${y}`,
-      answer: String(x * y),
-      answerLength: digits,
-    }
+    return { ...base, expression: `${x} × ${y}`, answer: String(x * y), answerLength: digits }
   }
 
   if (operator === '+') {
     const result = randomBetween(minResult, maxResult)
     const a = randomBetween(1, result - 1)
-    return {
-      instruction: 'Hitung dan masukkan hasilnya.',
-      expression: `${a} + ${result - a}`,
-      answer: String(result),
-      answerLength: digits,
-    }
+    return { ...base, expression: `${a} + ${result - a}`, answer: String(result), answerLength: digits }
   }
 
   const result = randomBetween(minResult, Math.max(minResult, maxResult - 1))
   const low = randomBetween(1, maxResult - result)
-  return {
-    instruction: 'Hitung dan masukkan hasilnya.',
-    expression: `${result + low} - ${low}`,
-    answer: String(result),
-    answerLength: digits,
-  }
+  return { ...base, expression: `${result + low} - ${low}`, answer: String(result), answerLength: digits }
 }
 
 function pickFactorPair(min: number, max: number): [number, number] {
@@ -209,13 +282,50 @@ function pickFactorPair(min: number, max: number): [number, number] {
   return pairs[randomInt(pairs.length)]
 }
 
-function createSelectChallenge(difficulty: Difficulty): DraftFor<'select'> {
-  const pool = shuffle(SELECT_ITEMS).slice(0, selectOptionCount(difficulty))
-  const target = pickOne(pool)
+function createSelectChallenge(difficulty: Difficulty, variant: SelectVariant): DraftFor<'select'> {
+  const count = selectOptionCount(difficulty)
+  const pool = shuffle(SELECT_ITEMS)
+  const asOptions = (items: typeof SELECT_ITEMS) =>
+    items.map((item) => ({ key: item.key, label: item.label }))
 
+  /** Dua varian di bawah butuh minimal tiga petak untuk punya arti: pada dua petak, "beda sendiri"
+   * berlaku untuk keduanya dan "muncul dua kali" berlaku untuk semuanya. `selectOptions*` boleh
+   * disetel serendah 2 dari panel, jadi keadaan itu harus punya jawaban — dan jawabannya kembali
+   * ke varian aslinya, bukan soal yang tidak bisa dijawab. */
+  const playable = count >= 3 ? variant : 'shape'
+
+  if (playable === 'odd') {
+    const [odd, common] = pool
+    return {
+      title: 'Beda Sendiri',
+      variant: playable,
+      parScale: 1.3,
+      instruction: 'Pilih objek yang bentuknya beda sendiri.',
+      options: asOptions(shuffle([odd, ...Array.from({ length: count - 1 }, () => common)])),
+      answer: odd.key,
+    }
+  }
+
+  if (playable === 'duplicate') {
+    const [twin, ...rest] = pool.slice(0, count - 1)
+    return {
+      title: 'Cari Kembaran',
+      variant: playable,
+      parScale: 1.5,
+      instruction: 'Pilih bentuk yang muncul dua kali.',
+      options: asOptions(shuffle([twin, twin, ...rest])),
+      answer: twin.key,
+    }
+  }
+
+  const options = pool.slice(0, count)
+  const target = pickOne(options)
   return {
+    title: CHALLENGE_TITLE.select,
+    variant: playable,
+    parScale: 1,
     instruction: `Pilih objek berbentuk ${target.label.toLowerCase()}.`,
-    options: pool.map((item) => ({ key: item.key, label: item.label })),
+    options: asOptions(options),
     answer: target.key,
   }
 }
@@ -226,30 +336,62 @@ function createChallengeId() {
   return `ch_${Date.now().toString(36)}_${counter}`
 }
 
-function createChallengeMeta(type: CaptchaType, difficulty: Difficulty) {
-  return {
-    id: createChallengeId(),
-    title: CHALLENGE_TITLE[type],
-    difficulty,
-    maxReward: getMaxReward(difficulty),
-  }
-}
+/** Varian yang tersedia per tipe. Diundi seragam seperti tipe dan kesulitannya, jadi menambah satu
+ * varian di sini langsung menambah bentuk yang mungkin muncul tanpa menyentuh apa pun yang lain. */
+export const TEXT_VARIANTS: readonly TextVariant[] = ['copy', 'reverse', 'letters']
+export const MATH_VARIANTS: readonly MathVariant[] = ['result', 'missing']
+export const SELECT_VARIANTS: readonly SelectVariant[] = ['shape', 'duplicate', 'odd']
 
 export function generateChallenge(opts?: {
   type?: CaptchaType
   difficulty?: Difficulty
+  variant?: ChallengeVariant
 }): GeneratedChallenge {
   const type = opts?.type ?? pickOne(CAPTCHA_TYPES)
   const difficulty = opts?.difficulty ?? pickOne(DIFFICULTIES)
-  const meta = createChallengeMeta(type, difficulty)
+  const meta = {
+    id: createChallengeId(),
+    difficulty,
+    maxReward: getMaxReward(difficulty),
+  }
 
   switch (type) {
     case 'text':
-      return { ...meta, type, ...createTextChallenge(difficulty) }
+      return {
+        ...meta,
+        type,
+        ...createTextChallenge(difficulty, (opts?.variant as TextVariant) ?? pickOne(TEXT_VARIANTS)),
+      }
     case 'math':
-      return { ...meta, type, ...createMathChallenge(difficulty) }
+      return {
+        ...meta,
+        type,
+        ...createMathChallenge(difficulty, (opts?.variant as MathVariant) ?? pickOne(MATH_VARIANTS)),
+      }
     case 'select':
-      return { ...meta, type, ...createSelectChallenge(difficulty) }
+      return {
+        ...meta,
+        type,
+        ...createSelectChallenge(
+          difficulty,
+          (opts?.variant as SelectVariant) ?? pickOne(SELECT_VARIANTS),
+        ),
+      }
   }
+}
+
+/** Payload lama tidak punya `variant`, `parScale`, maupun `answerLength` — baris `challenges` yang
+ * sudah tersimpan sebelum varian ada tetap harus bisa dikerjakan sampai selesai. Nilai bawaannya
+ * dipilih supaya baris lama berperilaku persis seperti dulu. */
+export function withVariantDefaults<T extends { type: CaptchaType }>(payload: T): T {
+  const base = payload as T & Record<string, unknown>
+  const filled: Record<string, unknown> = {
+    variant: base.variant ?? (base.type === 'math' ? 'result' : base.type === 'text' ? 'copy' : 'shape'),
+    parScale: typeof base.parScale === 'number' ? base.parScale : 1,
+  }
+  if (base.type === 'text' && typeof base.answerLength !== 'number') {
+    filled.answerLength = String(base.display ?? '').length
+  }
+  return { ...base, ...filled } as T
 }
 

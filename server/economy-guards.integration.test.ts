@@ -190,7 +190,17 @@ describe('ECON-5 — reward tidak pernah melewati plafon yang dijanjikan saat so
       rewardHard1: 40, rewardHard2: 45, rewardHard3: 50,
     })
 
-    const hasil = await submitAnswer(userId, challenge.id, challenge.display)
+    /** Jawabannya diturunkan dari varian, bukan diasumsikan sama dengan yang tampil: sejak varian
+     * ada, soal Ketik Ulang bisa berupa `copy`, `reverse`, atau `letters`. Menunggu varian tertentu
+     * lewat pengulangan akan membuat test ini sesekali gagal tanpa ada yang rusak. */
+    const jawaban =
+      challenge.variant === 'reverse'
+        ? [...challenge.display].reverse().join('')
+        : challenge.variant === 'letters'
+          ? challenge.display.replace(/[^A-Z]/g, '')
+          : challenge.display
+
+    const hasil = await submitAnswer(userId, challenge.id, jawaban)
     expect(hasil).toMatchObject({ ok: true, reward: Number(dijanjikan) })
   })
 })

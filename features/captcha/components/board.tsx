@@ -124,11 +124,11 @@ export function ChallengeSelect({
       aria-invalid={status === 'error'}
       className={`grid min-h-0 flex-1 gap-2 [grid-auto-rows:minmax(4rem,1fr)] ${columns}`}
     >
-      {options.map((option) => {
+      {options.map((option, index) => {
         const isSelected = selected === option.key
         return (
           <button
-            key={option.key}
+            key={`${option.key}-${index}`}
             type="button"
             role="radio"
             onClick={() => {

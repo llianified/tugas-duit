@@ -65,7 +65,7 @@ export function CaptchaView({
 
   const answerLength =
     challenge.type === 'text'
-      ? challenge.display.length
+      ? challenge.answerLength
       : challenge.type === 'math'
         ? challenge.answerLength
         : null
@@ -102,15 +102,27 @@ export function CaptchaView({
 
       <CaptchaMeter
         difficulty={challenge.difficulty}
+        parScale={challenge.parScale}
         elapsedMs={attempt.liveElapsedMs}
         rewardPoolCredits={rewardPoolCredits}
         onRewardChange={onRewardChange}
       />
 
       <div className="flex min-h-0 flex-1 flex-col justify-center gap-3">
-        {challenge.type === 'text' && <ChallengeText display={challenge.display} />}
-        {challenge.type === 'math' && <ChallengeMath expression={challenge.expression} />}
-        {challenge.type === 'select' && <ChallengeSelectBoard instruction={challenge.instruction} />}
+        {challenge.type === 'select' ? (
+          <ChallengeSelectBoard instruction={challenge.instruction} />
+        ) : (
+          <>
+            <p className="text-center text-sm text-muted-foreground text-pretty">
+              {challenge.instruction}
+            </p>
+            {challenge.type === 'text' ? (
+              <ChallengeText display={challenge.display} />
+            ) : (
+              <ChallengeMath expression={challenge.expression} />
+            )}
+          </>
+        )}
 
         {challenge.type === 'select' ? (
           <ChallengeSelect
@@ -123,7 +135,7 @@ export function CaptchaView({
         ) : (
           <CaptchaAnswerSlots
             value={attempt.textAnswer}
-            length={challenge.type === 'text' ? challenge.display.length : challenge.answerLength}
+            length={challenge.answerLength}
             validationType={challenge.type === 'text' ? 'alphanumeric' : 'numeric'}
             uppercase={challenge.type === 'text'}
             hasError={attempt.status === 'error'}

@@ -1,4 +1,5 @@
 'use client'
+import { SheetIcon } from '@/shared/components/sheet-icon'
 
 import { useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
@@ -93,9 +94,9 @@ function WithdrawDialogBody({
       <div className="sheet-grip" aria-hidden="true" />
 
       <div className="flex shrink-0 items-center gap-2 px-content pt-3">
-        <span className="stamp-channel stamp-portrait">
-          <GlyphWithdraw className="stamp-ink-fg size-4" />
-        </span>
+        <SheetIcon>
+          <GlyphWithdraw className="size-4" />
+        </SheetIcon>
         <div className="min-w-0 flex-1">
           <Dialog.Title className="truncate text-sm font-semibold tracking-tight text-foreground">
             {receipt ? 'Penarikan diajukan' : 'Tarik dana'}

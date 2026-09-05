@@ -1,10 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import { arcadeEnabled } from '@/domain/arcade/arcade'
 import type { EconomyConfig } from '@/domain/economy/economy-config'
+import { storeEnabled } from '@/domain/store/store'
 import { ArcadeCard } from '@/features/arcade/arcade-card'
 import { TurboRewardCard } from '@/features/home/turbo-reward-card'
 import { MissionCard } from '@/features/missions/mission-card'
+import { StoreCard } from '@/features/store/store-card'
+import { StoreSheet } from '@/features/store/store-sheet'
 import { PageHeader } from '@/shared/components/page-header'
 import { VIEW_TITLE } from '@/navigation/app-view'
 
@@ -30,8 +34,12 @@ export function MissionsView({
   onOpenArcade: () => void
   referralShareUrl: string
 }) {
+  const [storeOpen, setStoreOpen] = useState(false)
   const turboReachable = economy.turboRewardEnabled === 1
   const arenaReachable = arcadeEnabled()
+  /** Lembarnya sendiri yang membaca isi rak; ini cuma memutuskan kartunya dirender atau tidak,
+   * supaya pintu masuk ikut hilang saat toko ditutup dari panel. */
+  const storeReachable = storeEnabled()
 
   return (
     <div className="view-min-h flex flex-col">
@@ -53,7 +61,7 @@ export function MissionsView({
         />
       </div>
 
-      {turboReachable || arenaReachable ? (
+      {turboReachable || arenaReachable || storeReachable ? (
         <section aria-label="Pilihan hadiah lainnya" className="region-t flex flex-col gap-3">
           {turboReachable ? (
             <TurboRewardCard
@@ -68,10 +76,18 @@ export function MissionsView({
           {arenaReachable ? (
             <ArcadeCard poolEmpty={rewardPoolCredits === 0} onOpen={onOpenArcade} />
           ) : null}
+
+          {storeReachable ? (
+            <StoreCard poolEmpty={rewardPoolCredits === 0} onOpen={() => setStoreOpen(true)} />
+          ) : null}
         </section>
       ) : null}
 
       <div className="flex-1" />
+
+      {storeReachable ? (
+        <StoreSheet open={storeOpen} onOpenChange={setStoreOpen} onBought={onClaimed} />
+      ) : null}
     </div>
   )
 }

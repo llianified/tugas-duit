@@ -57,6 +57,8 @@ const HISTORIC: EconomyConfig = {
   arcadeEnabled: 1, arcadeAdGated: 1, arcadeMaxPlaysPerDay: 3, arcadeCooldownSeconds: 300,
   arcadeMatchSeconds: 30, arcadePoolPrizeCredits: 5, arcadePoolPrizeWeight: 1,
   arcadeEnergyPrizeAmount: 1, arcadeEnergyPrizeWeight: 2, arcadeBlankWeight: 1,
+  storeEnabled: 1, storeEnergyPriceCredits: 10,
+  storeEnergyAmount: 3, storePremiumMonthPriceCredits: 250,
 }
 
 const withField = (patch: Partial<EconomyConfig>) => ({ ...DEFAULT_ECONOMY_CONFIG, ...patch })

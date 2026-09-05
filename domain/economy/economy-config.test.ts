@@ -34,7 +34,7 @@ const HISTORIC: EconomyConfig = {
   // Dulu konstanta kode: REQUIRED_ACTIVE_DAYS di payout-rules.ts dan | WITHDRAWAL_COOLDOWN_DAYS di domain/premium.ts. Angkanya sama persis, jadi | memindahkannya ke panel tidak menggeser satu pun gerbang yang berjalan.
   withdrawalMinActiveDays: 7, withdrawalCooldownDays: 7,
   // Dulu LEADERBOARD_ENABLED = true di features/leaderboard/availability.ts.
-  leaderboardEnabled: 1,
+  leaderboardEnabled: 1, leaderboardSeasonDays: 7,
   // Dulu MISSIONS di domain/missions.ts.
   missionTasksTarget: 5, missionTasksReward: 2,
   missionStarsTarget: 3, missionStarsReward: 2,

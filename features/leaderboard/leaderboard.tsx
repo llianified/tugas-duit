@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   DataList,
   DataListAmount,
@@ -31,7 +31,7 @@ import { SectionLabel } from '@/shared/components/section-label'
 import { VIEW_TITLE } from '@/navigation/app-view'
 import { getRank } from '@/domain/progression/progression'
 import { prestigeBadges, type PrestigeKey } from '@/domain/progression/prestige'
-import { formatCredits } from '@/shared/lib/format'
+import { formatCredits, formatLongCountdown } from '@/shared/lib/format'
 import type { LeaderboardBoard, LeaderboardEntry } from '@/domain/progression/leaderboard'
 
 type BoardSurface = 'papan' | 'aktivitas'
@@ -50,7 +50,7 @@ export function LeaderboardView({
   board: LeaderboardBoard
   activity: ActivityEntry[] | null
 }) {
-  const { entries, you, participants, premiumMembers } = board
+  const { entries, you, participants, premiumMembers, seasonEndsAt } = board
   const [surface, setSurface] = useState<BoardSurface>('papan')
 
   return (
@@ -86,6 +86,8 @@ export function LeaderboardView({
             />
           ) : (
             <>
+              <SeasonBanner endsAt={seasonEndsAt} />
+
               <PodiumRail entries={entries} />
 
               <YourPosition you={you} participants={participants} />
@@ -508,5 +510,31 @@ function BoardListItem({
       meta={`${rank.name} · ${formatCredits(entry.taskCount)} soal`}
       amount={<DataListAmount value={formatCredits(entry.credits)} tone="neutral" />}
     />
+  )
+}
+
+/** Sisa musim, bukan tanggal berakhirnya: yang membuat papan jadi alasan untuk kembali adalah
+ * batas waktu yang terasa dekat, dan tanggal mentah tidak pernah terbaca begitu. Barisnya hilang
+ * saat papan disetel sepanjang masa (`leaderboardSeasonDays` nol), karena di situ tidak ada apa pun
+ * yang sedang dihitung mundur. */
+function SeasonBanner({ endsAt }: { endsAt: number | null }) {
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (endsAt === null) return
+    const timer = setInterval(() => setNow(Date.now()), 60_000)
+    return () => clearInterval(timer)
+  }, [endsAt])
+
+  if (endsAt === null) return null
+  const secondsLeft = Math.max(0, Math.ceil((endsAt - now) / 1000))
+
+  return (
+    <p className="flex items-baseline justify-between gap-3 rounded-lg bg-muted px-3 py-2">
+      <span className="text-xs font-medium text-foreground">Musim ini</span>
+      <span className="text-xs font-medium tabular-nums text-muted-foreground">
+        {secondsLeft === 0 ? 'Berakhir, papan sedang direset' : `Sisa ${formatLongCountdown(secondsLeft)}`}
+      </span>
+    </p>
   )
 }

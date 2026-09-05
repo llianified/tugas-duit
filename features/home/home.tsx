@@ -11,6 +11,7 @@ import { PremiumSheet } from '@/features/premium/components/premium-sheet'
 import { CardCarousel } from '@/shared/components/card-carousel'
 import type { EconomyConfig } from '@/domain/economy/economy-config'
 import type { Challenge, HistoryEntry } from '@/domain/task/challenge'
+import { arcadeEnabled } from '@/domain/arcade/arcade'
 import type { EnergyFill } from '@/domain/economy/energy'
 import type { ChannelBonusState, PremiumState } from '@/shell/session-api'
 import { cn } from '@/shared/lib/utils'
@@ -46,6 +47,7 @@ interface HomeViewProps {
   onSubmitWithdrawal: (input: WithdrawalSubmitInput) => Promise<Withdrawal | null>
   onOpenHistory: () => void
   onOpenMissions: () => void
+  onOpenArcade: () => void
   premium: PremiumState | null
   channelBonus: ChannelBonusState | null
   onRefreshSession: () => Promise<unknown>
@@ -77,6 +79,7 @@ export function HomeView({
   onSubmitWithdrawal,
   onOpenHistory,
   onOpenMissions,
+  onOpenArcade,
   premium,
   channelBonus,
   onRefreshSession,
@@ -137,6 +140,7 @@ export function HomeView({
             onStart={onStart}
             onStartWithAd={onStartWithAd}
             onOpenMissions={onOpenMissions}
+            onOpenArcade={arcadeEnabled() ? onOpenArcade : null}
             onOpenPremium={premiumReachable ? () => setPremiumOpen(true) : null}
           />
         </div>

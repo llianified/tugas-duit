@@ -4,7 +4,14 @@ import type { ReactNode } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import { EnergyPips } from '@/features/home/energy-pips'
 import { ActionButton } from '@/shared/components/action-button'
-import { GlyphChevron, GlyphCross, GlyphCrown, GlyphPlay, GlyphTrophy } from '@/shared/components/glyph'
+import {
+  GlyphChevron,
+  GlyphCross,
+  GlyphCrown,
+  GlyphDice,
+  GlyphPlay,
+  GlyphTrophy,
+} from '@/shared/components/glyph'
 import { EYEBROW_CLASS } from '@/shared/components/section-label'
 import { Surface } from '@/shared/components/surface'
 import type { EnergyFill } from '@/domain/economy/energy'
@@ -26,6 +33,7 @@ export function EnergyRecoverySheet({
   watchingAd,
   onWatchAd,
   onOpenMissions,
+  onOpenArcade,
   onOpenPremium,
 }: {
   open: boolean
@@ -41,6 +49,8 @@ export function EnergyRecoverySheet({
   watchingAd: boolean
   onWatchAd: () => void
   onOpenMissions: () => void
+  /** `null` kalau Arena sedang ditutup dari panel. */
+  onOpenArcade: (() => void) | null
   onOpenPremium: (() => void) | null
 }) {
   const close = () => onOpenChange(false)
@@ -120,6 +130,18 @@ export function EnergyRecoverySheet({
                   onOpenMissions()
                 }}
               />
+
+              {onOpenArcade ? (
+                <RecoveryOption
+                  icon={<GlyphDice className="size-4 text-primary" />}
+                  label="Main Arena"
+                  note="Menang bisa dapat energi atau isi stok reward"
+                  onClick={() => {
+                    close()
+                    onOpenArcade()
+                  }}
+                />
+              ) : null}
 
               {onOpenPremium ? (
                 <RecoveryOption

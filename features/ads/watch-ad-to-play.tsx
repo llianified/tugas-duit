@@ -16,6 +16,7 @@ export function WatchAdToPlay({
   entryOpen,
   watching,
   poolEmpty,
+  urgent = false,
   onWatch,
 }: {
   enabled: boolean
@@ -29,6 +30,14 @@ export function WatchAdToPlay({
   entryOpen: boolean
   watching: boolean
   poolEmpty: boolean
+  /** Energi habis, jadi tiket iklan bukan lagi cara kedua — ia satu-satunya cara main sekarang.
+   *
+   * Ada karena angkanya jelas: 75% user aktif tidak pernah menonton satu iklan pun, sementara
+   * plafon hariannya menganggur hampir utuh. Penyebabnya terbaca di layar — saat energi habis,
+   * tombol energi berubah jadi hitung mundur dan tombol ini tetap `neutral`, jadi satu-satunya
+   * hal yang menonjol adalah waktu tunggu. User membaca "nanti", lalu menutup app. Yang digeser
+   * cuma penonjolannya, bukan aturannya: server tetap menuntut `payWith` yang eksplisit. */
+  urgent?: boolean
   onWatch: () => void
 }) {
   if (!enabled || poolEmpty) return null
@@ -48,8 +57,8 @@ export function WatchAdToPlay({
     return (
       <TapAction
         compact
-        tone="neutral"
-        icon={<GlyphPlay className="size-4 text-muted-foreground" />}
+        tone={urgent ? 'primary' : 'neutral'}
+        icon={<GlyphPlay className={urgent ? 'size-4' : 'size-4 text-muted-foreground'} />}
         label="Pakai tiket"
         meta={passSecondsLeft === null ? undefined : formatCountdown(passSecondsLeft)}
         aria-label={
@@ -101,10 +110,12 @@ export function WatchAdToPlay({
   return (
     <TapAction
       compact
-      tone="neutral"
+      tone={urgent ? 'primary' : 'neutral'}
       label="Tonton iklan"
-      /** Pecahan ringkas menyisakan ruang untuk label aksi tetap utuh sekaligus menunjukkan sisa dan total jatah. */
-      meta={`${formatCredits(viewsLeft)}/${formatCredits(maxViews)}`}
+      /** Sisa jatah adalah angka yang berarti selama masih ada cara lain untuk main. Begitu energi
+       * habis ia berhenti menjawab pertanyaan yang sedang dipikirkan user — bukan "berapa jatahku"
+       * melainkan "kalau kutonton, aku dapat apa". Pecahannya kembali saat energinya ada. */
+      meta={urgent ? '1 soal' : `${formatCredits(viewsLeft)}/${formatCredits(maxViews)}`}
       aria-label={`Tonton iklan buat mulai soal tanpa energi, sisa ${formatCredits(viewsLeft)} kali hari ini`}
       onClick={() => {
         hapticTap()

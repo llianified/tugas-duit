@@ -849,6 +849,14 @@
     margin-inline: calc(var(--content-px) * -1);
     padding-inline: var(--content-px);
   }
+  /* Padanan `.bleed-x` untuk isi KARTU, bukan isi halaman. Garis pemisah di app ini harus menyentuh
+     kedua tepi bidangnya — garis yang berhenti sebelum tepi terbaca sebagai coretan, bukan sebagai
+     pemisah. `.bleed-x` menegasikan gutter halaman (`--content-px`); di dalam `.task-card` dan
+     `Surface` yang paddingnya `--surface-p`, angka itu salah dan garisnya tetap putus. */
+  .bleed-surface {
+    margin-inline: calc(var(--surface-p) * -1);
+    padding-inline: var(--surface-p);
+  }
   .region-t {
     margin-inline: calc(var(--content-px) * -1);
     padding-inline: var(--content-px);

@@ -27,7 +27,19 @@ export function activeDayWindow(series: readonly EarningsPoint[]): boolean[] {
  * visual yang sama dengan "Gabung 15 Agu 2026" — mekanik retensi terkuat aplikasi ini disajikan
  * sebagai trivia. Angka saja juga tidak cukup: 14 tidak menunjukkan apa pun yang bisa PUTUS.
  * Tujuh kotak menunjukkannya, dan kotak terakhir yang masih kosong adalah satu-satunya bentuk di
- * halaman ini yang membuat orang ingin membuka soal hari itu juga. */
+ * halaman ini yang membuat orang ingin membuka soal hari itu juga.
+ *
+ * Kotaknya sebaris dengan angkanya, bukan dengan seluruh blok teks, dan alasnya duduk tepat di
+ * kaki "14 hari" — terukur nol piksel, bukan dikira-kira. Tiga hal yang membuatnya begitu, dan
+ * ketiganya harus ada bersama: barisnya `items-baseline`, wadah kotaknya memakai ukuran huruf yang
+ * SAMA dengan angkanya (`text-2xl`) supaya strut kedua item menghasilkan baseline di tempat yang
+ * sama, dan kotaknya `inline-block` kosong sehingga tepi bawahnya sendiri yang jadi baseline.
+ * Mengubah salah satunya — misalnya menambah `leading-none` pada wadahnya — menggeser strut itu
+ * dan kotaknya melayang di atas kaki huruf.
+ *
+ * Tidak ada baris keterangan di bawahnya. Keadaan "hari ini belum" sudah dinyatakan cincin di
+ * kotak terakhir, dan kalimat yang mengulang apa yang sudah terlihat cuma menambah tinggi.
+ * Untuk yang tidak melihat bentuknya, kalimat itu tetap ada — di `aria-label` blok ini. */
 export function StreakStrip({
   streak,
   series,
@@ -37,25 +49,27 @@ export function StreakStrip({
 }) {
   const days = activeDayWindow(series)
   const todayDone = days.at(-1) ?? false
+  const label = `Streak ${formatCredits(streak)} hari. ${
+    todayDone ? 'Hari ini sudah terkunci.' : 'Hari ini belum ada task.'
+  }`
 
   return (
-    <section aria-label="Streak" className="stat-tile">
-      <div className="flex items-end justify-between gap-3">
-        <div className="min-w-0">
-          <p className={EYEBROW_CLASS}>Streak</p>
-          <p className="mt-0.5 text-2xl font-bold tracking-tight tabular-nums text-foreground">
-            {formatCredits(streak)} hari
-          </p>
-        </div>
+    <section aria-label={label} className="stat-tile">
+      <p className={EYEBROW_CLASS}>Streak</p>
 
-        {/* Kotaknya `aria-hidden`: pembaca layar sudah menerima kalimat lengkap di bawah, dan
-            tujuh kotak tanpa nama cuma jadi tujuh pengumuman kosong. */}
-        <div aria-hidden="true" className="flex shrink-0 items-center gap-1">
+      <div className="mt-0.5 flex items-baseline justify-between gap-3">
+        <p className="text-2xl font-bold tracking-tight tabular-nums text-foreground">
+          {formatCredits(streak)} hari
+        </p>
+
+        {/* `aria-hidden`: kalimat lengkapnya sudah dibawa `aria-label` section ini, dan tujuh kotak
+            tanpa nama cuma jadi tujuh pengumuman kosong. */}
+        <div aria-hidden="true" className="shrink-0 space-x-1 text-2xl whitespace-nowrap">
           {days.map((active, index) => (
             <span
               key={index}
               className={cn(
-                'size-3.5 rounded-[4px]',
+                'inline-block size-3.5 rounded-[4px]',
                 active ? 'bg-primary' : 'bg-border',
                 /* Hari ini diberi cincin, bukan warna lain: warna ketiga menuntut arti ketiga,
                    sementara yang perlu dinyatakan cuma "kotak ini yang masih bisa kamu isi". */
@@ -65,12 +79,6 @@ export function StreakStrip({
           ))}
         </div>
       </div>
-
-      <p className="stack-gap-t text-[13px] leading-relaxed text-muted-foreground">
-        {todayDone
-          ? 'Tujuh hari terakhir. Hari ini udah kekunci.'
-          : 'Tujuh hari terakhir. Kerjain 1 soal hari ini biar nggak putus.'}
-      </p>
     </section>
   )
 }

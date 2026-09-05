@@ -92,6 +92,8 @@ export interface EconomyConfig {
   premiumPoolCapBonus: number
   premiumMaxTasksPerDay: number
   premiumWithdrawalCooldownDays: number
+  premiumReferralCommissionPercent: number
+  premiumDailyCommissionCapIdr: number
   turboRewardEnabled: number
   arcadeEnabled: number
   arcadeAdGated: number
@@ -196,6 +198,8 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   premiumPoolCapBonus: 15,
   premiumMaxTasksPerDay: 1_000,
   premiumWithdrawalCooldownDays: 3,
+  premiumReferralCommissionPercent: 15,
+  premiumDailyCommissionCapIdr: 12_000,
   turboRewardEnabled: 1,
   // Arena aktif setelah angka hadiah, jatah, dan gerbang iklannya ditinjau. Saklar ini tetap
   // hidup di panel agar admin bisa menutupnya lagi tanpa deploy bila ekonomi perlu dihentikan.
@@ -629,6 +633,18 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     min: 1, max: 365, riskyWhen: 'lower',
   },
   {
+    key: 'premiumReferralCommissionPercent', group: 'premium', label: 'Komisi referral premium', unit: '%',
+    description: 'Persentase reward teman yang mengalir ke upline PREMIUM. Yang biasa tetap di "Komisi referral"; angka ini menggantikannya hanya selama premium upline aktif, dihitung saat komisinya dibukukan — bukan saat ditarik.',
+    impact: 'Menaikkannya menambah rupiah yang dibayarkan per task teman, tapi jumlahnya tetap dijepit plafon komisi harian premium.',
+    min: 1, max: 50, riskyWhen: 'higher',
+  },
+  {
+    key: 'premiumDailyCommissionCapIdr', group: 'premium', label: 'Plafon komisi harian premium', unit: 'Rp/hari',
+    description: 'Batas komisi yang bisa dibukukan user premium dalam satu hari WIB. Menggantikan plafon biasa selama premiumnya aktif. Ini penjaga terakhir komisi: tanpa selisih di sini, menaikkan persen premium tidak menambah apa pun bagi upline yang sudah mentok plafon.',
+    impact: 'Menaikkannya menaikkan langsung liabilitas harian per akun premium yang punya banyak downline aktif.',
+    min: 1_000, max: 10_000_000, riskyWhen: 'higher',
+  },
+  {
     key: 'arcadeEnabled', group: 'arcade', label: 'Arena', unit: '0/1',
     description: 'Isi 1 untuk membuka Arena. Satu-satunya fitur yang hadiahnya boleh mengisi stok reward, jadi satu-satunya yang menambah rupiah yang harus dibayarkan. Biaya maksimumnya per user per hari = jatah main × isi stok per hadiah × nilai 1 credit.',
     impact: 'Menaikkannya membuka jalur hadiah yang menaikkan plafon payout, bukan cuma mempercepat user mencapainya.',
@@ -848,6 +864,17 @@ export function validateEconomyConfig(
   if (config.premiumWithdrawalCooldownDays > config.withdrawalCooldownDays) {
     errors.premiumWithdrawalCooldownDays =
       `Jeda penarikan premium tidak boleh lebih panjang daripada jeda biasa (${config.withdrawalCooldownDays} hari).`
+  }
+
+  /** Keduanya sekelas dengan penjagaan `premiumWithdrawalCooldownDays` di atas: setelan premium yang lebih buruk daripada setelan biasa bukan konfigurasi yang tidak lazim, melainkan manfaat berbayar yang berubah jadi kerugian tanpa satu pun layar yang menyatakannya. */
+  if (config.premiumReferralCommissionPercent < config.referralCommissionPercent) {
+    errors.premiumReferralCommissionPercent =
+      `Komisi referral premium tidak boleh di bawah komisi biasa (${config.referralCommissionPercent}%).`
+  }
+
+  if (config.premiumDailyCommissionCapIdr < config.dailyCommissionCapIdr) {
+    errors.premiumDailyCommissionCapIdr =
+      `Plafon komisi harian premium tidak boleh di bawah plafon biasa (Rp${config.dailyCommissionCapIdr.toLocaleString('id-ID')}).`
   }
 
   if (config.premiumMaxTasksPerDay < config.maxTasksPerDay) {

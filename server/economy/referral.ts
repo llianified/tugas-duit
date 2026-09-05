@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto'
 import type { PoolClient } from 'pg'
 import { TEXT_CHARS } from '@/domain/task/challenge'
 import { commissionUnitsForReward, splitUnitsIntoCredits } from '@/domain/economy/referral'
+import { isPremiumActive } from '@/domain/economy/premium'
 import { appendLedger } from './ledger'
 import { consumeCommissionQuota } from './quota'
 
@@ -38,15 +39,18 @@ export async function accrueCommission(
   tx: PoolClient,
   input: { downlineId: number; completionId: string; reward: number },
 ) {
-  const users = await tx.query<{ upline_id: string }>(
-    `select up.id as upline_id
+  const users = await tx.query<{ upline_id: string; premium_until: Date | null; now: Date }>(
+    `select up.id as upline_id, up.premium_until, now() as now
        from users d join users up on up.id=d.referred_by
       where d.id=$1 and up.banned_at is null`,
     [input.downlineId],
   )
-  const upline = users.rows[0]?.upline_id
-  if (!upline) return
-  const units = commissionUnitsForReward(input.reward)
+  const row = users.rows[0]
+  const upline = row?.upline_id
+  if (!row || !upline) return
+  /** Premium UPLINE, dibaca dari baris yang sama dengan id-nya, bukan lewat query kedua: laju komisi dan plafon hariannya harus berasal dari satu potret waktu. Dua pembacaan terpisah bisa jatuh di dua sisi tanggal kedaluwarsa, dan hasilnya komisi 15% yang dijepit plafon biasa — selisih yang tidak akan pernah terlihat sebagai bug, cuma sebagai angka yang kurang. */
+  const premium = isPremiumActive(row.premium_until?.getTime() ?? null, row.now.getTime())
+  const units = commissionUnitsForReward(input.reward, premium)
   if (units <= 0) return
   const inserted = await tx.query<{ id: string }>(
     `insert into referral_commissions(upline_id,downline_id,task_completion_id,reward,commission_units) values($1,$2,$3,$4,$5) on conflict(task_completion_id) do nothing returning id`,
@@ -65,7 +69,7 @@ export async function accrueCommission(
     [Number(upline), remainderUnits],
   )
   if (!credits) return
-  const payable = await consumeCommissionQuota(tx, Number(upline), credits)
+  const payable = await consumeCommissionQuota(tx, Number(upline), credits, premium)
   if (!payable) return
   const ledger = await appendLedger(tx, {
     userId: Number(upline),

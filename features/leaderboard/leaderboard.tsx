@@ -533,19 +533,24 @@ function SeasonCountdown({ endsAt }: { endsAt: number | null }) {
   if (endsAt === null) return null
   const secondsLeft = Math.max(0, Math.ceil((endsAt - now) / 1000))
 
-  /** Cukup "Sisa". Kata "Musim" sudah dibawa konteksnya — barisnya berdiri tepat di atas papan
-   * yang isinya memang musim berjalan — dan label yang mengulang konteksnya sendiri cuma memakan
-   * lebar yang dibutuhkan angkanya. */
+  /** Chip, bukan teks lepas — keluarga yang sama dengan "x dari x premium" sebaris di bawahnya dan
+   * pill kesulitan di beranda. Sebagai teks polos ia terbaca sebagai keterangan yang bisa
+   * dilewati; sebagai chip ia sederajat dengan saringan di kirinya, dan barisnya jadi sepasang
+   * kontrol alih-alih satu tombol dengan catatan kaki.
+   *
+   * Kata "Season" sekarang ditulis penuh. Sebelumnya cuma "Sisa", dengan alasan konteksnya sudah
+   * dibawa barisnya sendiri — tapi konteks itu cuma jelas bagi yang sudah tahu papan ini musiman,
+   * dan yang belum tahu justru orang yang paling perlu diberi tahu bahwa angkanya akan direset. */
   return (
-    <p className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
+    <MetaBadge className="text-[11px] font-semibold">
       {secondsLeft === 0 ? (
         'Papan direset'
       ) : (
         <>
-          <span className="text-muted-foreground/70">Sisa </span>
+          <span className="text-muted-foreground/70">Season tersisa </span>
           {formatLongCountdown(secondsLeft)}
         </>
       )}
-    </p>
+    </MetaBadge>
   )
 }

@@ -112,7 +112,7 @@ function PremiumSheetBody({
 
       <div className="flex shrink-0 items-center gap-2 px-content pt-3">
         <span className="stamp-portrait">
-          <GlyphCrown className="size-4 text-premium" />
+          <GlyphCrown className="premium-glint size-4 text-premium" />
         </span>
         <div className="min-w-0 flex-1">
           <Dialog.Title className="truncate text-sm font-semibold tracking-tight text-foreground">

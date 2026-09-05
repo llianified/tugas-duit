@@ -44,7 +44,7 @@ describe('referral server', () => {
 
   it('berhenti saat completion yang sama sudah pernah dicatat', async () => {
     const tx = client((sql) => {
-      if (sql.includes('from users d')) return { rows: [{ upline_id: '3' }] }
+      if (sql.includes('from users d')) return { rows: [{ upline_id: '3', premium_until: null, now: new Date() }] }
       if (sql.startsWith('insert into referral_commissions')) return { rows: [] }
       throw new Error(`Query tidak diharapkan: ${sql}`)
     })
@@ -57,7 +57,7 @@ describe('referral server', () => {
 
   it('mencatat ledger hanya sebesar komisi yang lolos quota', async () => {
     const tx = client((sql) => {
-      if (sql.includes('from users d')) return { rows: [{ upline_id: '3' }] }
+      if (sql.includes('from users d')) return { rows: [{ upline_id: '3', premium_until: null, now: new Date() }] }
       if (sql.startsWith('insert into referral_commissions')) return { rows: [{ id: 'commission-1' }] }
       if (sql.startsWith('insert into referral_wallets')) return { rows: [{ pending_units: 0 }] }
       return { rows: [] }
@@ -67,7 +67,9 @@ describe('referral server', () => {
 
     await accrueCommission(tx, { downlineId: 8, completionId: 'completion-1', reward: 5 })
 
-    expect(mocks.consumeCommissionQuota).toHaveBeenCalledWith(tx, 3, 2)
+    /** Argumen keempat adalah premium UPLINE, dan ia harus ikut sampai ke quota: persen komisinya
+     * boleh naik, tapi kalau plafon hariannya tetap plafon biasa kenaikan itu tertelan tanpa jejak. */
+    expect(mocks.consumeCommissionQuota).toHaveBeenCalledWith(tx, 3, 2, false)
     expect(mocks.appendLedger).toHaveBeenCalledWith(
       tx,
       expect.objectContaining({ userId: 3, amount: 1, idempotencyKey: 'commission:commission-1' }),
@@ -76,5 +78,47 @@ describe('referral server', () => {
       expect.stringContaining('settled_ledger_id=$2'),
       ['commission-1', 'ledger-1'],
     )
+  })
+
+  /** Premium yang menentukan laju komisi adalah premium UPLINE, dan ia dibaca dari baris yang sama
+   * dengan id uplinenya — satu potret waktu untuk laju dan plafon sekaligus. Yang diuji di sini
+   * penyalurannya, bukan aritmetikanya: `commissionUnitsForReward` di-mock, jadi kegagalan di sini
+   * berarti flag-nya berhenti di tengah jalan, tepat mode kegagalan yang membuat pembeli premium
+   * dibayar dengan laju biasa tanpa satu layar pun yang menyatakannya. */
+  it('membayar upline premium dengan laju dan plafon premium', async () => {
+    const besok = new Date(Date.now() + 86_400_000)
+    const tx = client((sql) => {
+      if (sql.includes('from users d')) {
+        return { rows: [{ upline_id: '3', premium_until: besok, now: new Date() }] }
+      }
+      if (sql.startsWith('insert into referral_commissions')) return { rows: [{ id: 'commission-9' }] }
+      if (sql.startsWith('insert into referral_wallets')) return { rows: [{ pending_units: 0 }] }
+      return { rows: [] }
+    })
+    mocks.consumeCommissionQuota.mockResolvedValue(2)
+    mocks.appendLedger.mockResolvedValue({ ledgerId: 'ledger-9' })
+
+    await accrueCommission(tx, { downlineId: 8, completionId: 'completion-9', reward: 5 })
+
+    expect(mocks.commissionUnitsForReward).toHaveBeenCalledWith(5, true)
+    expect(mocks.consumeCommissionQuota).toHaveBeenCalledWith(tx, 3, 2, true)
+  })
+
+  /** Premium yang sudah lewat tanggalnya bukan premium. Dibaca dari `now()` milik database, bukan
+   * jam proses Node — dua-duanya ada di baris yang sama justru supaya perbandingannya tidak pernah
+   * menyeberang sumber waktu. */
+  it('tidak memakai laju premium saat premium uplinenya sudah habis', async () => {
+    const kemarin = new Date(Date.now() - 86_400_000)
+    const tx = client((sql) => {
+      if (sql.includes('from users d')) {
+        return { rows: [{ upline_id: '3', premium_until: kemarin, now: new Date() }] }
+      }
+      if (sql.startsWith('insert into referral_commissions')) return { rows: [] }
+      return { rows: [] }
+    })
+
+    await accrueCommission(tx, { downlineId: 8, completionId: 'completion-10', reward: 5 })
+
+    expect(mocks.commissionUnitsForReward).toHaveBeenCalledWith(5, false)
   })
 })

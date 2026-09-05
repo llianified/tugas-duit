@@ -59,6 +59,7 @@ export async function consumeCommissionQuota(
   tx: PoolClient,
   uplineId: number,
   credits: number,
+  premium = false,
 ): Promise<number> {
   if (credits <= 0) return 0
 
@@ -71,7 +72,7 @@ export async function consumeCommissionQuota(
     [uplineId],
   )
   const earned = Number(locked.rows[0].commission_credits)
-  const payable = Math.min(credits, Math.max(0, dailyCommissionCreditCap() - earned))
+  const payable = Math.min(credits, Math.max(0, dailyCommissionCreditCap(premium) - earned))
   if (payable <= 0) return 0
 
   await tx.query(

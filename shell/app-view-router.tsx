@@ -146,6 +146,7 @@ export function AppViewRouter({
         code={session.referralCode}
         shareUrl={session.referralShareUrl}
         earnedCredits={session.taskBalance + session.referralCredits}
+        premium={session.premium?.active ?? false}
       />
     )
   }

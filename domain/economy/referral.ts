@@ -1,11 +1,13 @@
 import { economyConfig } from '@/domain/economy/economy-config'
 
-function referralCommissionRate(): number {
-  return economyConfig().referralCommissionPercent / 100
+/** Laju komisi upline. Premium punya lajunya sendiri, dan yang menentukan adalah premium UPLINE — bukan downline yang mengerjakan soalnya: yang dibayar komisi upline, jadi manfaat berbayar itu miliknya. */
+function referralCommissionRate(premium: boolean): number {
+  return referralCommissionPercent(premium) / 100
 }
 
-export function referralCommissionPercent(): number {
-  return economyConfig().referralCommissionPercent
+export function referralCommissionPercent(premium = false): number {
+  const config = economyConfig()
+  return premium ? config.premiumReferralCommissionPercent : config.referralCommissionPercent
 }
 
 const COMMISSION_UNITS_PER_CREDIT = 100
@@ -24,8 +26,8 @@ export interface ReferralSummary {
   pendingUnits: number
 }
 
-export function commissionUnitsForReward(reward: number): number {
-  return Math.round(reward * referralCommissionRate() * COMMISSION_UNITS_PER_CREDIT)
+export function commissionUnitsForReward(reward: number, premium = false): number {
+  return Math.round(reward * referralCommissionRate(premium) * COMMISSION_UNITS_PER_CREDIT)
 }
 
 export function unitsToCredits(units: number): number {

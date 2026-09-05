@@ -1,5 +1,5 @@
 import type { PremiumPerks } from '@/domain/economy/premium'
-import { formatCredits } from '@/shared/lib/format'
+import { formatCredits, formatRupiah } from '@/shared/lib/format'
 
 export interface PremiumBenefit {
   key: string
@@ -19,6 +19,16 @@ export function premiumBenefitList(perks: PremiumPerks): PremiumBenefit[] {
       key: 'energy',
       title: `Energi ${formatCredits(perks.maxEnergy)}, isi tiap ${formatCredits(perks.energyRegenMinutes)} menit`,
       detail: `Biasanya ${formatCredits(perks.baseMaxEnergy)} energi tiap ${formatCredits(perks.baseEnergyRegenMinutes)} menit. Jadi lebih cepat lanjut soal.`,
+    },
+    /** Duduk tepat setelah energi, dan itu posisi yang diperebutkan: kartu upsell di beranda
+     * melepas mahkota lalu mencetak DUA baris berikutnya, jadi urutan di sini yang menentukan apa
+     * yang dibaca orang sebelum memutuskan membeli. Ia satu-satunya manfaat yang menambah
+     * PENGHASILAN — sisanya mempercepat atau melonggarkan — jadi ia yang paling pantas berdiri di
+     * sana, menggeser bonus stok reward ke dalam sheet. */
+    {
+      key: 'commission',
+      title: `Komisi referral ${formatCredits(perks.referralCommissionPercent)}%`,
+      detail: `Biasanya ${formatCredits(perks.baseReferralCommissionPercent)}%, dan plafon harianmu naik jadi ${formatRupiah(perks.dailyCommissionCapIdr)} dari ${formatRupiah(perks.baseDailyCommissionCapIdr)}.`,
     },
     {
       key: 'pool',

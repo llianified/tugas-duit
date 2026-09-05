@@ -50,7 +50,7 @@ export function StreakStrip({
   const days = activeDayWindow(series)
   const todayDone = days.at(-1) ?? false
   const label = `Streak ${formatCredits(streak)} hari. ${
-    todayDone ? 'Hari ini sudah terkunci.' : 'Hari ini belum ada task.'
+    todayDone ? 'Hari ini sudah terkunci.' : 'Hari ini belum ngerjain soal.'
   }`
 
   return (

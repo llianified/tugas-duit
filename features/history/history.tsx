@@ -6,7 +6,6 @@ import { DataList, DataListAmount, DataListRow } from '@/shared/components/data-
 import { EmptyState } from '@/shared/components/empty-state'
 import { GlyphHistory, GlyphWallet } from '@/shared/components/glyph'
 import { PageHeader } from '@/shared/components/page-header'
-import { PageRegion } from '@/shared/components/page-region'
 import { SegmentedTabs, type SegmentedTab } from '@/shared/components/segmented-tabs'
 import { StarRating } from '@/shared/components/star-rating'
 import { TotalSummary } from '@/shared/components/total-summary'
@@ -108,6 +107,12 @@ export function HistoryView({
   )
 }
 
+/** Blok pertama tiap panel memakai `region-under-brand`, bukan `PageRegion`. Ia yang PERTAMA di
+ * bawah baris tab, jadi tidak ada apa pun di atasnya untuk dipisahkan garis — alasan yang sama
+ * dengan umpan aktivitas di papan peringkat. `region-t` milik `PageRegion` membawa border beserta
+ * paddingnya sendiri, sehingga jarak tab ke isi jadi 20px ke garis lalu 20px lagi ke isinya,
+ * sementara ribbon ke ringkasan dan ringkasan ke tab masing-masing 20px. Sekarang ketiganya sama
+ * dan garisnya hilang. */
 function TaskHistoryPanel({
   history,
   completedCount,
@@ -133,7 +138,7 @@ function TaskHistoryPanel({
 
   return (
     <>
-      <PageRegion>
+      <div className="region-under-brand">
         <HistoryList history={history} completedCount={completedCount} />
         {hasMore ? (
           <ActionButton
@@ -145,7 +150,7 @@ function TaskHistoryPanel({
             {loadingMore ? 'Memuat…' : 'Muat lagi'}
           </ActionButton>
         ) : null}
-      </PageRegion>
+      </div>
 
       <div className="view-trim-b flex-1 [--view-trim-b:var(--list-row-py)]" />
     </>
@@ -165,9 +170,9 @@ function WithdrawalHistoryPanel({ withdrawals }: { withdrawals: Withdrawal[] }) 
 
   return (
     <>
-      <PageRegion>
+      <div className="region-under-brand">
         <WithdrawalList withdrawals={withdrawals} />
-      </PageRegion>
+      </div>
 
       <div className="view-trim-b flex-1 [--view-trim-b:var(--list-row-py)]" />
     </>

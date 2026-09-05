@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '../economy/economy-config'
 import {
   MISSION_KEYS,
+  ONCE_SOCIAL_MISSION_KEYS,
+  SOCIAL_MISSION_KEYS,
   buildMissionProgress,
   claimableMissions,
   hasUnclaimedMissions,
@@ -114,15 +116,43 @@ describe('missions', () => {
       missionTwitterLikeRepostReward: 3,
       missionTwitterPostReward: 4,
       missionFacebookPostReward: 5,
+      missionWhatsappShareReward: 6,
+      missionTiktokFollowReward: 7,
     })
     try {
       expect(missionDefinition('twitter_follow').reward).toBe(2)
       expect(missionDefinition('twitter_like_repost').reward).toBe(3)
       expect(missionDefinition('twitter_post').reward).toBe(4)
       expect(missionDefinition('facebook_post').reward).toBe(5)
+      expect(missionDefinition('whatsapp_share').reward).toBe(6)
+      expect(missionDefinition('tiktok_follow').reward).toBe(7)
     } finally {
       setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
     }
+  })
+})
+
+/** Daftar inilah yang dipakai `server/task/missions.ts` untuk memutuskan klaim mana yang berlaku
+ * sepanjang umur akun. Sebelumnya ia ditulis tangan sebagai literal SQL di dua kueri, terpisah dari
+ * `cadence` di katalog — dan misi `once` yang luput disalin ke sana akan terbit ulang tiap hari WIB
+ * dengan energi yang bisa diklaim berkali-kali dari satu aksi yang sama. Yang dijaga di sini bukan
+ * isi daftarnya, melainkan bahwa ia benar-benar diturunkan dari katalog. */
+describe('irama misi sosial punya satu sumber', () => {
+  beforeEach(() => setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, missionDailyCount: 6 }))
+  afterEach(() => setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG))
+
+  it('mendaftar persis misi sosial yang katalognya beririma sekali seumur akun', () => {
+    const dariKatalog = SOCIAL_MISSION_KEYS.filter((key) => {
+      const definisi = missionDefinition(key)
+      return definisi.kind === 'social' && definisi.cadence === 'once'
+    })
+
+    expect([...ONCE_SOCIAL_MISSION_KEYS]).toEqual(dariKatalog)
+  })
+
+  it('memasukkan follow TikTok, bukan hanya peninggalan X', () => {
+    expect(ONCE_SOCIAL_MISSION_KEYS).toContain('tiktok_follow')
+    expect(ONCE_SOCIAL_MISSION_KEYS).not.toContain('whatsapp_share')
   })
 })
 
@@ -144,6 +174,8 @@ describe('misi iklan mengikuti tombol mati iklan', () => {
       'twitter_like_repost',
       'twitter_post',
       'facebook_post',
+      'whatsapp_share',
+      'tiktok_follow',
     ])
     expect(isMissionAvailable('ads')).toBe(true)
   })
@@ -165,12 +197,18 @@ describe('misi iklan mengikuti tombol mati iklan', () => {
       'twitter_like_repost',
       'twitter_post',
       'facebook_post',
+      'whatsapp_share',
+      'tiktok_follow',
     ])
     expect(isMissionAvailable('ads')).toBe(false)
 
     const list = buildMissionProgress(
       hitung(),
-      ['tasks', 'stars', 'hard', 'variety', 'twitter_follow', 'twitter_like_repost', 'twitter_post', 'facebook_post'],
+      [
+        'tasks', 'stars', 'hard', 'variety',
+        'twitter_follow', 'twitter_like_repost', 'twitter_post', 'facebook_post',
+        'whatsapp_share', 'tiktok_follow',
+      ],
       {},
       HARI,
     )
@@ -196,7 +234,7 @@ describe('rotasi misi harian', () => {
     expect(list.filter((m) => m.kind === 'automatic')).toHaveLength(3)
     /** Misi sosial tidak ikut diundi: dua di antaranya sekali seumur akun, jadi menyembunyikannya
      * di hari yang salah berarti user tidak pernah tahu ia ada. */
-    expect(list.filter((m) => m.kind === 'social')).toHaveLength(4)
+    expect(list.filter((m) => m.kind === 'social')).toHaveLength(SOCIAL_MISSION_KEYS.length)
   })
 
   it('memberi susunan yang sama untuk tanggal yang sama', () => {

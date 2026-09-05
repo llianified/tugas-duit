@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy/economy-config'
-import { missionDefinition } from '@/domain/progression/missions'
+import { ONCE_SOCIAL_MISSION_KEYS, missionDefinition } from '@/domain/progression/missions'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
@@ -298,6 +298,44 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
       reason: 'already_claimed',
     })
   })
+
+  /** Berlaku untuk SETIAP misi sekali-seumur-akun, bukan satu per satu yang kebetulan sempat
+   * ditulis. Daftar yang dipakai `CLAIMED_SQL` dan `isAlreadyClaimed` sekarang diturunkan dari
+   * `cadence` di katalog, dan test inilah yang membuktikan penurunan itu benar-benar sampai ke
+   * database. Bentuk lamanya menulis daftar itu tangan sebagai literal SQL: misi `once` yang luput
+   * disalin ke sana terbit ulang begitu tanggal WIB bergeser, dan energinya bisa diklaim lagi dari
+   * aksi yang sama — kebocoran harian yang tidak menggagalkan apa pun saat terjadi. */
+  it.each([...ONCE_SOCIAL_MISSION_KEYS])(
+    'menganggap %s selesai untuk selamanya, bukan cuma hari WIB itu',
+    async (key) => {
+      const { claimMission, readMissions, startMissionAction } = await import('./missions')
+      const { query } = await import('../platform/db')
+      const userId = await makeUser(0)
+
+      await startMissionAction(userId, key)
+      await query(
+        `update social_mission_attempts
+          set started_at=now()-interval '11 seconds'
+          where user_id=$1 and mission_key=$2`,
+        [userId, key],
+      )
+      expect(await claimMission(userId, key)).toMatchObject({ ok: true })
+
+      await query(
+        `update mission_claims
+          set quota_date=(now() at time zone 'Asia/Jakarta')::date-1
+          where user_id=$1 and mission_key=$2`,
+        [userId, key],
+      )
+
+      const mission = (await readMissions(userId)).find((item) => item.key === key)
+      expect(mission).toMatchObject({ claimed: true, cadence: 'once' })
+      expect(await startMissionAction(userId, key)).toEqual({
+        ok: false,
+        reason: 'already_claimed',
+      })
+    },
+  )
 
   it('menyimpan confirmAt yang sama saat aksi dimulai ulang dan memulihkannya setelah reload', async () => {
     const { readMissions, startMissionAction } = await import('./missions')

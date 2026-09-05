@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy/economy-config'
-import { missions, type MissionDefinition } from '@/domain/progression/missions'
+import { missionDefinition } from '@/domain/progression/missions'
 
 beforeAll(async () => {
   delete process.env.DATABASE_URL
@@ -44,7 +44,18 @@ const readEnergyValue = async (userId: number) => {
   return Number(rows[0].energy)
 }
 
-const tasksMission = missions().find((mission: MissionDefinition) => mission.key === 'tasks')!
+/** Diambil dari KATALOG, bukan dari daftar yang terbit hari itu: sejak misi otomatis diundi harian,
+ * `missions()` belum tentu memuat `tasks`, dan test yang bergantung padanya akan lulus hari ini lalu
+ * gagal besok tanpa ada yang rusak. */
+const tasksMission = missionDefinition('tasks')
+
+/** Undian misi harian berarti sebuah misi belum tentu terbit hari ini, dan klaim untuk misi yang
+ * tidak terbit memang ditolak. Test di berkas ini menguji alur klaimnya, bukan undiannya, jadi
+ * kolamnya dibuka penuh supaya semua misi tersedia berapa pun tanggal saat test dijalankan. */
+beforeAll(async () => {
+  const { setActiveEconomyConfig, economyConfig } = await import('@/domain/economy/economy-config')
+  setActiveEconomyConfig({ ...economyConfig(), missionDailyCount: 6 })
+})
 
 describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () => {
   it('menolak klaim untuk misi yang belum kelar', async () => {
@@ -105,8 +116,7 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
     const { maxEnergy } = await import('@/domain/economy/energy')
     const { query } = await import('../platform/db')
 
-    const ads = missions().find((mission: MissionDefinition) => mission.key === 'ads')
-    if (!ads) throw new Error('misi ads hilang dari daftar')
+    const ads = missionDefinition('ads')
 
     /** Satu energi di bawah kapasitas, dengan hadiah 3: bentuk lamanya meloloskan ini karena energinya belum PENUH, lalu `applyEnergyGrant` memotong di kapasitas. User diberi tahu 3, menerima 1, dan `mission_claims.energy_granted` menyimpan 3 — padahal migrasi 0031 mensyaratkan kolom itu mencatat yang benar-benar diberikan. Klaimnya habis untuk hari itu, jadi selisihnya hilang tanpa jejak. */
     const userId = await makeUser(maxEnergy() - 1)
@@ -133,8 +143,7 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
     const { maxEnergy } = await import('@/domain/economy/energy')
     const { query } = await import('../platform/db')
 
-    const ads = missions().find((mission: MissionDefinition) => mission.key === 'ads')
-    if (!ads) throw new Error('misi ads hilang dari daftar')
+    const ads = missionDefinition('ads')
 
     const userId = await makeUser(maxEnergy() - ads.reward)
     for (let index = 0; index < ads.target; index += 1) {

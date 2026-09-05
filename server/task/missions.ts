@@ -29,7 +29,20 @@ const COUNTS_SQL = `select
     (select count(*) from ad_views
       where user_id=$1 and ready_at is not null
         and (created_at at time zone 'Asia/Jakarta')::date = ${TODAY})::int
-      as ads`
+      as ads,
+    (select count(*) from task_completions
+      where user_id=$1 and difficulty = 'Hard'
+        and (completed_at at time zone 'Asia/Jakarta')::date = ${TODAY})::int
+      as hard,
+    /** Ronde yang DIBUKA, sama dengan cara jatah harian Arena dihitung: ronde yang ditinggal tetap
+        memakai pass iklannya, jadi menghitung yang selesai saja membuat misi ini bisa digenapi
+        tanpa benar-benar main. */
+    (select count(*) from arcade_plays
+      where user_id=$1 and quota_date = ${TODAY})::int
+      as arcade,
+    (select count(distinct type) from task_completions
+      where user_id=$1 and (completed_at at time zone 'Asia/Jakarta')::date = ${TODAY})::int
+      as variety`
 
 /** Follow X dan aksi pada post tetap dibaca sepanjang umur akun; klaim lainnya hanya milik hari WIB ini. */
 const CLAIMED_SQL = `select mission_key from mission_claims
@@ -51,6 +64,9 @@ async function readCounts(userId: number, tx?: PoolClient): Promise<MissionCount
     : await query<MissionCounts>(COUNTS_SQL, [userId])
   const row = rows[0]
   return {
+    hard: Number(row?.hard ?? 0),
+    arcade: Number(row?.arcade ?? 0),
+    variety: Number(row?.variety ?? 0),
     tasks: Number(row?.tasks ?? 0),
     stars: Number(row?.stars ?? 0),
     ads: Number(row?.ads ?? 0),
@@ -92,10 +108,12 @@ export async function readMissionSnapshot(userId: number): Promise<MissionSnapsh
     readCounts(userId),
     readClaimed(userId),
     readConfirmTimes(userId),
-    query<{ now: Date }>('select now() as now'),
+    query<{ now: Date; wib_date: string }>(
+      `select now() as now, to_char((now() at time zone 'Asia/Jakarta')::date, 'YYYY-MM-DD') as wib_date`,
+    ),
   ])
   return {
-    missions: buildMissionProgress(counts, claimed, confirmTimes),
+    missions: buildMissionProgress(counts, claimed, confirmTimes, clockRows[0]?.wib_date),
     serverNow: clockRows[0]?.now.getTime() ?? Date.now(),
   }
 }
@@ -182,9 +200,7 @@ export type MissionClaimResult =
 
 /** Klaim dikunci per user. Itu membuat pengecekan, pencatatan klaim, dan pemberian energi menjadi satu operasi atomik, termasuk ketika dua konfirmasi ditekan hampir bersamaan. */
 export async function claimMission(userId: number, key: string): Promise<MissionClaimResult> {
-  if (!isMissionKey(key) || !isMissionAvailable(key)) {
-    return { ok: false, reason: 'unknown_mission' }
-  }
+  if (!isMissionKey(key)) return { ok: false, reason: 'unknown_mission' }
   const mission = missionDefinition(key)
 
   return transaction(async (tx) => {
@@ -193,12 +209,21 @@ export async function claimMission(userId: number, key: string): Promise<Mission
       energy_updated_at: Date
       premium_until: Date | null
       now: Date
+      wib_date: string
     }>(
-      'select energy, energy_updated_at, premium_until, now() as now from users where id=$1 for update',
+      `select energy, energy_updated_at, premium_until, now() as now,
+              to_char((now() at time zone 'Asia/Jakarta')::date, 'YYYY-MM-DD') as wib_date
+         from users where id=$1 for update`,
       [userId],
     )
     const row = locked.rows[0]
     if (!row) return { ok: false as const, reason: 'unknown_mission' as const }
+    /** Ketersediaan diperiksa terhadap tanggal WIB milik Postgres, bukan jam proses ini: undian misi
+     * harian dan `quota_date` yang ditulis klaimnya harus berasal dari batas hari yang sama. Dua
+     * sumber jam yang berbeda akan menolak klaim yang sah tepat di sekitar tengah malam. */
+    if (!isMissionAvailable(key, row.wib_date)) {
+      return { ok: false as const, reason: 'unknown_mission' as const }
+    }
     if (await isAlreadyClaimed(tx, userId, key)) {
       return { ok: false as const, reason: 'already_claimed' as const }
     }

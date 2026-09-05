@@ -29,13 +29,16 @@ export type SplashPhase = 'filling' | 'completing' | 'gone'
  * membaca pesan galatnya. */
 export function useBootSplash(ready: boolean): SplashPhase {
   const [phase, setPhase] = useState<SplashPhase>('filling')
-  /** Dipatok saat render pertama, bukan di dalam effect: effect baru jalan setelah paint, dan
-   * selisihnya membuat splash tampil lebih lama daripada angka yang tertulis di atas. */
-  const startedAt = useRef(Date.now())
+  /** Dipatok di effect pertama, bukan saat render: `Date.now()` fungsi tak murni, dan memanggilnya
+   * selama render melanggar `react-hooks/purity` — render bisa diulang React kapan saja, sehingga
+   * titik nolnya ikut bergeser. Selisihnya terhadap render cuma satu frame karena effect ini jalan
+   * di mount, dan satu frame tidak berarti apa-apa melawan 1,8 detik. */
+  const startedAt = useRef<number | null>(null)
 
   useEffect(() => {
+    const started = (startedAt.current ??= Date.now())
     if (phase !== 'filling' || !ready) return
-    const remaining = Math.max(0, SPLASH_MIN_MS - (Date.now() - startedAt.current))
+    const remaining = Math.max(0, SPLASH_MIN_MS - (Date.now() - started))
     const timer = setTimeout(() => setPhase('completing'), remaining)
     return () => clearTimeout(timer)
   }, [ready, phase])

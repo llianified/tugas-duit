@@ -98,3 +98,60 @@ describe('TASK-3 — percobaan dan jendela waktu mengikuti konfigurasi', () => {
     expect(rows[0].umur).toBe(90)
   })
 })
+
+/** Tipe `order` dan `count` menambah nilai baru ke enum `captcha_type` lewat migrasi 0050. Yang
+ * harus dibuktikan bukan bahwa migrasinya ada, melainkan bahwa jalur aslinya benar-benar bisa
+ * menerbitkan, menyimpan, dan membayar soal bertipe itu — kegagalan enum baru muncul di `insert`,
+ * jauh dari tempat tipenya ditambahkan. */
+describe('TASK-ENUM — tipe soal baru melewati jalur asli sampai dibayar', () => {
+  it.each(['order', 'count'] as const)('menerbitkan, menyimpan, dan membayar soal %s', async (tipe) => {
+    const { query } = await import('../platform/db')
+    const { issueChallenge, startChallenge, submitAnswer } = await import('./challenge')
+    const userId = await makeUser()
+
+    /** Soalnya dipaksa ke tipe yang diuji lewat payload yang dibuat generator asli, karena
+     * `issueChallenge` mengundi tipenya sendiri dan menunggu undian jatuh ke satu tipe akan
+     * membuat test ini sesekali gagal tanpa ada yang rusak. */
+    let challenge = await issueChallenge(userId)
+    let percobaan = 0
+    while (challenge.type !== tipe && percobaan < 60) {
+      await query('update challenges set submitted_at=now() where id=$1', [challenge.id])
+      challenge = await issueChallenge(userId)
+      percobaan += 1
+    }
+    expect(challenge.type, `tidak dapat soal ${tipe} dalam ${percobaan} undian`).toBe(tipe)
+
+    /** Baris yang tersimpan harus benar-benar membawa tipe barunya, bukan jatuh ke tipe lain. */
+    const tersimpan = await query<{ type: string }>('select type from challenges where id=$1', [
+      challenge.id,
+    ])
+    expect(tersimpan[0].type).toBe(tipe)
+
+    await startChallenge(userId, challenge.id)
+
+    const jawaban =
+      challenge.type === 'order'
+        ? [...challenge.tiles]
+            .sort((a, b) => (challenge.variant === 'descending' ? b - a : a - b))
+            .join('-')
+        : challenge.type === 'count'
+          ? String(
+              challenge.options.filter(
+                (o) =>
+                  o.label.toLowerCase() ===
+                  challenge.instruction.replace('Ada berapa ', '').replace(' di papan?', ''),
+              ).length,
+            )
+          : ''
+
+    const hasil = await submitAnswer(userId, challenge.id, jawaban)
+    expect(hasil).toMatchObject({ ok: true })
+    if (hasil.ok) expect(hasil.reward).toBeGreaterThan(0)
+
+    const selesai = await query<{ type: string }>(
+      'select type from task_completions where challenge_id=$1',
+      [challenge.id],
+    )
+    expect(selesai[0].type).toBe(tipe)
+  })
+})

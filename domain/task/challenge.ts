@@ -2,7 +2,7 @@
 import { getMaxReward, type StarCount } from '@/domain/progression/stars'
 import { mathCeiling, mathDigits, selectOptionCount, textLength } from '@/domain/economy/economy-config'
 
-type CaptchaType = 'text' | 'math' | 'select'
+type CaptchaType = 'text' | 'math' | 'select' | 'order' | 'count'
 
 /** Aturan main di dalam satu tipe soal. Ditambahkan karena isinya yang habis, bukan ekonominya:
  * tiga tipe kali tiga kesulitan cuma sembilan bentuk, dan user yang bertahan sampai hari ke-14
@@ -11,7 +11,14 @@ type CaptchaType = 'text' | 'math' | 'select'
 export type TextVariant = 'copy' | 'reverse' | 'letters'
 export type MathVariant = 'result' | 'missing'
 export type SelectVariant = 'shape' | 'duplicate' | 'odd'
-export type ChallengeVariant = TextVariant | MathVariant | SelectVariant
+export type OrderVariant = 'ascending' | 'descending'
+export type CountVariant = 'shape'
+export type ChallengeVariant =
+  | TextVariant
+  | MathVariant
+  | SelectVariant
+  | OrderVariant
+  | CountVariant
 
 export type Difficulty = 'Easy' | 'Medium' | 'Hard'
 
@@ -66,6 +73,19 @@ export type Challenge = ChallengeBase &
         type: 'select'
         options: SelectOption[]
       }
+    | {
+        /** Ketuk berurutan. Bentuk interaksi yang benar-benar baru: jawabannya urutan ketukan,
+         * bukan satu pilihan atau satu deret karakter. */
+        type: 'order'
+        tiles: number[]
+      }
+    | {
+        /** Menghitung. Papannya cuma tampilan — jawabannya angka lewat papan tombol yang sama
+         * dengan soal Hitung, jadi tidak ada komponen input baru yang perlu dibuat. */
+        type: 'count'
+        options: SelectOption[]
+        answerLength: number
+      }
   )
 
 type GeneratedByFactory = 'id' | 'difficulty' | 'maxReward' | 'type'
@@ -113,9 +133,11 @@ export const CHALLENGE_TITLE: Record<CaptchaType, string> = {
   text: 'Ketik Ulang Karakter',
   math: 'Hitung Hasil',
   select: 'Pilih Bentuk',
+  order: 'Urutkan Angka',
+  count: 'Hitung Bentuk',
 }
 
-const CAPTCHA_TYPES: CaptchaType[] = ['text', 'math', 'select']
+const CAPTCHA_TYPES: CaptchaType[] = ['text', 'math', 'select', 'order', 'count']
 
 const DIFFICULTIES: Difficulty[] = ['Easy', 'Medium', 'Hard']
 
@@ -330,6 +352,60 @@ function createSelectChallenge(difficulty: Difficulty, variant: SelectVariant): 
   }
 }
 
+/** Petak yang harus diketuk berurutan. Dibatasi enam walau `selectOptions` boleh sampai sembilan:
+ * mengetuk sembilan petak berurutan berubah dari soal jadi pekerjaan, dan par time-nya akan menuntut
+ * pengali yang membuat varian ini jauh lebih menguntungkan daripada yang lain. */
+const MAX_ORDER_TILES = 6
+
+function createOrderChallenge(difficulty: Difficulty, variant: OrderVariant): DraftFor<'order'> {
+  const count = Math.min(MAX_ORDER_TILES, Math.max(3, selectOptionCount(difficulty)))
+  const ceiling = mathCeiling(difficulty)
+
+  /** Angkanya wajib unik: dua petak bernilai sama membuat "urutan yang benar" ada lebih dari satu,
+   * dan jawaban yang benar akan ditolak. */
+  const values = new Set<number>()
+  while (values.size < count) values.add(randomBetween(1, Math.max(count * 3, ceiling)))
+  const tiles = shuffle([...values])
+
+  const sorted = [...tiles].sort((a, b) => (variant === 'descending' ? b - a : a - b))
+  return {
+    title: CHALLENGE_TITLE.order,
+    variant,
+    parScale: 1.8,
+    instruction:
+      variant === 'descending'
+        ? 'Ketuk angka berurutan dari yang terbesar.'
+        : 'Ketuk angka berurutan dari yang terkecil.',
+    tiles,
+    answer: sorted.join('-'),
+  }
+}
+
+function createCountChallenge(difficulty: Difficulty, variant: CountVariant): DraftFor<'count'> {
+  const slots = selectOptionCount(difficulty)
+  const pool = shuffle(SELECT_ITEMS)
+  const target = pool[0]
+
+  /** Minimal dua, dan tidak pernah seluruh papan: satu membuat soalnya sama dengan "pilih bentuk",
+   * dan seluruh papan membuat jawabannya bisa ditebak tanpa melihat. */
+  const targetCount = randomBetween(2, Math.max(2, slots - 2))
+  const filler = pool.slice(1)
+  const board = shuffle([
+    ...Array.from({ length: targetCount }, () => target),
+    ...Array.from({ length: slots - targetCount }, () => filler[randomInt(filler.length)]),
+  ])
+
+  return {
+    title: CHALLENGE_TITLE.count,
+    variant,
+    parScale: 1.6,
+    instruction: `Ada berapa ${target.label.toLowerCase()} di papan?`,
+    options: board.map((item) => ({ key: item.key, label: item.label })),
+    answerLength: String(targetCount).length,
+    answer: String(targetCount),
+  }
+}
+
 let counter = 0
 function createChallengeId() {
   counter += 1
@@ -341,6 +417,8 @@ function createChallengeId() {
 export const TEXT_VARIANTS: readonly TextVariant[] = ['copy', 'reverse', 'letters']
 export const MATH_VARIANTS: readonly MathVariant[] = ['result', 'missing']
 export const SELECT_VARIANTS: readonly SelectVariant[] = ['shape', 'duplicate', 'odd']
+export const ORDER_VARIANTS: readonly OrderVariant[] = ['ascending', 'descending']
+export const COUNT_VARIANTS: readonly CountVariant[] = ['shape']
 
 export function generateChallenge(opts?: {
   type?: CaptchaType
@@ -377,6 +455,24 @@ export function generateChallenge(opts?: {
           (opts?.variant as SelectVariant) ?? pickOne(SELECT_VARIANTS),
         ),
       }
+    case 'order':
+      return {
+        ...meta,
+        type,
+        ...createOrderChallenge(
+          difficulty,
+          (opts?.variant as OrderVariant) ?? pickOne(ORDER_VARIANTS),
+        ),
+      }
+    case 'count':
+      return {
+        ...meta,
+        type,
+        ...createCountChallenge(
+          difficulty,
+          (opts?.variant as CountVariant) ?? pickOne(COUNT_VARIANTS),
+        ),
+      }
   }
 }
 
@@ -386,7 +482,9 @@ export function generateChallenge(opts?: {
 export function withVariantDefaults<T extends { type: CaptchaType }>(payload: T): T {
   const base = payload as T & Record<string, unknown>
   const filled: Record<string, unknown> = {
-    variant: base.variant ?? (base.type === 'math' ? 'result' : base.type === 'text' ? 'copy' : 'shape'),
+    variant:
+      base.variant ??
+      (base.type === 'math' ? 'result' : base.type === 'text' ? 'copy' : base.type === 'order' ? 'ascending' : 'shape'),
     parScale: typeof base.parScale === 'number' ? base.parScale : 1,
   }
   if (base.type === 'text' && typeof base.answerLength !== 'number') {

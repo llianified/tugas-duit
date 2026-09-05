@@ -1,7 +1,12 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { Challenge, TaskOutcome, TaskSubmission } from '@/domain/task/challenge'
+import {
+  orderAnswerFromPicks,
+  type Challenge,
+  type TaskOutcome,
+  type TaskSubmission,
+} from '@/domain/task/challenge'
 import { ApiError, userFacingMessage } from '@/shell/api-client'
 import { hapticError, hapticSuccess, hapticWarning } from '@/shared/lib/haptic'
 
@@ -68,7 +73,7 @@ export function useCaptchaAttempt(
     challenge.type === 'select'
       ? (selectedOption ?? '')
       : challenge.type === 'order'
-        ? orderPicks.join('-')
+        ? orderAnswerFromPicks(challenge.tiles, orderPicks)
         : textAnswer
 
   const expectedLength =

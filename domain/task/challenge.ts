@@ -406,6 +406,18 @@ function createCountChallenge(difficulty: Difficulty, variant: CountVariant): Dr
   }
 }
 
+/** Jawaban soal Urutkan Angka, dibangun dari urutan ketukan.
+ *
+ * Ada di sini, bukan di hook captcha, karena inilah satu-satunya tempat bentuk jawabannya
+ * ditentukan — dan versi pertama fitur ini mengirim INDEKS petak sementara `createOrderChallenge`
+ * menyimpan NILAI petak, sehingga tidak ada urutan ketukan apa pun yang bisa dinilai benar.
+ * Kegagalannya diam: user melihat "jawaban salah" pada urutan yang jelas benar, energinya tetap
+ * terpotong, dan tidak ada satu pun error yang tercatat. Menaruh pembangunnya berdampingan dengan
+ * pembuat jawabannya membuat kedua sisi bisa dikunci satu test. */
+export function orderAnswerFromPicks(tiles: readonly number[], picks: readonly number[]): string {
+  return picks.map((index) => tiles[index]).join('-')
+}
+
 let counter = 0
 function createChallengeId() {
   counter += 1

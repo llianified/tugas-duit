@@ -27,7 +27,7 @@ import { MetaBadge, type ChipTone } from '@/shared/components/meta-badge'
 import { PageHeader } from '@/shared/components/page-header'
 import { PageRegion } from '@/shared/components/page-region'
 import { InfoHint } from '@/shared/components/info-hint'
-import { SectionLabel } from '@/shared/components/section-label'
+import { EYEBROW_CLASS, SectionLabel } from '@/shared/components/section-label'
 import { VIEW_TITLE } from '@/navigation/app-view'
 import { getRank } from '@/domain/progression/progression'
 import { prestigeBadges, type PrestigeKey } from '@/domain/progression/prestige'
@@ -529,12 +529,17 @@ function SeasonBanner({ endsAt }: { endsAt: number | null }) {
   if (endsAt === null) return null
   const secondsLeft = Math.max(0, Math.ceil((endsAt - now) / 1000))
 
+  /** Baris keterangan, bukan panel berisi. Bentuk pertamanya sebuah bilah `bg-muted` selebar layar
+   * tepat di bawah pemilih tab — bobot dan bahasa visualnya sama persis dengan bilah tab di atasnya,
+   * jadi yang terbaca dua lapis chrome yang berhimpitan, bukan satu halaman. Pasangan label-kecil di
+   * kiri dan angka teredam di kanan adalah pola yang sudah dipakai halaman ini di "Podium" dan
+   * "Perolehan teratas", jadi barisnya ikut ke sana alih-alih menambah lapis baru. */
   return (
-    <p className="flex items-baseline justify-between gap-3 rounded-lg bg-muted px-3 py-2">
-      <span className="text-xs font-medium text-foreground">Musim ini</span>
+    <div className="region-under-brand flex items-baseline justify-between gap-3">
+      <span className={EYEBROW_CLASS}>Musim ini</span>
       <span className="text-xs font-medium tabular-nums text-muted-foreground">
-        {secondsLeft === 0 ? 'Berakhir, papan sedang direset' : `Sisa ${formatLongCountdown(secondsLeft)}`}
+        {secondsLeft === 0 ? 'Papan sedang direset' : `Berakhir ${formatLongCountdown(secondsLeft)} lagi`}
       </span>
-    </p>
+    </div>
   )
 }

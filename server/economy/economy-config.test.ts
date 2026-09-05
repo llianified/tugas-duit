@@ -206,8 +206,16 @@ describe('konsumen membaca dari satu sumber kebenaran', () => {
     const adminId = await makeUser(true)
 
     expect(commissionUnitsForReward(10)).toBe(100)
-    await updateEconomyConfig(adminId, patched({ referralCommissionPercent: 20 }), 1)
+    await updateEconomyConfig(
+      adminId,
+      patched({ referralCommissionPercent: 20, premiumReferralCommissionPercent: 30 }),
+      1,
+    )
     expect(commissionUnitsForReward(10)).toBe(200)
+    /** Upline premium dibayar dari lajunya sendiri. Keduanya dibaca dari config yang sama, jadi
+     * satu-satunya cara selisih ini hilang diam-diam adalah kalau pemanggilnya lupa mengoper
+     * premium — dan itu yang dijaga di sini, bukan aritmetikanya. */
+    expect(commissionUnitsForReward(10, true)).toBe(300)
   })
 
   it('minimum dan maksimum penarikan mengikuti nominal yang disetel', async () => {

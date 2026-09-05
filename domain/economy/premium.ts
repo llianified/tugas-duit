@@ -76,6 +76,10 @@ export interface PremiumPerks {
   baseMaxTasksPerDay: number
   withdrawalCooldownDays: number
   baseWithdrawalCooldownDays: number
+  referralCommissionPercent: number
+  baseReferralCommissionPercent: number
+  dailyCommissionCapIdr: number
+  baseDailyCommissionCapIdr: number
 }
 
 export function premiumPerks(): PremiumPerks {
@@ -90,5 +94,9 @@ export function premiumPerks(): PremiumPerks {
     baseMaxTasksPerDay: config.maxTasksPerDay,
     withdrawalCooldownDays: config.premiumWithdrawalCooldownDays,
     baseWithdrawalCooldownDays: config.withdrawalCooldownDays,
+    referralCommissionPercent: config.premiumReferralCommissionPercent,
+    baseReferralCommissionPercent: config.referralCommissionPercent,
+    dailyCommissionCapIdr: config.premiumDailyCommissionCapIdr,
+    baseDailyCommissionCapIdr: config.dailyCommissionCapIdr,
   }
 }

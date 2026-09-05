@@ -1463,6 +1463,55 @@
     }
   }
 
+  /* --- Lapisan premium: gerak yang cuma dimiliki emas -----------------------
+     Premium sudah punya warna (`--premium`) dan bentuk (perangko bertinta emas). Yang belum
+     dimilikinya adalah GERAK, dan itu yang membuat bidang berbayar terbaca "hidup" tanpa harus
+     memperbesar apa pun. Dua kelas, dua pekerjaan berbeda — dan keduanya sengaja lambat: bidang
+     yang berkedip cepat terbaca sebagai galat, bukan sebagai status.
+
+     `.premium-sheen` menyapu kertas perangko yang BELUM dibeli. Ia kembaran `.cta-sheen`, dengan
+     dua bedanya disengaja: kilaunya emas (mengikuti `--stamp-accent`, jadi ia ikut berganti kalau
+     perangkonya berganti tinta) dan jedanya jauh lebih panjang — sapuan tiap 2,6 detik pantas
+     untuk tombol yang sedang ditunggu ditekan, tapi di kartu yang cuma lewat di beranda ia
+     berubah jadi kedipan yang menuntut perhatian terus-menerus.
+
+     `.premium-glint` untuk mahkota MILIK SENDIRI, bukan mahkota di daftar. Mahkota di papan
+     peringkat muncul di setiap baris premium; menganimasikan semuanya berarti seluruh daftar
+     berdenyut serentak, karena animasi CSS di elemen sejenis mulai pada waktu yang sama. Yang
+     dianimasikan cuma mahkota yang menyatakan status PEMBACANYA — di beranda, profil, dan sheet
+     premium — tempat ia satu-satunya di layar. */
+  .premium-sheen {
+    position: relative;
+    overflow: hidden;
+  }
+  .premium-sheen::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      transparent 38%,
+      color-mix(in oklab, var(--stamp-accent, var(--premium)) 22%, transparent) 50%,
+      transparent 62%
+    );
+    transform: translateX(-100%);
+    animation: cta-sheen-move 7s var(--ease-out-quart) infinite;
+    pointer-events: none;
+  }
+  @keyframes premium-glint {
+    0%,
+    72%,
+    100% {
+      filter: none;
+    }
+    84% {
+      filter: drop-shadow(0 0 5px color-mix(in oklab, var(--premium) 70%, transparent));
+    }
+  }
+  .premium-glint {
+    animation: premium-glint 4.5s ease-in-out infinite;
+  }
+
   .channel-popup {
     transition:
       opacity 120ms ease-out,
@@ -1511,11 +1560,17 @@
     }
     .slot-active,
     .animate-answer-shake,
-    .cta-sheen::after {
+    .cta-sheen::after,
+    .premium-sheen::after,
+    .premium-glint {
       animation: none;
     }
-    .cta-sheen::after {
+    .cta-sheen::after,
+    .premium-sheen::after {
       display: none;
+    }
+    .premium-glint {
+      filter: none;
     }
     .animate-check-draw {
       stroke-dasharray: none;

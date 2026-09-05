@@ -51,6 +51,7 @@ const HISTORIC: EconomyConfig = {
   premiumPrice1Idr: 19_900, premiumPrice2Idr: 34_900, premiumPrice3Idr: 44_900,
   premiumMaxEnergy: 10, premiumEnergyRegenMinutes: 25, premiumPoolCapBonus: 15,
   premiumMaxTasksPerDay: 1_000, premiumWithdrawalCooldownDays: 3,
+  premiumReferralCommissionPercent: 15, premiumDailyCommissionCapIdr: 12_000,
   turboRewardEnabled: 1,
   // Arena aktif setelah konfigurasi biaya, jatah, dan gerbang iklannya ditinjau.
   arcadeEnabled: 1, arcadeAdGated: 1, arcadeMaxPlaysPerDay: 3, arcadeCooldownSeconds: 300,

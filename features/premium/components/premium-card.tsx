@@ -53,7 +53,7 @@ function PremiumUpsellStamp({
       aria-label="Lihat paket premium"
       className="focus-ring transition-ui press-scale-soft flex w-full text-left"
     >
-      <span className="stamp stamp-card min-w-0 flex-1">
+      <span className="stamp stamp-card premium-sheen min-w-0 flex-1">
         {/* Nominal perangko: harga di sudut kanan atas, ukuran yang sama dengan angka nominal di perangko bonus — dua kertas, satu tinggi angka. */}
         <span className="stamp-card-head flex items-start justify-between gap-3">
           <span className="home-tag stamp-tag pt-1">Premium</span>

@@ -33,12 +33,15 @@ export function ReferralView({
   code,
   shareUrl,
   earnedCredits,
+  premium = false,
 }: {
   referrals: Referral[]
   summary: ReferralSummary
   code: string
   shareUrl: string
   earnedCredits: number
+  /** Menentukan persen yang ditulis "Cara kerjanya". Dikirim dari sesi, bukan dibaca ulang dari config di klien: `accrueCommission` memakai premium upline saat komisinya dibukukan, dan halaman yang menjanjikan persen berbeda dari yang dibayar adalah bentuk kegagalan yang cuma terlihat di mutasi. */
+  premium?: boolean
 }) {
   return (
     <div className="view-min-h flex flex-col">
@@ -62,7 +65,7 @@ export function ReferralView({
       </PageRegion>
 
       <PageRegion>
-        <RuleNote />
+        <RuleNote premium={premium} />
       </PageRegion>
 
       <PageRegion>
@@ -225,8 +228,8 @@ function InviteCard({
   )
 }
 
-function RuleNote() {
-  const percent = formatCredits(referralCommissionPercent())
+function RuleNote({ premium }: { premium: boolean }) {
+  const percent = formatCredits(referralCommissionPercent(premium))
 
   return (
     <section aria-label="Cara program referral bekerja">

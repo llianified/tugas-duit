@@ -70,7 +70,7 @@ export function ProfileIsland({
             <span className="truncate text-xs font-semibold text-foreground">
               {user.firstName}
             </span>
-            {isPremium ? <GlyphCrown className="size-3.5 shrink-0 text-premium" /> : null}
+            {isPremium ? <GlyphCrown className="premium-glint size-3.5 shrink-0 text-premium" /> : null}
           </span>
         }
         tone="muted"

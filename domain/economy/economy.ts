@@ -37,9 +37,10 @@ export function channelGateRequired(): boolean {
   return economyConfig().channelGateEnabled > 0
 }
 
-export function dailyCommissionCreditCap(): number {
+export function dailyCommissionCreditCap(premium = false): number {
   const config = economyConfig()
-  return config.dailyCommissionCapIdr / config.creditValueIdr
+  const capIdr = premium ? config.premiumDailyCommissionCapIdr : config.dailyCommissionCapIdr
+  return capIdr / config.creditValueIdr
 }
 
 /** Estimasi, bukan janji: dihitung dari laju isi ulang kolam reward selama 24 jam, dengan asumsi user menghabiskan setiap credit yang masuk. */

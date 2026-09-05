@@ -286,85 +286,74 @@ describe('WD-10 — notifikasi memakai jeda efektif user, bukan angka tetap', ()
   })
 })
 
-describe('WD-11 — syarat hari aktif sebelum penarikan pertama', () => {
+/** Gerbang hari aktif dicabut dan digantikan premium. Yang dijaga di sini bukan cuma penolakannya,
+ * tapi juga bahwa syaratnya BISA DIMATIKAN dari panel — gerbang berbayar yang tidak bisa dibuka
+ * lagi tanpa deploy adalah gerbang yang tidak akan pernah berani disetel. */
+describe('WD-11 — syarat premium sebelum penarikan', () => {
   const input = () => ({
     channelId: PAYOUT_CHANNELS[0].id,
     accountNumber: accountFor(PAYOUT_CHANNELS[0]),
-    accountName: 'Uji Hari Aktif',
+    accountName: 'Uji Premium',
     credits: withdrawalMinimumCredits(),
   })
 
-  it('menolak user yang saldonya cukup tapi belum punya hari aktif', async () => {
-    const { createPayout, requiredActiveDays } = await import('./payout')
-    const userId = await makeUser(withdrawalMinimumCredits(), 5, 0)
+  const withPremiumRequired = async <T,>(run: () => Promise<T>): Promise<T> => {
+    const { setActiveEconomyConfig, economyConfig } = await import('@/domain/economy/economy-config')
+    const before = economyConfig()
+    setActiveEconomyConfig({ ...before, withdrawalRequiresPremium: 1 })
+    try {
+      return await run()
+    } finally {
+      setActiveEconomyConfig(before)
+    }
+  }
 
-    await expect(createPayout(userId, input())).rejects.toMatchObject({
-      code: 'ACTIVE_DAYS_REQUIRED',
-      status: 403,
-      fields: { activeDays: '0', requiredActiveDays: String(requiredActiveDays()) },
+  it('menolak user yang syaratnya lengkap tapi belum premium', async () => {
+    const { createPayout } = await import('./payout')
+    const userId = await makeUser(withdrawalMinimumCredits(), 5)
+
+    await withPremiumRequired(async () => {
+      await expect(createPayout(userId, input())).rejects.toMatchObject({
+        code: 'PREMIUM_REQUIRED',
+        status: 403,
+      })
     })
   })
 
-  it('masih menolak saat kurang satu hari', async () => {
-    const { createPayout, requiredActiveDays } = await import('./payout')
-    const userId = await makeUser(withdrawalMinimumCredits(), 5, requiredActiveDays() - 1)
+  it('menerima begitu premiumnya aktif', async () => {
+    const { seedPremium } = await import('../__fixtures__/payout')
+    const { createPayout } = await import('./payout')
+    const userId = await makeUser(withdrawalMinimumCredits(), 5)
+    await seedPremium(userId)
 
-    await expect(createPayout(userId, input())).rejects.toMatchObject({
-      code: 'ACTIVE_DAYS_REQUIRED',
+    await withPremiumRequired(async () => {
+      await expect(createPayout(userId, input())).resolves.toHaveProperty('withdrawal')
     })
   })
 
-  it('menerima tepat di hari aktif ke-tujuh', async () => {
+  it('membuka penarikan lagi saat syaratnya dimatikan dari panel', async () => {
     const { createPayout } = await import('./payout')
     const userId = await makeUser(withdrawalMinimumCredits(), 5)
 
     await expect(createPayout(userId, input())).resolves.toHaveProperty('withdrawal')
   })
 
-  /** Yang dipilih pemilik repo hari aktif berbeda, bukan streak: bolong sehari tidak boleh mengulang dari nol. Fixture di sini sengaja berjarak dua hari supaya tidak ada satu pun rentetan berturut-turut yang panjangnya tujuh. */
-  it('menghitung hari yang tidak berturut-turut', async () => {
-    const { query } = await import('../platform/db')
-    const { createPayout, getPayouts, requiredActiveDays } = await import('./payout')
-    const userId = await makeUser(withdrawalMinimumCredits(), 5, 0)
-
-    await query(
-      `with baru as (
-         insert into challenges(user_id,type,difficulty,payload,answer_hash,max_reward,
-                                expires_at,submitted_at,solved)
-         select $1,'text','Easy','{}','\\x00',1,now(),now(),true from generate_series(1,$2) g
-         returning id
-       ), bernomor as (
-         select id, (row_number() over ())::int rn from baru
-       )
-       insert into task_completions(user_id,challenge_id,type,difficulty,elapsed_ms,stars,reward,completed_at)
-       select $1, id, 'text', 'Easy', 1000, 3, 1, now() - (rn * 2 * interval '1 day') from bernomor`,
-      [userId, requiredActiveDays()],
-    )
-
-    const eligibility = (await getPayouts(userId)).eligibility
-    expect(eligibility.activeDays).toBe(requiredActiveDays())
-    expect(eligibility.requiredActiveDays).toBe(requiredActiveDays())
-    await expect(createPayout(userId, input())).resolves.toHaveProperty('withdrawal')
-  })
-
-  it('dua task di hari yang sama tetap dihitung satu hari', async () => {
-    const { query } = await import('../platform/db')
+  /** Daftar syarat yang dibaca UI harus menyebut keadaan yang sama dengan yang ditegakkan server.
+   * Kalau keduanya berbeda, user melihat checklist yang lengkap lalu ditolak di ujung — persis
+   * bentuk kegagalan yang daftar ini ada untuk mencegahnya. */
+  it('melaporkan syarat premium apa adanya ke UI', async () => {
     const { getPayouts } = await import('./payout')
-    const userId = await makeUser(withdrawalMinimumCredits(), 5, 0)
+    const userId = await makeUser(withdrawalMinimumCredits(), 5)
 
-    await query(
-      `with baru as (
-         insert into challenges(user_id,type,difficulty,payload,answer_hash,max_reward,
-                                expires_at,submitted_at,solved)
-         select $1,'text','Easy','{}','\\x00',1,now(),now(),true from generate_series(1,5) g
-         returning id
-       )
-       insert into task_completions(user_id,challenge_id,type,difficulty,elapsed_ms,stars,reward,completed_at)
-       select $1, id, 'text', 'Easy', 1000, 3, 1, now() - interval '1 day' from baru`,
-      [userId],
-    )
+    const mati = (await getPayouts(userId)).eligibility
+    expect(mati.requiresPremium).toBe(false)
+    expect(mati.premiumActive).toBe(false)
 
-    expect((await getPayouts(userId)).eligibility.activeDays).toBe(1)
+    await withPremiumRequired(async () => {
+      const nyala = (await getPayouts(userId)).eligibility
+      expect(nyala.requiresPremium).toBe(true)
+      expect(nyala.premiumActive).toBe(false)
+    })
   })
 })
 

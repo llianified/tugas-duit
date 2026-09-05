@@ -1,6 +1,5 @@
 import { query } from '../platform/db'
 import {
-  requiredActiveDays,
   requiredActiveReferrals,
   withdrawalCooldownMsForBase,
 } from '../payout/payout-rules'
@@ -45,11 +44,10 @@ export async function clearWithdrawalCooldown(userId: number): Promise<void> {
   )
 }
 
-/** Menyiapkan hari aktif: satu task selesai per hari WIB berbeda, mundur dari kemarin. Batas harinya harus sama persis dengan `ELIGIBILITY_SQL` di `payout.ts` — keduanya memakai `(completed_at at time zone 'Asia/Jakarta')::date`. */
-export async function seedActiveDays(
-  userId: number,
-  days = requiredActiveDays(),
-): Promise<void> {
+/** Menyiapkan hari aktif: satu task selesai per hari WIB berbeda, mundur dari kemarin. Bukan lagi
+ * syarat penarikan — gerbang itu dicabut dan digantikan premium — tapi tetap dipakai berkas uji
+ * yang butuh riwayat task yang tersebar di beberapa hari, misalnya statistik dan streak. */
+export async function seedActiveDays(userId: number, days = 7): Promise<void> {
   if (days <= 0) return
   await query(
     `with baru as (
@@ -66,8 +64,19 @@ export async function seedActiveDays(
   )
 }
 
-/** Semua syarat kelayakan penarikan sekaligus. Ini yang dipakai berkas uji yang cuma perlu lolos gerbang tanpa peduli syarat mana yang sedang diuji — jadi saat gerbangnya bertambah, yang berubah cukup fungsi ini, bukan setiap `*.test.ts` yang menyentuh penarikan. */
+/** Premium aktif sampai sebulan ke depan. Terpisah dari `seedWithdrawalEligibility` supaya berkas
+ * uji yang justru menguji gerbang premium bisa menyalakannya sendiri. */
+export async function seedPremium(userId: number): Promise<void> {
+  await query(`update users set premium_until = now() + interval '30 days' where id=$1`, [userId])
+}
+
+/** Semua syarat kelayakan penarikan sekaligus. Ini yang dipakai berkas uji yang cuma perlu lolos gerbang tanpa peduli syarat mana yang sedang diuji — jadi saat gerbangnya bertambah, yang berubah cukup fungsi ini, bukan setiap `*.test.ts` yang menyentuh penarikan.
+ *
+ * Premium sengaja TIDAK ikut di sini walau ia gerbang penarikan, karena bawaannya mati dan
+ * menyalakannya punya efek samping jauh di luar penarikan: `maxTasksPerDay` beralih ke plafon
+ * premium, dan berkas uji yang menguji batas task harian akan lulus atau gagal karena alasan yang
+ * tidak ada hubungannya dengan yang sedang diuji. Uji yang memang menguji gerbang premium
+ * memanggil `seedPremium` sendiri. */
 export async function seedWithdrawalEligibility(userId: number): Promise<void> {
   await seedActiveReferrals(userId)
-  await seedActiveDays(userId)
 }

@@ -6,7 +6,7 @@ import { projectRewardPool, rewardPoolCapacity } from '../../domain/economy/rewa
 import { getRank } from '../../domain/progression/progression.ts'
 import { formatCredits, formatRupiah } from '../../shared/lib/format.ts'
 import { query } from '../platform/db.ts'
-import { requiredActiveDays, requiredActiveReferrals } from '../payout/payout-rules.ts'
+import { payoutRequiresPremium, requiredActiveReferrals } from '../payout/payout-rules.ts'
 import { escapeTelegramHtml as escapeHtml, openAppMarkup, sendTelegramMessage } from '../integrations/telegram.ts'
 
 export type EngagementKind =
@@ -85,8 +85,6 @@ const CANDIDATE_SQL = `with notified as (
       tasks_today,
     (select count(distinct rc.downline_id) from referral_commissions rc where rc.upline_id=p.id)::int
       active_referrals,
-    (select count(distinct (tc.completed_at at time zone 'Asia/Jakarta')::date)
-       from task_completions tc where tc.user_id=p.id)::int active_days,
     (select max(w.requested_at) from withdrawals w where w.user_id=p.id) last_withdrawal_at,
     (select count(*) from withdrawals w where w.user_id=p.id and w.state='processing')::int
       processing_withdrawals,
@@ -132,7 +130,6 @@ export type CandidateRow = {
   last_task_at: Date | null
   tasks_today: number
   active_referrals: number
-  active_days: number
   last_withdrawal_at: Date | null
   processing_withdrawals: number
   commission_today: number
@@ -178,7 +175,7 @@ function withdrawReady(row: CandidateRow, balance: number, premium: boolean): bo
   if (balance < withdrawalMinimumCredits()) return false
   if (row.processing_withdrawals > 0) return false
   if (row.active_referrals < requiredActiveReferrals()) return false
-  if (row.active_days < requiredActiveDays()) return false
+  if (payoutRequiresPremium() && !premium) return false
   if (!row.last_withdrawal_at) return true
   return row.last_withdrawal_at.getTime() + withdrawalCooldownMs(premium) <= row.now.getTime()
 }

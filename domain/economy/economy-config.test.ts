@@ -32,7 +32,7 @@ const HISTORIC: EconomyConfig = {
   inAppAdsIntervalSeconds: 30, inAppAdsTimeoutSeconds: 5,
   withdrawalMinimumIdr: 10_000, withdrawalMinActiveReferrals: 5,
   // Dulu konstanta kode: REQUIRED_ACTIVE_DAYS di payout-rules.ts dan | WITHDRAWAL_COOLDOWN_DAYS di domain/premium.ts. Angkanya sama persis, jadi | memindahkannya ke panel tidak menggeser satu pun gerbang yang berjalan.
-  withdrawalMinActiveDays: 7, withdrawalCooldownDays: 7,
+  withdrawalRequiresPremium: 0, withdrawalCooldownDays: 7,
   // Dulu LEADERBOARD_ENABLED = true di features/leaderboard/availability.ts.
   leaderboardEnabled: 1, leaderboardSeasonDays: 7,
   // Dulu MISSIONS di domain/missions.ts.
@@ -285,7 +285,7 @@ describe('invarian setelan panel yang baru dipindah dari kode', () => {
   })
 
   it('hari aktif minimum tidak boleh nol — itu mencabut gerbang waktunya sama sekali', () => {
-    expect(validateEconomyConfig(withField({ withdrawalMinActiveDays: 0 })).ok).toBe(false)
+    expect(validateEconomyConfig(withField({ withdrawalRequiresPremium: 2 })).ok).toBe(false)
   })
 })
 

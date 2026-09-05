@@ -12,7 +12,7 @@ import type { PoolClient } from 'pg'
 import { query, transaction } from '../platform/db'
 import { appendLedger } from '../economy/ledger'
 import {
-  requiredActiveDays,
+  payoutRequiresPremium,
   requiredActiveReferrals,
   withdrawalCooldownMsForBase,
 } from './payout-rules'
@@ -33,14 +33,13 @@ export class PayoutError extends Error {
 }
 
 const PG_UNIQUE_VIOLATION = '23505'
-export { requiredActiveDays, requiredActiveReferrals, withdrawalCooldownMsForBase }
+export { payoutRequiresPremium, requiredActiveReferrals, withdrawalCooldownMsForBase }
 
 interface PayoutEligibility {
   activeReferralCount: number
   requiredActiveReferrals: number
-  /** Hari WIB berbeda yang pernah punya minimal satu task selesai. */
-  activeDays: number
-  requiredActiveDays: number
+  premiumActive: boolean
+  requiresPremium: boolean
   cooldownEndsAt: number | null
   /** Jeda yang benar-benar berlaku untuk user ini — 3 hari kalau premium, 7 kalau tidak. */
   cooldownDays: number
@@ -48,14 +47,11 @@ interface PayoutEligibility {
 
 const ELIGIBILITY_SQL = `select
    (select count(distinct downline_id) from referral_commissions where upline_id=$1) active_referral_count,
-   (select count(distinct (completed_at at time zone 'Asia/Jakarta')::date)
-      from task_completions where user_id=$1) active_days,
    (select max(requested_at) from withdrawals where user_id=$1) last_requested_at,
    (select premium_until from users where id=$1) premium_until`
 
 type EligibilityRow = {
   active_referral_count: string
-  active_days: string
   last_requested_at: Date | null
   premium_until: Date | null
 }
@@ -74,8 +70,8 @@ async function readEligibility(userId: number, tx?: PoolClient): Promise<PayoutE
   return {
     activeReferralCount: Number(row.active_referral_count),
     requiredActiveReferrals: requiredActiveReferrals(),
-    activeDays: Number(row.active_days),
-    requiredActiveDays: requiredActiveDays(),
+    premiumActive: premium,
+    requiresPremium: payoutRequiresPremium(),
     cooldownEndsAt: endsAt && endsAt > now ? endsAt : null,
     cooldownDays: Math.round(cooldownMs / 86_400_000),
   }
@@ -179,17 +175,16 @@ export async function createPayout(
     if (body.credits > balance) throw new PayoutError('INSUFFICIENT_BALANCE', 400)
 
     const eligibility = await readEligibility(userId, tx)
-    if (eligibility.activeDays < eligibility.requiredActiveDays) {
-      throw new PayoutError('ACTIVE_DAYS_REQUIRED', 403, {
-        activeDays: String(eligibility.activeDays),
-        requiredActiveDays: String(eligibility.requiredActiveDays),
-      })
-    }
     if (eligibility.activeReferralCount < eligibility.requiredActiveReferrals) {
       throw new PayoutError('ACTIVE_REFERRALS_REQUIRED', 403, {
         activeReferralCount: String(eligibility.activeReferralCount),
         requiredActiveReferrals: String(eligibility.requiredActiveReferrals),
       })
+    }
+    /** Ditegakkan di server, bukan cuma digambar di klien: daftar syarat yang dilihat user dan
+     * yang benar-benar menahan pengajuan harus satu sumber, kalau tidak salah satunya berbohong. */
+    if (eligibility.requiresPremium && !eligibility.premiumActive) {
+      throw new PayoutError('PREMIUM_REQUIRED', 403)
     }
     if (eligibility.cooldownEndsAt) {
       throw new PayoutError('WITHDRAWAL_COOLDOWN', 429, {

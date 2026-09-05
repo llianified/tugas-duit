@@ -28,5 +28,5 @@ it('menyiapkan user preview yang layak menarik dana', async () => {
   await clearWithdrawalCooldown(id)
 
   const { eligibility } = await getPayouts(id)
-  expect(eligibility.activeDays).toBeGreaterThanOrEqual(eligibility.requiredActiveDays)
+  expect(eligibility.activeReferralCount).toBeGreaterThanOrEqual(eligibility.requiredActiveReferrals)
 })

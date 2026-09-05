@@ -13,7 +13,11 @@ import {
 import { WithdrawReceipt } from '@/features/withdraw/components/withdraw-receipt'
 import { WithdrawalList } from '@/features/withdraw/components/withdrawal-list'
 import { withdrawalGatingReason } from '@/domain/economy/withdrawal'
-import type { Withdrawal, WithdrawalEligibility } from '@/domain/economy/withdrawal'
+import {
+  withdrawalRequirements,
+  type Withdrawal,
+  type WithdrawalEligibility,
+} from '@/domain/economy/withdrawal'
 
 export function WithdrawDialog({
   open,
@@ -128,12 +132,9 @@ function WithdrawDialogBody({
                 <div className="mt-[var(--region-gap)]">
                   <NotEligibleNote
                     reason={gatingReason}
-                    activeReferralCount={eligibility?.activeReferralCount}
-                    requiredActiveReferrals={eligibility?.requiredActiveReferrals}
+                    requirements={withdrawalRequirements({ balance, eligibility })}
                     cooldownEndsAt={eligibility?.cooldownEndsAt}
                     cooldownDays={eligibility?.cooldownDays ?? null}
-                    activeDays={eligibility?.activeDays}
-                    requiredActiveDays={eligibility?.requiredActiveDays}
                   />
                 </div>
 

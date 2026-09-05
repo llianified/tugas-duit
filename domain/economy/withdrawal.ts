@@ -2,6 +2,7 @@ import {
   creditsToRupiah,
   getWithdrawalStatus,
   maxPayoutCredits,
+  withdrawalMinActiveReferrals,
   withdrawalMinimumCredits,
 } from '@/domain/economy/economy'
 
@@ -82,9 +83,11 @@ type WithdrawalState = 'processing' | 'paid' | 'rejected'
 export interface WithdrawalEligibility {
   activeReferralCount: number
   requiredActiveReferrals: number
-  /** Hari WIB berbeda yang pernah punya minimal satu task selesai — tidak harus berturut-turut. */
-  activeDays: number
-  requiredActiveDays: number
+  premiumActive: boolean
+  /** Apakah premium sedang diwajibkan (`withdrawalRequiresPremium`). Dikirim dari server, bukan
+   * dibaca ulang di klien, supaya daftar syarat yang dilihat user selalu sama dengan yang
+   * benar-benar ditegakkan `createPayout`. */
+  requiresPremium: boolean
   cooldownEndsAt: number | null
   /** Jeda yang berlaku untuk user ini: premium lebih pendek, jadi tidak boleh ditulis tetap di UI. */
   cooldownDays: number
@@ -240,9 +243,66 @@ export type WithdrawalGatingReason =
   | 'processing'
   | 'balance'
   | 'loading'
-  | 'days'
   | 'referrals'
+  | 'premium'
   | 'cooldown'
+
+export type WithdrawalRequirementKey = 'balance' | 'referrals' | 'premium'
+
+export interface WithdrawalRequirement {
+  key: WithdrawalRequirementKey
+  done: boolean
+  /** Progres dan targetnya untuk syarat yang bisa dihitung; `null` untuk syarat ya-atau-tidak.
+   * Angkanya mentah — yang memformat rupiah dan credit tetap `shared/lib/format`. */
+  current: number | null
+  required: number | null
+}
+
+/** Seluruh syarat penarikan sekaligus, bukan satu alasan yang menghalangi saat ini.
+ *
+ * Bentuk lamanya menyajikan satu penghalang teratas, dan itu menyembunyikan sisanya: user membaca
+ * "kumpulkan saldo dulu", memenuhinya setelah berminggu-minggu, lalu menemukan syarat kedua — dan
+ * kalau syarat terakhirnya berbayar, ia menemukannya setelah mengumpulkan saldo DAN mengajak lima
+ * teman. Daftar utuh membuat harganya terbaca sejak hari pertama, dan orang yang tetap
+ * mengumpulkan sambil tahu ada premium di ujungnya adalah calon pembeli, bukan calon komplain. */
+export function withdrawalRequirements(input: {
+  balance: number
+  eligibility: WithdrawalEligibility | null
+}): WithdrawalRequirement[] {
+  const minimum = withdrawalMinimumCredits()
+  const list: WithdrawalRequirement[] = [
+    {
+      key: 'balance',
+      done: input.balance >= minimum,
+      current: Math.floor(input.balance),
+      required: minimum,
+    },
+  ]
+
+  const eligibility = input.eligibility
+  const referralTarget = eligibility?.requiredActiveReferrals ?? withdrawalMinActiveReferrals()
+  if (referralTarget > 0) {
+    list.push({
+      key: 'referrals',
+      done: (eligibility?.activeReferralCount ?? 0) >= referralTarget,
+      current: eligibility?.activeReferralCount ?? 0,
+      required: referralTarget,
+    })
+  }
+
+  /** Baris premium hanya ada saat syaratnya memang menyala. Menampilkannya sebagai syarat yang
+   * sudah terpenuhi saat ia tidak diwajibkan akan mengiklankan gerbang yang tidak ada. */
+  if (eligibility?.requiresPremium) {
+    list.push({
+      key: 'premium',
+      done: eligibility.premiumActive,
+      current: null,
+      required: null,
+    })
+  }
+
+  return list
+}
 
 /** Alasan penarikan belum bisa diajukan, atau `null` kalau formulirnya boleh dibuka. Aturan, bukan penyajian, jadi ia tinggal di sini bersama `validateWithdrawalDraft` — dan bisa diuji tanpa merender apa pun.
  *
@@ -259,8 +319,8 @@ export function withdrawalGatingReason(input: {
 
   const eligibility = input.eligibility
   if (!eligibility) return 'loading'
-  if (eligibility.activeDays < eligibility.requiredActiveDays) return 'days'
   if (eligibility.activeReferralCount < eligibility.requiredActiveReferrals) return 'referrals'
+  if (eligibility.requiresPremium && !eligibility.premiumActive) return 'premium'
   if (eligibility.cooldownEndsAt) return 'cooldown'
   return null
 }

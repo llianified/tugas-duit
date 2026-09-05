@@ -11,6 +11,7 @@ import {
   ChallengeText,
 } from '@/features/captcha/components/board'
 import { CaptchaKeypad } from '@/features/captcha/components/keypad'
+import { MetaBadge } from '@/shared/components/meta-badge'
 import { CaptchaMeter } from '@/features/captcha/components/meter'
 import { CaptchaSuccessPanel } from '@/features/captcha/components/success'
 import { ActionButton } from '@/shared/components/action-button'
@@ -115,6 +116,20 @@ export function CaptchaView({
       <div className="flex min-h-0 flex-1 flex-col justify-center gap-3">
         {challenge.type === 'select' || challenge.type === 'count' ? (
           <ChallengeSelectBoard instruction={challenge.instruction} />
+        ) : challenge.type === 'order' ? (
+          /** Instruksi soal ini menanggung SELURUH bebannya: "terkecil" dan "terbesar" cuma beda
+           * satu kata, sementara petak angkanya besar dan menuntut perhatian duluan. Sebagai teks
+           * kecil teredam, ia kalah — dan yang menang adalah pola pikir bawaan orang saat melihat
+           * angka acak, yaitu mengurutkan menaik. Karena itu arahnya diangkat jadi lencana yang
+           * berdiri sendiri, bukan kata di tengah kalimat. */
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-center text-sm text-muted-foreground text-pretty">
+              Ketuk angka berurutan
+            </p>
+            <MetaBadge tone="primary">
+              {challenge.variant === 'descending' ? 'Terbesar dulu' : 'Terkecil dulu'}
+            </MetaBadge>
+          </div>
         ) : (
           <p className="text-center text-sm text-muted-foreground text-pretty">
             {challenge.instruction}

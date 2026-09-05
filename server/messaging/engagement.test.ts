@@ -35,7 +35,6 @@ function candidate(overrides: Partial<CandidateRow> = {}): CandidateRow {
     completed_count_before: 10,
     last_task_at: new Date(now.getTime() - 4 * HOURS),
     tasks_today: 1,
-    active_days: 30,
     active_referrals: 0,
     last_withdrawal_at: null,
     processing_withdrawals: 0,
@@ -123,7 +122,7 @@ describe('ENG-4 — saldo siap ditarik memakai gating yang sama dengan createPay
 
   // Kalau gating di sini tertinggal dari `createPayout`, bot mengajak user menarik lalu | server menolaknya — kegagalan yang paling merusak kepercayaan di jalur uang.
   it('diam saat hari aktifnya masih kurang', () => {
-    expect(pickMessage(ready({ active_days: 6 }), 0)?.kind).not.toBe('withdraw_ready')
+    expect(pickMessage(ready({ active_referrals: 0 }), 0)?.kind).not.toBe('withdraw_ready')
   })
 
   it('diam saat saldonya belum sampai batas minimal', () => {

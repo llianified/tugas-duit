@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { MissionProgress } from '@/domain/progression/missions'
+import { RewardReveal } from '@/features/missions/reward-reveal'
 import { SocialMissionSheet } from '@/features/missions/social-mission-sheet'
 import { useMissions } from '@/features/missions/use-missions'
 import { MissionListSkeleton } from '@/shared/components/app-skeleton'
@@ -30,6 +31,22 @@ export function MissionCard({
     onClaimed,
   })
   const [socialMissionKey, setSocialMissionKey] = useState<string | null>(null)
+  /** Nominal yang sedang dirayakan bingkisan, `null` kalau tidak ada. Ia hidup di sini, bukan di
+   * dalam baris misinya: barisnya ikut hilang begitu daftar disegarkan setelah klaim, dan overlay
+   * yang dirender oleh elemen yang sedang dilepas React akan mati di frame pertama. */
+  const [revealAmount, setRevealAmount] = useState<number | null>(null)
+
+  /** Satu pintu klaim untuk dua jalur — tombol di baris dan konfirmasi di sheet misi sosial —
+   * supaya bingkisannya tidak perlu dipasang dua kali. Nilai baliknya tetap boolean karena
+   * `SocialMissionSheet` memakainya untuk menutup dirinya sendiri. Energi 0 (kapasitas user sudah
+   * penuh) tidak dirayakan: bingkisan yang dibuka lalu mengeluarkan "+0" lebih buruk daripada
+   * tidak ada bingkisan. */
+  const claimAndReveal = async (key: string): Promise<boolean> => {
+    const granted = await claim(key)
+    if (granted === null) return false
+    if (granted > 0) setRevealAmount(granted)
+    return true
+  }
   const page = variant === 'page'
   const selectedMission = missions?.find((mission) => mission.key === socialMissionKey) ?? null
 
@@ -67,7 +84,7 @@ export function MissionCard({
               key={mission.key}
               mission={mission}
               claiming={claiming === mission.key}
-              onClaim={() => void claim(mission.key)}
+              onClaim={() => void claimAndReveal(mission.key)}
               onOpenSocial={() => setSocialMissionKey(mission.key)}
             />
           ))}
@@ -86,9 +103,13 @@ export function MissionCard({
             if (!open) setSocialMissionKey(null)
           }}
           onStart={() => startAction(selectedMission.key)}
-          onConfirm={() => claim(selectedMission.key)}
+          onConfirm={() => claimAndReveal(selectedMission.key)}
         />
       ) : null}
+
+      {revealAmount === null ? null : (
+        <RewardReveal amount={revealAmount} onDone={() => setRevealAmount(null)} />
+      )}
     </>
   )
 }

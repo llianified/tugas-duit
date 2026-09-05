@@ -13,6 +13,7 @@ import { GlyphCheck, GlyphCopy, GlyphShare, GlyphUsers } from '@/shared/componen
 import { IconCircle } from '@/shared/components/icon-circle'
 import { PageHeader } from '@/shared/components/page-header'
 import { PageRegion } from '@/shared/components/page-region'
+import { ProgressBar } from '@/shared/components/progress-bar'
 import { SectionLabel } from '@/shared/components/section-label'
 import { Surface } from '@/shared/components/surface'
 import { TotalSummary } from '@/shared/components/total-summary'
@@ -103,10 +104,26 @@ function CommissionSummary({
     return <CommissionEmpty hasReferrals={hasReferrals} />
   }
 
+  /** Sisa unit menuju 1 TD berikutnya. Dulu kalimat saja, dan itu membuang satu-satunya angka di
+   * halaman ini yang benar-benar hampir selesai — 80/100 dibaca sebagai keterangan, bukan sebagai
+   * "tinggal dikit". Barnya memakai `ProgressBar` yang sama dengan stok reward dan misi, jadi
+   * "hampir penuh" punya satu bentuk di seluruh aplikasi. */
   const note =
-    summary.pendingUnits > 0
-      ? `${formatCredits(summary.pendingUnits)}/100 unit terkumpul menuju 1 TD berikutnya.`
-      : undefined
+    summary.pendingUnits > 0 ? (
+      <span className="flex flex-col gap-1.5">
+        <span>
+          <span className="font-semibold tabular-nums text-foreground">
+            {formatCredits(summary.pendingUnits)}/100
+          </span>{' '}
+          unit menuju 1 TD berikutnya.
+        </span>
+        <ProgressBar
+          value={summary.pendingUnits}
+          max={100}
+          valueText={`${formatCredits(summary.pendingUnits)} dari 100 unit menuju 1 TD berikutnya`}
+        />
+      </span>
+    ) : undefined
 
   return (
     <TotalSummary

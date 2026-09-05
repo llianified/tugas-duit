@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest'
 import {
   buildFacebookShareText,
   buildTwitterShareText,
+  buildWhatsappShareText,
   contentFor,
   FACEBOOK_HOME_URL,
   secondsUntilConfirmation,
+  TIKTOK_PROFILE_URL,
+  WHATSAPP_SHARE_URL,
   X_LIKE_REPOST_URL,
 } from './social-mission-sheet'
 
@@ -17,6 +20,8 @@ describe('pesan misi sosial', () => {
     'twitter_like_repost',
     'twitter_post',
     'facebook_post',
+    'whatsapp_share',
+    'tiktok_follow',
   ] as const
 
   it('menyertakan mention dan link referral user pada template Twitter', () => {
@@ -40,6 +45,22 @@ describe('pesan misi sosial', () => {
     expect(text).toContain(REFERRAL_URL)
     expect(contentFor('facebook_post').instruction).toMatch(/facebook/i)
     expect(FACEBOOK_HOME_URL).toBe('https://www.facebook.com/')
+  })
+
+  it('menyertakan link referral user pada teks bagikan WhatsApp', () => {
+    const text = buildWhatsappShareText(REFERRAL_URL)
+
+    expect(text).toContain(REFERRAL_URL)
+    /** Tautannya membawa teksnya sendiri, jadi tidak ada langkah salin-tempel seperti Facebook. */
+    expect(WHATSAPP_SHARE_URL).toBe('https://wa.me/')
+    expect(new URL(WHATSAPP_SHARE_URL).searchParams.get('text')).toBeNull()
+  })
+
+  /** Yang dipaku handle-nya, bukan kalimatnya: profil yang salah mengirim orang ke akun yang bukan
+   * milik Tugas Duit, dan misinya tetap bisa dikonfirmasi karena tidak ada yang memverifikasi. */
+  it('menunjuk profil TikTok Tugas Duit dan menyebut handle-nya di instruksi', () => {
+    expect(TIKTOK_PROFILE_URL).toBe('https://www.tiktok.com/@tugas.duit')
+    expect(contentFor('tiktok_follow').instruction).toContain('@tugas.duit')
   })
 
   it('memberi tiap misi instruksi, label aksi, dan konfirmasi yang terisi', () => {

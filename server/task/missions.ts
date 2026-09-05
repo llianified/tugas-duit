@@ -5,6 +5,7 @@ import {
   isMissionKey,
   isSocialMissionKey,
   missionDefinition,
+  ONCE_SOCIAL_MISSION_KEYS,
   SOCIAL_MISSION_COOLDOWN_MS,
   type MissionCounts,
   type MissionKey,
@@ -16,6 +17,13 @@ import { isPremiumActive } from '@/domain/economy/premium'
 import { query, transaction } from '../platform/db'
 
 const TODAY = "(now() at time zone 'Asia/Jakarta')::date"
+
+/** Dikirim sebagai parameter, bukan ditempel sebagai literal ke dalam SQL. Bentuk lamanya menulis
+ * `('twitter_follow', 'twitter_like_repost')` langsung di dua kueri, dan irama misi jadi hidup di
+ * tiga tempat sekaligus: `cadence` di katalog, dan dua salinan SQL yang tidak pernah membacanya.
+ * Misi `once` yang lupa disalin ke sini terbit ulang tiap hari WIB — energinya bisa diklaim
+ * berkali-kali dari satu aksi yang sama, dan tidak ada yang gagal saat itu terjadi. */
+const ONCE_KEYS: string[] = [...ONCE_SOCIAL_MISSION_KEYS]
 
 /** Penghitung misi otomatis selalu dibaca dari sumber aslinya. Tayangan iklan hanya dihitung setelah `ready_at` terisi, yaitu setelah iklan benar-benar selesai. */
 const COUNTS_SQL = `select
@@ -44,12 +52,12 @@ const COUNTS_SQL = `select
       where user_id=$1 and (completed_at at time zone 'Asia/Jakarta')::date = ${TODAY})::int
       as variety`
 
-/** Follow X dan aksi pada post tetap dibaca sepanjang umur akun; klaim lainnya hanya milik hari WIB ini. */
+/** Misi sekali-seumur-akun tetap dibaca sepanjang umur akun; klaim lainnya hanya milik hari WIB ini. */
 const CLAIMED_SQL = `select mission_key from mission_claims
   where user_id=$1
     and (
       quota_date = ${TODAY}
-      or mission_key in ('twitter_follow', 'twitter_like_repost')
+      or mission_key = any($2::text[])
     )`
 
 const ATTEMPTS_SQL = `select
@@ -74,9 +82,10 @@ async function readCounts(userId: number, tx?: PoolClient): Promise<MissionCount
 }
 
 async function readClaimed(userId: number, tx?: PoolClient): Promise<MissionKey[]> {
+  const params = [userId, ONCE_KEYS]
   const rows = tx
-    ? (await tx.query<{ mission_key: string }>(CLAIMED_SQL, [userId])).rows
-    : await query<{ mission_key: string }>(CLAIMED_SQL, [userId])
+    ? (await tx.query<{ mission_key: string }>(CLAIMED_SQL, params)).rows
+    : await query<{ mission_key: string }>(CLAIMED_SQL, params)
   return rows.map((row) => row.mission_key).filter(isMissionKey)
 }
 
@@ -131,11 +140,11 @@ async function isAlreadyClaimed(
     `select 1 from mission_claims
       where user_id=$1 and mission_key=$2
         and (
-          $2 in ('twitter_follow', 'twitter_like_repost')
+          $2 = any($3::text[])
           or quota_date=${TODAY}
         )
       limit 1`,
-    [userId, key],
+    [userId, key, ONCE_KEYS],
   )
   return result.rows.length > 0
 }

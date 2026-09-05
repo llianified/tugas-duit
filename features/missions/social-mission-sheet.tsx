@@ -24,14 +24,29 @@ import { useToast } from '@/shell/toast'
 const X_FOLLOW_URL = 'https://twitter.com/intent/follow?screen_name=tugasduit'
 export const X_LIKE_REPOST_URL = 'https://x.com/TugasDuit/status/2095765886091276589'
 export const FACEBOOK_HOME_URL = 'https://www.facebook.com/'
+export const TIKTOK_PROFILE_URL = 'https://www.tiktok.com/@tugas.duit'
+/** Pemilih kontak dan grup, bukan Status: WhatsApp tidak punya tautan yang membuka komposer Status
+ * di semua perangkat, jadi misi yang menjanjikan Status akan menyuruh langkah yang tombolnya
+ * sendiri tidak bisa antar. */
+export const WHATSAPP_SHARE_URL = 'https://wa.me/'
 const AD_COPY = 'Kerjain soal singkat, kumpulin energi, dapetin reward'
+
+/** Tanpa mention, untuk platform yang akun Tugas Duit-nya tidak disebut di dalam teks. Satu sumber
+ * supaya dua platform tidak pelan-pelan menyimpang jadi dua kalimat iklan yang berbeda. */
+function buildPlainShareText(referralShareUrl: string): string {
+  return `${AD_COPY} bareng Tugas Duit.\n\nCoba aplikasinya: ${referralShareUrl}`
+}
 
 export function buildTwitterShareText(referralShareUrl: string): string {
   return `${AD_COPY} bareng @Tugasduit.\n\nCoba aplikasinya: ${referralShareUrl}`
 }
 
 export function buildFacebookShareText(referralShareUrl: string): string {
-  return `${AD_COPY} bareng Tugas Duit.\n\nCoba aplikasinya: ${referralShareUrl}`
+  return buildPlainShareText(referralShareUrl)
+}
+
+export function buildWhatsappShareText(referralShareUrl: string): string {
+  return buildPlainShareText(referralShareUrl)
 }
 
 type TelegramWebApp = {
@@ -81,6 +96,22 @@ export function contentFor(action: SocialMissionAction) {
       confirmLabel: 'Udah diposting',
     }
   }
+  if (action === 'whatsapp_share') {
+    return {
+      instruction: 'Tekan tombol di bawah, terus pilih grup atau kontak yang mau dikirimi.',
+      actionLabel: 'Kirim ke WhatsApp',
+      confirmation: 'Pesannya udah kekirim?',
+      confirmLabel: 'Udah kekirim',
+    }
+  }
+  if (action === 'tiktok_follow') {
+    return {
+      instruction: 'Buka profil @tugas.duit di TikTok, terus tekan Follow.',
+      actionLabel: 'Buka profil TikTok',
+      confirmation: 'Udah follow @tugas.duit?',
+      confirmLabel: 'Udah follow',
+    }
+  }
   return {
     instruction: 'Tekan tombol di bawah — teksnya kesalin sendiri, terus tinggal tempel di grup Facebook mana pun.',
     actionLabel: 'Salin teks dan buka Facebook',
@@ -122,11 +153,15 @@ export function SocialMissionSheet({
   const [copied, setCopied] = useState(false)
   const showError = useToast()
   const needsReferralLink =
-    mission.action === 'twitter_post' || mission.action === 'facebook_post'
+    mission.action === 'twitter_post' ||
+    mission.action === 'facebook_post' ||
+    mission.action === 'whatsapp_share'
   const shareText =
     mission.action === 'twitter_post'
       ? buildTwitterShareText(referralShareUrl)
-      : buildFacebookShareText(referralShareUrl)
+      : mission.action === 'whatsapp_share'
+        ? buildWhatsappShareText(referralShareUrl)
+        : buildFacebookShareText(referralShareUrl)
 
   useEffect(() => {
     if (timing === null) return
@@ -153,6 +188,12 @@ export function SocialMissionSheet({
       const intent = new URL('https://twitter.com/intent/tweet')
       intent.searchParams.set('text', shareText)
       openExternal(intent.toString())
+    } else if (mission.action === 'tiktok_follow') {
+      openExternal(TIKTOK_PROFILE_URL)
+    } else if (mission.action === 'whatsapp_share') {
+      const share = new URL(WHATSAPP_SHARE_URL)
+      share.searchParams.set('text', shareText)
+      openExternal(share.toString())
     } else {
       copyRequest = navigator.clipboard?.writeText
         ? navigator.clipboard.writeText(shareText)

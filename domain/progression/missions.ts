@@ -10,6 +10,8 @@ export type SocialMissionKey =
   | 'twitter_like_repost'
   | 'twitter_post'
   | 'facebook_post'
+  | 'whatsapp_share'
+  | 'tiktok_follow'
 export type MissionKey = AutomaticMissionKey | SocialMissionKey
 
 export const AUTOMATIC_MISSION_KEYS: readonly AutomaticMissionKey[] = [
@@ -53,6 +55,8 @@ export const MISSION_KEYS: readonly MissionKey[] = [
   'twitter_like_repost',
   'twitter_post',
   'facebook_post',
+  'whatsapp_share',
+  'tiktok_follow',
 ]
 
 export const SOCIAL_MISSION_KEYS: readonly SocialMissionKey[] = [
@@ -60,7 +64,29 @@ export const SOCIAL_MISSION_KEYS: readonly SocialMissionKey[] = [
   'twitter_like_repost',
   'twitter_post',
   'facebook_post',
+  'whatsapp_share',
+  'tiktok_follow',
 ]
+
+/** Irama tiap misi sosial, dipisah dari katalog supaya bisa dibaca tanpa konfigurasi ekonomi aktif.
+ * `server/task/missions.ts` menurunkan daftar misi sekali-seumur-akun dari sini pada waktu impor,
+ * dan `missionCatalog()` membacanya juga — jadi satu key tidak bisa punya dua irama yang berbeda.
+ * Sebelumnya daftar itu ditulis tangan sebagai literal SQL di dua tempat, dan misi `once` yang lupa
+ * didaftarkan akan diam-diam terbit ulang tiap hari WIB: energinya bisa diklaim berkali-kali dari
+ * satu aksi yang sama, tanpa satu pun test yang keberatan. */
+const SOCIAL_MISSION_CADENCE: Record<SocialMissionKey, 'once' | 'daily'> = {
+  twitter_follow: 'once',
+  twitter_like_repost: 'once',
+  twitter_post: 'daily',
+  facebook_post: 'daily',
+  whatsapp_share: 'daily',
+  tiktok_follow: 'once',
+}
+
+/** Misi sosial yang klaimnya berlaku sepanjang umur akun, bukan hanya hari WIB berjalan. */
+export const ONCE_SOCIAL_MISSION_KEYS: readonly SocialMissionKey[] = SOCIAL_MISSION_KEYS.filter(
+  (key) => SOCIAL_MISSION_CADENCE[key] === 'once',
+)
 
 export const SOCIAL_MISSION_COOLDOWN_MS = 10_000
 
@@ -114,7 +140,7 @@ function missionCatalog(): MissionDefinition[] {
       key: 'twitter_follow',
       kind: 'social',
       action: 'twitter_follow',
-      cadence: 'once',
+      cadence: SOCIAL_MISSION_CADENCE.twitter_follow,
       title: 'Follow Twitter Tugas Duit',
       target: 1,
       reward: config.missionTwitterFollowReward,
@@ -123,7 +149,7 @@ function missionCatalog(): MissionDefinition[] {
       key: 'twitter_like_repost',
       kind: 'social',
       action: 'twitter_like_repost',
-      cadence: 'once',
+      cadence: SOCIAL_MISSION_CADENCE.twitter_like_repost,
       title: 'Like & Retweet di X',
       target: 1,
       reward: config.missionTwitterLikeRepostReward,
@@ -132,7 +158,7 @@ function missionCatalog(): MissionDefinition[] {
       key: 'twitter_post',
       kind: 'social',
       action: 'twitter_post',
-      cadence: 'daily',
+      cadence: SOCIAL_MISSION_CADENCE.twitter_post,
       title: 'Post di Twitter',
       target: 1,
       reward: config.missionTwitterPostReward,
@@ -141,10 +167,33 @@ function missionCatalog(): MissionDefinition[] {
       key: 'facebook_post',
       kind: 'social',
       action: 'facebook_post',
-      cadence: 'daily',
+      cadence: SOCIAL_MISSION_CADENCE.facebook_post,
       title: 'Post di Facebook',
       target: 1,
       reward: config.missionFacebookPostReward,
+    },
+    /** Yang dibagikan bukan status, melainkan pesan ke kontak atau grup: WhatsApp tidak punya
+     * tautan yang membuka komposer Status di semua perangkat, jadi misi yang menyuruh "pasang di
+     * Status" akan menjanjikan langkah yang tombolnya sendiri tidak bisa antar. */
+    {
+      key: 'whatsapp_share',
+      kind: 'social',
+      action: 'whatsapp_share',
+      cadence: SOCIAL_MISSION_CADENCE.whatsapp_share,
+      title: 'Bagikan ke grup WhatsApp',
+      target: 1,
+      reward: config.missionWhatsappShareReward,
+    },
+    /** Follow saja, bukan bikin video: TikTok tidak menyediakan tautan yang mengisi komposernya,
+     * jadi misi membuat konten menuntut peninjauan manual yang belum ada tempatnya di panel. */
+    {
+      key: 'tiktok_follow',
+      kind: 'social',
+      action: 'tiktok_follow',
+      cadence: SOCIAL_MISSION_CADENCE.tiktok_follow,
+      title: 'Follow TikTok Tugas Duit',
+      target: 1,
+      reward: config.missionTiktokFollowReward,
     },
   ]
 }

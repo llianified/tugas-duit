@@ -64,6 +64,13 @@ export interface EconomyConfig {
   missionStarsReward: number
   missionAdsTarget: number
   missionAdsReward: number
+  missionHardTarget: number
+  missionHardReward: number
+  missionArcadeTarget: number
+  missionArcadeReward: number
+  missionVarietyTarget: number
+  missionVarietyReward: number
+  missionDailyCount: number
   missionTwitterFollowReward: number
   missionTwitterLikeRepostReward: number
   missionTwitterPostReward: number
@@ -160,6 +167,13 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   missionStarsReward: 2,
   missionAdsTarget: 3,
   missionAdsReward: 3,
+  missionHardTarget: 5,
+  missionHardReward: 2,
+  missionArcadeTarget: 2,
+  missionArcadeReward: 2,
+  missionVarietyTarget: 3,
+  missionVarietyReward: 2,
+  missionDailyCount: 3,
   missionTwitterFollowReward: 1,
   missionTwitterLikeRepostReward: 1,
   missionTwitterPostReward: 1,
@@ -551,6 +565,9 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
       ['missionTasksTarget', 'missionTasksReward', 'Selesaikan task', 'task'],
       ['missionStarsTarget', 'missionStarsReward', 'Task bintang tiga', 'task'],
       ['missionAdsTarget', 'missionAdsReward', 'Tonton iklan', 'tayangan'],
+      ['missionHardTarget', 'missionHardReward', 'Task Sulit', 'task'],
+      ['missionArcadeTarget', 'missionArcadeReward', 'Ronde Arena', 'ronde'],
+      ['missionVarietyTarget', 'missionVarietyReward', 'Jenis soal berbeda', 'jenis'],
     ] as [EconomyConfigKey, EconomyConfigKey, string, string][]
   ).flatMap(([targetKey, rewardKey, label, unit]): EconomyFieldMeta[] => [
     {
@@ -566,6 +583,12 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
       min: 1, max: 10, riskyWhen: 'higher',
     },
   ]),
+  {
+    key: 'missionDailyCount', group: 'mission', label: 'Misi otomatis per hari', unit: 'misi',
+    description: 'Berapa misi otomatis yang diundi untuk hari itu dari seluruh kolam misi. Undiannya sama untuk semua user dan berganti tiap hari WIB, jadi susunan misi hari ini bisa dibicarakan bersama.',
+    impact: 'Menaikkannya menambah energi gratis per hari sekaligus mengurangi variasi antar hari, karena makin banyak yang diundi makin mirip susunannya tiap hari.',
+    min: 1, max: 6, riskyWhen: 'higher',
+  },
   ...(
     [
       ['missionTwitterFollowReward', 'Follow Twitter', 'sekali per akun'],
@@ -781,11 +804,27 @@ export function validateEconomyConfig(
       `Target misi "Tonton iklan" tidak boleh melebihi plafon tayangan harian (${config.adsMaxViewsPerDay}), karena misi yang menuntut lebih banyak tayangan daripada yang boleh ditonton tidak pernah bisa diselesaikan.`
   }
 
+  /** Bentuk kesalahan yang sama dengan misi iklan: misi yang menuntut lebih dari yang boleh
+   * dilakukan tidak pernah bisa selesai, dan gagalnya diam — progresnya berhenti di N/M selamanya
+   * sementara titik pengingat di nav menyala terus. */
+  if (config.arcadeEnabled > 0 && config.missionArcadeTarget > config.arcadeMaxPlaysPerDay) {
+    errors.missionArcadeTarget =
+      `Target misi "Ronde Arena" tidak boleh melebihi jatah main harian (${config.arcadeMaxPlaysPerDay}).`
+  }
+
+  /** Cuma ada tiga jenis soal — Ketik Ulang, Hitung, dan Pilih Bentuk. */
+  if (config.missionVarietyTarget > 3) {
+    errors.missionVarietyTarget = 'Cuma ada 3 jenis soal, jadi targetnya tidak bisa lebih dari 3.'
+  }
+
   /** Hadiah misi harus muat di kapasitas energi biasa, bukan premium: `claimMission` menolak klaim yang hadiahnya terpotong, jadi hadiah yang lebih besar dari kapasitas membuat misinya tidak pernah bisa diambil user non-premium — gagal diam-diam, karena yang terlihat cuma tombol klaim yang selalu menolak. */
   const missionRewards: [EconomyConfigKey, string][] = [
     ['missionTasksReward', 'Selesaikan task'],
     ['missionStarsReward', 'Task bintang tiga'],
     ['missionAdsReward', 'Tonton iklan'],
+    ['missionHardReward', 'Task Sulit'],
+    ['missionArcadeReward', 'Ronde Arena'],
+    ['missionVarietyReward', 'Jenis soal berbeda'],
     ['missionTwitterFollowReward', 'Follow Twitter'],
     ['missionTwitterLikeRepostReward', 'Like & Retweet di X'],
     ['missionTwitterPostReward', 'Post Twitter'],

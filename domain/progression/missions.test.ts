@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '../economy/economy-config'
 import {
   MISSION_KEYS,
@@ -9,9 +9,27 @@ import {
   isMissionKey,
   missionDefinition,
   missions,
+  rotateAutomaticMissions,
+  todayWib,
+  type MissionCounts,
 } from './missions'
 
+/** Undian misi harian berganti tiap hari WIB, jadi test yang tidak memaku tanggalnya akan lulus
+ * hari ini dan gagal besok. Tanggal ini dipilih karena undiannya memuat ketiga misi otomatis yang
+ * sudah ada sebelum rotasi, sehingga test lama tetap menguji hal yang sama. */
+const HARI = '2026-09-04'
+const hitung = (partial: Partial<MissionCounts> = {}): MissionCounts => ({
+  tasks: 0, stars: 0, ads: 0, hard: 0, arcade: 0, variety: 0, ...partial,
+})
+
 describe('missions', () => {
+  /** Undian dibuka penuh untuk kelompok ini: yang diuji di sini logika progres dan klaim, bukan
+   * misi mana yang kebagian terbit hari itu. Rotasinya diuji terpisah di bawah. */
+  beforeEach(() =>
+    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, missionDailyCount: 6, arcadeEnabled: 1 }),
+  )
+  afterEach(() => setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG))
+
   it('menerima hanya kunci misi yang dikenal', () => {
     for (const key of MISSION_KEYS) expect(isMissionKey(key)).toBe(true)
     expect(isMissionKey('credits')).toBe(false)
@@ -19,7 +37,7 @@ describe('missions', () => {
 
   it('membatasi progres pada rentang nol sampai target', () => {
     const list = buildMissionProgress(
-      { tasks: -1, stars: missionDefinition('stars').target, ads: Number.MAX_SAFE_INTEGER },
+      hitung({ tasks: -1, stars: missionDefinition('stars').target, ads: Number.MAX_SAFE_INTEGER }),
       ['stars'],
     )
 
@@ -33,11 +51,11 @@ describe('missions', () => {
 
   it('hanya mengembalikan misi selesai yang belum diklaim', () => {
     const list = buildMissionProgress(
-      {
-        tasks: missionDefinition('tasks').target,
-        stars: missionDefinition('stars').target,
-        ads: 0,
-      },
+      hitung({
+          tasks: missionDefinition('tasks').target,
+          stars: missionDefinition('stars').target,
+          ads: 0,
+        }),
       ['stars'],
     )
 
@@ -45,27 +63,27 @@ describe('missions', () => {
   })
 
   it('menandai semua misi yang belum diklaim, terlepas dari progresnya', () => {
-    const incomplete = buildMissionProgress({ tasks: 0, stars: 0, ads: 0 }, [])
+    const incomplete = buildMissionProgress(hitung({ tasks: 0, stars: 0, ads: 0 }), [])
     expect(hasUnclaimedMissions(incomplete)).toBe(true)
 
     const claimable = buildMissionProgress(
-      {
-        tasks: missionDefinition('tasks').target,
-        stars: missionDefinition('stars').target,
-        ads: missionDefinition('ads').target,
-      },
+      hitung({
+          tasks: missionDefinition('tasks').target,
+          stars: missionDefinition('stars').target,
+          ads: missionDefinition('ads').target,
+        }),
       ['stars', 'ads'],
     )
     expect(hasUnclaimedMissions(claimable)).toBe(true)
 
-    const allClaimed = buildMissionProgress({ tasks: 0, stars: 0, ads: 0 }, MISSION_KEYS)
+    const allClaimed = buildMissionProgress(hitung({ tasks: 0, stars: 0, ads: 0 }), MISSION_KEYS)
     expect(hasUnclaimedMissions(allClaimed)).toBe(false)
   })
 
   it('membedakan misi sekali per akun dari post harian dan membawa waktu konfirmasi', () => {
     const confirmAt = Date.now() + 10_000
     const list = buildMissionProgress(
-      { tasks: 0, stars: 0, ads: 0 },
+      hitung({ tasks: 0, stars: 0, ads: 0 }),
       ['twitter_follow'],
       { twitter_like_repost: confirmAt, twitter_post: confirmAt },
     )
@@ -112,11 +130,16 @@ describe('misi iklan mengikuti tombol mati iklan', () => {
   afterEach(() => setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG))
 
   it('menerbitkan misi otomatis dan sosial selama iklan menyala', () => {
-    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, adsMaxViewsPerDay: 10 })
-    expect(missions().map((mission) => mission.key)).toEqual([
+    setActiveEconomyConfig({
+      ...DEFAULT_ECONOMY_CONFIG, adsMaxViewsPerDay: 10, missionDailyCount: 6, arcadeEnabled: 1,
+    })
+    expect(missions(HARI).map((mission) => mission.key)).toEqual([
       'tasks',
       'stars',
       'ads',
+      'hard',
+      'arcade',
+      'variety',
       'twitter_follow',
       'twitter_like_repost',
       'twitter_post',
@@ -127,10 +150,17 @@ describe('misi iklan mengikuti tombol mati iklan', () => {
 
   /** Misi yang mustahil lebih buruk daripada misi yang hilang: progresnya berhenti di 0/N selamanya, dan karena `hasUnclaimedMissions` menyala selama masih ada yang belum diklaim, titik pengingat di nav ikut menyala permanen tanpa satu pun cara membersihkannya. */
   it('berhenti menerbitkan misi iklan saat plafon tayangannya nol', () => {
-    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, adsMaxViewsPerDay: 0 })
-    expect(missions().map((mission) => mission.key)).toEqual([
+    setActiveEconomyConfig({
+      ...DEFAULT_ECONOMY_CONFIG, adsMaxViewsPerDay: 0, missionDailyCount: 6, arcadeEnabled: 1,
+    })
+    /** Misi Arena ikut hilang, dan itu memang benar: ongkos masuk Arena adalah pass iklan, jadi
+     * `arcadeEnabled()` ikut tertutup saat tombol mati iklan menyala. Misi yang mustahil lebih
+     * buruk daripada misi yang hilang. */
+    expect(missions(HARI).map((mission) => mission.key)).toEqual([
       'tasks',
       'stars',
+      'hard',
+      'variety',
       'twitter_follow',
       'twitter_like_repost',
       'twitter_post',
@@ -139,15 +169,10 @@ describe('misi iklan mengikuti tombol mati iklan', () => {
     expect(isMissionAvailable('ads')).toBe(false)
 
     const list = buildMissionProgress(
-      { tasks: 0, stars: 0, ads: 0 },
-      [
-        'tasks',
-        'stars',
-        'twitter_follow',
-        'twitter_like_repost',
-        'twitter_post',
-        'facebook_post',
-      ],
+      hitung(),
+      ['tasks', 'stars', 'hard', 'variety', 'twitter_follow', 'twitter_like_repost', 'twitter_post', 'facebook_post'],
+      {},
+      HARI,
     )
     expect(hasUnclaimedMissions(list)).toBe(false)
   })
@@ -157,5 +182,59 @@ describe('misi iklan mengikuti tombol mati iklan', () => {
     setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, adsMaxViewsPerDay: 0 })
     expect(isMissionKey('ads')).toBe(true)
     expect(missionDefinition('ads').target).toBe(DEFAULT_ECONOMY_CONFIG.missionAdsTarget)
+  })
+})
+
+describe('rotasi misi harian', () => {
+  beforeEach(() =>
+    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, missionDailyCount: 3, arcadeEnabled: 1 }),
+  )
+  afterEach(() => setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG))
+
+  it('menerbitkan sebanyak yang disetel, ditambah seluruh misi sosial', () => {
+    const list = missions(HARI)
+    expect(list.filter((m) => m.kind === 'automatic')).toHaveLength(3)
+    /** Misi sosial tidak ikut diundi: dua di antaranya sekali seumur akun, jadi menyembunyikannya
+     * di hari yang salah berarti user tidak pernah tahu ia ada. */
+    expect(list.filter((m) => m.kind === 'social')).toHaveLength(4)
+  })
+
+  it('memberi susunan yang sama untuk tanggal yang sama', () => {
+    expect(missions(HARI).map((m) => m.key)).toEqual(missions(HARI).map((m) => m.key))
+  })
+
+  it('mengganti susunannya seiring hari berganti', () => {
+    const susunan = new Set<string>()
+    for (let hari = 1; hari <= 28; hari += 1) {
+      susunan.add(
+        missions(`2026-09-${String(hari).padStart(2, '0')}`)
+          .filter((m) => m.kind === 'automatic')
+          .map((m) => m.key)
+          .join(','),
+      )
+    }
+    /** Kolam 6 diambil 3 memberi 20 susunan yang mungkin; yang dijaga di sini cuma bahwa undiannya
+     * benar-benar berputar, bukan berapa persis yang muncul dalam 28 hari. */
+    expect(susunan.size).toBeGreaterThanOrEqual(8)
+  })
+
+  it('mempertahankan urutan katalog supaya daftarnya tidak melompat dalam satu hari', () => {
+    const urutan = missions(HARI)
+      .filter((m) => m.kind === 'automatic')
+      .map((m) => m.key)
+    const katalog = ['tasks', 'stars', 'ads', 'hard', 'arcade', 'variety']
+    expect([...urutan].sort((a, b) => katalog.indexOf(a) - katalog.indexOf(b))).toEqual(urutan)
+  })
+
+  it('mengembalikan seluruh kolam saat yang diminta lebih banyak daripada isinya', () => {
+    const kolam = missions(HARI).filter((m) => m.kind === 'automatic')
+    expect(rotateAutomaticMissions(kolam, HARI, 99)).toHaveLength(kolam.length)
+  })
+
+  it('menghitung tanggal WIB, bukan UTC', () => {
+    /** 31 Des 2025 17:00 UTC sudah 1 Jan 2026 di Jakarta. Kalau ini meleset, undian misi berganti
+     * di jam yang berbeda dari batas hari yang dipakai klaimnya. */
+    expect(todayWib(new Date('2025-12-31T17:00:00Z'))).toBe('2026-01-01')
+    expect(todayWib(new Date('2025-12-31T16:59:00Z'))).toBe('2025-12-31')
   })
 })

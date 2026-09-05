@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { economyConfig } from '@/domain/economy/economy-config'
 import { maxEnergy } from '@/domain/economy/energy'
 import type { Referral, ReferralSummary } from '@/domain/economy/referral'
@@ -29,6 +29,10 @@ export function useRewardSession({
     back: goBack,
     select: selectView,
   } = useViewStack()
+  /** Dinyalakan saat dialog tarik dibuka, dan tidak pernah dimatikan lagi — lihat `withdrawalsPrimed`
+   * di `useSessionQueries`. */
+  const [withdrawalsPrimed, setWithdrawalsPrimed] = useState(false)
+  const primeWithdrawals = useCallback(() => setWithdrawalsPrimed(true), [])
   const onErrorRef = useRef(onError)
   useEffect(() => {
     onErrorRef.current = onError
@@ -61,7 +65,7 @@ export function useRewardSession({
     mutateReferral,
     payoutData,
     mutatePayouts,
-  } = useSessionQueries(view)
+  } = useSessionQueries(view, withdrawalsPrimed)
 
   const retrySession = useCallback(() => {
     void mutateSession()
@@ -193,6 +197,16 @@ export function useRewardSession({
     rememberAdsHint(adsEnabled)
   }, [adsEnabled, session])
 
+  const channelBlocked = Boolean(session?.channelGate?.required && !session.channelGate.member)
+  /** Jalan keluar penarikan di layar gerbang muncul kalau ada pengajuan yang perlu ditengok, dan itu
+   * dibaca dari daftar penarikan — yang sejak di-gate baru ditarik saat dialognya dibuka. Tanpa ini
+   * daftarnya selalu kosong di sana, dan user yang saldonya sudah habis ke pengajuan berjalan
+   * kehilangan satu-satunya tombol untuk melihat statusnya. Layar gerbang jarang muncul, jadi
+   * membangunkannya di sini tidak mengembalikan permintaan yang barusan dihemat. */
+  useEffect(() => {
+    if (channelBlocked) setWithdrawalsPrimed(true)
+  }, [channelBlocked])
+
   const openHistory = useCallback(() => pushView('history'), [pushView])
   const openMissions = useCallback(() => pushView('missions'), [pushView])
   const openArcade = useCallback(() => pushView('arcade'), [pushView])
@@ -206,6 +220,7 @@ export function useRewardSession({
   return {
     view,
     viewDepth,
+    primeWithdrawals,
     loading: session === undefined && !sessionError,
     sessionFailed: Boolean(sessionError) && session === undefined,
     unauthenticated: session !== undefined && !session.user,
@@ -264,7 +279,7 @@ export function useRewardSession({
     premium: session?.premium ?? null,
     channelBonus: session?.channelBonus ?? null,
     channelGate: session?.channelGate ?? null,
-    channelBlocked: Boolean(session?.channelGate?.required && !session.channelGate.member),
+    channelBlocked,
     refreshSession: mutateSession,
     adsEnabled,
     inAppAdsEnabled: session?.ads?.inAppEnabled ?? false,

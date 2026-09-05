@@ -1463,6 +1463,100 @@
     }
   }
 
+  /* --- Layar pembuka -------------------------------------------------------
+     Menempati jeda boot Mini App, bukan menambahkannya: `initData` Telegram baru sampai setelah
+     webview-nya berdiri, dan selama itu yang tampil dulunya kerangka abu-abu.
+
+     Denyutnya persis kurva yang dipakai lambang aslinya — dua ketuk (12% dan 29%, yang kedua lebih
+     lemah) lalu istirahat panjang sampai 100%. Itu yang membedakannya dari `pulse` biasa yang naik
+     turun rata: yang ini terbaca sebagai detak, bukan sebagai bidang yang berkedip. Skalanya
+     sengaja kecil (3,5% dan 2,2%) karena lambangnya besar di sini — pada 120px, 3,5% sudah empat
+     piksel, dan lebih dari itu berubah jadi benda yang bergoyang.
+
+     `.boot-splash-fill` memakai `transform: scaleX`, bukan `width`: yang pertama dikerjakan
+     compositor, yang kedua memaksa layout tiap frame — dan frame yang tersendat justru paling
+     terasa di layar yang tugasnya menutupi kelambatan. Ia berhenti di 92%, bukan 100%, selama
+     sesinya belum datang: bar yang sudah penuh sementara layarnya masih diam adalah kebohongan
+     kecil yang langsung ketahuan. Sisanya baru ditutup saat sesinya benar-benar terbaca. */
+  .boot-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background);
+    opacity: 1;
+  }
+  .boot-splash[data-phase='completing'] {
+    opacity: 0;
+    transition: opacity 260ms ease-out 240ms;
+    /* Aplikasinya bisa disentuh sejak frame pertama pudar, bukan setelah splash-nya dicabut:
+       selama setengah detik itu bidangnya masih menutupi layar, dan ketukan pertama user —
+       yang paling mungkin jatuh tepat di situ — akan hilang tanpa jejak. */
+    pointer-events: none;
+  }
+  .boot-splash-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2.25rem;
+  }
+  .boot-splash-track {
+    width: 8.5rem;
+    height: 3px;
+    border-radius: 999px;
+    background-color: color-mix(in oklab, var(--foreground) 12%, transparent);
+    overflow: hidden;
+  }
+  .boot-splash-fill {
+    display: block;
+    height: 100%;
+    width: 100%;
+    border-radius: inherit;
+    background-color: var(--primary);
+    transform-origin: left center;
+    transform: scaleX(0.04);
+    animation: boot-fill var(--splash-min-ms, 1800ms) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .boot-splash[data-phase='completing'] .boot-splash-fill {
+    animation: none;
+    transform: scaleX(1);
+    transition: transform 240ms ease-out;
+  }
+  @keyframes boot-fill {
+    from {
+      transform: scaleX(0.04);
+    }
+    to {
+      transform: scaleX(0.92);
+    }
+  }
+  @keyframes token-beat {
+    0%,
+    45%,
+    100% {
+      transform: scale(1);
+    }
+    12% {
+      transform: scale(1.035);
+    }
+    20% {
+      transform: scale(1);
+    }
+    29% {
+      transform: scale(1.022);
+    }
+    36% {
+      transform: scale(1);
+    }
+  }
+  .token-beat {
+    display: inline-flex;
+    transform-origin: center;
+    animation: token-beat 1.8s ease-in-out infinite;
+  }
+
   /* --- Lapisan premium: gerak yang cuma dimiliki emas -----------------------
      Premium sudah punya warna (`--premium`) dan bentuk (perangko bertinta emas). Yang belum
      dimilikinya adalah GERAK, dan itu yang membuat bidang berbayar terbaca "hidup" tanpa harus
@@ -1562,8 +1656,13 @@
     .animate-answer-shake,
     .cta-sheen::after,
     .premium-sheen::after,
-    .premium-glint {
+    .premium-glint,
+    .token-beat {
       animation: none;
+    }
+    /* Barnya tetap terisi — ia penanda kemajuan, bukan hiasan — cuma tanpa easing panjangnya. */
+    .boot-splash-fill {
+      animation: boot-fill 1800ms linear forwards;
     }
     .cta-sheen::after,
     .premium-sheen::after {

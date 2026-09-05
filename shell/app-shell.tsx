@@ -12,6 +12,8 @@ import { ProgressionBadges } from '@/features/home/progression-badges'
 import { NavPill } from '@/navigation/nav-pill'
 import { AppFrame } from '@/shell/app-frame'
 import { AppViewRouter } from '@/shell/app-view-router'
+import { BootSplash } from '@/shell/boot-splash'
+import { useBootSplash } from '@/shell/use-boot-splash'
 import { ToastProvider, useToast } from '@/shell/toast'
 import { useTelegramViewport } from '@/shell/telegram-viewport'
 import { inAppZoneId, useInAppAds } from '@/shell/use-in-app-ads'
@@ -31,6 +33,10 @@ function AppShellInner() {
   useTelegramViewport()
   const showError = useToast()
   const session = useRewardSession({ onError: showError })
+  /** Splash menutupi seluruh boot, jadi ia dirender berdampingan dengan `AppFrame` alih-alih di
+   * dalamnya: frame itu yang membawa nav, brand band, dan kunci scroll, dan splash tidak boleh
+   * ikut terpotong oleh salah satunya. */
+  const splashPhase = useBootSplash(!session.loading)
   const [liveTaskReward, setLiveTaskReward] = useState<number | null>(null)
   const [gateWithdrawOpen, setGateWithdrawOpen] = useState(false)
 
@@ -128,72 +134,75 @@ function AppShellInner() {
   }
 
   return (
-    <AppFrame
-      viewKey={viewKey}
-      direction={depthTracker.direction}
-      heroBand={session.loading || (!channelBlocked && !activeChallenge && effectiveView === 'home')}
-      badges={
-        badgesVisible ? (
-          <ProgressionBadges
-            progression={getProgression({
-              completedCount: session.completedCount,
-              streak: session.stats?.streak ?? 0,
-              todayCount: session.stats?.todayCount ?? 0,
-            })}
-            user={session.user}
-            stats={session.stats}
-            premium={session.premium}
-            showProfile={effectiveView !== 'captcha'}
-            taskDifficulty={activeChallenge?.difficulty ?? null}
-            taskReward={liveTaskReward}
-            energy={session.energy}
-            energyMax={session.energyMax}
-            energyFill={session.energyFill}
-            rewardPoolCredits={session.rewardPoolCredits}
-            rewardPoolMax={session.rewardPoolMax}
-            rewardPoolRegenCredits={session.rewardPoolRegenCredits}
-            rewardPoolSecondsToNext={session.rewardPoolSecondsToNext}
-            onOpenStats={session.openStats}
+    <>
+      <BootSplash phase={splashPhase} />
+      <AppFrame
+          viewKey={viewKey}
+        direction={depthTracker.direction}
+        heroBand={session.loading || (!channelBlocked && !activeChallenge && effectiveView === 'home')}
+        badges={
+          badgesVisible ? (
+            <ProgressionBadges
+              progression={getProgression({
+                completedCount: session.completedCount,
+                streak: session.stats?.streak ?? 0,
+                todayCount: session.stats?.todayCount ?? 0,
+              })}
+              user={session.user}
+              stats={session.stats}
+              premium={session.premium}
+              showProfile={effectiveView !== 'captcha'}
+              taskDifficulty={activeChallenge?.difficulty ?? null}
+              taskReward={liveTaskReward}
+              energy={session.energy}
+              energyMax={session.energyMax}
+              energyFill={session.energyFill}
+              rewardPoolCredits={session.rewardPoolCredits}
+              rewardPoolMax={session.rewardPoolMax}
+              rewardPoolRegenCredits={session.rewardPoolRegenCredits}
+              rewardPoolSecondsToNext={session.rewardPoolSecondsToNext}
+              onOpenStats={session.openStats}
+            />
+          ) : null
+        }
+        nav={
+          navVisible ? (
+            <NavPill
+              activeView={effectiveView}
+              photoUrl={session.user?.photoUrl ?? null}
+              missionsNeedAttention={session.missionsNeedAttention}
+              onSelect={session.selectView}
+            />
+          ) : null
+        }
+      >
+        {channelBlocked && session.channelGate ? (
+          <>
+            <ChannelGate
+              gate={session.channelGate}
+              onVerified={session.refreshSession}
+              onWithdraw={gateWithdrawReachable ? () => setGateWithdrawOpen(true) : null}
+            />
+            {/* Dialognya dirender di sini, bukan di dalam `ChannelGate`, supaya lapisan `features` tidak saling mengimpor — komposisi lintas fitur memang tugas `shell`. */}
+            <WithdrawDialog
+              open={gateWithdrawOpen}
+              onOpenChange={setGateWithdrawOpen}
+              balance={session.balance}
+              withdrawals={session.withdrawals}
+              eligibility={session.withdrawalEligibility}
+              onSubmit={session.submitWithdrawal}
+            />
+          </>
+        ) : (
+          <AppViewRouter
+            session={session}
+            activeChallenge={activeChallenge}
+            effectiveView={effectiveView}
+            showError={showError}
+            onTaskRewardChange={setLiveTaskReward}
           />
-        ) : null
-      }
-      nav={
-        navVisible ? (
-          <NavPill
-            activeView={effectiveView}
-            photoUrl={session.user?.photoUrl ?? null}
-            missionsNeedAttention={session.missionsNeedAttention}
-            onSelect={session.selectView}
-          />
-        ) : null
-      }
-    >
-      {channelBlocked && session.channelGate ? (
-        <>
-          <ChannelGate
-            gate={session.channelGate}
-            onVerified={session.refreshSession}
-            onWithdraw={gateWithdrawReachable ? () => setGateWithdrawOpen(true) : null}
-          />
-          {/* Dialognya dirender di sini, bukan di dalam `ChannelGate`, supaya lapisan `features` tidak saling mengimpor — komposisi lintas fitur memang tugas `shell`. */}
-          <WithdrawDialog
-            open={gateWithdrawOpen}
-            onOpenChange={setGateWithdrawOpen}
-            balance={session.balance}
-            withdrawals={session.withdrawals}
-            eligibility={session.withdrawalEligibility}
-            onSubmit={session.submitWithdrawal}
-          />
-        </>
-      ) : (
-        <AppViewRouter
-          session={session}
-          activeChallenge={activeChallenge}
-          effectiveView={effectiveView}
-          showError={showError}
-          onTaskRewardChange={setLiveTaskReward}
-        />
-      )}
-    </AppFrame>
+        )}
+      </AppFrame>
+    </>
   )
 }

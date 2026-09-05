@@ -79,7 +79,7 @@ function DataRowSkeleton({
       {/* `StarRating` size sm: tiga ikon `size-3.5` dengan `gap-0.5` = 46px × 14px. */}
       <span className="flex shrink-0 flex-col items-end gap-1">
         <Line
-          sample="+120 credit"
+          sample="+120 TD"
           className="text-[15px] font-bold"
           bar={cn('h-3.5', amountWidth)}
         />
@@ -171,7 +171,7 @@ export function ActivityFeedSkeleton({ rows = 6 }: { rows?: number }) {
 
           <div className="thread-line ml-5 pt-2 pl-5">
             <Line
-              sample="+120 credit · soal bintang tiga"
+              sample="+120 TD · soal bintang tiga"
               className="text-[13px] leading-relaxed"
               bar={cn('h-3 max-w-full', ACTIVITY_MESSAGE_W[index % ACTIVITY_MESSAGE_W.length])}
             />
@@ -397,7 +397,7 @@ export function LeaderboardSkeleton() {
                 <Bar className="size-12 rounded-full" />
                 <Line sample="Nama peserta" className="text-[13px] font-semibold" bar="h-3 w-20" />
                 <Line sample="1.284" className="num-display text-[15px]" bar="h-4 w-16" />
-                <Line sample="credit · 326 soal" className="text-[11px]" bar="h-2.5 w-24" />
+                <Line sample="TD · 326 soal" className="text-[11px]" bar="h-2.5 w-24" />
               </div>
             </CardRailItem>
           ))}
@@ -427,7 +427,7 @@ export function LeaderboardSkeleton() {
                 bar="h-3 w-36"
               />
             </div>
-            <Line sample="1.284 credit" className="shrink-0 text-[15px] font-bold" bar="h-3.5 w-16" />
+            <Line sample="1.284 TD" className="shrink-0 text-[15px] font-bold" bar="h-3.5 w-16" />
           </div>
         </div>
       </section>
@@ -510,7 +510,7 @@ export function ProfileSkeleton() {
 
         <div className="label-gap-t flex items-end justify-between gap-3">
           <Line
-            sample="12.340 credit"
+            sample="12.340 TD"
             className="text-4xl font-bold leading-none tracking-[-0.035em]"
             bar="h-7 w-40"
           />
@@ -613,7 +613,7 @@ function DifficultyRowsSkeleton() {
             bar="h-3 w-16"
           />
           <Line
-            sample="40% · 1.240 credit"
+            sample="40% · 1.240 TD"
             className="mt-0.5 w-full text-xs leading-relaxed"
             bar={cn('h-2.5', DIFFICULTY_NOTE_W[index])}
           />

@@ -10,6 +10,7 @@ import type { UserStats } from '@/domain/progression/stats'
 import { VIEW_TITLE } from '@/navigation/app-view'
 import { DataList, DataListRow } from '@/shared/components/data-list'
 import { GlyphCrown } from '@/shared/components/glyph'
+import { TokenMark } from '@/shared/components/token-mark'
 import { PageHeader } from '@/shared/components/page-header'
 import { EYEBROW_CLASS, SectionLabel } from '@/shared/components/section-label'
 import { formatCredits, formatRupiah, formatShortDate } from '@/shared/lib/format'
@@ -199,12 +200,13 @@ export function ProfileView({
         </div>
 
         {/* Nilai rupiah jadi baris kedua saldo, bukan sesi sendiri dengan ikon besar:
-            angkanya turunan langsung dari credit di atasnya, jadi memisahkannya membuat
+            angkanya turunan langsung dari TD di atasnya, jadi memisahkannya membuat
             satu nilai yang sama dibaca dua kali di dua blok berbeda. */}
         <div className="label-gap-t flex items-end justify-between gap-3">
-          <p className="text-4xl font-bold leading-none tracking-[-0.035em] tabular-nums text-foreground">
+          <p className="flex items-baseline gap-[0.14em] text-4xl font-bold leading-none tracking-[-0.035em] tabular-nums text-foreground">
+            <TokenMark />
             {formatCredits(stats.balance)}
-            <span className="ml-1.5 text-base font-semibold text-muted-foreground">credit</span>
+            <span className="ml-1.5 text-base font-semibold text-muted-foreground">TD</span>
           </p>
           <p className="shrink-0 text-[15px] font-semibold leading-none tabular-nums text-muted-foreground">
             {formatRupiah(creditsToRupiah(stats.balance))}
@@ -250,7 +252,7 @@ export function ProfileView({
               key={row.difficulty}
               showDivider={index < stats.byDifficulty.length - 1}
               title={row.label}
-              meta={`${formatCredits(row.credits)} credit`}
+              meta={`${formatCredits(row.credits)} TD`}
               amount={
                 <span className="text-[15px] font-bold tabular-nums text-foreground">
                   {formatCredits(row.count)}

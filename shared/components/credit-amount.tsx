@@ -1,14 +1,15 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { splitAmountParts } from '@/shared/lib/format'
+import { splitAmountParts, TOKEN_SYMBOL } from '@/shared/lib/format'
+import { TokenMark } from '@/shared/components/token-mark'
 import { cn } from '@/shared/lib/utils'
 
 const CREDIT_SIZE_CLASS = {
   sm: 'flex-row items-baseline gap-1 text-sm font-semibold',
   xl: 'flex-col items-stretch gap-1.5 text-4xl font-bold leading-none tracking-[-0.03em]',
   '2xl': 'flex-row flex-wrap items-baseline gap-x-2 text-5xl font-bold leading-none tracking-[-0.035em]',
-  /* Angka hero tidak boleh terlipat: nominal dan unitnya satu tarikan ("3.646 credit"), bukan "3.646" lalu "credit" di bawahnya. Karena itu `whitespace-nowrap` dan tanpa `flex-wrap` — kalau ruangnya sempit yang mengalah adalah UKURAN hurufnya, bukan barisnya. Ukuran itu dihitung di `heroFontSize()`; di sini sengaja tidak ada `text-*` supaya tidak ada dua sumber kebenaran soal ukuran. */
+  /* Angka hero tidak boleh terlipat: nominal dan unitnya satu tarikan ("3.646 TD"), bukan "3.646" lalu "TD" di bawahnya. Karena itu `whitespace-nowrap` dan tanpa `flex-wrap` — kalau ruangnya sempit yang mengalah adalah UKURAN hurufnya, bukan barisnya. Ukuran itu dihitung di `heroFontSize()`; di sini sengaja tidak ada `text-*` supaya tidak ada dua sumber kebenaran soal ukuran. */
   display: 'num-display flex-row items-baseline gap-x-1.5 whitespace-nowrap',
 } as const
 
@@ -17,14 +18,16 @@ const CREDIT_STACKED = { sm: false, xl: true, '2xl': false, display: false } as 
 /* * Lebar bagian-bagian angka hero, hasil UKUR di browser (bukan terkaan) pada * font display yang dipakai sekarang. Semuanya relatif ukuran huruf (em), * kecuali `HERO_FIXED_PX` yang memang tidak ikut mengecil. */
 const HERO_DIGIT_EM = 0.571 // satu angka
 const HERO_SEPARATOR_EM = 0.375 // titik ribuan / koma — lebih sempit dari angka
-/* Satuan "credit" TIDAK ikut mengecil bersama nominalnya: ukurannya dipatok `text-sm` sama seperti hero referral, jadi lebarnya konstan (≈42px) dan masuk ke bagian tetap di bawah, bukan ke lebar-per-em. */
-const HERO_FIXED_PX = 76 // satuan + ikon hint (ukurannya tetap) + gap + sisa aman
+/* Mark TD justru IKUT mengecil: ukurannya relatif terhadap nominal, jadi ia masuk ke lebar-per-em, bukan ke bagian tetap. Kalau ia dipatok px seperti satuannya, saldo panjang akan mengecilkan angkanya sampai mark-nya jadi lebih tinggi daripada digit di sebelahnya. */
+const HERO_MARK_EM = 0.82 // sama dengan `size-[0.82em]` di `TokenMark`
+/* Satuan TIDAK ikut mengecil bersama nominalnya: ukurannya dipatok `text-sm` sama seperti hero referral, jadi lebarnya konstan dan masuk ke bagian tetap di bawah. Angka ini turun dari 76 ke 60 saat satuannya berganti dari "credit" (≈42px) ke "TD" (≈20px); +6px-nya jarak tambahan untuk mark di depan nominal, yang jaraknya tetap sementara mark-nya sendiri tidak. */
+const HERO_FIXED_PX = 60 // satuan + ikon hint (ukurannya tetap) + dua gap + sisa aman
 
-/** Ukuran angka hero, dihitung dari ruang yang benar-benar tersedia. Dua hal menentukan apakah "3.646 credit" masih muat satu baris: lebar kolomnya dan panjang nominalnya. Untuk yang pertama, satuan viewport tidak bisa dipakai — shell aplikasi ini dikunci `max-w-md`, jadi di layar lebar `vw` terus tumbuh sementara kolomnya diam di tempat, dan angkanya malah kebesaran saat layarnya lega. Patokannya `cqi`: 100cqi = lebar kolom hero itu sendiri, berapa pun jendelanya. Untuk yang kedua, nominal dipecah jadi angka dan pemisah karena keduanya tidak sama lebar. Dari situ ketemu lebar yang dibutuhkan per satu satuan ukuran huruf, dan ukuran huruf terbesar yang masih muat adalah (lebar kolom − bagian yang tak mengecil) ÷ lebar-per-em itu. Batas 1,875rem menyisakan 6px untuk jarak dan 14px untuk baris pendukung, sehingga seluruh blok kiri maksimal 50px dan tidak melampaui CTA 52px. Hasilnya: saldo pendek tetap tampil menonjol, saldo panjang mengecil sendiri, dan tidak ada nominal yang memaksa "credit" turun ke baris berikutnya. */
+/** Ukuran angka hero, dihitung dari ruang yang benar-benar tersedia. Dua hal menentukan apakah "3.646 TD" masih muat satu baris: lebar kolomnya dan panjang nominalnya. Untuk yang pertama, satuan viewport tidak bisa dipakai — shell aplikasi ini dikunci `max-w-md`, jadi di layar lebar `vw` terus tumbuh sementara kolomnya diam di tempat, dan angkanya malah kebesaran saat layarnya lega. Patokannya `cqi`: 100cqi = lebar kolom hero itu sendiri, berapa pun jendelanya. Untuk yang kedua, nominal dipecah jadi angka dan pemisah karena keduanya tidak sama lebar. Dari situ ketemu lebar yang dibutuhkan per satu satuan ukuran huruf, dan ukuran huruf terbesar yang masih muat adalah (lebar kolom − bagian yang tak mengecil) ÷ lebar-per-em itu. Batas 1,875rem menyisakan 6px untuk jarak dan 14px untuk baris pendukung, sehingga seluruh blok kiri maksimal 50px dan tidak melampaui CTA 52px. Hasilnya: saldo pendek tetap tampil menonjol, saldo panjang mengecil sendiri, dan tidak ada nominal yang memaksa satuannya turun ke baris berikutnya. */
 function heroFontSize(text: string) {
   const digits = text.replace(/\D/g, '').length
   const separators = text.length - digits
-  const widthPerEm = HERO_DIGIT_EM * digits + HERO_SEPARATOR_EM * separators
+  const widthPerEm = HERO_DIGIT_EM * digits + HERO_SEPARATOR_EM * separators + HERO_MARK_EM
 
   return `clamp(1.25rem, calc((100cqi - ${HERO_FIXED_PX}px) / ${widthPerEm.toFixed(3)}), 1.875rem)`
 }
@@ -33,14 +36,14 @@ const CREDIT_UNIT_CLASS = {
   sm: 'text-xs font-medium',
   xl: 'text-sm font-medium',
   '2xl': 'text-sm font-semibold',
-  /* Sama seperti hero referral (`2xl`): satuannya keterangan, bukan bagian dari angkanya. Nilai relatif (`0.6em` dari nominal ~43px) membuat "credit" tumbuh jadi ~26px — hampir sebesar nominal `2xl` itu sendiri — dan bobot `extrabold` menyeret mata ke kata yang paling sedikit isinya. */
+  /* Sama seperti hero referral (`2xl`): satuannya keterangan, bukan bagian dari angkanya. Nilai relatif (`0.6em` dari nominal ~43px) membuat satuannya tumbuh jadi ~26px — hampir sebesar nominal `2xl` itu sendiri — dan bobot `extrabold` menyeret mata ke kata yang paling sedikit isinya. */
   display: 'text-sm font-semibold',
 } as const
 
 export function CreditAmount({
   value,
   prefix,
-  unit = 'credit',
+  unit = TOKEN_SYMBOL,
   hint,
   size = 'sm',
   tone = 'primary',
@@ -71,15 +74,25 @@ export function CreditAmount({
           : undefined
       }
     >
+      {/* Mark selalu di depan nominal, termasuk pada tata letak bertumpuk (`xl`) — di sana induknya
+          `flex-col`, jadi mark dan angkanya harus dibungkus satu baris sendiri supaya mark tidak
+          jatuh jadi barisnya sendiri di atas angka. */}
       {size === 'display' ? (
-        <DisplayValue prefix={prefix} value={value} />
+        <>
+          <TokenMark />
+          <DisplayValue prefix={prefix} value={value} />
+        </>
       ) : CREDIT_STACKED[size] ? (
-        <span>
-          {prefix}
-          {value}
+        <span className="flex items-center gap-[0.2em]">
+          <TokenMark />
+          <span>
+            {prefix}
+            {value}
+          </span>
         </span>
       ) : (
         <>
+          <TokenMark />
           {prefix}
           {value}{' '}
         </>

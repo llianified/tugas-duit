@@ -118,7 +118,7 @@ export function DataListAmount({
         tone === 'primary' ? 'text-primary' : 'text-foreground',
       )}
     >
-      {value} <span className="text-[13px] font-semibold text-muted-foreground">credit</span>
+      {value} <span className="text-[13px] font-semibold text-muted-foreground">TD</span>
     </span>
   )
 }

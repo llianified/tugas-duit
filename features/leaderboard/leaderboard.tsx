@@ -191,12 +191,12 @@ function PodiumCard({ entry }: { entry: LeaderboardEntry }) {
 
       {/* Satuannya ikut, meski ruangnya mahal: angka sebesar ini tanpa satuan bisa
       terbaca sebagai Rupiah, dan itu kesalahpahaman yang paling merugikan di app
-      yang memang menukar credit ke Rupiah. Ditaruh sebaris di bawah supaya angkanya
+      yang memang menukar TD ke Rupiah. Ditaruh sebaris di bawah supaya angkanya
       tetap boleh selebar kartu. */}
       <p className="num-display text-[15px]">{formatCredits(entry.credits)}</p>
 
       <p className="text-[11px] tabular-nums text-muted-foreground">
-        credit · {formatCredits(entry.taskCount)} soal
+        TD · {formatCredits(entry.taskCount)} soal
       </p>
     </div>
   )
@@ -231,7 +231,7 @@ function YourPosition({
         <SectionLabel as="h2">
           Posisi kamu
           <InfoHint label="Posisi kamu">
-            Urutannya dari total credit, bukan jumlah soal. Posisi bisa geser kalau peserta lain
+            Urutannya dari total TD, bukan jumlah soal. Posisi bisa geser kalau peserta lain
             ngerjain soal.
           </InfoHint>
         </SectionLabel>

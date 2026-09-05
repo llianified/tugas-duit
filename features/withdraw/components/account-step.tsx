@@ -94,7 +94,7 @@ function AmountRecap({
       as="button"
       type="button"
       onClick={onEdit}
-      aria-label={`Ubah nominal, sekarang ${formatCredits(credits)} credit`}
+      aria-label={`Ubah nominal, sekarang ${formatCredits(credits)} TD`}
       className="focus-ring transition-ui flex w-full items-center gap-3 text-left hover:bg-muted"
     >
       <span className="min-w-0 flex-1">

@@ -89,7 +89,7 @@ function OutcomeDetails({
         <DetailRow label="Durasi pengerjaan">{formatDuration(elapsedMs)}</DetailRow>
         <DetailRow label="Saldo kini">
           {formatCreditsPrecise(balance)}{' '}
-          <span className="font-normal text-muted-foreground">credit</span>{' '}
+          <span className="font-normal text-muted-foreground">TD</span>{' '}
           <span className="font-normal text-muted-foreground">
             · {formatRupiah(creditsToRupiah(balance))}
           </span>

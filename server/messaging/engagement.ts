@@ -145,7 +145,7 @@ export interface Message {
 }
 
 const money = (credits: number) =>
-  `${formatCredits(credits)} credit (${formatRupiah(creditsToRupiah(credits))})`
+  `${formatCredits(credits)} TD (${formatRupiah(creditsToRupiah(credits))})`
 
 const wibDayKey = (at: Date) => at.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
 
@@ -327,7 +327,7 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
         '',
         `${formatCredits(energy.current)}/${formatCredits(energy.max)} energi siap dipakai. Energi yang udah penuh berhenti ngisi, jadi mending langsung dihabisin.`,
         '',
-        'Pecahin soal, credit-nya masuk.',
+        'Pecahin soal, TD-nya masuk.',
       ].join('\n'),
     }
   }

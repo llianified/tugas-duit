@@ -213,7 +213,7 @@ function ArcadeHero({ state }: { state: ArcadeStateResponse }) {
             Main sebentar, lanjut cari cuan.
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-primary-foreground/75 text-pretty">
-            Menangkan energi atau isi stok reward. Bukan credit instan, tapi kesempatan buat
+            Menangkan energi atau isi stok reward. Bukan TD instan, tapi kesempatan buat
             lanjut ngerjain soal hari ini.
           </p>
         </div>

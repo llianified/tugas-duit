@@ -1,4 +1,11 @@
 
+/** Satuan saldo yang dilihat user. Satu-satunya tempat namanya ditulis: kata ini pernah "credit"
+ * dan tersebar di puluhan berkas, jadi penggantian berikutnya harus cukup satu baris. Nama kolom
+ * DB (`balance_credits`), key API (`credits`), dan nama fungsi di sini sengaja TIDAK ikut: mereka
+ * kontrak dan skema, bukan tampilan, dan menggantinya menuntut migrasi merusak plus deploy
+ * server-klien serentak demi sesuatu yang tidak pernah dilihat user. */
+export const TOKEN_SYMBOL = 'TD'
+
 export function formatRupiah(value: number): string {
   const rounded = Math.round(value)
   return `${rounded < 0 ? '−' : ''}Rp${Math.abs(rounded).toLocaleString('id-ID')}`

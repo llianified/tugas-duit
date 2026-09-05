@@ -36,7 +36,7 @@ export function BalanceSummary({
   return (
     <section aria-label="Saldo reward">
       {/* Saldo dan aksinya berdiri sebaris, bukan bertumpuk, dan aksinya kini tinggal satu: "Tarik dana". Riwayat pernah berdiri di sini sebagai tombol ikon persegi seukuran CTA — bidang sebesar itu untuk sekadar membuka daftar bacaan membuatnya terbaca sederajat dengan satu-satunya aksi yang memindahkan uang. Pintunya sekarang ada di kepala daftar "Transaksi terakhir", tepat di atas data yang memang dilanjutkannya. */}
-      {/* Label "Saldo kamu" pernah berdiri di atas angka ini. Ia dilepas karena tidak ada yang perlu dinamai: nominal terbesar di halaman, dengan satuan "credit" menempel di sampingnya, kurs rupiah di bawahnya, dan "Tarik dana" di sebelahnya sudah mengatakan bahwa ini saldo — dan `aria-label` section ini tetap membawa namanya untuk pembaca layar. Yang tersisa dari label itu cuma satu baris yang mendorong angkanya turun. */}
+      {/* Label "Saldo kamu" pernah berdiri di atas angka ini. Ia dilepas karena tidak ada yang perlu dinamai: nominal terbesar di halaman, dengan satuan "TD" menempel di sampingnya, kurs rupiah di bawahnya, dan "Tarik dana" di sebelahnya sudah mengatakan bahwa ini saldo — dan `aria-label` section ini tetap membawa namanya untuk pembaca layar. Yang tersisa dari label itu cuma satu baris yang mendorong angkanya turun. */}
       <div className="flex items-end gap-3">
         {/* `@container` di sini bukan hiasan: ia yang menjadi acuan `cqi` bagi ukuran angka hero, sehingga nominalnya menyusut mengikuti sisa ruang di samping CTA — bukan mengikuti lebar jendela. */}
         <div className="@container relative min-w-0 flex-1">
@@ -49,7 +49,7 @@ export function BalanceSummary({
               tone="neutral"
               hint={
                 <InfoHint label="Saldo reward">
-                  Credit yang bisa kamu tarik. Penarikan yang lagi diproses udah dipotong dari angka ini.
+                  TD yang bisa kamu tarik. Penarikan yang lagi diproses udah dipotong dari angka ini.
                 </InfoHint>
               }
             />

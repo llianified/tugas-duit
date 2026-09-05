@@ -28,7 +28,7 @@ export function ConfirmStep({
 
       <Surface as="section" aria-label="Ringkasan penarikan">
         <p className="text-base font-semibold tabular-nums text-foreground">
-          {formatCredits(input.credits)} credit
+          {formatCredits(input.credits)} TD
         </p>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
           {formatRupiah(creditsToRupiah(input.credits))} · {channel.name} ·{' '}

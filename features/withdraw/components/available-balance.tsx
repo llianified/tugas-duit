@@ -7,7 +7,7 @@ export function AvailableBalance({ balance }: { balance: number }) {
     <TotalSummary
       label="Saldo tersedia"
       credits={balance}
-      hint="Credit yang bisa ditarik. Penarikan yang diproses sudah dipotong dari saldo."
+      hint="TD yang bisa ditarik. Penarikan yang diproses sudah dipotong dari saldo."
     />
   )
 }

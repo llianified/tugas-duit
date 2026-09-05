@@ -109,7 +109,7 @@ export function ProfileIsland({
         value={
           stats.referralCount === 0
             ? 'Belum ada'
-            : `${formatCredits(stats.referralCount)} · +${formatCredits(stats.referralCredits)} credit`
+            : `${formatCredits(stats.referralCount)} · +${formatCredits(stats.referralCredits)} TD`
         }
       />
       {onOpenStats ? (

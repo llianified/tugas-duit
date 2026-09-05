@@ -36,10 +36,10 @@ export function DifficultyIsland({
           <span className="font-semibold tabular-nums text-primary">+{formatCredits(reward)}</span>
         </span>
       }
-      pillTitle={`Kesulitan ${label}, reward sekarang ${formatCredits(reward)} credit`}
+      pillTitle={`Kesulitan ${label}, reward sekarang ${formatCredits(reward)} TD`}
       openLabel={`Buka rincian kesulitan ${label}`}
       closeLabel={`Tutup rincian kesulitan ${label}`}
-      srSummary={`, reward sekarang ${formatCredits(reward)} credit`}
+      srSummary={`, reward sekarang ${formatCredits(reward)} TD`}
       isOpen={isOpen}
       slideOutTo={slideOutTo}
       onToggle={onToggle}
@@ -61,7 +61,7 @@ function DifficultySummaryRegion({ maxReward }: { maxReward: number }) {
           Reward ditentukan kecepatan
         </span>
         <span className="flex shrink-0 items-center gap-1.5 text-xs font-semibold leading-none text-primary tabular-nums">
-          Maksimum {formatCredits(maxReward)} credit
+          Maksimum {formatCredits(maxReward)} TD
         </span>
       </div>
     </div>
@@ -85,7 +85,7 @@ function StarTierRegion({ difficulty }: { difficulty: Difficulty }) {
             {tier.window}
           </span>
           <span className="shrink-0 text-xs font-semibold leading-none text-foreground tabular-nums">
-            {formatCredits(tier.reward)} credit
+            {formatCredits(tier.reward)} TD
           </span>
         </div>
       ))}

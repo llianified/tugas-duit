@@ -39,8 +39,8 @@ export function CaptchaMeter({
       role="timer"
       aria-label={
         capped
-          ? `${stars} bintang, reward sekarang ${payable} credit karena sisa stok reward segitu, sisa waktu ${Math.round(remainingRatio * 100)} persen`
-          : `${stars} bintang, reward sekarang ${payable} credit, sisa waktu ${Math.round(remainingRatio * 100)} persen`
+          ? `${stars} bintang, reward sekarang ${payable} TD karena sisa stok reward segitu, sisa waktu ${Math.round(remainingRatio * 100)} persen`
+          : `${stars} bintang, reward sekarang ${payable} TD, sisa waktu ${Math.round(remainingRatio * 100)} persen`
       }
     >
       <div aria-hidden className="flex flex-col gap-1.5">
@@ -58,7 +58,7 @@ export function CaptchaMeter({
 
       {capped ? (
         <p className="label-gap-t text-[11px] leading-tight text-muted-foreground">
-          Stok reward kamu tinggal {formatCredits(payable)} credit, jadi segitu yang dibayar buat
+          Stok reward kamu tinggal {formatCredits(payable)} TD, jadi segitu yang dibayar buat
           soal ini. Stoknya keisi lagi pelan-pelan.
         </p>
       ) : null}

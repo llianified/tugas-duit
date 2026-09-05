@@ -37,7 +37,7 @@ export function ChannelBonusCard({
           <span className="num-display stamp-ink-fg text-[1.375rem]">
             +{formatCredits(bonus.credits)}
           </span>
-          <span className="home-tag">credit</span>
+          <span className="home-tag">TD</span>
         </p>
       </div>
 

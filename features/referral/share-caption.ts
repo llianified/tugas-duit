@@ -22,12 +22,12 @@ export function buildShareCaption(stats: ShareStats): string {
   if (stats.friends > 0) {
     return [
       `${formatCredits(stats.friends)} teman sudah gabung Tugas Duit lewat link aku.`,
-      'Jawab soal, kumpulin credit, lalu tarik jadi Rupiah.',
+      'Jawab soal, kumpulin TD, lalu tarik jadi Rupiah.',
     ].join(' ')
   }
 
   return [
-    'Tugas Duit: jawab soal singkat di Telegram, kumpulin credit, lalu tarik jadi Rupiah.',
+    'Tugas Duit: jawab soal singkat di Telegram, kumpulin TD, lalu tarik jadi Rupiah.',
     'Gabung lewat link ini, kita sama-sama dapat bonus.',
   ].join(' ')
 }

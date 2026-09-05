@@ -33,6 +33,7 @@ const GROUP_LABEL: Record<EconomyGroup, string> = {
   premium: 'Premium',
   mission: 'Misi',
   arcade: 'Arena',
+  store: 'Toko',
   feature: 'Fitur',
 }
 
@@ -50,6 +51,7 @@ const GROUP_ORDER: EconomyGroup[] = [
   'premium',
   'mission',
   'arcade',
+  'store',
   'feature',
 ]
 

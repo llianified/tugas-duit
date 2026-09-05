@@ -1,6 +1,6 @@
 import type { PoolClient } from 'pg'
 import { transaction } from '../platform/db'
-type LedgerKind = 'task'|'commission'|'withdrawal_hold'|'withdrawal_refund'|'adjustment'
+type LedgerKind = 'task'|'commission'|'withdrawal_hold'|'withdrawal_refund'|'adjustment'|'purchase'
 
 export async function appendLedger(tx: PoolClient, entry: { userId:number; kind:LedgerKind; amount:number; idempotencyKey:string; referenceId?:string; note?:string }): Promise<{ balance:number; ledgerId:number }> {
   const locked = await tx.query<{ balance_credits:string }>('select balance_credits from users where id=$1 for update', [entry.userId])

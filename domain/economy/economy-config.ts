@@ -107,6 +107,10 @@ export interface EconomyConfig {
   arcadeEnergyPrizeAmount: number
   arcadeEnergyPrizeWeight: number
   arcadeBlankWeight: number
+  storeEnabled: number
+  storeEnergyPriceCredits: number
+  storeEnergyAmount: number
+  storePremiumMonthPriceCredits: number
 }
 
 export type EconomyConfigKey = keyof EconomyConfig
@@ -217,6 +221,10 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   arcadeEnergyPrizeAmount: 1,
   arcadeEnergyPrizeWeight: 2,
   arcadeBlankWeight: 1,
+  storeEnabled: 1,
+  storeEnergyPriceCredits: 10,
+  storeEnergyAmount: 3,
+  storePremiumMonthPriceCredits: 250,
 }
 
 export type EconomyGroup =
@@ -233,6 +241,7 @@ export type EconomyGroup =
   | 'premium'
   | 'mission'
   | 'arcade'
+  | 'store'
   | 'feature'
 
 export interface EconomyFieldMeta {
@@ -710,6 +719,30 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     impact: 'Menurunkannya memperbesar porsi undian yang berhadiah, sehingga biaya rata-rata per main naik.',
     min: 0, max: 100, riskyWhen: 'lower',
   },
+  {
+    key: 'storeEnabled', group: 'store', label: 'Toko TD', unit: '0/1',
+    description: 'Menyalakan rak belanja. Isi 0 untuk menutupnya tanpa deploy.',
+    impact: 'Mematikannya menutup satu-satunya jalur yang mengurangi saldo user tanpa membayarkannya sebagai Rupiah.',
+    min: 0, max: 1, riskyWhen: 'lower',
+  },
+  {
+    key: 'storeEnergyPriceCredits', group: 'store', label: 'Harga · Tambah energi', unit: 'TD',
+    description: 'TD yang dibakar untuk satu kali tambah energi.',
+    impact: 'Menurunkannya membuat energi lebih murah, sehingga lebih sedikit TD yang terserap per pembelian.',
+    min: 1, max: 10_000, riskyWhen: 'lower',
+  },
+  {
+    key: 'storeEnergyAmount', group: 'store', label: 'Isi · Tambah energi', unit: 'energi',
+    description: 'Berapa energi yang diberikan sekali beli. Tidak boleh melebihi kapasitas energi biasa.',
+    impact: 'Menaikkannya mempercepat user menghabiskan stok reward, bukan menaikkan plafonnya.',
+    min: 1, max: 50, riskyWhen: 'higher',
+  },
+  {
+    key: 'storePremiumMonthPriceCredits', group: 'store', label: 'Harga · Premium 1 bulan', unit: 'TD',
+    description: 'TD yang dibakar untuk satu bulan premium. Sengaja di atas nilai tunainya supaya jalur QRIS tetap yang paling murah.',
+    impact: 'Menurunkannya sampai di bawah nilai tunai premium membuat pembeli QRIS jadi pihak yang paling rugi.',
+    min: 1, max: 1_000_000, riskyWhen: 'lower',
+  },
 ]
 
 export type EconomyValidationErrors = Partial<Record<EconomyConfigKey, string>> & { _?: string }
@@ -910,6 +943,19 @@ export function validateEconomyConfig(
   if (config.arcadeEnabled > 0 && config.arcadePoolPrizeWeight + config.arcadeEnergyPrizeWeight <= 0) {
     errors.arcadeBlankWeight =
       'Arena butuh minimal satu hadiah berbobot. Isi bobot hadiah isi stok atau bobot hadiah energi di atas 0, atau matikan Arena.'
+  }
+
+  /** Isi yang melebihi kapasitas energi biasa membuat barangnya MUSTAHIL dibeli: `storePurchaseRefusal` menolak yang tidak muat utuh, dengan alasan yang sama seperti hadiah misi — dijepit diam-diam berarti user membayar penuh untuk sebagian. Dijepit ke kapasitas biasa, bukan premium, supaya rak yang sama tetap terpakai user non-premium. */
+  if (config.storeEnergyAmount > config.maxEnergy) {
+    errors.storeEnergyAmount =
+      `Isi tambah energi tidak boleh melebihi kapasitas energi (${config.maxEnergy}), karena isi yang tidak muat utuh membuat barangnya tidak pernah bisa dibeli.`
+  }
+
+  /** Premium yang lebih murah lewat TD daripada lewat QRIS membalik arah seluruh fitur ini: toko berhenti menyerap saldo dan mulai menggantikan pendapatan tunai. Ambangnya nilai tunai premium sebulan dalam TD — sama, bukan lebih murah, sudah cukup untuk ditolak. */
+  const premiumMonthCredits = config.premiumPrice1Idr / config.creditValueIdr
+  if (config.storeEnabled > 0 && config.storePremiumMonthPriceCredits < premiumMonthCredits) {
+    errors.storePremiumMonthPriceCredits =
+      `Harga premium di toko tidak boleh di bawah nilai tunainya (${premiumMonthCredits} TD), karena itu membuat pembelian QRIS jadi jalur yang paling mahal.`
   }
 
   return Object.keys(errors).length > 0 ? { ok: false, errors } : { ok: true, config }

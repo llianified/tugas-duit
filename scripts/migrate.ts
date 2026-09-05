@@ -2,6 +2,7 @@ import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { createPool } from '../server/platform/db.ts'
 import { env } from '../server/platform/env.ts'
+import { deployDecision } from './deploy-gate.ts'
 
 const directory = path.join(process.cwd(), 'db/migrations')
 
@@ -11,14 +12,26 @@ const LOCK_KEY = 8_421_207
 const CONNECT_ATTEMPTS = 5
 const RETRYABLE = new Set(['ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT'])
 
-/** Dipanggil dengan `--deploy` dari `vercel-build`, dan di situ ia HANYA boleh jalan untuk deploy Production. Vercel menjalankan build di setiap deploy Preview juga, jadi tanpa penjaga ini setiap branch setengah jadi akan memigrasi database produksi. `pnpm db:migrate` manual tidak membawa flag ini dan tetap jalan apa adanya. */
+/** Dipanggil dengan `--deploy` dari `deploy-build`, dan di situ ia HANYA boleh jalan untuk deploy Production. Aturan platformnya di `deploy-gate.ts`; yang tinggal di sini cuma cara menjawabnya. `pnpm db:migrate` manual tidak membawa flag ini dan tetap jalan apa adanya. */
 const deployMode = process.argv.includes('--deploy')
 
-if (deployMode && process.env.VERCEL_ENV !== 'production') {
-  console.log(
-    `[migrate] dilewati — VERCEL_ENV=${process.env.VERCEL_ENV ?? '(kosong)'}, migrasi hanya jalan di deploy Production`,
-  )
-  process.exit(0)
+if (deployMode) {
+  const decision = deployDecision(process.env)
+
+  if (decision.action === 'fail') {
+    console.error(`[migrate] ${decision.reason}`)
+    process.exit(1)
+  }
+
+  if (decision.action === 'skip') {
+    console.log(`[migrate] dilewati — ${decision.platform}: ${decision.reason}`)
+    process.exit(0)
+  }
+
+  /** Dicetak justru saat migrasi JADI jalan. Perpindahan platform hanya bisa dibuktikan dari log
+   * build pertama: baris inilah yang menunjukkan Render benar-benar mengekspor sinyalnya saat
+   * build, bukan cuma saat runtime. */
+  console.log(`[migrate] platform ${decision.platform}, deploy produksi — migrasi dijalankan`)
 }
 
 /** Di jalur otomatis endpoint langsung tidak boleh ditebak. `databaseUrlForMigrations` sengaja jatuh ke DATABASE_URL kalau yang unpooled tidak ada, dan itu benar untuk pemakaian manual — tapi DATABASE_URL dari integrasi Neon–Vercel adalah endpoint POOLED, dan `pg_advisory_lock` di pooler mode transaksi tidak menjamin apa pun. Lebih baik build-nya gagal berisik daripada dua deploy bersamaan memigrasi tanpa kunci yang benar-benar memegang. */

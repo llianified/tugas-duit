@@ -11,8 +11,8 @@ export function withdrawalMinActiveReferrals(): number {
   return economyConfig().withdrawalMinActiveReferrals
 }
 
-export function withdrawalMinActiveDays(): number {
-  return economyConfig().withdrawalMinActiveDays
+export function withdrawalRequiresPremium(): boolean {
+  return economyConfig().withdrawalRequiresPremium > 0
 }
 
 export function maxPayoutCredits(): number {

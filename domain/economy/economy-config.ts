@@ -55,7 +55,7 @@ export interface EconomyConfig {
   withdrawalMinimumIdr: number
   maxPayoutIdr: number
   withdrawalMinActiveReferrals: number
-  withdrawalMinActiveDays: number
+  withdrawalRequiresPremium: number
   withdrawalCooldownDays: number
   leaderboardEnabled: number
   leaderboardSeasonDays: number
@@ -159,7 +159,7 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   withdrawalMinimumIdr: 10_000,
   maxPayoutIdr: 2_000_000_000,
   withdrawalMinActiveReferrals: 5,
-  withdrawalMinActiveDays: 7,
+  withdrawalRequiresPremium: 0,
   withdrawalCooldownDays: 7,
   leaderboardEnabled: 1,
   leaderboardSeasonDays: 7,
@@ -468,10 +468,10 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     min: 0, max: 50, riskyWhen: 'lower',
   },
   {
-    key: 'withdrawalMinActiveDays', group: 'withdrawal', label: 'Hari aktif minimum', unit: 'hari',
-    description: 'Berapa hari WIB berbeda yang harus pernah punya minimal satu task selesai sebelum penarikan pertama bisa diajukan. Tidak harus berturut-turut, jadi satu hari bolong tidak menghapus progres. Sengaja bukan umur akun: pabrik akun cukup menunggu, sedangkan ini menuntut task betulan di hari-hari terpisah.',
-    impact: 'Menurunkannya mempercepat penarikan pertama untuk semua orang, termasuk akun yang dibuat massal — ini gerbang waktu yang paling menahan pabrik akun.',
-    min: 1, max: 365, riskyWhen: 'lower',
+    key: 'withdrawalRequiresPremium', group: 'withdrawal', label: 'Wajib premium untuk menarik', unit: '0/1',
+    description: 'Saat menyala, penarikan hanya bisa diajukan user dengan premium aktif. Syaratnya ditampilkan sejak awal bersama dua syarat lain, bukan baru muncul di langkah terakhir — user yang sudah mengumpulkan saldo dan mengajak lima teman lalu menemukan syarat berbayar yang belum pernah disebut tidak akan membacanya sebagai penawaran.',
+    impact: 'Menyalakannya menutup penarikan untuk semua user non-premium, termasuk yang saldonya sudah lewat ambang. Isi 0 untuk membukanya kembali tanpa deploy.',
+    min: 0, max: 1, riskyWhen: 'higher',
   },
   {
     key: 'withdrawalCooldownDays', group: 'withdrawal', label: 'Jeda antar penarikan', unit: 'hari',

@@ -27,7 +27,7 @@ import { MetaBadge, type ChipTone } from '@/shared/components/meta-badge'
 import { PageHeader } from '@/shared/components/page-header'
 import { PageRegion } from '@/shared/components/page-region'
 import { InfoHint } from '@/shared/components/info-hint'
-import { EYEBROW_CLASS, SectionLabel } from '@/shared/components/section-label'
+import { SectionLabel } from '@/shared/components/section-label'
 import { VIEW_TITLE } from '@/navigation/app-view'
 import { getRank } from '@/domain/progression/progression'
 import { prestigeBadges, type PrestigeKey } from '@/domain/progression/prestige'
@@ -86,8 +86,6 @@ export function LeaderboardView({
             />
           ) : (
             <>
-              <SeasonBanner endsAt={seasonEndsAt} />
-
               <PodiumRail entries={entries} />
 
               <YourPosition you={you} participants={participants} />
@@ -97,6 +95,7 @@ export function LeaderboardView({
                 you={you}
                 participants={participants}
                 premiumMembers={premiumMembers}
+                seasonEndsAt={seasonEndsAt}
               />
             </>
           )}
@@ -284,11 +283,13 @@ function BoardPanel({
   you,
   participants,
   premiumMembers,
+  seasonEndsAt,
 }: {
   entries: LeaderboardEntry[]
   you: LeaderboardEntry | null
   participants: number
   premiumMembers: number
+  seasonEndsAt: number | null
 }) {
   const [tab, setTab] = useState<BoardTab>('all')
   const [shown, setShown] = useState(PAGE_SIZE)
@@ -310,12 +311,11 @@ function BoardPanel({
 
   return (
     <>
-      {/* Baris kontrol gaya fomo: saringan di kiri. Sisi kanan — tempat fomo menaruh
-      pemilih rentang waktu — dibiarkan kosong dengan sengaja: papan ini kumulatif,
-      `getLeaderboard` tidak menerima parameter waktu, dan pill "24j / 7h / 30h" yang
-      tidak menyaring apa pun cuma kebohongan berbentuk kontrol. `justify-between`
-      sudah dipasang supaya pemilih itu bisa masuk tanpa menyusun ulang baris ini
-      kalau datanya kelak ada. */}
+      {/* Baris kontrol gaya fomo: saringan di kiri, rentang waktu di kanan. Sisi kanan dulu
+      sengaja dikosongkan karena papannya kumulatif dan pill "24j / 7h / 30h" yang tidak menyaring
+      apa pun cuma kebohongan berbentuk kontrol — `justify-between` dipasang menunggu data yang
+      benar-benar punya rentang. Musim adalah rentang itu: ia bukan saringan yang bisa dipilih,
+      melainkan jendela yang sedang berlaku untuk seluruh papan, jadi ia dibaca, bukan diketuk. */}
       <div className="region-gap-t flex items-center justify-between gap-3">
         <FilterChip
           options={filters}
@@ -323,6 +323,7 @@ function BoardPanel({
           onChange={select}
           ariaLabel="Saringan papan peringkat"
         />
+        <SeasonCountdown endsAt={seasonEndsAt} />
       </div>
 
       {/* Bukan lagi `role="tabpanel"`: pemilihnya kini `<select>`, bukan tablist, jadi
@@ -517,7 +518,7 @@ function BoardListItem({
  * batas waktu yang terasa dekat, dan tanggal mentah tidak pernah terbaca begitu. Barisnya hilang
  * saat papan disetel sepanjang masa (`leaderboardSeasonDays` nol), karena di situ tidak ada apa pun
  * yang sedang dihitung mundur. */
-function SeasonBanner({ endsAt }: { endsAt: number | null }) {
+function SeasonCountdown({ endsAt }: { endsAt: number | null }) {
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
@@ -526,20 +527,25 @@ function SeasonBanner({ endsAt }: { endsAt: number | null }) {
     return () => clearInterval(timer)
   }, [endsAt])
 
+  /** Hilang sepenuhnya saat papannya disetel sepanjang masa (`leaderboardSeasonDays` nol): tidak
+   * ada rentang yang sedang berjalan, jadi tidak ada yang perlu dihitung mundur. Barisnya memakai
+   * `justify-between`, jadi saringan di kiri tetap pada tempatnya tanpa pengganjal. */
   if (endsAt === null) return null
   const secondsLeft = Math.max(0, Math.ceil((endsAt - now) / 1000))
 
-  /** Baris keterangan, bukan panel berisi. Bentuk pertamanya sebuah bilah `bg-muted` selebar layar
-   * tepat di bawah pemilih tab — bobot dan bahasa visualnya sama persis dengan bilah tab di atasnya,
-   * jadi yang terbaca dua lapis chrome yang berhimpitan, bukan satu halaman. Pasangan label-kecil di
-   * kiri dan angka teredam di kanan adalah pola yang sudah dipakai halaman ini di "Podium" dan
-   * "Perolehan teratas", jadi barisnya ikut ke sana alih-alih menambah lapis baru. */
+  /** Cukup "Sisa". Kata "Musim" sudah dibawa konteksnya — barisnya berdiri tepat di atas papan
+   * yang isinya memang musim berjalan — dan label yang mengulang konteksnya sendiri cuma memakan
+   * lebar yang dibutuhkan angkanya. */
   return (
-    <div className="region-under-brand flex items-baseline justify-between gap-3">
-      <span className={EYEBROW_CLASS}>Musim ini</span>
-      <span className="text-xs font-medium tabular-nums text-muted-foreground">
-        {secondsLeft === 0 ? 'Papan sedang direset' : `Berakhir ${formatLongCountdown(secondsLeft)} lagi`}
-      </span>
-    </div>
+    <p className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
+      {secondsLeft === 0 ? (
+        'Papan direset'
+      ) : (
+        <>
+          <span className="text-muted-foreground/70">Sisa </span>
+          {formatLongCountdown(secondsLeft)}
+        </>
+      )}
+    </p>
   )
 }

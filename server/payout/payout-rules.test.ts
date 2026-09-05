@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { DEFAULT_ECONOMY_CONFIG, setActiveEconomyConfig } from '@/domain/economy/economy-config'
 import { withdrawalCooldownMs } from '@/domain/economy/premium'
 import {
-  requiredActiveDays,
+  payoutRequiresPremium,
   requiredActiveReferrals,
   withdrawalCooldownMsForBase,
 } from './payout-rules'
@@ -19,8 +19,10 @@ describe('aturan kelayakan payout', () => {
   })
 
   it('membaca syarat hari aktif dari konfigurasi terbaru', () => {
-    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, withdrawalMinActiveDays: 4 })
-    expect(requiredActiveDays()).toBe(4)
+    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, withdrawalRequiresPremium: 1 })
+    expect(payoutRequiresPremium()).toBe(true)
+    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, withdrawalRequiresPremium: 0 })
+    expect(payoutRequiresPremium()).toBe(false)
   })
 
   it('menggunakan cooldown non-premium sebagai aturan dasar', () => {

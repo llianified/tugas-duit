@@ -77,11 +77,10 @@ describe('AUDIT-2 — syarat referral penarikan datang dari panel admin', () => 
   it('user tanpa referral bisa menarik setelah cukup hari aktif', async () => {
     const { query } = await import('../../server/platform/db')
     const { createPayout } = await import('../../server/payout/payout')
-    const { requiredActiveDays } = await import('../../server/payout/payout-rules')
     setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, withdrawalMinActiveReferrals: 0 })
 
     const userId = await makeUser(500)
-    for (let day = 1; day <= requiredActiveDays(); day++) {
+    for (let day = 1; day <= 7; day++) {
       const challengeId = (await query<{ id: string }>('select gen_random_uuid() id'))[0].id
       await query(
         `insert into challenges(id,user_id,type,difficulty,payload,answer_hash,max_reward,expires_at,started_at,submitted_at,solved)

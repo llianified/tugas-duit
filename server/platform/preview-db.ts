@@ -2,11 +2,16 @@ import { readdir, readFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
+/** Direktori data uji. Diekspor HANYA untuk `tests/reset-preview-db.ts`, yang menghapusnya sekali
+ * sebelum suite jalan. Ia konstanta tersendiri, bukan `DATA_DIR` yang bercabang di bawah: yang
+ * mengimpornya melakukan `rm -rf`, dan cabang yang salah baca berarti menghapus database preview
+ * yang sedang dipakai mengembangkan. Bentuk ini membuat kesalahan itu tidak mungkin terjadi. */
+export const PREVIEW_TEST_DATA_DIR = path.join(os.tmpdir(), 'tugas-duit-test-db')
+
 /** Direktori data dipisah per pemakai. Uji juga jatuh ke PGlite (mereka menghapus `DATABASE_URL` lalu mengimpor `./db`), dan selama direktorinya sama dengan yang dipakai `pnpm dev`, satu kali `pnpm test` menulis ratusan user uji ke database preview yang sedang dipakai mengembangkan — saldo, task, dan penarikan yang terlihat di layar dev jadi campuran keduanya. `VITEST` diset runner-nya sendiri, jadi pemisahannya tidak perlu disetel siapa pun. */
-const DATA_DIR = path.join(
-  os.tmpdir(),
-  process.env.VITEST ? 'tugas-duit-test-db' : 'tugas-duit-preview-db',
-)
+const DATA_DIR = process.env.VITEST
+  ? PREVIEW_TEST_DATA_DIR
+  : path.join(os.tmpdir(), 'tugas-duit-preview-db')
 
 type QueryResult = { rows: unknown[]; rowCount: number }
 type PgliteInstance = {

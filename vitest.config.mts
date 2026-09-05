@@ -25,5 +25,7 @@ export default defineConfig({
      * pun env var supaya mode preview tidak bisa dipaksa menyala.
      */
     fileParallelism: false,
+    /** Database uji dihapus sekali sebelum suite jalan. Lihat berkasnya untuk alasannya — singkatnya, direktori PGlite uji persisten, dan suite yang sudah lama dipakai di satu mesin mulai gagal karena sisa jalan sebelumnya, bukan karena kodenya. */
+    globalSetup: ['./tests/reset-preview-db.ts'],
   },
 })

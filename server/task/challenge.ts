@@ -1,9 +1,11 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto'
 import {
+  CHALLENGE_TITLE,
   generateChallenge,
   type Challenge,
   type Difficulty,
   type DistributiveOmit,
+  type HistoryEntry,
   withVariantDefaults,
 } from '@/domain/task/challenge'
 import { getStarReward, getStars, type StarCount } from '@/domain/progression/stars'
@@ -15,7 +17,7 @@ import { recordSubmitSignals, recordSubmitWithoutStart } from './fraud'
 import { appendLedger } from '../economy/ledger'
 import { accrueCommission } from '../economy/referral'
 import { consumeQuota } from '../economy/quota'
-import { readRewardPool } from '../economy/reward-pool'
+import { readRewardPool, type RewardPoolView } from '../economy/reward-pool'
 
 type PublicChallenge = Challenge
 type ChallengePayload = DistributiveOmit<Challenge, 'id' | 'issuedAt' | 'startedAt' | 'expiresAt'>
@@ -178,7 +180,18 @@ export async function startChallenge(
   })
 }
 type SubmitResult =
-  | { ok: true; stars: StarCount; reward: number; balance: number; elapsedMs: number }
+  /** `pool` dan `entry` ikut pulang bukan sebagai kemewahan: tanpa keduanya klien menyegarkan
+   * sesi dan riwayat lewat dua permintaan lagi untuk data yang sudah ada di tangan transaksi ini.
+   * Keduanya dibaca dari nilai yang memang sudah dihitung di sini, bukan dari kueri tambahan. */
+  | {
+      ok: true
+      stars: StarCount
+      reward: number
+      balance: number
+      elapsedMs: number
+      pool: RewardPoolView
+      entry: HistoryEntry
+    }
   | { ok: false; reason: 'wrong'; attemptsLeft: number }
   | {
       ok: false
@@ -248,8 +261,8 @@ export async function submitAnswer(
 
     /** `solved` ditulis SETELAH kuota membayar, bukan bersamaan dengan `submitted_at`. Jawaban yang benar tapi tidak dibayar (kolam kosong / plafon harian) tetap soal yang ditutup, bukan soal yang selesai: tidak ada baris `task_completions` maupun ledger untuknya. Menandainya `solved` membuat hitungan admin tidak cocok dengan jumlah completion, dan membuatnya luput dari sapuan `runMaintenance` yang memang hanya menghapus soal ber-`solved = false`. */
     await tx.query('update challenges set solved=true where id=$1', [id])
-    const completion = await tx.query<{ id: string }>(
-      `insert into task_completions(user_id,challenge_id,type,difficulty,elapsed_ms,stars,reward) values($1,$2,$3,$4,$5,$6,$7) returning id`,
+    const completion = await tx.query<{ id: string; completed_at: Date }>(
+      `insert into task_completions(user_id,challenge_id,type,difficulty,elapsed_ms,stars,reward) values($1,$2,$3,$4,$5,$6,$7) returning id,completed_at`,
       [userId, id, c.type, c.difficulty, elapsedMs, stars, paidReward],
     )
     const ledger = await appendLedger(tx, {
@@ -265,6 +278,21 @@ export async function submitAnswer(
       reward: paidReward,
     })
     await recordSubmitSignals(tx, userId, { difficulty: c.difficulty, elapsedMs, challengeId: id })
-    return { ok: true, stars, reward: paidReward, balance: ledger.balance, elapsedMs }
+    return {
+      ok: true,
+      stars,
+      reward: paidReward,
+      balance: ledger.balance,
+      elapsedMs,
+      pool: quota.pool,
+      entry: {
+        id: completion.rows[0].id,
+        title: CHALLENGE_TITLE[c.type],
+        difficulty: c.difficulty,
+        reward: paidReward,
+        stars,
+        completedAt: completion.rows[0].completed_at.getTime(),
+      },
+    }
   })
 }

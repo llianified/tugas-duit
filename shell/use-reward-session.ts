@@ -113,7 +113,6 @@ export function useRewardSession({
     mutateTask,
     mutateHistory,
     mutateStats,
-    mutateReferral,
   })
 
   const { watchAd, watchingAd, hasPass } = useAdPass({

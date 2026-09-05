@@ -148,7 +148,18 @@ export type WithdrawalsResponse = {
   eligibility: WithdrawalEligibility
 }
 export type SubmitResponse =
-  | { ok: true; stars: 1 | 2 | 3; reward: number; balance: number; elapsedMs: number }
+  | {
+      ok: true
+      stars: 1 | 2 | 3
+      reward: number
+      balance: number
+      elapsedMs: number
+      pool: RewardPoolState & { now: number }
+      entry: HistoryEntry
+      /** `null` berarti pengayaannya gagal di server; klien menyegarkan sendiri sebagai jalur mundur. */
+      stats: UserStats | null
+      challenge: Challenge | null
+    }
   | { ok: false; reason: string; attemptsLeft?: number }
 
 export type StartTaskResponse = {

@@ -193,7 +193,14 @@ function AppShellInner() {
             <ChannelGate
               gate={session.channelGate}
               onVerified={session.refreshSession}
-              onWithdraw={gateWithdrawReachable ? () => setGateWithdrawOpen(true) : null}
+              onWithdraw={
+                gateWithdrawReachable
+                  ? () => {
+                      session.primeWithdrawals()
+                      setGateWithdrawOpen(true)
+                    }
+                  : null
+              }
             />
             {/* Dialognya dirender di sini, bukan di dalam `ChannelGate`, supaya lapisan `features` tidak saling mengimpor — komposisi lintas fitur memang tugas `shell`. */}
             <WithdrawDialog

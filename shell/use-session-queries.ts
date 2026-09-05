@@ -20,7 +20,7 @@ import {
 /** Jeda polling umpan aktivitas, dan angkanya terikat plafon `/api/activity` — bukan selera. Lima belas detik berarti 240 permintaan per jam melawan plafon yang saat itu 120, jadi user yang membuka tab Peringkat lebih dari setengah jam mendapat 429 dan umpannya berhenti hidup tanpa pesan apa pun. Tiga puluh detik = 120 permintaan per jam, dan plafon route-nya dinaikkan ke 200 supaya `revalidateOnFocus` serta pemasangan ulang komponen punya sisa. Menaikkan salah satunya tanpa yang lain mengembalikan bug yang sama; `tests/rate-budget.test.ts` yang menahannya. */
 const ACTIVITY_POLL_MS = 30_000
 
-export function useSessionQueries(view: AppView) {
+export function useSessionQueries(view: AppView, withdrawalsPrimed: boolean) {
   const {
     data: session,
     error: sessionError,
@@ -72,13 +72,31 @@ export function useSessionQueries(view: AppView) {
     fetchJson,
     { revalidateOnFocus: false },
   )
+  /** Panel referral berikut `shareUrl`-nya cuma dibaca dua view, tapi sebelumnya ditarik di tiap
+   * boot dan tiap fokus — 28K permintaan per 12 jam di Observability untuk layar yang mayoritas
+   * user tidak pernah buka. `view === 'missions'` ikut karena misi berbagi bocorannya: kartu misi
+   * sosial menyusun teks bagikannya dari `referralShareUrl`, dan itu satu-satunya sumbernya.
+   * `referralCode` tidak ikut menunggu — ia sudah punya jalur cadangan dari payload sesi. */
   const { data: referralData, mutate: mutateReferral } = useSWR<ReferralResponse>(
-    authenticated ? '/api/referral' : null,
+    authenticated && (view === 'referral' || view === 'missions') ? '/api/referral' : null,
     fetchJson,
+    { keepPreviousData: true },
   )
+  /** Daftar penarikan tidak pernah dibaca di beranda: yang memakainya cuma tiga view di dalam nav
+   * dan dialog tarik — dan dialog itu dibuka dengan ketukan, bukan saat boot. Sebelumnya ia ikut
+   * ditarik di tiap boot dan tiap fokus, 18K permintaan per 12 jam melawan 4,5K halaman dibuka.
+   * `withdrawalsPrimed` sekali menyala tidak dimatikan lagi: yang dihindari cuma permintaan pertama
+   * sebelum ada yang membutuhkannya, dan mematikannya lagi hanya membuat dialog yang ditutup lalu
+   * dibuka ulang menembak dua kali. `withdrawnCredits` tidak menunggu ini — ia punya jalur cadangan
+   * dari `breakdown` di payload sesi; `processingCredits` yang tidak punya, dan ketiga view itulah
+   * satu-satunya pembacanya. */
   const { data: payoutData, mutate: mutatePayouts } = useSWR<WithdrawalsResponse>(
-    authenticated ? '/api/withdrawals' : null,
+    authenticated &&
+      (withdrawalsPrimed || view === 'history' || view === 'stats' || view === 'profile')
+      ? '/api/withdrawals'
+      : null,
     fetchJson,
+    { keepPreviousData: true },
   )
   return {
     session,

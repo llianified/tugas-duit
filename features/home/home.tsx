@@ -45,6 +45,8 @@ interface HomeViewProps {
   withdrawals: Withdrawal[]
   withdrawalEligibility: WithdrawalEligibility | null
   onSubmitWithdrawal: (input: WithdrawalSubmitInput) => Promise<Withdrawal | null>
+  /** Daftar penarikan baru ditarik saat dialognya dibuka, bukan saat boot. */
+  onPrimeWithdrawals: () => void
   onOpenHistory: () => void
   onOpenMissions: () => void
   onOpenArcade: () => void
@@ -77,6 +79,7 @@ export function HomeView({
   withdrawals,
   withdrawalEligibility,
   onSubmitWithdrawal,
+  onPrimeWithdrawals,
   onOpenHistory,
   onOpenMissions,
   onOpenArcade,
@@ -117,7 +120,10 @@ export function HomeView({
         <BalanceSummary
           balance={balance}
           history={history}
-          onWithdraw={() => setWithdrawOpen(true)}
+          onWithdraw={() => {
+            onPrimeWithdrawals()
+            setWithdrawOpen(true)
+          }}
         />
 
         <div className={`animate-view-in region-gap-t ${ENTER_STEP_CLASS[1]}`}>

@@ -215,6 +215,7 @@ export function AppViewRouter({
       withdrawals={session.withdrawals}
       withdrawalEligibility={session.withdrawalEligibility}
       onSubmitWithdrawal={session.submitWithdrawal}
+      onPrimeWithdrawals={session.primeWithdrawals}
       onOpenHistory={session.openHistory}
       onOpenMissions={session.openMissions}
       onOpenArcade={session.openArcade}

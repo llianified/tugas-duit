@@ -175,3 +175,23 @@ export async function readAdminActivity(limit = 25): Promise<AdminActivityEntry[
     at: row.at.getTime(),
   }))
 }
+
+/** Rata-rata user aktif harian selama seminggu terakhir, dipakai simulator ekonomi untuk menaikkan
+ * angka per-user jadi angka kas. Sengaja rata-rata sepekan, bukan hitungan hari ini: panel sering
+ * dibuka pagi, dan DAU hari berjalan selalu terbaca setengah sehingga proyeksi kasnya ikut separuh.
+ * Query terpisah dari `readAdminDashboard` karena halaman ekonomi cuma butuh satu angka ini. */
+export async function readActiveUserBaseline(): Promise<number> {
+  await requireAdminRead()
+
+  const rows = await query<{ dau: string }>(
+    `select coalesce(round(avg(count)), 0)::text as dau
+       from (
+         select count(distinct user_id) as count
+           from task_completions
+          where (completed_at at time zone 'Asia/Jakarta')::date
+                between ${TODAY} - 7 and ${TODAY} - 1
+          group by (completed_at at time zone 'Asia/Jakarta')::date
+       ) as daily`,
+  )
+  return Number(rows[0]?.dau ?? 0)
+}

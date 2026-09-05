@@ -17,6 +17,7 @@ import {
   type EconomyPatch,
 } from '@/domain/economy/economy-presets'
 import type { EconomyAuditEntry, EconomyConfigSnapshot } from '@/server/economy/economy-config'
+import { EconomySimulator } from './economy-simulator'
 
 const GROUP_LABEL: Record<EconomyGroup, string> = {
   earnings: 'Plafon',
@@ -65,9 +66,11 @@ const toNumbers = (draft: Draft): Record<string, unknown> =>
 export function EconomyForm({
   snapshot,
   audit,
+  activeUsers,
 }: {
   snapshot: EconomyConfigSnapshot
   audit: EconomyAuditEntry[]
+  activeUsers: number
 }) {
   const [saved, setSaved] = useState(snapshot)
   const [draft, setDraft] = useState<Draft>(() => toDraft(snapshot.config))
@@ -208,6 +211,8 @@ export function EconomyForm({
       {errors._ ? (
         <p className="rounded-xl bg-muted px-3 py-2.5 text-xs text-destructive">{errors._}</p>
       ) : null}
+
+      <EconomySimulator saved={saved.config} draft={draft} activeUsers={activeUsers} />
 
       <ConfigLoader current={saved.config} onApply={applyPatch} />
 

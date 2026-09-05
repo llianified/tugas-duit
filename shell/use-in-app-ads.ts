@@ -12,8 +12,31 @@ import { readShow, showFailureReason, waitForShow } from '@/shell/monetag-sdk'
 /** Jeda sebelum mencoba lagi kalau fungsi global SDK belum tersedia. */
 const SDK_RETRY_MS = 30_000
 
-/** Zone yang sudah menerima konfigurasi native pada dokumen ini. React dapat menjalankan effect lagi saat state sesi berubah; memanggil payload `inApp` untuk kedua kalinya akan membuat penjadwal otomatis tambahan di SDK. */
-const initializedZones = new Set<string>()
+/** Zone yang sudah menerima konfigurasi native pada dokumen ini. React dapat menjalankan effect lagi saat state sesi berubah; memanggil payload `inApp` untuk kedua kalinya akan membuat penjadwal otomatis tambahan di SDK.
+ *
+ * Ditaruh di `window`, bukan di lingkup modul, dan itu bukan gaya. Penjadwal Monetag hidup di
+ * DOKUMEN — sekali terdaftar ia jalan sampai dokumennya mati. Penjaga yang hidup di lingkup modul
+ * cuma menjaga satu instance modul, jadi dokumen yang entah bagaimana memuat bundel ini dua kali
+ * mendapat dua `Set` kosong dan mendaftarkan dua penjadwal untuk zone yang sama. Penjaganya harus
+ * hidup di tempat yang sama dengan yang dijaga.
+ *
+ * Hitungannya ikut disimpan supaya pertanyaan "apakah kodenya yang memanggil dua kali, atau SDK-nya
+ * yang menembak dua kali dari satu panggilan" bisa dijawab dengan melihat, bukan menebak. */
+interface InAppAdsRegistry {
+  zones: Set<string>
+  calls: { zone: string; at: number }[]
+}
+
+const REGISTRY_KEY = '__tugasDuitInAppAds'
+
+function registry(): InAppAdsRegistry {
+  const host = globalThis as unknown as Record<string, InAppAdsRegistry | undefined>
+  const existing = host[REGISTRY_KEY]
+  if (existing) return existing
+  const created: InAppAdsRegistry = { zones: new Set<string>(), calls: [] }
+  host[REGISTRY_KEY] = created
+  return created
+}
 
 /** Menahan PENDAFTARAN jadwal selama task berjalan — dan hanya itu yang bisa dijanjikan.
  *
@@ -40,10 +63,18 @@ export function useInAppAds({
     let cancelled = false
 
     const initialize = async () => {
-      if (cancelled || initializedZones.has(sdkName)) return
+      const registered = registry()
+      if (cancelled || registered.zones.has(sdkName)) return
 
       const show = readShow(sdkName) ?? (await waitForShow(sdkName))
-      if (cancelled || initializedZones.has(sdkName)) return
+      if (cancelled) return
+      /** Pendaftaran kedua yang tertahan di sini bukan keadaan normal — ia berarti ada jalur yang
+       * mencoba mendaftar dua kali, dan itu justru yang sedang dicari saat interstitial menembak
+       * ganda. Dulu ia pulang diam-diam; sekarang ia meninggalkan jejak. */
+      if (registered.zones.has(sdkName)) {
+        console.warn('[ads] in-app pendaftaran kedua ditahan', sdkName, registered.calls.length)
+        return
+      }
       if (!show) {
         retryTimer = setTimeout(() => {
           void initialize()
@@ -52,7 +83,8 @@ export function useInAppAds({
       }
 
       // Tandai sebelum memanggil SDK agar dua effect yang selesai menunggu bersamaan | tidak dapat mendaftarkan dua penjadwal untuk zone yang sama.
-      initializedZones.add(sdkName)
+      registered.zones.add(sdkName)
+      registered.calls.push({ zone: sdkName, at: Date.now() })
       try {
         // Satu-satunya pemanggilan otomatis: SDK Monetag mengurus timeout, interval, | frequency, dan capping setelah menerima payload native ini.
         await show(inAppShowParams(settings))

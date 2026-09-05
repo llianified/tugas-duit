@@ -1,4 +1,5 @@
 'use client'
+import { SheetIcon } from '@/shared/components/sheet-icon'
 
 import { useEffect, useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
@@ -184,9 +185,9 @@ export function SocialMissionSheet({
           <div className="sheet-grip" aria-hidden="true" />
 
           <div className="flex shrink-0 items-center gap-3 px-content pt-3">
-            <span className="stamp-portrait">
-              <GlyphShare className="size-4 text-primary" />
-            </span>
+            <SheetIcon>
+              <GlyphShare className="size-4" />
+            </SheetIcon>
             <div className="min-w-0 flex-1">
               <Dialog.Title className="truncate text-sm font-semibold tracking-tight text-foreground">
                 {mission.title}

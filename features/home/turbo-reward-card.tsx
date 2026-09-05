@@ -1,4 +1,5 @@
 'use client'
+import { SheetIcon } from '@/shared/components/sheet-icon'
 
 import { Dialog } from '@base-ui/react/dialog'
 import { creditsToRupiah } from '@/domain/economy/economy'
@@ -90,9 +91,9 @@ export function TurboRewardCard({
           <div className="sheet-grip" aria-hidden="true" />
 
           <div className="flex shrink-0 items-center gap-2 px-content pt-3">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <SheetIcon>
               <GlyphBolt className="size-4" />
-            </span>
+            </SheetIcon>
             <div className="min-w-0 flex-1">
               <Dialog.Title className="truncate text-sm font-semibold tracking-tight text-foreground">
                 Event Turbo Reward

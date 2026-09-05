@@ -1,7 +1,8 @@
 'use client'
 
 import { GlyphCheck, GlyphWallet } from '@/shared/components/glyph'
-import { IconCircle } from '@/shared/components/icon-circle'
+import { InfoHint } from '@/shared/components/info-hint'
+import { SheetIcon } from '@/shared/components/sheet-icon'
 import { Surface } from '@/shared/components/surface'
 import { creditsToRupiah } from '@/domain/economy/economy'
 import type {
@@ -30,8 +31,14 @@ function requirementValue(requirement: WithdrawalRequirement): string {
   return `${formatCredits(current)} / ${formatCredits(required)}`
 }
 
-/** Sebaris keterangan untuk syarat yang belum kelar. Daftarnya sudah dipotong di gerbang itu, jadi
- * yang belum terpenuhi selalu baris terakhir — keterangannya menutup daftar, bukan menyela. */
+/** Keterangan untuk syarat yang belum kelar, dan ia hidup di dalam gelembung `InfoHint`, bukan
+ * sebagai baris teks di bawah daftar.
+ *
+ * Sebagai baris tetap ia menambah dua baris teks kecil di kartu yang seluruh isinya justru
+ * dirancang untuk dipindai sekilas — tiga syarat, tiga angka, selesai. Di dalam gelembung ia tetap
+ * ada untuk yang mencarinya, dan hilang untuk yang tidak. Daftarnya sudah dipotong di gerbang yang
+ * sedang dihadapi, jadi yang belum terpenuhi selalu baris terakhir dan hint-nya tidak pernah
+ * ambigu menunjuk syarat yang mana. */
 function requirementHint(requirement: WithdrawalRequirement): string | null {
   if (requirement.done) return null
   if (requirement.key === 'balance') return 'Kerjain soal buat nambah saldo.'
@@ -66,9 +73,9 @@ export function NotEligibleNote({
     return (
       <Surface as="section" aria-label={title}>
         <div className="flex items-center gap-3">
-          <IconCircle tone="card">
-            <GlyphWallet className="glyph-md" />
-          </IconCircle>
+          <SheetIcon>
+            <GlyphWallet className="size-4" />
+          </SheetIcon>
           <p className="min-w-0 text-sm font-semibold tracking-tight">{title}</p>
         </div>
         <p className="stack-gap-t text-xs leading-relaxed text-muted-foreground text-pretty">
@@ -98,11 +105,16 @@ export function NotEligibleNote({
 
   return (
     <Surface as="section" aria-label="Syarat penarikan">
-      <div className="flex items-center gap-3">
-        <IconCircle tone="card">
-          <GlyphWallet className="glyph-md" />
-        </IconCircle>
-        <p className="min-w-0 text-sm font-semibold tracking-tight">Syarat penarikan</p>
+      <div className="relative flex items-center gap-3">
+        <SheetIcon>
+          <GlyphWallet className="size-4" />
+        </SheetIcon>
+        <p className="min-w-0 text-sm font-semibold tracking-tight">
+          Syarat penarikan
+          {firstPending ? (
+            <InfoHint label="Syarat penarikan">{requirementHint(firstPending)}</InfoHint>
+          ) : null}
+        </p>
       </div>
 
       <ul className="stack-gap-t flex flex-col gap-1.5">
@@ -138,11 +150,6 @@ export function NotEligibleNote({
         ))}
       </ul>
 
-      {firstPending ? (
-        <p className="stack-gap-t text-xs leading-relaxed text-muted-foreground text-pretty">
-          {requirementHint(firstPending)}
-        </p>
-      ) : null}
     </Surface>
   )
 }

@@ -350,8 +350,12 @@ function BoardPanel({
       sengaja dikosongkan karena papannya kumulatif dan pill "24j / 7h / 30h" yang tidak menyaring
       apa pun cuma kebohongan berbentuk kontrol — `justify-between` dipasang menunggu data yang
       benar-benar punya rentang. Musim adalah rentang itu: ia bukan saringan yang bisa dipilih,
-      melainkan jendela yang sedang berlaku untuk seluruh papan, jadi ia dibaca, bukan diketuk. */}
-      <div className="region-gap-t flex items-center justify-between gap-3">
+      melainkan jendela yang sedang berlaku untuk seluruh papan, jadi ia dibaca, bukan diketuk.
+
+      `items-end`, bukan `items-center`: chip musim jauh lebih pendek daripada pemilih saringan di
+      kirinya, dan ditengahkan ia mengambang di antara dua garis yang tidak dipakai apa pun.
+      Disejajarkan ke alas pemilihnya, keduanya duduk di satu garis yang benar-benar ada. */}
+      <div className="region-gap-t flex items-end justify-between gap-3">
         <FilterChip
           options={filters}
           value={tab}

@@ -44,8 +44,13 @@ export function TotalSummary({
         </p>
       </div>
 
+      {/* `div`, bukan `p`: catatan ini sekarang boleh membawa meter, dan `div` di dalam `p`
+          adalah HTML tak sah yang dipecahkan peramban sendiri saat parsing — hidrasi React lalu
+          menemukan pohon yang berbeda dari yang dirender server. */}
       {note ? (
-        <p className="label-gap-t text-[13px] leading-relaxed text-muted-foreground text-pretty">{note}</p>
+        <div className="label-gap-t text-[13px] leading-relaxed text-muted-foreground text-pretty">
+          {note}
+        </div>
       ) : null}
     </section>
   )

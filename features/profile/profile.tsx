@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { creditsToRupiah } from '@/domain/economy/economy'
 import { prestigeBadges, type PrestigeKey } from '@/domain/progression/prestige'
 import { EarningsChart } from '@/features/profile/earnings-chart'
+import { StreakStrip } from '@/features/profile/streak-strip'
 import { ProfileAvatar } from '@/shared/components/profile-avatar'
 import { TierGlyph } from '@/shared/components/tier-glyph'
 import type { UserStats } from '@/domain/progression/stats'
@@ -34,12 +35,16 @@ const RANGES = [
 
 type RangeKey = (typeof RANGES)[number]['key']
 
-/** Semua angka datar halaman ini hidup di satu petak, bukan tersebar antara baris fakta inline, petak, dan daftar bertajuk seperti sebelumnya — tiga cara menampilkan pasangan label/nilai yang sama, ditumpuk berurutan. Hanya "Sebaran kesulitan" yang tetap jadi daftar karena tiap barisnya membawa dua nilai (jumlah dan credit), jadi memang tabular. */
+/** Semua angka datar halaman ini hidup di satu petak, bukan tersebar antara baris fakta inline, petak, dan daftar bertajuk seperti sebelumnya — tiga cara menampilkan pasangan label/nilai yang sama, ditumpuk berurutan. Hanya "Sebaran kesulitan" yang tetap jadi daftar karena tiap barisnya membawa dua nilai (jumlah dan credit), jadi memang tabular.
+ *
+ * Streak TIDAK ada di sini lagi. Ia naik ke `StreakStrip` di atas grid: sebagai satu petak di
+ * antara petak sederajat, mekanik retensi terkuat aplikasi ini punya bobot yang sama dengan
+ * tanggal gabung. Sisa petak di sini memang setara satu sama lain — semuanya angka rekam jejak
+ * yang dibaca sekilas — jadi bobot seragamnya benar untuk mereka, dan cuma salah untuk streak. */
 function factTiles(stats: UserStats) {
   const tiles: { label: string; value: string }[] = [
     { label: 'Soal selesai', value: formatCredits(stats.completedCount) },
     { label: 'Rata-rata bintang', value: stats.averageStars.toFixed(1) },
-    { label: 'Streak', value: `${formatCredits(stats.streak)} hari` },
     { label: 'Hari aktif', value: `${formatCredits(stats.activeDays)} hari` },
     { label: 'Bintang tiga', value: `${Math.round(stats.perfectShare * 100)}%` },
     { label: 'Reward terbaik', value: `+${formatCredits(stats.bestReward)}` },
@@ -225,7 +230,11 @@ export function ProfileView({
       {/* Tanpa judul: keempat petak sudah punya label sendiri (`dt`), jadi
           "Rekam jejak" cuma satu lapis kata di atas kata. `aria-label` tetap ada
           supaya blok ini masih punya nama untuk pembaca layar. */}
-      <section aria-label="Rekam jejak" className="region-t">
+      <div className="region-t">
+        <StreakStrip streak={stats.streak} series={stats.earningsSeries} />
+      </div>
+
+      <section aria-label="Rekam jejak" className="stack-gap-t">
         <dl className="grid grid-cols-2 gap-2">
           {tiles.map((tile, index) => (
             <div

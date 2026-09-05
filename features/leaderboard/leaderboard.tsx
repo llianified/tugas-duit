@@ -21,6 +21,7 @@ import {
 import { ProfileAvatar } from '@/shared/components/profile-avatar'
 import { ActivityFeed } from '@/features/activity/activity-feed'
 import type { ActivityEntry } from '@/domain/progression/activity'
+import { leaderboardGap, type LeaderboardGap } from '@/domain/progression/leaderboard'
 import { TierGlyph } from '@/shared/components/tier-glyph'
 import { cn } from '@/shared/lib/utils'
 import { MetaBadge, type ChipTone } from '@/shared/components/meta-badge'
@@ -88,7 +89,7 @@ export function LeaderboardView({
             <>
               <PodiumRail entries={entries} />
 
-              <YourPosition you={you} participants={participants} />
+              <YourPosition you={you} participants={participants} gap={leaderboardGap(entries, you)} />
 
               <BoardPanel
                 entries={entries}
@@ -205,9 +206,11 @@ function PodiumCard({ entry }: { entry: LeaderboardEntry }) {
 function YourPosition({
   you,
   participants,
+  gap,
 }: {
   you: LeaderboardEntry | null
   participants: number
+  gap: LeaderboardGap | null
 }) {
   if (!you) {
     return (
@@ -268,8 +271,40 @@ function YourPosition({
 
           <DataListAmount value={formatCredits(you.credits)} tone="neutral" />
         </div>
+
+        {gap ? <GapLine gap={gap} /> : null}
       </div>
     </section>
+  )
+}
+
+/** Satu baris jarak ke tetangga peringkat, di dalam kartu yang sama — bukan sesi sendiri.
+ * Ia keterangan atas angka di atasnya, dan memisahkannya membuat dua blok membicarakan satu hal.
+ *
+ * Nama orangnya ikut disebut, dan itu keputusan yang dipilih sadar: "10 TD lagi" tanpa nama cuma
+ * target, sedangkan menyebut nama membuatnya jadi orang yang bisa dikejar. Risikonya nama yang
+ * panjang memakan barisnya, karena itu `truncate` — bukan dipendekkan di data, supaya yang tampil
+ * tetap nama yang sama dengan yang tertulis di papan di bawahnya. */
+function GapLine({ gap }: { gap: LeaderboardGap }) {
+  const seri = gap.credits === 0
+
+  return (
+    <p className="stack-gap-t flex min-w-0 items-center gap-1 border-t border-border pt-2.5 text-[13px] text-muted-foreground">
+      {seri ? (
+        <>
+          <span className="shrink-0 font-semibold text-foreground">Seri</span>
+          <span className="shrink-0">{gap.kind === 'lead' ? 'di puncak sama' : 'sama'}</span>
+        </>
+      ) : (
+        <>
+          <span className="shrink-0 font-semibold tabular-nums text-foreground">
+            {formatCredits(gap.credits)} TD
+          </span>
+          <span className="shrink-0">{gap.kind === 'lead' ? 'unggul dari' : 'lagi buat nyalip'}</span>
+        </>
+      )}
+      <span className="min-w-0 truncate font-medium text-foreground">{gap.displayName}</span>
+    </p>
   )
 }
 

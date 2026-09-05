@@ -1463,6 +1463,148 @@
     }
   }
 
+  /* --- Bingkisan hadiah misi ------------------------------------------------
+     Menggantikan bar progres yang dulu berdiri di tiap baris misi: daftarnya kembali sunyi, dan
+     seluruh perayaannya dipindah ke satu momen — detik hadiahnya diambil.
+
+     Panggungnya BERGANTIAN, bukan bertumpuk. Bingkisan muncul, bergoyang dua kali, lalu pergi
+     seluruhnya; angkanya baru masuk setelah panggungnya kosong. Versi pertama menaikkan angka dari
+     dalam kotak yang masih berdiri — dua benda bergerak di tempat yang sama, dan yang terbaca
+     akhirnya tidak satu pun. Goyangannya kecil (5 derajat) karena benda ini kertas: kertas
+     bergetar, tidak terguncang.
+
+     `overflow: visible` pada SVG-nya wajib. Tutupnya terbang keluar batas viewBox, dan SVG
+     memangkas isinya di batas itu secara bawaan — tanpa ini tutupnya terpotong rata persis di
+     detik ia paling terlihat. */
+  .gift-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: color-mix(in oklab, var(--background) 88%, transparent);
+    animation: gift-layer-out 300ms ease-out 1700ms both;
+  }
+  .gift-stage {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 12rem;
+    height: 12rem;
+    /* Kertasnya harus punya bidang sendiri, bukan sekadar lebih terang sedikit dari latar: di
+       versi pertama nilainya 11% dan kotaknya larut ke dalam backdrop sampai tinggal pitanya yang
+       terbaca. */
+    --gift-paper: color-mix(in oklab, var(--foreground) 17%, var(--background));
+    --gift-edge: color-mix(in oklab, var(--foreground) 38%, transparent);
+    --gift-ribbon: var(--primary);
+  }
+  .gift-parcel {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    transform-origin: 50% 76%;
+    filter: drop-shadow(0 10px 22px color-mix(in oklab, var(--background) 80%, transparent));
+    animation:
+      gift-in 240ms var(--ease-out-quart) both,
+      gift-shake 320ms ease-in-out 240ms both;
+  }
+  .gift-body {
+    transform-box: view-box;
+    transform-origin: 60px 79px;
+    animation: gift-body-out 300ms var(--ease-out-quart) 620ms both;
+  }
+  .gift-lid {
+    transform-box: view-box;
+    transform-origin: 60px 50px;
+    animation: gift-lid-off 380ms var(--ease-out-quart) 560ms both;
+  }
+  .gift-reward {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 2.25rem;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    font-variant-numeric: tabular-nums;
+    color: var(--primary);
+    /* Masuk setelah badan bingkisannya habis (620 + 300), bukan bersamaan dengannya. */
+    animation: gift-reward-in 340ms var(--ease-out-quart) 920ms both;
+  }
+  @keyframes gift-layer-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes gift-in {
+    from {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+    70% {
+      transform: scale(1.05);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  @keyframes gift-shake {
+    0%,
+    100% {
+      rotate: 0deg;
+    }
+    25% {
+      rotate: -5deg;
+    }
+    60% {
+      rotate: 5deg;
+    }
+    85% {
+      rotate: -2deg;
+    }
+  }
+  @keyframes gift-lid-off {
+    from {
+      opacity: 1;
+      transform: translateY(0) rotate(0deg);
+    }
+    60% {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-52px) rotate(-22deg);
+    }
+  }
+  @keyframes gift-body-out {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.55);
+    }
+  }
+  @keyframes gift-reward-in {
+    from {
+      opacity: 0;
+      transform: scale(0.45);
+    }
+    70% {
+      transform: scale(1.08);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   /* --- Layar pembuka -------------------------------------------------------
      Menempati jeda boot Mini App, bukan menambahkannya: `initData` Telegram baru sampai setelah
      webview-nya berdiri, dan selama itu yang tampil dulunya kerangka abu-abu.
@@ -1659,6 +1801,19 @@
     .premium-glint,
     .token-beat {
       animation: none;
+    }
+    /* Bingkisan tetap terbaca sebagai bingkisan yang SUDAH dibuka: tutupnya lepas dan angkanya
+       sudah di atas kotak. Yang dilepas cuma jalan ke sana. */
+    .gift-parcel,
+    .gift-body,
+    .gift-lid,
+    .gift-reward,
+    .gift-layer {
+      animation: none;
+    }
+    /* Yang tersisa cuma hasilnya: bingkisannya sudah pergi, angkanya berdiri sendiri. */
+    .gift-parcel {
+      display: none;
     }
     /* Barnya tetap terisi — ia penanda kemajuan, bukan hiasan — cuma tanpa easing panjangnya. */
     .boot-splash-fill {

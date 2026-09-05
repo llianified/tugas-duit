@@ -75,19 +75,23 @@ export function useMissions({
     [load, showError],
   )
 
+  /** Mengembalikan energi yang BENAR-BENAR diberikan server, bukan sekadar berhasil/gagal: angka
+   * itu yang dibacakan bingkisan hadiah, dan membacanya dari `mission.reward` di klien akan
+   * menampilkan nominal yang bisa berbeda dari yang masuk — hadiah dijepit kapasitas energi user,
+   * dan kelebihannya tidak disimpan. `null` berarti gagal. */
   const claim = useCallback(
-    async (key: string): Promise<boolean> => {
+    async (key: string): Promise<number | null> => {
       hapticTap()
       setClaiming(key)
       try {
-        await sendJson<ClaimResponse>('/api/missions/claim', 'POST', { key })
+        const result = await sendJson<ClaimResponse>('/api/missions/claim', 'POST', { key })
         hapticSuccess()
         await Promise.all([load(), onClaimed()])
-        return true
+        return result.energyGranted
       } catch (cause) {
         showError(userFacingMessage(cause))
         await load()
-        return false
+        return null
       } finally {
         setClaiming(null)
       }

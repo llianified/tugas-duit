@@ -58,6 +58,7 @@ export interface EconomyConfig {
   withdrawalMinActiveDays: number
   withdrawalCooldownDays: number
   leaderboardEnabled: number
+  leaderboardSeasonDays: number
   missionTasksTarget: number
   missionTasksReward: number
   missionStarsTarget: number
@@ -161,6 +162,7 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   withdrawalMinActiveDays: 7,
   withdrawalCooldownDays: 7,
   leaderboardEnabled: 1,
+  leaderboardSeasonDays: 7,
   missionTasksTarget: 5,
   missionTasksReward: 2,
   missionStarsTarget: 3,
@@ -607,6 +609,12 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     description: 'Isi 1 untuk menyalakan view Peringkat beserta umpan aktivitasnya, 0 untuk menggantinya dengan layar "segera hadir". Papan ini memajang nama depan, foto Telegram, dan status premium ke seluruh user — itu satu-satunya permukaan publik di aplikasi ini.',
     impact: 'Menyalakannya membuka data peringkat ke semua user; mematikannya menutup view-nya tanpa menghapus datanya.',
     min: 0, max: 1, riskyWhen: 'never',
+  },
+  {
+    key: 'leaderboardSeasonDays', group: 'feature', label: 'Panjang musim papan peringkat', unit: 'hari',
+    description: 'Papan peringkat hanya menghitung task di dalam musim berjalan. Musimnya berganti serentak untuk semua orang. Isi 0 untuk kembali menghitung sepanjang masa.',
+    impact: 'Memperpendeknya membuat peringkat lebih sering direset, sehingga user baru punya peluang menyusul; memperpanjangnya membuat papan makin dikuasai akun lama.',
+    min: 0, max: 365, riskyWhen: 'never',
   },
   {
     key: 'turboRewardEnabled', group: 'feature', label: 'Event Turbo Reward', unit: '0/1',

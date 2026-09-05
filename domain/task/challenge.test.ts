@@ -5,6 +5,7 @@ import {
   DIFFICULTY_LABEL,
   generateChallenge,
   withVariantDefaults,
+  orderAnswerFromPicks,
   TEXT_CHARS,
 } from './challenge'
 
@@ -206,5 +207,40 @@ describe('tipe soal baru', () => {
     const filled = withVariantDefaults({ type: 'order' as const, tiles: [3, 1, 2] } as never) as Record<string, unknown>
     expect(filled.variant).toBe('ascending')
     expect(filled.parScale).toBe(1)
+  })
+})
+
+/** Kontrak dua sisi soal Urutkan Angka: yang dibangun dari urutan ketukan user harus persis sama
+ * dengan yang disimpan sebagai jawaban benar. Versi pertama fitur ini mengirim indeks petak
+ * sementara jawabannya berisi nilai petak, jadi TIDAK ADA urutan ketukan yang bisa dinilai benar —
+ * dan kegagalannya diam: user melihat "jawaban salah" pada urutan yang jelas benar, energinya
+ * tetap terpotong, dan tidak ada error yang tercatat di mana pun. */
+describe('ORDER-ANSWER — ketukan yang benar harus dinilai benar', () => {
+  it.each(['ascending', 'descending'] as const)('mengetuk sesuai urutan %s menghasilkan jawaban benar', (variant) => {
+    for (let i = 0; i < 40; i += 1) {
+      const c = generateChallenge({ type: 'order', difficulty: 'Hard', variant })
+      if (c.type !== 'order') throw new Error('tipe salah')
+
+      const picks = c.tiles
+        .map((value, index) => ({ value, index }))
+        .sort((a, b) => (variant === 'descending' ? b.value - a.value : a.value - b.value))
+        .map((tile) => tile.index)
+
+      expect(orderAnswerFromPicks(c.tiles, picks)).toBe(c.answer)
+    }
+  })
+
+  it('urutan ketukan yang salah tidak menghasilkan jawaban benar', () => {
+    const c = generateChallenge({ type: 'order', difficulty: 'Hard', variant: 'ascending' })
+    if (c.type !== 'order') throw new Error('tipe salah')
+    const terbalik = c.tiles
+      .map((value, index) => ({ value, index }))
+      .sort((a, b) => b.value - a.value)
+      .map((tile) => tile.index)
+    expect(orderAnswerFromPicks(c.tiles, terbalik)).not.toBe(c.answer)
+  })
+
+  it('membangun jawaban dari nilai petak, bukan indeksnya', () => {
+    expect(orderAnswerFromPicks([70, 12, 45], [1, 2, 0])).toBe('12-45-70')
   })
 })

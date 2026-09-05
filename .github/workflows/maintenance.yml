@@ -1,0 +1,66 @@
+# Pengganti Vercel Cron setelah pindah ke Render.
+#
+# Render plan Free tidak punya Cron Job maupun One-Off Job — keduanya fitur berbayar. Yang tersisa
+# sebagai pemicu terjadwal gratis adalah GitHub Actions, dan `/api/cron/maintenance` memang sudah
+# dirancang untuk dipanggil dari luar: ia cuma menuntut `Authorization: Bearer $CRON_SECRET` dan
+# tidak peduli siapa pemanggilnya.
+name: Maintenance harian
+
+on:
+  # 12:00 UTC = 19:00 WIB, sama persis dengan jadwal di vercel.json.
+  #
+  # Jamnya BUKAN selera: `server/messaging/engagement.ts` hanya mengirim pesan antara 08:00-20:00
+  # WIB. Jalan di luar rentang itu tetap menyelesaikan pembersihan dengan normal tapi tidak
+  # mengirim satu pun notifikasi — kegagalan yang tidak memunculkan error di mana pun.
+  schedule:
+    - cron: '0 12 * * *'
+  # Supaya bisa diuji tanpa menunggu besok, dan supaya ada cara memicunya manual kalau satu hari
+  # terlewat. Jadwal GitHub Actions bisa telat beberapa menit saat antreannya padat, dan berhenti
+  # sendiri setelah 60 hari repo tidak ada aktivitas.
+  workflow_dispatch:
+
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Panggil endpoint maintenance
+        env:
+          CRON_TARGET_URL: ${{ secrets.CRON_TARGET_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+
+          # INERT sampai cutover. Selama secret ini belum diisi, workflow berhenti di sini dengan
+          # sukses — bukan gagal. Selama Vercel Cron masih hidup, dua pemicu yang jalan bersamaan
+          # berarti maintenance dobel di hari yang sama; yang benar adalah workflow ini diam
+          # sampai Vercel benar-benar dimatikan.
+          if [ -z "${CRON_TARGET_URL:-}" ]; then
+            echo "CRON_TARGET_URL belum diisi — maintenance dilewati (ini disengaja)."
+            echo "Isi secret itu dengan origin Render setelah Vercel Cron dimatikan."
+            exit 0
+          fi
+
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "::error::CRON_TARGET_URL sudah diisi tapi CRON_SECRET belum. Endpoint-nya akan menjawab 401."
+            exit 1
+          fi
+
+          # Instance Free tidur setelah menganggur, dan permintaan pertama yang membangunkannya
+          # bisa memakan puluhan detik. Timeout longgar plus percobaan ulang supaya cold start
+          # tidak terbaca sebagai maintenance yang gagal.
+          status=$(curl --silent --show-error --location \
+            --retry 3 --retry-delay 20 --retry-all-errors \
+            --max-time 180 \
+            --header "Authorization: Bearer ${CRON_SECRET}" \
+            --output response.json --write-out '%{http_code}' \
+            "${CRON_TARGET_URL%/}/api/cron/maintenance")
+
+          echo "HTTP ${status}"
+          # Isinya cuma ringkasan jumlah — tidak ada rahasia di dalamnya.
+          cat response.json || true
+          echo
+
+          if [ "${status}" != "200" ]; then
+            echo "::error::maintenance gagal dengan HTTP ${status}"
+            exit 1
+          fi

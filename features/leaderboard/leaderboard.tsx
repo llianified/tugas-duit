@@ -289,7 +289,7 @@ function GapLine({ gap }: { gap: LeaderboardGap }) {
   const seri = gap.credits === 0
 
   return (
-    <p className="stack-gap-t flex min-w-0 items-center gap-1 border-t border-border pt-2.5 text-[13px] text-muted-foreground">
+    <p className="bleed-surface stack-gap-t flex min-w-0 items-center gap-1 border-t border-border pt-2.5 text-[13px] text-muted-foreground">
       {seri ? (
         <>
           <span className="shrink-0 font-semibold text-foreground">Seri</span>

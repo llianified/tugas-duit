@@ -216,6 +216,7 @@ export function AppViewRouter({
       onSubmitWithdrawal={session.submitWithdrawal}
       onOpenHistory={session.openHistory}
       onOpenMissions={session.openMissions}
+      onOpenArcade={session.openArcade}
       premium={session.premium}
       channelBonus={session.channelBonus}
       onRefreshSession={session.refreshSession}

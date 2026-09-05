@@ -45,6 +45,7 @@ export function ActiveTask({
   onStart,
   onStartWithAd,
   onOpenMissions,
+  onOpenArcade,
   onOpenPremium,
 }: {
   task: Challenge
@@ -66,6 +67,7 @@ export function ActiveTask({
   onStart: (hold?: Promise<unknown>) => Promise<boolean>
   onStartWithAd: () => void
   onOpenMissions: () => void
+  onOpenArcade: (() => void) | null
   onOpenPremium: (() => void) | null
 }) {
   const [recoveryOpen, setRecoveryOpen] = useState(false)
@@ -142,6 +144,7 @@ export function ActiveTask({
               entryOpen={adEntryOpen}
               watching={watchingAd}
               poolEmpty={poolEmpty}
+              urgent={energyEmpty && !resuming}
               onWatch={onStartWithAd}
             />
           </div>
@@ -162,6 +165,7 @@ export function ActiveTask({
         watchingAd={watchingAd}
         onWatchAd={onStartWithAd}
         onOpenMissions={onOpenMissions}
+        onOpenArcade={onOpenArcade}
         onOpenPremium={onOpenPremium}
       />
     </section>

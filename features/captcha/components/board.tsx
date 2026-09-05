@@ -102,6 +102,88 @@ export function ChallengeSelectBoard({ instruction }: { instruction: string }) {
   )
 }
 
+/** Papan bentuk yang hanya ditonton, dipakai soal Hitung Bentuk. Sengaja bukan `ChallengeSelect`
+ * dengan `disabled`: petak yang tampak bisa diketuk lalu tidak merespons terbaca sebagai rusak,
+ * sementara di soal ini memang tidak ada yang perlu dipilih — jawabannya diketik. */
+export function ChallengeShapeBoard({ options }: { options: SelectOption[] }) {
+  const columns = options.length % 3 === 0 ? 'grid-cols-3' : 'grid-cols-2'
+  return (
+    <div
+      role="img"
+      aria-label={`Papan berisi ${options.map((option) => option.label.toLowerCase()).join(', ')}`}
+      className={`grid min-h-0 flex-1 gap-2 [grid-auto-rows:minmax(3.5rem,1fr)] ${columns}`}
+    >
+      {options.map((option, index) => (
+        <span
+          key={`${option.key}-${index}`}
+          aria-hidden="true"
+          className="flex h-full items-center justify-center rounded-lg bg-track-surface"
+        >
+          <GlyphShape shape={option.key} className="size-7" />
+        </span>
+      ))}
+    </div>
+  )
+}
+
+/** Ketuk berurutan. Nomor urut dicetak di petak yang sudah diketuk supaya user bisa memeriksa
+ * pilihannya tanpa mengingat-ingat, dan mengetuk ulang petak yang sama membatalkannya beserta
+ * seluruh ketukan sesudahnya. */
+export function ChallengeOrder({
+  tiles,
+  picks,
+  status,
+  disabled = false,
+  onPick,
+}: {
+  tiles: number[]
+  picks: number[]
+  status: CaptchaAttemptStatus
+  disabled?: boolean
+  onPick: (index: number) => void
+}) {
+  const columns = tiles.length % 3 === 0 ? 'grid-cols-3' : 'grid-cols-2'
+
+  return (
+    <div
+      aria-label="Petak angka"
+      aria-invalid={status === 'error'}
+      className={`grid min-h-0 flex-1 gap-2 [grid-auto-rows:minmax(4rem,1fr)] ${columns}`}
+    >
+      {tiles.map((value, index) => {
+        const order = picks.indexOf(index)
+        const picked = order !== -1
+        return (
+          <button
+            key={`${value}-${index}`}
+            type="button"
+            onClick={() => {
+              hapticSelect()
+              onPick(index)
+            }}
+            aria-pressed={picked}
+            aria-label={picked ? `${value}, urutan ke-${order + 1}` : `${value}, belum diketuk`}
+            disabled={disabled}
+            className={`focus-ring focus-ring-strong transition-ui press-scale relative flex h-full items-center justify-center rounded-lg text-2xl font-bold tabular-nums ${optionStateClass(picked, status)} ${
+              disabled && !picked ? 'opacity-40' : ''
+            }`}
+          >
+            {value}
+            {picked ? (
+              <span
+                aria-hidden="true"
+                className="absolute right-1.5 top-1.5 flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold leading-none text-primary-foreground"
+              >
+                {order + 1}
+              </span>
+            ) : null}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export function ChallengeSelect({
   options,
   selected,

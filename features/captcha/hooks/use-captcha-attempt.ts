@@ -31,6 +31,10 @@ export function useCaptchaAttempt(
   const [status, setStatus] = useState<CaptchaAttemptStatus>('idle')
   const [textAnswer, setTextAnswer] = useState('')
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
+  /** Urutan ketukan untuk soal Urutkan Angka. Disimpan sebagai daftar, bukan string, karena yang
+   * dibutuhkan UI adalah nomor urut tiap petak — dan "sudah lengkap" di soal ini berarti seluruh
+   * petak sudah diketuk, bukan panjang teks tertentu. */
+  const [orderPicks, setOrderPicks] = useState<number[]>([])
   const [rejectedAnswer, setRejectedAnswer] = useState<string | null>(null)
   const [attemptsExhausted, setAttemptsExhausted] = useState(false)
   const [challengeEnded, setChallengeEnded] = useState(false)
@@ -60,17 +64,24 @@ export function useCaptchaAttempt(
     return () => clearInterval(id)
   }, [outcome, verifying])
 
-  const answer = challenge.type === 'select' ? (selectedOption ?? '') : textAnswer
+  const answer =
+    challenge.type === 'select'
+      ? (selectedOption ?? '')
+      : challenge.type === 'order'
+        ? orderPicks.join('-')
+        : textAnswer
 
   const expectedLength =
-    challenge.type === 'text'
-      ? challenge.display.length
-      : challenge.type === 'math'
-        ? challenge.answerLength
-        : null
+    challenge.type === 'text' || challenge.type === 'math' || challenge.type === 'count'
+      ? challenge.answerLength
+      : null
 
   const answerComplete =
-    expectedLength === null ? answer.trim().length > 0 : answer.trim().length === expectedLength
+    challenge.type === 'order'
+      ? orderPicks.length === challenge.tiles.length
+      : expectedLength === null
+        ? answer.trim().length > 0
+        : answer.trim().length === expectedLength
 
   /** Soal yang sudah tutup — waktunya habis, ongkosnya dikembalikan, atau sudah dikirim — tidak lagi menyediakan jalan mencoba. Layar task memakai ini untuk menawarkan soal baru alih-alih tombol "Cek" yang pasti ditolak. */
   const finished = attemptsExhausted || challengeEnded
@@ -89,6 +100,21 @@ export function useCaptchaAttempt(
     (value: string) => {
       if (verifying) return
       setTextAnswer(value)
+      clearError()
+    },
+    [clearError, verifying],
+  )
+
+  /** Mengetuk petak yang sama lagi membatalkannya beserta seluruh ketukan sesudahnya. Itu satu-
+   * satunya pembatalan yang punya arti di soal berurutan: membuang satu ketukan di tengah akan
+   * menyisakan urutan yang tidak pernah bisa dilanjutkan jadi jawaban yang benar. */
+  const pickTile = useCallback(
+    (index: number) => {
+      if (verifying) return
+      setOrderPicks((current) => {
+        const at = current.indexOf(index)
+        return at === -1 ? [...current, index] : current.slice(0, at)
+      })
       clearError()
     },
     [clearError, verifying],
@@ -148,12 +174,14 @@ export function useCaptchaAttempt(
     liveElapsedMs: outcome ? outcome.elapsedMs : liveElapsedMs,
     textAnswer,
     selectedOption,
+    orderPicks,
     verifying,
     attemptsExhausted,
     finished,
     canVerify,
     updateAnswer,
     selectOption,
+    pickTile,
     verify,
   }
 }

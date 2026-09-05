@@ -152,3 +152,59 @@ it('menurunkan varian select yang mustahil saat petaknya cuma dua', () => {
     setActiveEconomyConfig(sebelumnya)
   }
 })
+
+/** Dua tipe ini yang pertama menambah bentuk interaksinya sendiri, jadi yang dijaga bukan cuma
+ * jawabannya benar — tapi juga bahwa soalnya punya SATU jawaban yang benar. Angka kembar pada
+ * Urutkan Angka dan papan yang seluruhnya satu bentuk pada Hitung Bentuk sama-sama menghasilkan
+ * soal yang jawaban benarnya lebih dari satu atau bisa ditebak tanpa melihat. */
+describe('tipe soal baru', () => {
+  it.each(['Easy', 'Medium', 'Hard'] as const)('Urutkan Angka %s memakai angka unik', (difficulty) => {
+    const c = generateChallenge({ type: 'order', difficulty })
+    if (c.type !== 'order') throw new Error('tipe salah')
+    expect(new Set(c.tiles).size).toBe(c.tiles.length)
+    expect(c.tiles.length).toBeGreaterThanOrEqual(3)
+    expect(c.tiles.length).toBeLessThanOrEqual(6)
+  })
+
+  it.each(['ascending', 'descending'] as const)('Urutkan Angka %s menjawab urutan yang diminta', (variant) => {
+    const c = generateChallenge({ type: 'order', difficulty: 'Hard', variant })
+    if (c.type !== 'order') throw new Error('tipe salah')
+    const urut = [...c.tiles].sort((a, b) => (variant === 'descending' ? b - a : a - b))
+    expect(c.answer).toBe(urut.join('-'))
+  })
+
+  it.each(['Easy', 'Medium', 'Hard'] as const)('Hitung Bentuk %s menghitung target dengan benar', (difficulty) => {
+    const c = generateChallenge({ type: 'count', difficulty })
+    if (c.type !== 'count') throw new Error('tipe salah')
+    /** Papannya mengikuti `selectOptions*` seperti soal Pilih Bentuk. */
+    expect(c.options).toHaveLength(DEFAULT_ECONOMY_CONFIG[`selectOptions${difficulty}`])
+
+    const target = c.instruction.replace('Ada berapa ', '').replace(' di papan?', '')
+    const actual = c.options.filter((o) => o.label.toLowerCase() === target).length
+    expect(String(actual)).toBe(c.answer)
+    expect(c.answerLength).toBe(c.answer.length)
+  })
+
+  it('Hitung Bentuk tidak pernah menjadikan seluruh papan jawabannya', () => {
+    for (let i = 0; i < 60; i += 1) {
+      const c = generateChallenge({ type: 'count', difficulty: 'Hard' })
+      if (c.type !== 'count') throw new Error('tipe salah')
+      /** Dua sebagai lantai supaya soalnya tidak berubah jadi "pilih bentuk"; kurang dari seluruh
+       * papan supaya jawabannya tidak bisa ditebak tanpa melihat. */
+      expect(Number(c.answer)).toBeGreaterThanOrEqual(2)
+      expect(Number(c.answer)).toBeLessThan(c.options.length)
+    }
+  })
+
+  it('mengundi kelima tipe soal', () => {
+    const types = new Set<string>()
+    for (let i = 0; i < 400; i += 1) types.add(generateChallenge().type)
+    expect([...types].sort()).toEqual(['count', 'math', 'order', 'select', 'text'])
+  })
+
+  it('memulihkan payload order lama dengan varian menaik', () => {
+    const filled = withVariantDefaults({ type: 'order' as const, tiles: [3, 1, 2] } as never) as Record<string, unknown>
+    expect(filled.variant).toBe('ascending')
+    expect(filled.parScale).toBe(1)
+  })
+})

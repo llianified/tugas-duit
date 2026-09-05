@@ -4,8 +4,10 @@ import { useEffect, useRef, type Ref } from 'react'
 import { CaptchaAnswerSlots } from '@/features/captcha/components/answer-slots'
 import {
   ChallengeMath,
+  ChallengeOrder,
   ChallengeSelect,
   ChallengeSelectBoard,
+  ChallengeShapeBoard,
   ChallengeText,
 } from '@/features/captcha/components/board'
 import { CaptchaKeypad } from '@/features/captcha/components/keypad'
@@ -64,11 +66,9 @@ export function CaptchaView({
   }, [attempt.verifying])
 
   const answerLength =
-    challenge.type === 'text'
+    challenge.type === 'text' || challenge.type === 'math' || challenge.type === 'count'
       ? challenge.answerLength
-      : challenge.type === 'math'
-        ? challenge.answerLength
-        : null
+      : null
 
   function handleKeypadKey(char: string) {
     if (answerLength === null || attempt.textAnswer.length >= answerLength) return
@@ -108,21 +108,22 @@ export function CaptchaView({
         onRewardChange={onRewardChange}
       />
 
+      {/* Papan dan alat jawabnya dipisah per tipe, bukan lewat ternary bersarang: dengan lima tipe
+          yang papan dan inputnya tidak berpasangan satu-satu — Hitung Bentuk menonton papan tapi
+          menjawab lewat papan tombol, Urutkan Angka menjadikan papannya sekaligus alat jawab —
+          rantai ternary berhenti bisa dibaca sebelum sempat benar. */}
       <div className="flex min-h-0 flex-1 flex-col justify-center gap-3">
-        {challenge.type === 'select' ? (
+        {challenge.type === 'select' || challenge.type === 'count' ? (
           <ChallengeSelectBoard instruction={challenge.instruction} />
         ) : (
-          <>
-            <p className="text-center text-sm text-muted-foreground text-pretty">
-              {challenge.instruction}
-            </p>
-            {challenge.type === 'text' ? (
-              <ChallengeText display={challenge.display} />
-            ) : (
-              <ChallengeMath expression={challenge.expression} />
-            )}
-          </>
+          <p className="text-center text-sm text-muted-foreground text-pretty">
+            {challenge.instruction}
+          </p>
         )}
+
+        {challenge.type === 'text' ? <ChallengeText display={challenge.display} /> : null}
+        {challenge.type === 'math' ? <ChallengeMath expression={challenge.expression} /> : null}
+        {challenge.type === 'count' ? <ChallengeShapeBoard options={challenge.options} /> : null}
 
         {challenge.type === 'select' ? (
           <ChallengeSelect
@@ -131,6 +132,14 @@ export function CaptchaView({
             status={attempt.status}
             disabled={inputLocked}
             onSelect={attempt.selectOption}
+          />
+        ) : challenge.type === 'order' ? (
+          <ChallengeOrder
+            tiles={challenge.tiles}
+            picks={attempt.orderPicks}
+            status={attempt.status}
+            disabled={inputLocked}
+            onPick={attempt.pickTile}
           />
         ) : (
           <CaptchaAnswerSlots

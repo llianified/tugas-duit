@@ -3,6 +3,7 @@
 import { GlyphCheck, GlyphWallet } from '@/shared/components/glyph'
 import { InfoHint } from '@/shared/components/info-hint'
 import { SheetIcon } from '@/shared/components/sheet-icon'
+import { findStoreItem, storeEnabled } from '@/domain/store/store'
 import { Surface } from '@/shared/components/surface'
 import { creditsToRupiah } from '@/domain/economy/economy'
 import type {
@@ -60,6 +61,10 @@ export function NotEligibleNote({
   cooldownEndsAt?: number | null
   cooldownDays?: number | null
 }) {
+  /** Ajakannya cuma muncul kalau barangnya memang ada di rak hari ini. Menyebut jalan keluar yang
+   * sudah ditutup admin lebih buruk daripada tidak menyebut apa pun. */
+  const skipSellable = storeEnabled() && findStoreItem('withdraw_skip') !== null
+
   /** Dua keadaan ini bukan syarat yang harus dikumpulkan, melainkan keadaan sementara — jadi
    * keduanya tetap sebuah keterangan, bukan checklist yang seolah-olah bisa dikerjakan. */
   if (reason === 'processing' || reason === 'loading' || reason === 'cooldown') {
@@ -94,6 +99,14 @@ export function NotEligibleNote({
                 ? 'Dihitung sejak pengajuan terakhir'
                 : `${formatCredits(cooldownDays)} hari sejak pengajuan terakhir`}{' '}
               dan tetap jalan meski ditolak.
+              {/* Satu-satunya tempat jalan keluarnya disebut, dan tempatnya memang di sini: yang
+                  membaca layar ini persis orang yang sedang menunggu jedanya habis. Kalimatnya
+                  menyebut di mana barangnya, bukan tombol — lembar toko hidup di layar Misi, dan
+                  memindahkannya ke sini cuma untuk satu ajakan tidak sepadan. */}
+              {skipSellable ? (
+                <> Nggak mau nunggu? Ada Tarik Sekarang di Toko TD, sekali pakai buat lewatin
+                jedanya.</>
+              ) : null}
             </>
           )}
         </p>

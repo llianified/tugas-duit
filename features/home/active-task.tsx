@@ -32,6 +32,7 @@ export function ActiveTask({
   energy,
   energyMax,
   energyFill,
+  gaspolActive,
   rewardPoolCredits,
   rewardPoolSecondsToNext,
   adsEnabled,
@@ -53,6 +54,9 @@ export function ActiveTask({
   energy: number
   energyMax: number
   energyFill: EnergyFill
+  /** Pass Gaspol yang sedang berjalan. Selama menyala, energi berhenti jadi gerbang: bukan karena
+   * angkanya berubah, melainkan karena ongkos masuknya sudah dibayar di muka. */
+  gaspolActive: boolean
   rewardPoolCredits: number | null
   rewardPoolSecondsToNext: number | null
   adsEnabled: boolean
@@ -73,7 +77,7 @@ export function ActiveTask({
   const [recoveryOpen, setRecoveryOpen] = useState(false)
   const [tearing, setTearing] = useState(false)
   const poolEmpty = rewardPoolCredits === 0
-  const energyEmpty = energy < energyCostPerTask()
+  const energyEmpty = !gaspolActive && energy < energyCostPerTask()
   /** Task yang sudah pernah dimulai tidak menagih apa pun lagi: `startChallenge` melakukan seluruh pemungutan ongkos di dalam cabang `fresh`, jadi melanjutkannya lolos tanpa energi maupun stok reward. Tanpa pembedaan ini, user yang menekan back lalu energinya habis terkunci dari task yang ongkosnya SUDAH dia bayar. */
   const resuming = task.startedAt !== null
   const waiting = !resuming && (poolEmpty || energyEmpty)
@@ -120,6 +124,7 @@ export function ActiveTask({
             energyMax={energyMax}
             energyEmpty={energyEmpty}
             energyFill={energyFill}
+            gaspolActive={gaspolActive}
           />
           <div className="cta-gap flex items-stretch gap-2 [&>*]:min-w-0 [&>*]:flex-1">
             <StartAction
@@ -210,12 +215,14 @@ function TaskStats({
   energyMax,
   energyEmpty,
   energyFill,
+  gaspolActive,
 }: {
   maxReward: number
   energy: number
   energyMax: number
   energyEmpty: boolean
   energyFill: EnergyFill
+  gaspolActive: boolean
 }) {
   return (
     <dl className="grid grid-cols-3 gap-x-3">
@@ -224,7 +231,14 @@ function TaskStats({
         value={`+${formatCredits(maxReward)}`}
         note={formatRupiah(creditsToRupiah(maxReward))}
       />
-      <Stat label="Biaya" value={formatCredits(energyCostPerTask())} note="energi" />
+      {/* Petak biayanya yang berubah, bukan petak energinya: yang dibeli Pass Gaspol adalah ongkos
+          masuk yang jadi nol, dan angka energi di sebelahnya tetap angka sebenarnya. Menuliskannya
+          di petak energi akan membuat stok yang tidak berkurang terbaca seperti stok yang penuh. */}
+      {gaspolActive ? (
+        <Stat label="Biaya" value="0" note="pass gaspol" />
+      ) : (
+        <Stat label="Biaya" value={formatCredits(energyCostPerTask())} note="energi" />
+      )}
       <Stat
         label="Energi"
         value={

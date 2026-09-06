@@ -155,9 +155,146 @@ describe('TOKO-2 — pemotongan saldo dan pemberian barang', () => {
     const { buyStoreItem } = await import('./store')
     const userId = await makeUser()
 
-    expect(await buyStoreItem(userId, 'frame_emas', crypto.randomUUID())).toEqual({
+    expect(await buyStoreItem(userId, 'bingkai_ngawur', crypto.randomUUID())).toEqual({
       ok: false,
       reason: 'unknown_item',
     })
+  })
+})
+
+/** TOKO-3 — barang berbayar baru: yang dibeli benar-benar berlaku, dan berlakunya menumpuk.
+ *
+ * Ketiganya menyentuh kolom `users` yang tidak pernah muncul di ledger, jadi kekeliruan di sini
+ * tidak akan tertangkap rekonsiliasi saldo — yang terlihat cuma user yang membayar lalu tidak
+ * mendapat apa-apa. */
+describe('TOKO-3 — Pass Gaspol dan Tarik Sekarang', () => {
+  const readExtras = async (userId: number) => {
+    const { query } = await import('../platform/db')
+    const rows = await query<{
+      gaspol_until: Date | null
+      withdrawal_cooldown_waived_at: Date | null
+      now: Date
+    }>(
+      'select gaspol_until, withdrawal_cooldown_waived_at, now() as now from users where id=$1',
+      [userId],
+    )
+    return rows[0]
+  }
+
+  it('menyalakan jendela Gaspol, dan pembelian kedua menumpuk dari sisanya', async () => {
+    const { buyStoreItem } = await import('./store')
+    const userId = await makeUser({ balance: 1_000, pool: 30 })
+
+    expect(await buyStoreItem(userId, 'gaspol_pass', crypto.randomUUID())).toMatchObject({
+      ok: true,
+    })
+    const pertama = await readExtras(userId)
+    expect(pertama.gaspol_until).not.toBeNull()
+
+    await buyStoreItem(userId, 'gaspol_pass', crypto.randomUUID())
+    const kedua = await readExtras(userId)
+
+    /** Menumpuk, bukan menggantikan: tanpa `greatest(now(), coalesce(...))` pembelian kedua justru
+     * MEMOTONG sisa yang masih berjalan, dan yang terlihat user cuma jam yang tiba-tiba pendek. */
+    const selisihMenit =
+      ((kedua.gaspol_until as Date).getTime() - (pertama.gaspol_until as Date).getTime()) / 60_000
+    expect(Math.round(selisihMenit)).toBe(DEFAULT_ECONOMY_CONFIG.storeGaspolMinutes)
+  })
+
+  it('menolak Gaspol saat stok reward habis, sebelum TD-nya terbakar', async () => {
+    const { buyStoreItem } = await import('./store')
+    const userId = await makeUser({ balance: 1_000, pool: 0 })
+
+    expect(await buyStoreItem(userId, 'gaspol_pass', crypto.randomUUID())).toEqual({
+      ok: false,
+      reason: 'pool_empty',
+    })
+    expect(Number((await readUser(userId)).balance_credits)).toBe(1_000)
+  })
+
+  /** Tanpa jeda yang menahan, Tarik Sekarang tidak membeli apa pun — dan menjualnya di situ adalah
+   * cara tercepat membuat barang berbayar dibenci. */
+  it('menolak Tarik Sekarang saat tidak ada jeda penarikan yang berjalan', async () => {
+    const { buyStoreItem } = await import('./store')
+    const userId = await makeUser({ balance: 1_000 })
+
+    expect(await buyStoreItem(userId, 'withdraw_skip', crypto.randomUUID())).toEqual({
+      ok: false,
+      reason: 'no_cooldown',
+    })
+  })
+})
+
+/** TOKO-4 — kepemilikan kosmetik: dibeli sekali, dipakai sesuka hati, tidak bisa dipasang tanpa
+ * dibeli. Yang dipasang tampil di papan peringkat — satu-satunya permukaan publik aplikasi ini —
+ * jadi penjagaannya di server, bukan di tombol. */
+describe('TOKO-4 — kepemilikan dan pemasangan kosmetik', () => {
+  it('mencatat kepemilikan lalu langsung memasangnya', async () => {
+    const { buyStoreItem } = await import('./store')
+    const { query } = await import('../platform/db')
+    const userId = await makeUser({ balance: 1_000 })
+
+    expect(await buyStoreItem(userId, 'frame_emas', crypto.randomUUID())).toMatchObject({ ok: true })
+
+    const owned = await query<{ cosmetic_key: string }>(
+      'select cosmetic_key from user_cosmetics where user_id=$1',
+      [userId],
+    )
+    expect(owned.map((row) => row.cosmetic_key)).toEqual(['frame_emas'])
+
+    const equipped = await query<{ equipped_frame: string | null }>(
+      'select equipped_frame from users where id=$1',
+      [userId],
+    )
+    expect(equipped[0].equipped_frame).toBe('frame_emas')
+  })
+
+  it('menolak pembelian kedua untuk barang yang sudah dimiliki', async () => {
+    const { buyStoreItem } = await import('./store')
+    const userId = await makeUser({ balance: 1_000 })
+
+    await buyStoreItem(userId, 'title_sultan', crypto.randomUUID())
+    expect(await buyStoreItem(userId, 'title_sultan', crypto.randomUUID())).toEqual({
+      ok: false,
+      reason: 'already_owned',
+    })
+  })
+
+  it('menolak pemasangan barang yang belum dibeli', async () => {
+    const { equipCosmetic } = await import('./store')
+    const userId = await makeUser({ balance: 0 })
+
+    expect(await equipCosmetic(userId, 'frame', 'frame_api')).toEqual({
+      ok: false,
+      reason: 'not_owned',
+    })
+  })
+
+  /** Gelar yang dipasang ke slot bingkai lolos pemeriksaan kepemilikan tapi tidak akan pernah
+   * tergambar — penolakan yang harus terjadi di server, bukan diserahkan ke penyaji. */
+  it('menolak kosmetik yang jenisnya tidak cocok dengan slotnya', async () => {
+    const { buyStoreItem, equipCosmetic } = await import('./store')
+    const userId = await makeUser({ balance: 1_000 })
+
+    await buyStoreItem(userId, 'title_kilat', crypto.randomUUID())
+    expect(await equipCosmetic(userId, 'frame', 'title_kilat')).toEqual({
+      ok: false,
+      reason: 'unknown_slot',
+    })
+  })
+
+  it('melepas yang sedang dipakai tanpa menghapus kepemilikannya', async () => {
+    const { buyStoreItem, equipCosmetic } = await import('./store')
+    const { query } = await import('../platform/db')
+    const userId = await makeUser({ balance: 1_000 })
+
+    await buyStoreItem(userId, 'frame_langit', crypto.randomUUID())
+    expect(await equipCosmetic(userId, 'frame', null)).toEqual({
+      ok: true,
+      equipped: { frame: null, title: null },
+    })
+
+    const owned = await query('select 1 from user_cosmetics where user_id=$1', [userId])
+    expect(owned).toHaveLength(1)
   })
 })

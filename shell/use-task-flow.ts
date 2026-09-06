@@ -23,6 +23,7 @@ export function useTaskFlow({
   task,
   energy,
   energySecondsToNext,
+  gaspolActive,
   rewardPoolCredits,
   rewardPoolSecondsToNext,
   notifyError,
@@ -37,6 +38,10 @@ export function useTaskFlow({
   task: Challenge | null
   energy: number
   energySecondsToNext: number | null
+  /** Pass Gaspol yang sedang berjalan membayarkan ongkos masuk, jadi penjaga energi di bawah harus
+   * berhenti menahan. Tanpa ini tombol mulainya mati begitu energi habis — persis pada user yang
+   * baru saja membayar supaya energinya berhenti jadi penghalang. */
+  gaspolActive: boolean
   rewardPoolCredits: number | null
   rewardPoolSecondsToNext: number | null
   notifyError: (message: string) => void
@@ -84,7 +89,7 @@ export function useTaskFlow({
     (candidate: Challenge, payWith: TaskPayment): string | null => {
       if (candidate.startedAt !== null) return null
       /** Ambangnya `energyCostPerTask()`, bukan 1: biaya energi per task bisa disetel dari panel admin, dan `< 1` membuat klien meloloskan permintaan yang pasti ditolak server begitu biayanya dinaikkan. Bentuknya sama dengan `energyEmpty` di `active-task.tsx`. */
-      if (payWith === 'energy' && energy < energyCostPerTask()) {
+      if (payWith === 'energy' && !gaspolActive && energy < energyCostPerTask()) {
         return energySecondsToNext === null
           ? 'Energi belum cukup. Tunggu isi berikutnya.'
           : `Energi belum cukup. Isi lagi dalam ${formatCountdown(energySecondsToNext)}.`
@@ -96,7 +101,7 @@ export function useTaskFlow({
       }
       return null
     },
-    [energy, energySecondsToNext, rewardPoolCredits, rewardPoolSecondsToNext],
+    [energy, energySecondsToNext, gaspolActive, rewardPoolCredits, rewardPoolSecondsToNext],
   )
 
   /** `hold` datang dari animasi sobekan karcis di beranda (`ActiveTask`). Permintaan ke server dan animasinya jalan BERBARENGAN; yang ditunggu di sini hanya sisa waktu animasi setelah server menjawab, jadi ketukan tidak pernah jadi lebih lambat dari salah satu di antaranya. Kembaliannya dipakai pemanggil untuk memulihkan karcis kalau task gagal dimulai. */

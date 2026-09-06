@@ -155,3 +155,92 @@ describe('TASK-ENUM — tipe soal baru melewati jalur asli sampai dibayar', () =
     expect(selesai[0].type).toBe(tipe)
   })
 })
+
+/** TASK-GASPOL — Pass Gaspol membayar ongkos masuk, bukan hadiahnya.
+ *
+ * Argumennya sama persis dengan tiket iklan di migrasi 0024: yang dibeli adalah ongkos masuk, jadi
+ * yang naik cuma kecepatan user menghabiskan plafonnya sendiri — kolam reward tetap yang mematok
+ * berapa yang bisa keluar per hari. Yang dijaga di sini dua hal yang sama-sama menentukan uang:
+ * energinya benar-benar tidak terpotong, dan soalnya tidak meninggalkan jejak ongkos yang bisa
+ * "dikembalikan" jadi energi gratis. */
+describe('TASK-GASPOL — pass membayar ongkos masuk tanpa memotong energi', () => {
+  const nyalakanGaspol = async (userId: number) => {
+    const { query } = await import('../platform/db')
+    await query(
+      `update users set gaspol_until = now() + interval '1 hour' where id=$1`,
+      [userId],
+    )
+  }
+
+  const energiUser = async (userId: number) => {
+    const { query } = await import('../platform/db')
+    const rows = await query<{ energy: number }>('select energy from users where id=$1', [userId])
+    return Number(rows[0].energy)
+  }
+
+  it('tidak memotong energi selama jendelanya berjalan', async () => {
+    const { issueChallenge, startChallenge } = await import('./challenge')
+    const userId = await makeUser()
+    await nyalakanGaspol(userId)
+
+    const sebelum = await energiUser(userId)
+    const challenge = await issueChallenge(userId)
+    const started = await startChallenge(userId, challenge.id)
+
+    expect(started).toMatchObject({ ok: true, paidBy: 'gaspol' })
+    expect(await energiUser(userId)).toBe(sebelum)
+  })
+
+  /** Pass dibaca SEBELUM energi dipotong, bukan sebagai jalur mundur setelah energinya habis: yang
+   * dibeli "energi tidak berkurang", bukan "boleh main saat energi nol". */
+  it('tetap jalan saat energinya kosong', async () => {
+    const { query } = await import('../platform/db')
+    const { issueChallenge, startChallenge } = await import('./challenge')
+    const userId = await makeUser()
+    await query('update users set energy=0 where id=$1', [userId])
+    await nyalakanGaspol(userId)
+
+    const challenge = await issueChallenge(userId)
+    expect(await startChallenge(userId, challenge.id)).toMatchObject({ ok: true, paidBy: 'gaspol' })
+  })
+
+  /** Soal yang tidak memotong apa pun juga tidak boleh punya jejak ongkos: `energy_spent_at` yang
+   * telanjur terisi membuat `refundEntry` mencetak energi dari udara untuk soal yang gratis. */
+  it('tidak meninggalkan jejak ongkos yang bisa dikembalikan jadi energi', async () => {
+    const { query } = await import('../platform/db')
+    const { issueChallenge, startChallenge } = await import('./challenge')
+    const { refundEntry } = await import('../economy/energy')
+    const { transaction } = await import('../platform/db')
+    const userId = await makeUser()
+    await nyalakanGaspol(userId)
+
+    const challenge = await issueChallenge(userId)
+    await startChallenge(userId, challenge.id)
+
+    const rows = await query<{ energy_spent_at: Date | null; ad_view_id: string | null }>(
+      'select energy_spent_at, ad_view_id from challenges where id=$1',
+      [challenge.id],
+    )
+    expect(rows[0].energy_spent_at).toBeNull()
+    expect(rows[0].ad_view_id).toBeNull()
+
+    const sebelum = await energiUser(userId)
+    expect(await transaction((tx) => refundEntry(tx, userId, challenge.id))).toEqual({
+      refunded: false,
+    })
+    expect(await energiUser(userId)).toBe(sebelum)
+  })
+
+  it('kembali memotong energi setelah jendelanya lewat', async () => {
+    const { query } = await import('../platform/db')
+    const { issueChallenge, startChallenge } = await import('./challenge')
+    const userId = await makeUser()
+    await query(`update users set gaspol_until = now() - interval '1 minute' where id=$1`, [userId])
+
+    const sebelum = await energiUser(userId)
+    const challenge = await issueChallenge(userId)
+
+    expect(await startChallenge(userId, challenge.id)).toMatchObject({ ok: true, paidBy: 'energy' })
+    expect(await energiUser(userId)).toBe(sebelum - DEFAULT_ECONOMY_CONFIG.energyCostPerTask)
+  })
+})

@@ -160,6 +160,7 @@ export function AppViewRouter({
         stats={session.stats}
         premium={session.premium}
         founder={session.founder}
+        cosmetics={session.cosmetics}
         onOpenPhotoNote={() =>
           showError('Foto dan nama ikut Telegram. Ubah di sana, lalu buka ulang app.')
         }
@@ -200,6 +201,7 @@ export function AppViewRouter({
       energy={session.energy}
       energyMax={session.energyMax}
       energyFill={session.energyFill}
+      gaspolActive={session.gaspolActive}
       rewardPoolCredits={session.rewardPoolCredits}
       rewardPoolSecondsToNext={session.rewardPoolSecondsToNext}
       economy={session.economy}

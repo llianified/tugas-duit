@@ -36,6 +36,8 @@ const eligible = {
   requiresPremium: false,
   cooldownEndsAt: null,
   cooldownDays: 7,
+  cooldownWaived: false,
+  processingCount: 0,
 }
 
 describe('WD-12 — gerbang formulir penarikan', () => {
@@ -111,6 +113,8 @@ describe('withdrawalRequirements', () => {
     requiresPremium: false,
     cooldownEndsAt: null,
     cooldownDays: 7,
+    cooldownWaived: false,
+    processingCount: 0,
   }
 
   it('menyembunyikan baris premium saat syaratnya mati', () => {

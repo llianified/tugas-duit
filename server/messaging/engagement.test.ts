@@ -35,6 +35,7 @@ function candidate(overrides: Partial<CandidateRow> = {}): CandidateRow {
     completed_count_before: 10,
     last_task_at: new Date(now.getTime() - 4 * HOURS),
     tasks_today: 1,
+    tasks_recent: 1,
     active_referrals: 0,
     last_withdrawal_at: null,
     processing_withdrawals: 0,
@@ -340,5 +341,113 @@ describe('ENG-11 — kueri kandidat berbatas dan berurutan', () => {
     // Seluruh subquery berkorelasi berdiri di atas `picked`, bukan di atas `users`.
     expect(setelahPotong).toMatch(/from picked p/)
     expect(setelahPotong).not.toMatch(/tc\.user_id=u\.id/)
+  })
+})
+
+/** ENG-12 — jenis pesan baru, dan satu aturan yang berlaku untuk semuanya: setiap pesan menutup
+ * dengan ajakan main yang konkret.
+ *
+ * Cron-nya jalan sekali sehari, jadi satu user paling banyak menerima SATU pesan per hari. Itu yang
+ * membuat urutan di `pickMessage` menentukan segalanya — jenis yang kalah urutan bukan "muncul
+ * nanti", melainkan tidak pernah muncul untuk user itu hari itu. */
+describe('ENG-12 — ajakan main dan jenis pesan baru', () => {
+  /** Misi harian DIUNDI tiap hari (migrasi 0048), jadi "Selesaikan soal" belum tentu keluar. Undian
+   * dilebarkan sampai seluruh misi otomatis terpilih supaya yang diuji aturannya, bukan hasil
+   * undian tanggal tertentu. */
+  const semuaMisi = () =>
+    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, missionDailyCount: 20 })
+
+  it('mengingatkan misi harian yang tinggal sedikit, bukan yang baru dimulai', () => {
+    semuaMisi()
+    const target = DEFAULT_ECONOMY_CONFIG.missionTasksTarget
+
+    const nyaris = pickMessage(candidate({ tasks_today: target - 1 }), 0)
+    expect(nyaris?.kind).toBe('mission_ready')
+    expect(nyaris?.text).toContain('tinggal 1 soal')
+
+    /** Empat soal lagi bukan ajakan, cuma laporan — dan laporan menghabiskan satu-satunya jatah
+     * kirim hari itu tanpa memindahkan siapa pun. */
+    expect(pickMessage(candidate({ tasks_today: 1 }), 0)?.kind).not.toBe('mission_ready')
+  })
+
+  it('tidak menyebut misi yang tidak keluar hari itu', () => {
+    setActiveEconomyConfig({ ...DEFAULT_ECONOMY_CONFIG, missionDailyCount: 0 })
+    const target = DEFAULT_ECONOMY_CONFIG.missionTasksTarget
+    expect(pickMessage(candidate({ tasks_today: target - 1 }), 0)?.kind).not.toBe('mission_ready')
+  })
+
+  /** 2026-01-11 adalah hari terakhir musim pertama sejak `SEASON_ANCHOR` (2026-01-05, musim 7
+   * hari). Tanggalnya dipilih dari aturannya, bukan dari hari ini, supaya uji ini tidak berubah
+   * hasil besok. */
+  it('mengabari musim papan peringkat yang habis malam ini, hanya untuk yang ikut', () => {
+    const akhirMusim = new Date('2026-01-11T05:00:00Z')
+    const ikut = candidate({ now: akhirMusim, tasks_today: 0, tasks_recent: 12, energy: 0 })
+    expect(pickMessage(ikut, 0)?.kind).toBe('season_ending')
+
+    const tidakIkut = candidate({ now: akhirMusim, tasks_today: 0, tasks_recent: 0, energy: 0 })
+    expect(pickMessage(tidakIkut, 0)?.kind).not.toBe('season_ending')
+  })
+
+  /** Ajakan belanja: saldo yang cukup buat beli sesuatu tapi penarikannya belum kebuka. Kunci
+   * dedup-nya mingguan — ajakan belanja yang datang tiap hari berhenti jadi ajakan. */
+  it('menawarkan toko untuk saldo yang belum bisa ditarik, dengan dedup mingguan', () => {
+    const message = pickMessage(candidate({ tasks_today: 0, balance_credits: '50' }), 0)
+
+    expect(message?.kind).toBe('store_idle')
+    expect(message?.dedupeKey.startsWith('W')).toBe(true)
+    expect(message?.text).toContain('QRIS')
+  })
+
+  it('tidak menawarkan toko saat saldonya belum cukup buat beli apa pun', () => {
+    expect(pickMessage(candidate({ tasks_today: 0, balance_credits: '1' }), 0)?.kind).not.toBe(
+      'store_idle',
+    )
+  })
+
+  /** Jaring terakhir. Tanpa ini user yang hari ini belum menyentuh soal — tapi energinya belum
+   * penuh, stoknya belum penuh, streak-nya belum dua hari — tidak menerima satu pun ajakan main,
+   * padahal ia persis orang yang paling mudah diajak balik. */
+  it('tetap mengajak main user yang hari ini belum kelar satu soal pun', () => {
+    const row = candidate({
+      tasks_today: 0,
+      energy: 1,
+      last_task_at: new Date(NOON_WIB.getTime() - 1 * HOURS),
+    })
+
+    expect(pickMessage(row, 0)?.kind).toBe('daily_invite')
+  })
+
+  it('diam untuk user yang hari ini memang sudah main dan tidak punya kabar lain', () => {
+    const row = candidate({
+      tasks_today: 2,
+      energy: 1,
+      last_task_at: new Date(NOON_WIB.getTime() - 1 * HOURS),
+    })
+
+    expect(pickMessage(row, 0)).toBeNull()
+  })
+
+  /** Yang diuji bukan kalimatnya, melainkan bahwa tidak ada jenis pesan yang berhenti sebagai
+   * laporan keadaan. Tiap pesan harus punya tombol yang menyebut aksinya — "buka app" yang dulu
+   * dipakai bergantian sudah tidak dihitung sebagai ajakan. */
+  it('memberi setiap jenis pesan tombol yang menyebut aksinya', () => {
+    semuaMisi()
+    const target = DEFAULT_ECONOMY_CONFIG.missionTasksTarget
+    const rows: CandidateRow[] = [
+      candidate({ tasks_today: target - 1 }),
+      candidate({ commission_today: 5, tasks_today: 1 }),
+      candidate({ new_referrals_today: 2, tasks_today: 1 }),
+      candidate({ tasks_today: 0, balance_credits: '50' }),
+      candidate({ tasks_today: 0, energy: 1, last_task_at: new Date(NOON_WIB.getTime() - HOURS) }),
+      candidate({ last_task_at: new Date(NOON_WIB.getTime() - 5 * 24 * HOURS), tasks_today: 0 }),
+    ]
+
+    const messages = rows.map((row) => pickMessage(row, 0))
+    expect(messages.every((message) => message !== null)).toBe(true)
+    for (const message of messages) {
+      expect(message?.buttonLabel).toBeTruthy()
+      expect(message?.buttonLabel).not.toBe('🎮 Buka app')
+      expect(message?.text.length).toBeGreaterThan(40)
+    }
   })
 })

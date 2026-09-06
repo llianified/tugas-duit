@@ -18,6 +18,7 @@ import {
   type FilterChipOption,
   type SegmentedTab,
 } from '@/shared/components/segmented-tabs'
+import { titleLabel, type CosmeticKey } from '@/domain/store/cosmetics'
 import { ProfileAvatar } from '@/shared/components/profile-avatar'
 import { ActivityFeed } from '@/features/activity/activity-feed'
 import type { ActivityEntry } from '@/domain/progression/activity'
@@ -166,6 +167,7 @@ function PodiumCard({ entry }: { entry: LeaderboardEntry }) {
       <span className="relative flex">
         <ProfileAvatar
           photoUrl={entry.photoUrl}
+          frame={entry.frame}
           className={cn(
             'size-12',
             entry.premium
@@ -189,6 +191,8 @@ function PodiumCard({ entry }: { entry: LeaderboardEntry }) {
           <GlyphCrown className="size-3 shrink-0 text-premium" aria-label="Anggota premium" />
         ) : null}
       </p>
+
+      <CosmeticTitle entry={entry} />
 
       {/* Satuannya ikut, meski ruangnya mahal: angka sebesar ini tanpa satuan bisa
       terbaca sebagai Rupiah, dan itu kesalahpahaman yang paling merugikan di app
@@ -251,6 +255,7 @@ function YourPosition({
             tier={rank.tier}
             premium={you.premium}
             photoUrl={you.photoUrl}
+            frame={you.frame}
           />
 
           <div className="min-w-0 flex-1">
@@ -259,6 +264,7 @@ function YourPosition({
               {you.premium ? (
                 <GlyphCrown className="size-3.5 shrink-0 text-premium" aria-label="Anggota premium" />
               ) : null}
+              <CosmeticTitle entry={you} />
               <MetaBadge tone="primary">Kamu</MetaBadge>
             </p>
             {/* Jumlah task tidak ikut di baris ini. Pada 384px kolom nama tinggal ~200px
@@ -431,16 +437,19 @@ function BoardFrame({
   tier,
   premium,
   photoUrl,
+  frame,
 }: {
   position: number
   tier: number
   premium: boolean
   photoUrl: string | null
+  frame: CosmeticKey | null
 }) {
   return (
     <span className="relative flex shrink-0">
       <ProfileAvatar
         photoUrl={photoUrl}
+        frame={frame}
         className={cn(
           'size-10',
           premium
@@ -517,6 +526,15 @@ function PrestigeChips({ entry }: { entry: LeaderboardEntry }) {
   )
 }
 
+/** Gelar yang dipakai, dicetak sebagai chip di sebelah nama. Ia satu-satunya bagian kosmetik yang
+ * memakan lebar baris, jadi ia berdiri sebelum chip prestise: yang dibayar orang harus kalah dari
+ * namanya sendiri, tapi tidak dari lencana yang didapat gratis. */
+function CosmeticTitle({ entry }: { entry: LeaderboardEntry }) {
+  const label = titleLabel(entry.title)
+  if (!label) return null
+  return <MetaBadge tone="neutral">{label}</MetaBadge>
+}
+
 function BoardListItem({
   entry,
   showDivider,
@@ -535,6 +553,7 @@ function BoardListItem({
           tier={rank.tier}
           premium={entry.premium}
           photoUrl={entry.photoUrl}
+          frame={entry.frame}
         />
       }
       title={
@@ -544,6 +563,7 @@ function BoardListItem({
             <GlyphCrown className="size-3.5 shrink-0 text-premium" aria-label="Anggota premium" />
           ) : null}
           {entry.you ? <MetaBadge tone="primary">Kamu</MetaBadge> : null}
+          <CosmeticTitle entry={entry} />
           <PrestigeChips entry={entry} />
         </span>
       }

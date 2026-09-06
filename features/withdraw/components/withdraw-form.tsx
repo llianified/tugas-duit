@@ -29,12 +29,14 @@ export interface WithdrawalSubmitInput {
 export function WithdrawForm({
   balance,
   cooldownDays,
+  cooldownWaived,
   step,
   onStepChange,
   onSubmit,
 }: {
   balance: number
   cooldownDays: number | null
+  cooldownWaived: boolean
   step: WithdrawStep
   onStepChange: (step: WithdrawStep) => void
   onSubmit: (input: WithdrawalSubmitInput) => Promise<Withdrawal | null>
@@ -135,6 +137,7 @@ export function WithdrawForm({
               credits,
             }}
             cooldownDays={cooldownDays}
+            cooldownWaived={cooldownWaived}
             isSubmitting={isSubmitting}
             onConfirm={handleConfirm}
             onBack={() => onStepChange('account')}

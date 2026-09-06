@@ -6,6 +6,7 @@ import {
   type LeaderboardEntry,
 } from '@/domain/progression/leaderboard'
 import { FOUNDER_MAX_USER_ID } from '@/domain/progression/prestige'
+import { readEquipped } from '@/domain/store/cosmetics'
 import { query } from '../platform/db'
 
 /** 500, naik dari 20. Papan sepanjang ini tidak dimaksudkan untuk digulir habis — UI-nya memuat 50 baris sekaligus dan menyematkan posisi user di atas — melainkan supaya peringkat masih berarti bagi orang yang tidak akan pernah masuk sepuluh besar. Muatannya tetap kecil: 500 baris berisi angka dan nama pendek, dan querinya sudah memindai seluruh peserta untuk menghitung `participants` sejak sebelum perubahan ini. */
@@ -106,6 +107,8 @@ export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> 
     is_you: boolean
     is_premium: boolean
     is_founder: boolean
+    equipped_frame: string | null
+    equipped_title: string | null
   }>(
     /** Batas musimnya dihitung Postgres, bukan proses ini, dengan alasan yang sama seperti undian
         misi: `completed_at` dibandingkan dengan batas itu, jadi keduanya harus datang dari jam yang
@@ -117,6 +120,8 @@ export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> 
               u.public_id,
               u.first_name,
               u.photo_url,
+              u.equipped_frame,
+              u.equipped_title,
               count(tc.id)::int                                  as task_count,
               coalesce(sum(tc.reward), 0)::int                    as task_credits,
               (rank() over (order by coalesce(sum(tc.reward), 0) desc,
@@ -136,7 +141,8 @@ export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> 
         where u.banned_at is null
         group by u.id
      )
-     select public_id, first_name, photo_url, task_count, task_credits, position, participants,
+     select public_id, first_name, photo_url, equipped_frame, equipped_title,
+            task_count, task_credits, position, participants,
             premium_members, is_premium, is_founder,
             (id = $1) as is_you
        from ranked
@@ -156,6 +162,7 @@ export async function getLeaderboard(userId: number): Promise<LeaderboardBoard> 
     you: row.is_you,
     premium: row.is_premium,
     founder: row.is_founder,
+    ...readEquipped(row.equipped_frame, row.equipped_title),
   })
 
   const you = rows.filter((row) => row.is_you).map(toEntry)[0] ?? null

@@ -1,3 +1,4 @@
+import type { StorePurchaseRefusal } from '@/domain/store/store'
 import { loadEconomyConfig } from '@/server/economy/economy-config'
 import {
   apiError,
@@ -13,15 +14,32 @@ import { requireUser } from '@/server/auth/session'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const REFUSAL: Record<string, { message: string; status: number }> = {
+/** Bentuknya `Record<StorePurchaseRefusal, …>`, bukan `Record<string, …>`. Bedanya bukan gaya:
+ * dengan `string`, alasan penolakan baru yang lupa didaftarkan di sini lolos pemeriksaan tipe lalu
+ * meledak saat dijalankan sebagai `refusal.message` pada `undefined` — 500 untuk keadaan yang
+ * sebenarnya sudah ditangani dengan benar sampai satu baris sebelum ini. */
+const REFUSAL: Record<StorePurchaseRefusal, { message: string; status: number }> = {
   store_disabled: { message: 'Tokonya lagi tutup.', status: 409 },
   unknown_item: { message: 'Barangnya nggak ketemu. Muat ulang dulu ya.', status: 400 },
+  payment_unavailable: {
+    message: 'Barang ini nggak bisa ditebus pakai TD. Bayarnya lewat QRIS ya.',
+    status: 409,
+  },
   insufficient_balance: { message: 'Saldo TD kamu belum cukup buat beli ini.', status: 409 },
   energy_full: { message: 'Energi kamu bakal kelebihan. Pakai dulu, terus beli lagi.', status: 409 },
   /** Menyebut yang ditakutkan lalu menenangkan: yang dikhawatirkan bukan tokonya rusak, melainkan
    * TD-nya kepotong percuma. Kalimatnya menutup dengan kapan barangnya jadi berguna lagi. */
   pool_empty: {
     message: 'Stok reward lagi habis, jadi energi belum ada gunanya. Saldo kamu aman, coba lagi nanti ya.',
+    status: 409,
+  },
+  already_owned: { message: 'Barang ini udah kamu punya. Tinggal dipakai aja.', status: 409 },
+  no_cooldown: {
+    message: 'Penarikan kamu lagi nggak kena jeda, jadi nggak ada yang perlu dilewati.',
+    status: 409,
+  },
+  withdrawal_processing: {
+    message: 'Pengajuan kamu masih diproses. Tunggu hasilnya dulu, baru beli ini.',
     status: 409,
   },
 }

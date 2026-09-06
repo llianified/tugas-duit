@@ -6,12 +6,14 @@ import { maxEnergy } from '@/domain/economy/energy'
 import type { Referral, ReferralSummary } from '@/domain/economy/referral'
 import type { Withdrawal, WithdrawalDraft } from '@/domain/economy/withdrawal'
 import { hasUnclaimedMissions } from '@/domain/progression/missions'
+import { NO_COSMETICS } from '@/domain/store/cosmetics'
 import { useViewStack } from '@/navigation/use-view-stack'
 import { rememberAdsHint } from '@/shell/ads-hint'
 import { sendJson, userFacingMessage } from '@/shell/api-client'
 import { useAdPass } from '@/shell/use-ad-pass'
 import { useAdsProjection } from '@/shell/use-ads-projection'
 import { useEnergyProjection } from '@/shell/use-energy-projection'
+import { useGaspolProjection } from '@/shell/use-gaspol-projection'
 import { useRewardPoolProjection } from '@/shell/use-reward-pool-projection'
 import { useSessionQueries } from '@/shell/use-session-queries'
 import { useTaskFlow } from '@/shell/use-task-flow'
@@ -73,6 +75,17 @@ export function useRewardSession({
 
   const premiumActive = session?.premium?.active ?? false
 
+  /** Pass Gaspol yang sedang berjalan. Yang menentukan boleh atau tidak tetap `startChallenge`;
+   * yang di sini cuma supaya tombol mulai dan kartu karcis tidak menahan user yang ongkos masuknya
+   * sudah dibayar. Lewat proyeksi, bukan perbandingan sekali di render: pass yang tenggatnya lewat
+   * di tengah pemakaian harus berhenti menyala pada detik yang sama, bukan menunggu sesi
+   * berikutnya. */
+  const { gaspolActive } = useGaspolProjection({
+    until: session?.gaspolUntil ?? null,
+    clockOffset: session?.energy ? session.energy.now - session.energy.receivedAt : 0,
+    refreshSession: retrySession,
+  })
+
   const { energy, energySecondsToNext, energyFill } = useEnergyProjection({
     payload: session?.energy ?? null,
     premium: premiumActive,
@@ -104,6 +117,7 @@ export function useRewardSession({
     task,
     energy,
     energySecondsToNext,
+    gaspolActive,
     rewardPoolCredits,
     rewardPoolSecondsToNext,
     notifyError,
@@ -269,6 +283,7 @@ export function useRewardSession({
     energyMax: maxEnergy(premiumActive),
     energySecondsToNext,
     energyFill,
+    gaspolActive,
     rewardPoolCredits,
     rewardPoolMax,
     rewardPoolRegenCredits,
@@ -276,6 +291,7 @@ export function useRewardSession({
     startTask,
     startTaskWithAd,
     premium: session?.premium ?? null,
+    cosmetics: session?.cosmetics ?? NO_COSMETICS,
     channelBonus: session?.channelBonus ?? null,
     channelGate: session?.channelGate ?? null,
     channelBlocked,

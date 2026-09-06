@@ -49,17 +49,29 @@ interface PayoutEligibility {
   cooldownEndsAt: number | null
   /** Jeda yang benar-benar berlaku untuk user ini — 3 hari kalau premium, 7 kalau tidak. */
   cooldownDays: number
+  /** Jedanya sedang dilepas oleh Tarik Sekarang yang sudah dibeli. Dikirim supaya layar penarikan
+   * bisa menyebutnya, bukan cuma diam-diam membuka formulirnya: user yang membayar untuk melewati
+   * jeda berhak melihat bahwa yang ia bayar sedang bekerja. */
+  cooldownWaived: boolean
+  /** Pengajuan yang masih ditunggu keputusan admin. Ikut dibaca di sini karena ia bagian dari
+   * pertanyaan yang sama — boleh mengajukan atau tidak — dan `withdrawals_one_active_per_user`
+   * tetap menolaknya di ujung kalau tidak diperiksa lebih dulu. */
+  processingCount: number
 }
 
 const ELIGIBILITY_SQL = `select
    (select count(distinct downline_id) from referral_commissions where upline_id=$1) active_referral_count,
    (select max(requested_at) from withdrawals where user_id=$1) last_requested_at,
-   (select premium_until from users where id=$1) premium_until`
+   (select count(*) from withdrawals where user_id=$1 and state='processing')::int processing_count,
+   (select premium_until from users where id=$1) premium_until,
+   (select withdrawal_cooldown_waived_at from users where id=$1) cooldown_waived_at`
 
 type EligibilityRow = {
   active_referral_count: string
   last_requested_at: Date | null
+  processing_count: number
   premium_until: Date | null
+  cooldown_waived_at: Date | null
 }
 
 /** Satu-satunya pembaca kelayakan penarikan, dipakai jalur baca maupun jalur tulis. Dulu keduanya punya SQL kembar. Saat premium menambahkan jeda 3 hari, hanya jalur tulis yang ikut diubah — jalur baca tetap memakai 7 hari, sehingga UI menggerbang user premium sampai hari ketujuh padahal server sudah menerima pengajuannya sejak hari ketiga. Yang memperbaikinya bukan menyamakan konstantanya, melainkan menghapus salinannya. Bentuk `tx?` mengikuti `run()` di `reward-pool.ts` dan `ads.ts`: ikut transaksi saat dipakai `createPayout`, berdiri sendiri saat sekadar dibaca. */
@@ -73,13 +85,40 @@ async function readEligibility(userId: number, tx?: PoolClient): Promise<PayoutE
   const cooldownMs = withdrawalCooldownMs(premium)
   const endsAt = row.last_requested_at ? row.last_requested_at.getTime() + cooldownMs : null
 
+  /** Tarik Sekarang melepas jeda tanpa jatah yang dicacah: penandanya cukup lebih baru daripada
+   * pengajuan terakhir. Bentuk itu yang membuatnya habis sendiri — begitu pengajuan berikutnya
+   * masuk, `requested_at` melewati penandanya dan gerbangnya menutup lagi, tanpa satu pun langkah
+   * konsumsi terpisah yang bisa gagal di tengah dan menyisakan jatah hantu. */
+  const waived =
+    row.cooldown_waived_at !== null &&
+    row.last_requested_at !== null &&
+    row.cooldown_waived_at.getTime() > row.last_requested_at.getTime()
+
   return {
     activeReferralCount: Number(row.active_referral_count),
     requiredActiveReferrals: requiredActiveReferrals(),
     premiumActive: premium,
     requiresPremium: payoutRequiresPremium(),
-    cooldownEndsAt: endsAt && endsAt > now ? endsAt : null,
+    cooldownEndsAt: waived ? null : endsAt && endsAt > now ? endsAt : null,
     cooldownDays: Math.round(cooldownMs / 86_400_000),
+    cooldownWaived: waived,
+    processingCount: Number(row.processing_count),
+  }
+}
+
+/** Dipakai Toko TD sebelum menjual Tarik Sekarang. Diekspor dari sini, bukan dihitung ulang di
+ * sana, dengan alasan yang sama yang membuat `readEligibility` jadi satu-satunya pembaca: jeda
+ * penarikan pernah punya dua salinan, dan yang kedua tetap memakai tujuh hari lama setelah premium
+ * memendekkannya jadi tiga. Rak yang menghitung sendiri akan menjual jatah untuk jeda yang
+ * sebenarnya sudah lewat. */
+export async function readWithdrawalGate(
+  userId: number,
+  tx?: PoolClient,
+): Promise<{ cooldownActive: boolean; processing: boolean }> {
+  const eligibility = await readEligibility(userId, tx)
+  return {
+    cooldownActive: eligibility.cooldownEndsAt !== null,
+    processing: eligibility.processingCount > 0,
   }
 }
 

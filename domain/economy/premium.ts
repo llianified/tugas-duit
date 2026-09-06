@@ -1,18 +1,25 @@
 import { economyConfig } from './economy-config.ts'
 
-export type PremiumMonths = 1 | 2 | 3
+/** Paket 6 dan 12 bulan menyusul di migrasi 0058. Yang membuatnya layak bukan diskonnya melainkan
+ * ukuran tiketnya: satu pembayaran Rp139.900 menanggung ongkos gateway sekali, bukan dua belas
+ * kali, dan user yang membayar setahun berhenti jadi orang yang tiap bulan menimbang ulang apakah
+ * mau lanjut. Yang TIDAK berubah: premium tetap menjual kecepatan dan kenyamanan, bukan plafon
+ * penghasilan — lihat catatan panjang di migrasi 0027. */
+export type PremiumMonths = 1 | 2 | 3 | 6 | 12
 
-export const PREMIUM_MONTHS: readonly PremiumMonths[] = [1, 2, 3]
+export const PREMIUM_MONTHS: readonly PremiumMonths[] = [1, 2, 3, 6, 12]
 
 export function isPremiumMonths(value: unknown): value is PremiumMonths {
-  return value === 1 || value === 2 || value === 3
+  return PREMIUM_MONTHS.includes(value as PremiumMonths)
 }
 
 export function premiumPriceIdr(months: PremiumMonths): number {
   const config = economyConfig()
   if (months === 1) return config.premiumPrice1Idr
   if (months === 2) return config.premiumPrice2Idr
-  return config.premiumPrice3Idr
+  if (months === 3) return config.premiumPrice3Idr
+  if (months === 6) return config.premiumPrice6Idr
+  return config.premiumPrice12Idr
 }
 
 export interface PremiumPlan {
@@ -36,7 +43,10 @@ export function premiumPlan(months: PremiumMonths): PremiumPlan {
     baselineIdr,
     savingIdr,
     savingPercent: baselineIdr === 0 ? 0 : Math.round((savingIdr / baselineIdr) * 100),
-    best: months === 3,
+    /** Yang paling hemat per bulan, dan itu selalu paket terpanjang selama tangga harganya lolos
+     * `validateEconomyConfig`. Dulu dipatok `months === 3` — angka mati yang langsung berbohong
+     * begitu paket 6 dan 12 bulan masuk. */
+    best: months === PREMIUM_MONTHS[PREMIUM_MONTHS.length - 1],
   }
 }
 

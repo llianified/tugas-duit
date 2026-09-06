@@ -6,14 +6,16 @@ import { leaderboardEnabled } from '@/features/leaderboard/availability'
 import type { AppView } from '@/navigation/app-view'
 import { fetchJson } from '@/shell/api-client'
 import {
+  fetchMissions,
   loadSession,
+  MISSIONS_KEY,
   type HistoryResponse,
   type ActivityResponse,
   type LeaderboardResponse,
-  type MissionsResponse,
   type ReferralResponse,
   type StatsResponse,
   type TaskResponse,
+  type TimedMissionsResponse,
   type WithdrawalsResponse,
 } from '@/shell/session-api'
 
@@ -51,11 +53,14 @@ export function useSessionQueries(view: AppView, withdrawalsPrimed: boolean) {
     authenticated ? '/api/stats' : null,
     fetchJson,
   )
+  /** Fetcher-nya WAJIB sama dengan yang dipakai `useMissions`: SWR mengunci cache pada key, bukan
+   * pada fetcher, jadi dua bentuk payload untuk satu key akan saling menimpa. Lihat `fetchMissions`
+   * di `shell/session-api.ts`. */
   const {
     data: missionsData,
     error: missionsError,
     mutate: mutateMissions,
-  } = useSWR<MissionsResponse>(authenticated ? '/api/missions' : null, fetchJson)
+  } = useSWR<TimedMissionsResponse>(authenticated ? MISSIONS_KEY : null, fetchMissions)
   // Umpan aktivitas global milik semua user, jadi ia bergerak walau user ini diam — | polling-nya yang bikin tab Aktivitas terasa hidup, bukan aksi user sendiri. | Interval hanya jalan selagi tab papan peringkat kebuka, dan `refreshWhenHidden` | dibiarkan mati supaya app yang di-background tidak menembaki API tanpa penonton. | `leaderboardEnabled()` ikut menjaganya, sama seperti papan di bawah: umpan ini | bagian dari view Peringkat, dan tanpa penjaga itu ia tetap dipoll tiap interval | di belakang layar "segera hadir" — permintaan berkala untuk fitur yang sedang | dimatikan, dan sejak route-nya ikut dijaga ia cuma memanen 404.
   const { data: activityData } = useSWR<ActivityResponse>(
     leaderboardEnabled() && authenticated && view === 'leaderboard' ? '/api/activity' : null,

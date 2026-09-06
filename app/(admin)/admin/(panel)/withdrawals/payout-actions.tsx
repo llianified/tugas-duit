@@ -5,7 +5,9 @@ import { useId, useRef, useState } from 'react'
 import { PAYOUT_PROOF_ACCEPT, WITHDRAWAL_REJECT_REASON_MAX } from '@/domain/economy/withdrawal'
 import { ApiError, sendFormData, sendJson } from '@/shell/api-client'
 
-type Mode = 'idle' | 'confirm-paid' | 'reject'
+type Mode = 'idle' | 'confirm-paid' | 'reject' | 'proof-failed'
+
+type SettleResponse = { proofSaved: boolean }
 
 export function PayoutActions({
   id,
@@ -26,6 +28,12 @@ export function PayoutActions({
   const [error, setError] = useState<string | null>(null)
   const [proof, setProof] = useState<File | null>(null)
 
+  /** Penarikannya sudah settle di database sebelum route menjawab, jadi kegagalan mengirim bukti
+   * TIDAK dilempar sebagai error — ia pulang sebagai `proofSaved: false`. Kalau nilai itu dibuang,
+   * `router.refresh()` menghapus barisnya dari antrean dan tidak ada satu pun yang tahu buktinya
+   * tidak pernah sampai ke user: statusnya lunas, `hasProof` tetap false, dan yang mengunggahnya
+   * sudah menutup layar. Karena itu penyegarannya ditahan dan diganti satu layar yang menyebutkan
+   * persis apa yang terjadi. */
   async function submit(action: 'paid' | 'rejected') {
     setPending(true)
     setError(null)
@@ -35,7 +43,16 @@ export function PayoutActions({
         form.set('action', 'paid')
         if (note.trim()) form.set('note', note.trim())
         form.set('proof', proof)
-        await sendFormData(`/api/admin/withdrawals/${id}`, 'PATCH', form)
+        const settled = await sendFormData<SettleResponse>(
+          `/api/admin/withdrawals/${id}`,
+          'PATCH',
+          form,
+        )
+        if (!settled.proofSaved) {
+          setMode('proof-failed')
+          setPending(false)
+          return
+        }
       } else {
         await sendJson(`/api/admin/withdrawals/${id}`, 'PATCH', {
           action,
@@ -53,6 +70,25 @@ export function PayoutActions({
       }
       setPending(false)
     }
+  }
+
+  if (mode === 'proof-failed') {
+    return (
+      <Panel>
+        <p className="text-sm font-medium text-foreground">
+          Penarikan {amountLabel} sudah ditandai terkirim, tapi bukti transfernya gagal dikirim ke
+          {' '}
+          {userName}.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Statusnya tidak perlu diulang — mengulanginya akan dijawab &ldquo;sudah diproses&rdquo;.
+          Kirim gambarnya manual lewat chat bot ke {userName}.
+        </p>
+        <Row>
+          <PrimaryButton onClick={() => router.refresh()}>Mengerti</PrimaryButton>
+        </Row>
+      </Panel>
+    )
   }
 
   if (mode === 'confirm-paid') {

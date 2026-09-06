@@ -107,9 +107,8 @@ const ADS_OFF: Omit<AdsSessionState, 'now'> = {
 
 /** Premium mematikan interstitial otomatis saja (`inAppEnabled: false`). Tiket berhadiah sengaja tetap hidup untuk premium: ia tidak pernah muncul sendiri, hanya dirender sebagai tombol saat user butuh task tambahan, jadi tidak melanggar janji "bebas iklan yang ganggu" tapi tetap menjaga impresi yang membayari reward pool. */
 export async function readAdsState(userId: number): Promise<AdsSessionState> {
+  if (!adsConfigured()) return { ...ADS_OFF, now: Date.now() }
   const resolved = resolveAdProvider()
-  const enabled = Boolean(resolved) && adsConfigured()
-  if (!resolved || !enabled) return { ...ADS_OFF, now: Date.now() }
   const premium = await isPremium(userId)
   const state = await readState(userId)
   return {
@@ -138,10 +137,12 @@ export type OpenTicketResult =
   | { ok: false; reason: AdRefusal; cooldownSecondsLeft: number; viewsLeft: number }
 
 export async function openAdTicket(userId: number): Promise<OpenTicketResult> {
-  const resolved = resolveAdProvider()
-  if (!resolved)
+  /** Diperiksa di sini juga, bukan cuma lewat `adOpenRefusal` di dalam transaksi: iklan yang
+   * dimatikan tidak perlu membuka transaksi dan menyapu `ad_views` lebih dulu untuk sampai pada
+   * jawaban yang sudah pasti. */
+  if (!adsConfigured())
     return { ok: false, reason: 'ads_disabled', cooldownSecondsLeft: 0, viewsLeft: 0 }
-  const { provider, unitId } = resolved
+  const { provider, unitId } = resolveAdProvider()
 
   return transaction(async (tx) => {
     const state = await readState(userId, tx)

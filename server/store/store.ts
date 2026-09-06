@@ -129,7 +129,7 @@ export async function buyStoreItem(
       userId,
       kind: 'purchase',
       amount: -item.priceCredits,
-      idempotencyKey: `store:${requestId}`,
+      idempotencyKey: `store:${userId}:${requestId}`,
       referenceId: item.key,
       note: item.title,
     })

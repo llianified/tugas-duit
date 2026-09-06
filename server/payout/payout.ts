@@ -33,6 +33,12 @@ export class PayoutError extends Error {
 }
 
 const PG_UNIQUE_VIOLATION = '23505'
+
+/** `withdrawals.id` bertipe `uuid`, jadi id yang bentuknya salah bukan "tidak ketemu" melainkan
+ * error parse Postgres — 500 untuk permintaan yang jawabannya sudah pasti 404. Bentuknya diperiksa
+ * lebih dulu, sama seperti `startChallenge` dan `settleArcadePlay`. */
+const UUID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export { payoutRequiresPremium, requiredActiveReferrals, withdrawalCooldownMsForBase }
 
 interface PayoutEligibility {
@@ -293,6 +299,8 @@ export async function settlePayout(
   reason: string,
   note: string | null,
 ): Promise<SettledPayout | null> {
+  if (!UUID_SHAPE.test(id)) return null
+
   return transaction(async (tx) => {
     const locked = await tx.query<{
       user_id: string

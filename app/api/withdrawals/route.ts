@@ -33,16 +33,15 @@ const MESSAGE: Record<string, string> = {
   INVALID_CHANNEL: 'Pilih tujuan transfernya dulu ya.',
   ABOVE_MAXIMUM: 'Jumlahnya kebanyakan, lewat dari batas maksimum.',
   ACCOUNT_NUMBER_IN_USE: 'Nomor ini dipakai akun lain. Pakai nomor kamu sendiri.',
+  /** Tanpa baris ini gerbang premium jatuh ke pesan bawaan "Ada data yang belum pas" — kalimat
+   * tentang isian formulir, untuk gerbang yang tidak ada hubungannya dengan formulir. Kalimatnya
+   * mengikuti `requirementHint` di `not-eligible-note.tsx` supaya user membaca hal yang sama di
+   * daftar syarat dan di penolakan. */
+  PREMIUM_REQUIRED: 'Aktifin Premium dulu buat buka penarikan.',
 }
 
 /** Angka syarat dan jeda tidak ditulis di dalam kalimat: keduanya aturan yang bisa berbeda per user — jeda premium 3 hari, biasa 7 — dan salinan di teks pernah membuat pembeli premium diberi tahu angka yang salah. Yang dipakai nilai yang ikut dikirim `PayoutError`. */
 function messageFor(error: PayoutError): string {
-  if (error.code === 'ACTIVE_DAYS_REQUIRED') {
-    const required = Number(error.fields?.requiredActiveDays)
-    return Number.isFinite(required) && required > 0
-      ? `Kamu perlu ${formatCredits(required)} hari aktif dulu. Cukup kerjain 1 soal tiap hari.`
-      : 'Kamu perlu beberapa hari aktif dulu sebelum bisa tarik dana.'
-  }
   if (error.code === 'ACTIVE_REFERRALS_REQUIRED') {
     const required = Number(error.fields?.requiredActiveReferrals)
     return Number.isFinite(required) && required > 0

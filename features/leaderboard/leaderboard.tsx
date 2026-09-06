@@ -52,7 +52,7 @@ export function LeaderboardView({
   board: LeaderboardBoard
   activity: ActivityEntry[] | null
 }) {
-  const { entries, you, participants, premiumMembers, seasonEndsAt } = board
+  const { entries, you, participants, premiumMembers, seasonStartedAt, seasonEndsAt } = board
   const [surface, setSurface] = useState<BoardSurface>('papan')
 
   return (
@@ -81,11 +81,7 @@ export function LeaderboardView({
         /* Pembungkus `flex flex-1 flex-col` di sini mengambil alih peran yang dulu dipegang `view-min-h`: anak-anaknya tetap kolom flex dengan tinggi sisa yang sama, jadi empty state (`flex-1 justify-center`) dan pengganjal `view-trim-b flex-1` di dalam `BoardPanel` berperilaku persis seperti sebelumnya. Ia ada karena `aria-controls` tab Papan butuh satu elemen untuk ditunjuk. */
         <div role="tabpanel" id="panel-papan" aria-labelledby="tab-papan" className="flex flex-1 flex-col">
           {entries.length === 0 ? (
-            <EmptyState
-              icon={<GlyphTrophy className="glyph-md text-muted-foreground" />}
-              title="Papan masih kosong"
-              description="Kerjain soal pertama kamu buat masuk papan."
-            />
+            <BoardEmpty seasonStartedAt={seasonStartedAt} seasonEndsAt={seasonEndsAt} />
           ) : (
             <>
               <PodiumRail entries={entries} />
@@ -118,6 +114,52 @@ export function LeaderboardComingSoon() {
         description="Papan sedang disiapkan. Perolehan kamu tetap tercatat."
       />
     </div>
+  )
+}
+
+/** Papan kosong, dan yang menentukan kalimatnya adalah APAKAH ada musim yang sedang berjalan.
+ *
+ * Bentuk lamanya satu kalimat untuk dua keadaan yang sama sekali berbeda: papan yang memang belum
+ * pernah ada isinya, dan papan yang baru saja direset semenit lalu karena musimnya berganti tengah
+ * malam. Keduanya dibacakan "Papan masih kosong" — dan yang kedua terbaca seperti fitur rusak,
+ * bukan seperti musim baru. Itu bukan kekhawatiran teoretis: pemilik repo sendiri membacanya
+ * sebagai data produksi yang hilang.
+ *
+ * Yang menutup celahnya bukan kalimat baru melainkan angka yang sudah dikirim server dan selama ini
+ * dibuang di cabang ini. `server/task/leaderboard.ts` membaca batas musim lewat kueri TERPISAH dari
+ * papannya justru untuk keadaan ini — "tepat setelah musim berganti papannya masih kosong, dan
+ * justru di momen itulah sisa waktu musim paling perlu terbaca". Sisa waktunya sekarang benar-benar
+ * terbaca.
+ *
+ * Kalimat keduanya sekalian membalik kekosongannya jadi ajakan: papan yang belum ada isinya adalah
+ * satu-satunya saat satu soal cukup untuk berada di puncak, dan itu tawaran paling kuat yang pernah
+ * dipunyai layar ini. */
+function BoardEmpty({
+  seasonStartedAt,
+  seasonEndsAt,
+}: {
+  seasonStartedAt: number | null
+  seasonEndsAt: number | null
+}) {
+  /** `null` berarti papannya disetel sepanjang masa (`leaderboardSeasonDays` nol): tidak ada
+   * jendela yang bisa menjelaskan kekosongannya, jadi kalimatnya kembali ke yang paling polos. */
+  if (seasonStartedAt === null) {
+    return (
+      <EmptyState
+        icon={<GlyphTrophy className="glyph-md text-muted-foreground" />}
+        title="Papan masih kosong"
+        description="Kerjain soal pertama kamu buat masuk papan."
+      />
+    )
+  }
+
+  return (
+    <EmptyState
+      icon={<GlyphTrophy className="glyph-md text-muted-foreground" />}
+      title="Musim ini belum ada yang mulai"
+      description="Papan dihitung ulang tiap musim. Satu soal aja udah cukup buat nangkring di puncak sekarang."
+      footer={<SeasonCountdown endsAt={seasonEndsAt} />}
+    />
   )
 }
 

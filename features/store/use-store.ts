@@ -1,8 +1,9 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import useSWR from 'swr'
 import type { StoreItem, StoreItemKey } from '@/domain/store/store'
+import { clearPurchaseRequestId, purchaseRequestId } from '@/features/store/purchase-key'
 import { fetchJson, sendJson, userFacingMessage } from '@/shell/api-client'
 import { hapticSuccess, hapticTap } from '@/shared/lib/haptic'
 import { useToast } from '@/shell/toast'
@@ -28,10 +29,12 @@ interface BuyResponse {
  * `requestId` DIPERTAHANKAN per barang sampai pembeliannya benar-benar berhasil, bukan dibuat baru
  * tiap klik. Itu bagian dari idempotensinya: percobaan ulang setelah jaringan putus harus membawa
  * kunci yang SAMA, supaya server mengenalinya sebagai tap yang sudah pernah dibayar alih-alih
- * memotong saldo untuk kedua kalinya. Kunci baru hanya dibuat setelah yang lama selesai. */
+ * memotong saldo untuk kedua kalinya. Kunci baru hanya dibuat setelah yang lama selesai.
+ *
+ * Kuncinya tinggal di `purchase-key.ts`, DI LUAR komponen ini — lembar toko dilepas dari DOM tiap
+ * kali ditutup, dan kunci yang ikut hilang bersamanya justru membatalkan janji di paragraf atas. */
 export function useStore({ onBought }: { onBought: () => Promise<unknown> }) {
   const [buying, setBuying] = useState<StoreItemKey | null>(null)
-  const requestIds = useRef(new Map<StoreItemKey, string>())
   const showError = useToast()
   const { data, error, mutate } = useSWR<StoreSnapshot>('/api/store', fetchJson<StoreSnapshot>, {
     revalidateOnMount: true,
@@ -42,15 +45,11 @@ export function useStore({ onBought }: { onBought: () => Promise<unknown> }) {
       hapticTap()
       setBuying(key)
 
-      let requestId = requestIds.current.get(key)
-      if (!requestId) {
-        requestId = crypto.randomUUID()
-        requestIds.current.set(key, requestId)
-      }
+      const requestId = purchaseRequestId(key)
 
       try {
         await sendJson<BuyResponse>('/api/store/buy', 'POST', { key, requestId })
-        requestIds.current.delete(key)
+        clearPurchaseRequestId(key)
         hapticSuccess()
         await Promise.all([mutate(), onBought()])
         return true

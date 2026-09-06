@@ -36,8 +36,8 @@ const LIVE: EconomyConfig = {
   missionTasksReward: 1,
   missionStarsReward: 2,
   missionAdsReward: 2,
-  missionTwitterPostReward: 1,
   missionFacebookPostReward: 1,
+  missionWhatsappShareReward: 1,
   withdrawalMinimumIdr: 25_000,
 }
 

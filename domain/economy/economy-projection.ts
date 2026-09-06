@@ -126,15 +126,21 @@ export function poolCreditsPerDay(config: EconomyConfig): number {
   return (1_440 / config.rewardPoolRegenMinutes) * config.rewardPoolRegenCredits
 }
 
-/** Energi harian dari misi yang benar-benar diklaim. Misi sekali-seumur-akun (follow, like & repost)
- * sengaja tidak ikut: ia tidak berulang, jadi memasukkannya akan menggelembungkan proyeksi harian. */
+/** Energi harian dari misi yang benar-benar diklaim. Misi sekali-seumur-akun (join channel, follow
+ * TikTok) sengaja tidak ikut: ia tidak berulang, jadi memasukkannya akan menggelembungkan proyeksi
+ * harian.
+ *
+ * Daftarnya ditulis di sini, bukan diturunkan dari `missionCatalog()`, karena katalog itu membaca
+ * `economyConfig()` yang AKTIF sementara modul ini harus bisa menghitung config yang belum
+ * disimpan — alasan yang sama yang membuat seluruh berkas ini menerima `config` sebagai parameter.
+ * Iramanya sendiri dipatok `SOCIAL_MISSION_CADENCE` di `domain/progression/missions.ts`. */
 function missionEnergy(config: EconomyConfig, claimRate: number): number {
   const daily =
     config.missionTasksReward +
     config.missionStarsReward +
     (config.adsMaxViewsPerDay > 0 ? config.missionAdsReward : 0) +
-    config.missionTwitterPostReward +
-    config.missionFacebookPostReward
+    config.missionFacebookPostReward +
+    config.missionWhatsappShareReward
   return daily * Math.max(0, Math.min(1, claimRate))
 }
 

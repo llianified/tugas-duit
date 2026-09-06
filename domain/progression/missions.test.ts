@@ -86,22 +86,22 @@ describe('missions', () => {
     const confirmAt = Date.now() + 10_000
     const list = buildMissionProgress(
       hitung({ tasks: 0, stars: 0, ads: 0 }),
-      ['twitter_follow'],
-      { twitter_like_repost: confirmAt, twitter_post: confirmAt },
+      ['tiktok_follow'],
+      { whatsapp_channel: confirmAt, whatsapp_share: confirmAt },
     )
 
-    expect(list.find((mission) => mission.key === 'twitter_follow')).toMatchObject({
+    expect(list.find((mission) => mission.key === 'tiktok_follow')).toMatchObject({
       kind: 'social',
       cadence: 'once',
       claimed: true,
     })
-    expect(list.find((mission) => mission.key === 'twitter_like_repost')).toMatchObject({
+    expect(list.find((mission) => mission.key === 'whatsapp_channel')).toMatchObject({
       kind: 'social',
       cadence: 'once',
       confirmAt,
       claimed: false,
     })
-    expect(list.find((mission) => mission.key === 'twitter_post')).toMatchObject({
+    expect(list.find((mission) => mission.key === 'whatsapp_share')).toMatchObject({
       kind: 'social',
       cadence: 'daily',
       confirmAt,
@@ -112,19 +112,15 @@ describe('missions', () => {
   it('memetakan setiap misi sosial ke reward konfigurasinya sendiri', () => {
     setActiveEconomyConfig({
       ...DEFAULT_ECONOMY_CONFIG,
-      missionTwitterFollowReward: 2,
-      missionTwitterLikeRepostReward: 3,
-      missionTwitterPostReward: 4,
       missionFacebookPostReward: 5,
       missionWhatsappShareReward: 6,
+      missionWhatsappChannelReward: 4,
       missionTiktokFollowReward: 7,
     })
     try {
-      expect(missionDefinition('twitter_follow').reward).toBe(2)
-      expect(missionDefinition('twitter_like_repost').reward).toBe(3)
-      expect(missionDefinition('twitter_post').reward).toBe(4)
       expect(missionDefinition('facebook_post').reward).toBe(5)
       expect(missionDefinition('whatsapp_share').reward).toBe(6)
+      expect(missionDefinition('whatsapp_channel').reward).toBe(4)
       expect(missionDefinition('tiktok_follow').reward).toBe(7)
     } finally {
       setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
@@ -170,11 +166,9 @@ describe('misi iklan mengikuti tombol mati iklan', () => {
       'hard',
       'arcade',
       'variety',
-      'twitter_follow',
-      'twitter_like_repost',
-      'twitter_post',
       'facebook_post',
       'whatsapp_share',
+      'whatsapp_channel',
       'tiktok_follow',
     ])
     expect(isMissionAvailable('ads')).toBe(true)
@@ -193,11 +187,9 @@ describe('misi iklan mengikuti tombol mati iklan', () => {
       'stars',
       'hard',
       'variety',
-      'twitter_follow',
-      'twitter_like_repost',
-      'twitter_post',
       'facebook_post',
       'whatsapp_share',
+      'whatsapp_channel',
       'tiktok_follow',
     ])
     expect(isMissionAvailable('ads')).toBe(false)
@@ -206,8 +198,7 @@ describe('misi iklan mengikuti tombol mati iklan', () => {
       hitung(),
       [
         'tasks', 'stars', 'hard', 'variety',
-        'twitter_follow', 'twitter_like_repost', 'twitter_post', 'facebook_post',
-        'whatsapp_share', 'tiktok_follow',
+        'facebook_post', 'whatsapp_share', 'whatsapp_channel', 'tiktok_follow',
       ],
       {},
       HARI,

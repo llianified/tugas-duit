@@ -6,11 +6,9 @@ import { economyConfig } from '../economy/economy-config.ts'
 
 export type AutomaticMissionKey = 'tasks' | 'stars' | 'ads' | 'hard' | 'arcade' | 'variety'
 export type SocialMissionKey =
-  | 'twitter_follow'
-  | 'twitter_like_repost'
-  | 'twitter_post'
   | 'facebook_post'
   | 'whatsapp_share'
+  | 'whatsapp_channel'
   | 'tiktok_follow'
 export type MissionKey = AutomaticMissionKey | SocialMissionKey
 
@@ -51,20 +49,16 @@ export const MISSION_KEYS: readonly MissionKey[] = [
   'hard',
   'arcade',
   'variety',
-  'twitter_follow',
-  'twitter_like_repost',
-  'twitter_post',
   'facebook_post',
   'whatsapp_share',
+  'whatsapp_channel',
   'tiktok_follow',
 ]
 
 export const SOCIAL_MISSION_KEYS: readonly SocialMissionKey[] = [
-  'twitter_follow',
-  'twitter_like_repost',
-  'twitter_post',
   'facebook_post',
   'whatsapp_share',
+  'whatsapp_channel',
   'tiktok_follow',
 ]
 
@@ -75,11 +69,9 @@ export const SOCIAL_MISSION_KEYS: readonly SocialMissionKey[] = [
  * didaftarkan akan diam-diam terbit ulang tiap hari WIB: energinya bisa diklaim berkali-kali dari
  * satu aksi yang sama, tanpa satu pun test yang keberatan. */
 const SOCIAL_MISSION_CADENCE: Record<SocialMissionKey, 'once' | 'daily'> = {
-  twitter_follow: 'once',
-  twitter_like_repost: 'once',
-  twitter_post: 'daily',
   facebook_post: 'daily',
   whatsapp_share: 'daily',
+  whatsapp_channel: 'once',
   tiktok_follow: 'once',
 }
 
@@ -137,33 +129,6 @@ function missionCatalog(): MissionDefinition[] {
       reward: config.missionVarietyReward,
     },
     {
-      key: 'twitter_follow',
-      kind: 'social',
-      action: 'twitter_follow',
-      cadence: SOCIAL_MISSION_CADENCE.twitter_follow,
-      title: 'Follow Twitter Tugas Duit',
-      target: 1,
-      reward: config.missionTwitterFollowReward,
-    },
-    {
-      key: 'twitter_like_repost',
-      kind: 'social',
-      action: 'twitter_like_repost',
-      cadence: SOCIAL_MISSION_CADENCE.twitter_like_repost,
-      title: 'Like & Retweet di X',
-      target: 1,
-      reward: config.missionTwitterLikeRepostReward,
-    },
-    {
-      key: 'twitter_post',
-      kind: 'social',
-      action: 'twitter_post',
-      cadence: SOCIAL_MISSION_CADENCE.twitter_post,
-      title: 'Post di Twitter',
-      target: 1,
-      reward: config.missionTwitterPostReward,
-    },
-    {
       key: 'facebook_post',
       kind: 'social',
       action: 'facebook_post',
@@ -183,6 +148,18 @@ function missionCatalog(): MissionDefinition[] {
       title: 'Bagikan ke grup WhatsApp',
       target: 1,
       reward: config.missionWhatsappShareReward,
+    },
+    /** Join channel, bukan bagikan: channel WhatsApp punya tautan undangan yang membuka layar join
+     * langsung, jadi langkahnya bisa diantar tombol sampai selesai. Sekali seumur akun karena
+     * join memang cuma terjadi sekali — sama seperti follow TikTok. */
+    {
+      key: 'whatsapp_channel',
+      kind: 'social',
+      action: 'whatsapp_channel',
+      cadence: SOCIAL_MISSION_CADENCE.whatsapp_channel,
+      title: 'Join channel WhatsApp Tugas Duit',
+      target: 1,
+      reward: config.missionWhatsappChannelReward,
     },
     /** Follow saja, bukan bikin video: TikTok tidak menyediakan tautan yang mengisi komposernya,
      * jadi misi membuat konten menuntut peninjauan manual yang belum ada tempatnya di panel. */

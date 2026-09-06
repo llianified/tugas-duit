@@ -30,7 +30,18 @@ describe('PREM-1 — tangga harga selalu makin murah per bulan', () => {
     expect(dua.savingPercent).toBe(12)
     expect(tiga.savingIdr).toBe(14_800)
     expect(tiga.savingPercent).toBe(25)
-    expect(tiga.best).toBe(true)
+  })
+
+  /** `best` dulu dipatok `months === 3` — angka mati yang langsung berbohong begitu paket 6 dan 12
+   * bulan masuk di migrasi 0058. Yang dilabeli "paling hemat" harus benar-benar yang paling murah
+   * per bulan, kalau tidak lembar premium melabeli satu paket lalu memilihkan yang lain. */
+  it('melabeli paket terpanjang sebagai yang paling hemat, bukan paket ketiga', () => {
+    const plans = premiumPlans()
+    const best = plans.filter((plan) => plan.best)
+
+    expect(best).toHaveLength(1)
+    expect(best[0].months).toBe(plans[plans.length - 1].months)
+    expect(best[0].pricePerMonthIdr).toBe(Math.min(...plans.map((p) => p.pricePerMonthIdr)))
   })
 
   it('harga per bulan turun di setiap tingkat', () => {

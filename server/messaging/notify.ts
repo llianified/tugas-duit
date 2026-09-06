@@ -116,6 +116,24 @@ export async function notifyPremiumActivated(
   )
 }
 
+/** Barang toko yang dibayar lewat QRIS. Sengaja tidak menyebut nominal: yang ditunggu user setelah
+ * membayar cuma satu jawaban — barangnya sudah masuk atau belum — dan angka yang diulang di sini
+ * membuat pesan konfirmasi terbaca seperti tagihan kedua. */
+export async function notifyShopOrderPaid(telegramId: string, itemTitle: string) {
+  await send(
+    telegramId,
+    [
+      '<b>Pembayaran kamu masuk 🎉</b>',
+      '',
+      `${escapeHtml(itemTitle)} udah aktif di akun kamu.`,
+      '',
+      'Buka app-nya sekarang, langsung kepakai.',
+    ].join('\n'),
+    'shop-paid',
+    openAppMarkup('🎮 Pakai sekarang'),
+  )
+}
+
 export async function notifyAdminLogin(input: { telegramId: string; ip: string; userAgent: string | null }) {
   await send(
     input.telegramId,

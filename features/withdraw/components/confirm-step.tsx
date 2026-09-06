@@ -10,12 +10,17 @@ import type { WithdrawalSubmitInput } from './withdraw-form'
 export function ConfirmStep({
   input,
   cooldownDays,
+  cooldownWaived,
   isSubmitting,
   onConfirm,
   onBack,
 }: {
   input: WithdrawalSubmitInput
   cooldownDays: number | null
+  /** Jedanya sedang dilepas Tarik Sekarang yang sudah dibeli. Disebut di layar konfirmasi, bukan
+   * dibiarkan diam: formulir yang terbuka tanpa keterangan terbaca seperti jedanya memang sudah
+   * habis, dan yang membayar untuk membukanya tidak pernah tahu apa yang ia dapat. */
+  cooldownWaived: boolean
   isSubmitting: boolean
   onConfirm: () => void
   onBack: () => void
@@ -39,6 +44,12 @@ export function ConfirmStep({
       <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
         {PAYOUT_ETA_TEXT} Kami kabari lewat bot begitu dikirim.
       </p>
+
+      {cooldownWaived ? (
+        <p className="text-sm leading-relaxed text-foreground text-pretty">
+          Pengajuan ini pakai Tarik Sekarang yang kamu beli, jadi jedanya dilewati.
+        </p>
+      ) : null}
 
       <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
         {cooldownDays === null

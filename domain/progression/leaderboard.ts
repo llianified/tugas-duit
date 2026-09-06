@@ -1,3 +1,4 @@
+import type { CosmeticKey } from '../store/cosmetics'
 import { economyConfig } from '../economy/economy-config'
 
 export interface LeaderboardEntry {
@@ -13,6 +14,11 @@ export interface LeaderboardEntry {
   photoUrl: string | null
   /** Termasuk akun paling awal. Tidak bisa dikejar siapa pun lagi, dan itulah gunanya. */
   founder: boolean
+  /** Kosmetik yang sedang dipakai. Papan ini panggungnya: bingkai dan gelar yang dibeli tidak
+   * punya arti kalau tidak ada yang melihatnya, dan ini satu-satunya permukaan di aplikasi tempat
+   * orang lain melihat akun kamu. */
+  frame: CosmeticKey | null
+  title: CosmeticKey | null
 }
 
 export interface LeaderboardBoard {

@@ -430,3 +430,55 @@ describe('WD-12 — bukti transfer', () => {
     expect(JSON.stringify(withdrawal)).not.toContain('file-id-uji')
   })
 })
+
+/** WD-11 — Tarik Sekarang melepas jeda sekali, lalu habis sendiri.
+ *
+ * Penandanya waktu, bukan jatah yang dicacah, dan itu yang membuatnya tidak bisa menggantung:
+ * begitu pengajuan berikutnya masuk, `requested_at` melewati penandanya dan gerbangnya menutup
+ * lagi. Yang dijaga di sini bahwa ia BENAR-BENAR sekali — jatah yang diam-diam berlaku selamanya
+ * berarti satu pembelian membuka penarikan tanpa batas. */
+describe('WD-13 — pelepas jeda penarikan yang dibeli di toko', () => {
+  it('membuka satu pengajuan lalu kembali menahan yang berikutnya', async () => {
+    const { createPayout, getPayouts } = await import('./payout')
+    const { query } = await import('../platform/db')
+    const credits = withdrawalMinimumCredits()
+    const userId = await makeUser(credits * 3)
+    const input = {
+      channelId: PAYOUT_CHANNELS[0].id,
+      accountNumber: accountFor(PAYOUT_CHANNELS[0]),
+      accountName: 'Uji Lepas Jeda',
+      credits,
+    }
+
+    const first = await createPayout(userId, input)
+    await query(
+      "update withdrawals set state='rejected',rejected_at=now(),reject_reason='Ditolak untuk tes' where id=$1",
+      [first.withdrawal.id],
+    )
+
+    const tertahan = (await getPayouts(userId)).eligibility
+    expect(tertahan.cooldownEndsAt).not.toBeNull()
+    expect(tertahan.cooldownWaived).toBe(false)
+
+    await query('update users set withdrawal_cooldown_waived_at=now() where id=$1', [userId])
+
+    const terlepas = (await getPayouts(userId)).eligibility
+    expect(terlepas.cooldownEndsAt).toBeNull()
+    expect(terlepas.cooldownWaived).toBe(true)
+
+    const second = await createPayout(userId, input)
+    await query(
+      "update withdrawals set state='rejected',rejected_at=now(),reject_reason='Ditolak untuk tes' where id=$1",
+      [second.withdrawal.id],
+    )
+
+    /** Pengajuan kedua sudah memakai jatahnya: penandanya kini lebih tua daripada
+     * `requested_at`, jadi gerbangnya menutup lagi tanpa satu pun langkah konsumsi terpisah. */
+    const lagi = (await getPayouts(userId)).eligibility
+    expect(lagi.cooldownWaived).toBe(false)
+    expect(lagi.cooldownEndsAt).not.toBeNull()
+    await expect(createPayout(userId, input)).rejects.toMatchObject({
+      code: 'WITHDRAWAL_COOLDOWN',
+    })
+  })
+})

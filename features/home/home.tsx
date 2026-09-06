@@ -29,6 +29,8 @@ interface HomeViewProps {
   energy: number
   energyMax: number
   energyFill: EnergyFill
+  /** Pass Gaspol yang sedang berjalan: soal berhenti memotong energi selama jendelanya. */
+  gaspolActive: boolean
   rewardPoolCredits: number | null
   rewardPoolSecondsToNext: number | null
   economy: EconomyConfig
@@ -64,6 +66,7 @@ export function HomeView({
   energy,
   energyMax,
   energyFill,
+  gaspolActive,
   rewardPoolCredits,
   rewardPoolSecondsToNext,
   economy,
@@ -133,6 +136,7 @@ export function HomeView({
             energy={energy}
             energyMax={energyMax}
             energyFill={energyFill}
+            gaspolActive={gaspolActive}
             rewardPoolCredits={rewardPoolCredits}
             rewardPoolSecondsToNext={rewardPoolSecondsToNext}
             adsEnabled={adsEnabled}

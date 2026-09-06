@@ -1,50 +1,82 @@
-import type { PoolClient } from 'pg'
-import { applyEnergyGrant, maxEnergy, projectEnergy } from '@/domain/economy/energy'
+import { maxEnergy, projectEnergy } from '@/domain/economy/energy'
 import { isPremiumActive } from '@/domain/economy/premium'
 import {
+  canEquip,
+  findStoreItem,
   isStoreItemKey,
   storeCatalog,
+  storeCosmeticsEnabled,
   storeEnabled,
-  storeItem,
+  storePrice,
   storePurchaseRefusal,
   type StoreItem,
   type StoreItemKey,
   type StorePurchaseRefusal,
 } from '@/domain/store/store'
+import {
+  cosmetic,
+  isCosmeticKey,
+  readEquipped,
+  NO_COSMETICS,
+  type CosmeticKey,
+  type EquippedCosmetics,
+} from '@/domain/store/cosmetics'
 import { appendLedger } from '../economy/ledger'
 import { readRewardPool } from '../economy/reward-pool'
+import { readWithdrawalGate } from '../payout/payout'
+import { readLatestCashOrder, type CashOrder, type CashOrderState } from '../shop/cash-order'
 import { query, transaction } from '../platform/db'
-import { grantPremium } from '../premium/premium'
-
-const USER_SELECT = `select balance_credits, energy, energy_updated_at, premium_until, now() as now
-  from users where id=$1`
-
-interface UserRow {
-  balance_credits: string
-  energy: number
-  energy_updated_at: Date
-  premium_until: Date | null
-  now: Date
-}
+import { applyStoreEffect } from './effects'
+import { readOwned, readPurchaseState, STORE_USER_SELECT, type StoreUserRow } from './purchase-state'
 
 export interface StoreSnapshot {
   enabled: boolean
+  cosmeticsEnabled: boolean
   items: StoreItem[]
   balance: number
   energy: number
   energyMax: number
   rewardPoolCredits: number
+  owned: CosmeticKey[]
+  equipped: EquippedCosmetics
+  /** Sampai kapan Pass Gaspol yang sedang berjalan berlaku. `null` = tidak sedang punya. */
+  gaspolUntil: number | null
+  /** Dua keadaan yang menentukan Tarik Sekarang layak dijual atau tidak. Dikirim ke klien supaya
+   * tombolnya mati dengan keterangan, bukan hidup lalu ditolak sesudah ditekan. */
+  withdrawalCooldownActive: boolean
+  withdrawalProcessing: boolean
+  /** Pesanan QRIS terakhir beserta keadaannya. Yang menggantung membuat lembar toko membuka
+   * langsung ke layar pembayaran; yang sudah lunas atau kedaluwarsa yang memberi kalimat penutup
+   * yang benar setelah user kembali dari aplikasi banknya. */
+  order: (CashOrder & { state: CashOrderState }) | null
 }
 
+const empty = (): StoreSnapshot => ({
+  enabled: storeEnabled(),
+  cosmeticsEnabled: storeCosmeticsEnabled(),
+  items: [],
+  balance: 0,
+  energy: 0,
+  energyMax: maxEnergy(),
+  rewardPoolCredits: 0,
+  owned: [],
+  equipped: NO_COSMETICS,
+  gaspolUntil: null,
+  withdrawalCooldownActive: false,
+  withdrawalProcessing: false,
+  order: null,
+})
+
 export async function readStoreSnapshot(userId: number): Promise<StoreSnapshot> {
-  const [rows, pool] = await Promise.all([
-    query<UserRow>(USER_SELECT, [userId]),
+  const [rows, pool, owned, gate, order] = await Promise.all([
+    query<StoreUserRow>(STORE_USER_SELECT, [userId]),
     readRewardPool(userId),
+    readOwned(userId),
+    readWithdrawalGate(userId),
+    readLatestCashOrder(userId),
   ])
   const row = rows[0]
-  if (!row) {
-    return { enabled: storeEnabled(), items: [], balance: 0, energy: 0, energyMax: maxEnergy(), rewardPoolCredits: 0 }
-  }
+  if (!row) return empty()
 
   const now = row.now.getTime()
   const premium = isPremiumActive(row.premium_until ? row.premium_until.getTime() : null, now)
@@ -53,14 +85,22 @@ export async function readStoreSnapshot(userId: number): Promise<StoreSnapshot> 
     now,
     premium,
   )
+  const gaspolUntil = row.gaspol_until ? row.gaspol_until.getTime() : null
 
   return {
     enabled: storeEnabled(),
+    cosmeticsEnabled: storeCosmeticsEnabled(),
     items: storeCatalog(),
     balance: Number(row.balance_credits),
     energy: energy.current,
     energyMax: energy.max,
     rewardPoolCredits: pool.current,
+    owned,
+    equipped: readEquipped(row.equipped_frame, row.equipped_title),
+    gaspolUntil: gaspolUntil !== null && gaspolUntil > now ? gaspolUntil : null,
+    withdrawalCooldownActive: gate.cooldownActive,
+    withdrawalProcessing: gate.processing,
+    order,
   }
 }
 
@@ -88,10 +128,13 @@ export async function buyStoreItem(
 ): Promise<StoreBuyResult> {
   if (!storeEnabled()) return { ok: false, reason: 'store_disabled' }
   if (!isStoreItemKey(key)) return { ok: false, reason: 'unknown_item' }
-  const item = storeItem(key)
+  const item = findStoreItem(key)
+  if (!item) return { ok: false, reason: 'unknown_item' }
+  const price = storePrice(item, 'credits')
+  if (price === null) return { ok: false, reason: 'payment_unavailable' }
 
   return transaction(async (tx) => {
-    const locked = await tx.query<UserRow>(`${USER_SELECT} for update`, [userId])
+    const locked = await tx.query<StoreUserRow>(`${STORE_USER_SELECT} for update`, [userId])
     const row = locked.rows[0]
     if (!row) return { ok: false as const, reason: 'unknown_item' as const }
 
@@ -106,72 +149,84 @@ export async function buyStoreItem(
         ok: true as const,
         replayed: true,
         itemKey: item.key,
-        priceCredits: item.priceCredits,
+        priceCredits: price,
         balance: Number(row.balance_credits),
       }
     }
 
-    const now = row.now.getTime()
-    const premium = isPremiumActive(row.premium_until ? row.premium_until.getTime() : null, now)
-    const snapshot = { energy: Number(row.energy), updatedAt: row.energy_updated_at.getTime() }
-    const energy = projectEnergy(snapshot, now, premium)
-    const pool = await readRewardPool(userId, tx)
-
-    const refusal = storePurchaseRefusal(item, {
-      balance: Number(row.balance_credits),
-      energy: energy.current,
-      maxEnergy: energy.max,
-      rewardPoolCredits: pool.current,
-    })
+    const refusal = storePurchaseRefusal(item, await readPurchaseState(tx, userId, row), 'credits')
     if (refusal) return { ok: false as const, reason: refusal }
 
     const ledger = await appendLedger(tx, {
       userId,
       kind: 'purchase',
-      amount: -item.priceCredits,
+      amount: -price,
       idempotencyKey: `store:${userId}:${requestId}`,
       referenceId: item.key,
       note: item.title,
     })
 
-    await applyEffect(tx, userId, item, { snapshot, now, premium })
+    await applyStoreEffect(tx, userId, item)
+
+    /** QR yang sedang menggantung untuk barang yang sama dimatikan sekarang juga: membiarkannya
+     * hidup berarti user bisa membayar tunai untuk barang yang baru saja ia tebus pakai TD. Sisa
+     * balapannya — pembayaran yang mendarat sebelum baris ini commit — tidak bisa ditutup dari
+     * sini, dan `settleCashOrder` yang mencatatnya di log supaya bisa dikembalikan tangan. */
+    await tx.query(
+      `update cash_orders set state='expired', updated_at=now()
+        where user_id=$1 and state='pending' and product_key=$2`,
+      [userId, item.key],
+    )
 
     await tx.query(
       `insert into store_purchases(user_id, item_key, request_id, price_credits, ledger_id)
        values($1,$2,$3,$4,$5)`,
-      [userId, item.key, requestId, item.priceCredits, ledger.ledgerId],
+      [userId, item.key, requestId, price, ledger.ledgerId],
     )
 
     return {
       ok: true as const,
       replayed: false,
       itemKey: item.key,
-      priceCredits: item.priceCredits,
+      priceCredits: price,
       balance: ledger.balance,
     }
   })
 }
 
-async function applyEffect(
-  tx: PoolClient,
-  userId: number,
-  item: StoreItem,
-  context: { snapshot: { energy: number; updatedAt: number }; now: number; premium: boolean },
-): Promise<void> {
-  if (item.effect.kind === 'energy') {
-    const granted = applyEnergyGrant(
-      context.snapshot,
-      context.now,
-      context.premium,
-      item.effect.amount,
-    )
-    await tx.query('update users set energy=$2, energy_updated_at=$3 where id=$1', [
-      userId,
-      granted.snapshot.energy,
-      new Date(granted.snapshot.updatedAt),
-    ])
-    return
-  }
+export type EquipResult =
+  | { ok: true; equipped: EquippedCosmetics }
+  | { ok: false; reason: 'not_owned' | 'unknown_slot' }
 
-  await grantPremium(tx, userId, item.effect.months)
+/** Memasang atau melepas kosmetik. Yang boleh dipasang cuma yang dimiliki — diperiksa di server,
+ * bukan cuma di klien, karena bingkai yang dipasang tanpa dibeli akan tampil di papan peringkat
+ * untuk semua orang dan itu satu-satunya permukaan publik aplikasi ini. */
+export async function equipCosmetic(
+  userId: number,
+  slot: 'frame' | 'title',
+  key: unknown,
+): Promise<EquipResult> {
+  if (slot !== 'frame' && slot !== 'title') return { ok: false, reason: 'unknown_slot' }
+  /** `null` berarti melepas yang sedang dipakai, dan itu selalu boleh. Selain itu key-nya harus ada
+   * di katalog DAN jenisnya cocok dengan slotnya — gelar yang dipasang ke slot bingkai lolos
+   * kepemilikan tapi tidak akan pernah tergambar. */
+  if (key !== null && (!isCosmeticKey(key) || cosmetic(key).kind !== slot)) {
+    return { ok: false, reason: 'unknown_slot' }
+  }
+  const wanted: CosmeticKey | null = key === null ? null : (key as CosmeticKey)
+
+  return transaction(async (tx) => {
+    const owned = await readOwned(userId, tx)
+    if (!canEquip(wanted, owned)) return { ok: false as const, reason: 'not_owned' as const }
+
+    const column = slot === 'frame' ? 'equipped_frame' : 'equipped_title'
+    const rows = await tx.query<{ equipped_frame: string | null; equipped_title: string | null }>(
+      `update users set ${column}=$2, updated_at=now() where id=$1
+       returning equipped_frame, equipped_title`,
+      [userId, wanted],
+    )
+    const row = rows.rows[0]
+    if (!row) return { ok: false as const, reason: 'not_owned' as const }
+    return { ok: true as const, equipped: readEquipped(row.equipped_frame, row.equipped_title) }
+  })
 }

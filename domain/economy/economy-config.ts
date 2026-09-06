@@ -88,6 +88,8 @@ export interface EconomyConfig {
   premiumPrice1Idr: number
   premiumPrice2Idr: number
   premiumPrice3Idr: number
+  premiumPrice6Idr: number
+  premiumPrice12Idr: number
   premiumMaxEnergy: number
   premiumEnergyRegenMinutes: number
   premiumPoolCapBonus: number
@@ -110,6 +112,16 @@ export interface EconomyConfig {
   storeEnergyPriceCredits: number
   storeEnergyAmount: number
   storePremiumMonthPriceCredits: number
+  storeGaspolMinutes: number
+  storeGaspolPriceCredits: number
+  storeGaspolPriceIdr: number
+  storeWithdrawSkipPriceCredits: number
+  storeWithdrawSkipPriceIdr: number
+  storeCosmeticsEnabled: number
+  storeFramePriceCredits: number
+  storeFramePriceIdr: number
+  storeTitlePriceCredits: number
+  storeTitlePriceIdr: number
 }
 
 export type EconomyConfigKey = keyof EconomyConfig
@@ -198,6 +210,8 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   premiumPrice1Idr: 19_900,
   premiumPrice2Idr: 34_900,
   premiumPrice3Idr: 44_900,
+  premiumPrice6Idr: 79_900,
+  premiumPrice12Idr: 139_900,
   premiumMaxEnergy: 10,
   premiumEnergyRegenMinutes: 25,
   premiumPoolCapBonus: 15,
@@ -222,6 +236,16 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   storeEnergyPriceCredits: 10,
   storeEnergyAmount: 3,
   storePremiumMonthPriceCredits: 250,
+  storeGaspolMinutes: 60,
+  storeGaspolPriceCredits: 40,
+  storeGaspolPriceIdr: 3_000,
+  storeWithdrawSkipPriceCredits: 80,
+  storeWithdrawSkipPriceIdr: 5_000,
+  storeCosmeticsEnabled: 1,
+  storeFramePriceCredits: 100,
+  storeFramePriceIdr: 7_000,
+  storeTitlePriceCredits: 75,
+  storeTitlePriceIdr: 5_000,
 }
 
 export type EconomyGroup =
@@ -553,6 +577,18 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     min: 1_000, max: 10_000_000, riskyWhen: 'lower',
   },
   {
+    key: 'premiumPrice6Idr', group: 'premium', label: 'Harga premium 6 bulan', unit: 'Rp',
+    description: 'Harga paket premium enam bulan. Harus lebih murah per bulan daripada paket 3 bulan, kalau tidak paket yang lebih panjang jadi paket yang lebih mahal.',
+    impact: 'Menaikkannya menambah pendapatan per pembayaran tapi mengurangi jumlah yang memilih paket panjang.',
+    min: 1_000, max: 10_000_000, riskyWhen: 'never',
+  },
+  {
+    key: 'premiumPrice12Idr', group: 'premium', label: 'Harga premium 12 bulan', unit: 'Rp',
+    description: 'Harga paket premium setahun. Tiket terbesar di aplikasi ini, dan satu-satunya yang menanggung ongkos gateway sekali untuk dua belas bulan langganan.',
+    impact: 'Menurunkannya menukar pendapatan per pembayaran dengan langganan yang terkunci lebih lama.',
+    min: 1_000, max: 10_000_000, riskyWhen: 'never',
+  },
+  {
     key: 'premiumMaxEnergy', group: 'premium', label: 'Kapasitas energi premium', unit: 'energi',
     description: 'Stok energi maksimum user premium. Tidak boleh di bawah kapasitas energi biasa, dan batas 10 datang dari constraint users_energy_range.',
     impact: 'Menaikkannya memperbanyak task yang bisa dikerjakan sekaligus oleh user premium.',
@@ -737,6 +773,66 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     description: 'TD yang dibakar untuk satu bulan premium. Sengaja di atas nilai tunainya supaya jalur QRIS tetap yang paling murah.',
     impact: 'Menurunkannya sampai di bawah nilai tunai premium membuat pembeli QRIS jadi pihak yang paling rugi.',
     min: 1, max: 1_000_000, riskyWhen: 'lower',
+  },
+  {
+    key: 'storeGaspolMinutes', group: 'store', label: 'Durasi · Pass Gaspol', unit: 'menit',
+    description: 'Berapa lama soal berhenti memotong energi setelah pass-nya dibeli. Pembelian kedua menumpuk dari sisa yang masih berjalan, bukan menggantikannya.',
+    impact: 'Menaikkannya mempercepat user menghabiskan stok reward miliknya sendiri; plafon hariannya tidak ikut naik karena kolam tetap mengikat.',
+    min: 5, max: 1_440, riskyWhen: 'never',
+  },
+  {
+    key: 'storeGaspolPriceCredits', group: 'store', label: 'Harga TD · Pass Gaspol', unit: 'TD',
+    description: 'TD yang dibakar untuk satu pass. Harus bernilai minimal sebesar harga QRIS-nya, karena TD yang tidak dibelanjakan akan ditarik jadi Rupiah.',
+    impact: 'Menurunkannya sampai di bawah nilai tunai pass membuat jalur QRIS jadi jalur yang paling mahal.',
+    min: 1, max: 1_000_000, riskyWhen: 'lower',
+  },
+  {
+    key: 'storeGaspolPriceIdr', group: 'store', label: 'Harga QRIS · Pass Gaspol', unit: 'Rp',
+    description: 'Yang ditagih lewat QRIS untuk satu pass, sebelum kode unik ditambahkan gateway.',
+    impact: 'Menaikkannya menambah pemasukan per pass, tapi harus tetap di bawah nilai harga TD-nya.',
+    min: 1_000, max: 10_000_000, riskyWhen: 'never',
+  },
+  {
+    key: 'storeWithdrawSkipPriceCredits', group: 'store', label: 'Harga TD · Tarik Sekarang', unit: 'TD',
+    description: 'TD yang dibakar untuk melewati jeda penarikan sekali.',
+    impact: 'Menurunkannya membuat penarikan lebih sering, dan setiap penarikan menanggung ongkos transfer sendiri.',
+    min: 1, max: 1_000_000, riskyWhen: 'lower',
+  },
+  {
+    key: 'storeWithdrawSkipPriceIdr', group: 'store', label: 'Harga QRIS · Tarik Sekarang', unit: 'Rp',
+    description: 'Yang ditagih lewat QRIS untuk melewati jeda penarikan sekali. Ini satu-satunya barang yang harganya harus menutup ongkos nyata: setiap jeda yang dilewati berarti satu transfer tambahan yang dibayar kas.',
+    impact: 'Menurunkannya di bawah ongkos transfer membuat tiap pembelian jadi kerugian bersih.',
+    min: 1_000, max: 10_000_000, riskyWhen: 'lower',
+  },
+  {
+    key: 'storeCosmeticsEnabled', group: 'store', label: 'Rak kosmetik', unit: '0/1',
+    description: 'Isi 1 untuk memajang bingkai dan gelar di rak. Kosmetik yang sudah dibeli tetap terpasang saat raknya ditutup — yang hilang cuma cara membeli yang baru.',
+    impact: 'Mematikannya menutup satu-satunya pemasukan yang tidak menambah liabilitas sepeser pun.',
+    min: 0, max: 1, riskyWhen: 'never',
+  },
+  {
+    key: 'storeFramePriceCredits', group: 'store', label: 'Harga TD · Bingkai', unit: 'TD',
+    description: 'Berlaku untuk semua bingkai. Satu harga, bukan satu per barang: bingkai tidak punya beda manfaat, cuma beda warna.',
+    impact: 'Menurunkannya mengurangi TD yang terserap per pembelian.',
+    min: 1, max: 1_000_000, riskyWhen: 'lower',
+  },
+  {
+    key: 'storeFramePriceIdr', group: 'store', label: 'Harga QRIS · Bingkai', unit: 'Rp',
+    description: 'Yang ditagih lewat QRIS untuk satu bingkai, sebelum kode unik ditambahkan gateway.',
+    impact: 'Menaikkannya menambah pemasukan tanpa menambah liabilitas apa pun; yang turun cuma jumlah pembelinya.',
+    min: 1_000, max: 10_000_000, riskyWhen: 'never',
+  },
+  {
+    key: 'storeTitlePriceCredits', group: 'store', label: 'Harga TD · Gelar', unit: 'TD',
+    description: 'Berlaku untuk semua gelar.',
+    impact: 'Menurunkannya mengurangi TD yang terserap per pembelian.',
+    min: 1, max: 1_000_000, riskyWhen: 'lower',
+  },
+  {
+    key: 'storeTitlePriceIdr', group: 'store', label: 'Harga QRIS · Gelar', unit: 'Rp',
+    description: 'Yang ditagih lewat QRIS untuk satu gelar, sebelum kode unik ditambahkan gateway.',
+    impact: 'Menaikkannya menambah pemasukan tanpa menambah liabilitas apa pun.',
+    min: 1_000, max: 10_000_000, riskyWhen: 'never',
   },
 ]
 
@@ -925,12 +1021,29 @@ export function validateEconomyConfig(
       `Batas task harian premium tidak boleh di bawah batas biasa (${config.maxTasksPerDay}).`
   }
 
-  if (config.premiumPrice2Idr >= config.premiumPrice1Idr * 2) {
-    errors.premiumPrice2Idr = 'Paket 2 bulan harus lebih murah per bulan daripada paket 1 bulan.'
-  }
-
-  if (config.premiumPrice3Idr * 2 >= config.premiumPrice2Idr * 3) {
-    errors.premiumPrice3Idr = 'Paket 3 bulan harus lebih murah per bulan daripada paket 2 bulan.'
+  /** Tangga harga premium: tiap paket yang lebih panjang harus lebih murah PER BULAN daripada
+   * paket sebelumnya. Dulu dua perbandingan yang ditulis tangan; sekarang satu daftar, karena
+   * paket 6 dan 12 bulan yang masuk di migrasi 0058 membuat bentuk lamanya diam-diam berhenti
+   * memeriksa dua paket termahal. Perbandingannya dikali silang, bukan dibagi — pembagian bulat
+   * membuat selisih Rp1 per bulan lolos sebagai "sama".
+   *
+   * Daftarnya ditulis di sini, bukan diimpor dari `premium.ts`, karena berkas itu justru mengimpor
+   * `economyConfig()` dari sini: impor balik membuat lingkarannya nyata di jalur yang dievaluasi
+   * saat modul dimuat. */
+  const premiumLadder: [number, EconomyConfigKey][] = [
+    [1, 'premiumPrice1Idr'],
+    [2, 'premiumPrice2Idr'],
+    [3, 'premiumPrice3Idr'],
+    [6, 'premiumPrice6Idr'],
+    [12, 'premiumPrice12Idr'],
+  ]
+  for (let i = 1; i < premiumLadder.length; i += 1) {
+    const [months, key] = premiumLadder[i]
+    const [prevMonths, prevKey] = premiumLadder[i - 1]
+    if (config[key] * prevMonths >= config[prevKey] * months) {
+      errors[key] =
+        `Paket ${months} bulan harus lebih murah per bulan daripada paket ${prevMonths} bulan.`
+    }
   }
 
   if (config.maxPayoutIdr < config.withdrawalMinimumIdr) {
@@ -958,6 +1071,35 @@ export function validateEconomyConfig(
   if (config.storeEnabled > 0 && config.storePremiumMonthPriceCredits < premiumMonthCredits) {
     errors.storePremiumMonthPriceCredits =
       `Harga premium di toko tidak boleh di bawah nilai tunainya (${premiumMonthCredits} TD), karena itu membuat pembelian QRIS jadi jalur yang paling mahal.`
+  }
+
+  /** Barang berharga ganda: nilai harga TD-nya tidak boleh di bawah harga QRIS-nya. Aturan yang
+   * sama persis dengan premium di atas, digeneralisasi karena migrasi 0058 menambah empat barang
+   * yang bisa dibayar dua cara.
+   *
+   * Alasannya bukan gengsi harga. TD adalah liabilitas: satu credit yang tidak dibelanjakan pada
+   * akhirnya ditarik jadi Rupiah. Barang yang lebih murah ditebus pakai TD daripada dibayar tunai
+   * membalik arah seluruh rak — toko berhenti menyerap saldo dan mulai menggantikan pemasukan
+   * tunai, dan yang paling rugi justru user yang membayar pakai uang sungguhan. */
+  const rupiah = (value: number) => `Rp${value.toLocaleString('id-ID')}`
+  const dualPriced: [EconomyConfigKey, EconomyConfigKey, string][] = [
+    ['storeGaspolPriceCredits', 'storeGaspolPriceIdr', 'Pass Gaspol'],
+    ['storeWithdrawSkipPriceCredits', 'storeWithdrawSkipPriceIdr', 'Tarik Sekarang'],
+    ...(config.storeCosmeticsEnabled > 0
+      ? ([
+          ['storeFramePriceCredits', 'storeFramePriceIdr', 'Bingkai'],
+          ['storeTitlePriceCredits', 'storeTitlePriceIdr', 'Gelar'],
+        ] as [EconomyConfigKey, EconomyConfigKey, string][])
+      : []),
+  ]
+  if (config.storeEnabled > 0) {
+    for (const [creditsKey, idrKey, label] of dualPriced) {
+      const worth = config[creditsKey] * config.creditValueIdr
+      if (worth < config[idrKey]) {
+        errors[creditsKey] =
+          `Harga TD ${label} bernilai ${rupiah(worth)}, di bawah harga QRIS-nya (${rupiah(config[idrKey])}). Isi minimal ${Math.ceil(config[idrKey] / config.creditValueIdr)} TD, kalau tidak menebus pakai saldo jadi lebih murah daripada membayar tunai.`
+      }
+    }
   }
 
   return Object.keys(errors).length > 0 ? { ok: false, errors } : { ok: true, config }

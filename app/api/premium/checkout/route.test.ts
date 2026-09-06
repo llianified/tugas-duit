@@ -40,7 +40,7 @@ describe('POST /api/premium/checkout', () => {
   })
 
   it('menolak paket di luar daftar server-side', async () => {
-    const response = await POST(request({ months: 12 }))
+    const response = await POST(request({ months: 4 }))
 
     expect(response.status).toBe(400)
     expect(mocks.startPremiumCheckout).not.toHaveBeenCalled()

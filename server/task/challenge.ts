@@ -1,4 +1,5 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto'
+import type { PoolClient } from 'pg'
 import {
   CHALLENGE_TITLE,
   generateChallenge,
@@ -94,19 +95,36 @@ export async function issueChallenge(userId: number): Promise<PublicChallenge> {
 
 export type TaskPayment = 'energy' | 'ad'
 
+/** Yang benar-benar membayar ongkos masuk. Bukan selalu yang diminta klien: Pass Gaspol yang sedang
+ * berjalan membayarkannya lebih dulu, tanpa pernah diminta dan tanpa memotong apa pun. Dipisah dari
+ * `TaskPayment` supaya permintaan tetap cuma punya dua bentuk yang sah — 'gaspol' adalah jawaban,
+ * bukan pilihan. */
+export type TaskPaidBy = TaskPayment | 'gaspol'
+
 type StartChallengeResult =
   | {
       ok: true
       challenge: PublicChallenge
       elapsedMs: number
       energy: EnergyView
-      paidBy: TaskPayment
+      paidBy: TaskPaidBy
     }
   | {
       ok: false
       reason: 'not_startable' | 'energy_empty' | 'pool_empty' | 'ad_pass_missing'
       energy: EnergyView
     }
+
+/** Pass Gaspol yang sedang berjalan. Jamnya `now()` milik Postgres, bukan `Date.now()` proses ini —
+ * alasan yang sama dengan `expires_at` di atas: `gaspol_until` ditulis database, jadi selisih jam
+ * kedua mesin tidak boleh masuk ke titik yang menentukan satu soal memotong energi atau tidak. */
+async function gaspolActive(tx: PoolClient, userId: number): Promise<boolean> {
+  const rows = await tx.query<{ active: boolean }>(
+    'select coalesce(gaspol_until > now(), false) as active from users where id=$1',
+    [userId],
+  )
+  return rows.rows[0]?.active === true
+}
 
 export async function startChallenge(
   userId: number,
@@ -136,6 +154,11 @@ export async function startChallenge(
 
     const fresh = existing.started_at === null
     let adViewId: string | null = existing.ad_view_id
+    /** Ongkos masuk yang benar-benar dibayar energi. Ikut menentukan `energy_spent_at` di update
+     * bawah, dan itu yang menjaga `challenges_entry_refund_needs_entry`: soal yang dibayar Pass
+     * Gaspol tidak memotong apa pun, jadi ia juga tidak boleh punya jejak ongkos yang bisa
+     * dikembalikan. `refundEntry` sudah menyaring baris seperti itu keluar dengan sendirinya. */
+    let paidWithEnergy = existing.ad_view_id === null
     if (fresh) {
       if ((await readRewardPool(userId, tx)).current <= 0)
         return {
@@ -152,6 +175,13 @@ export async function startChallenge(
             energy: await readEnergy(userId, tx),
           }
         adViewId = pass.id
+        paidWithEnergy = false
+      } else if (await gaspolActive(tx, userId)) {
+        /** Pass Gaspol dibaca SEBELUM energi dipotong, bukan sebagai jalur mundur setelah energinya
+         * habis. Kalau ia cuma dipakai saat energi kosong, user yang membayar pass tetap kehilangan
+         * energinya soal demi soal sampai habis — yang dibeli "energi tidak berkurang", bukan
+         * "boleh main saat energi nol". */
+        paidWithEnergy = false
       } else {
         const spent = await spendEnergy(tx, userId)
         if (!spent.ok)
@@ -163,11 +193,11 @@ export async function startChallenge(
       `update challenges
          set started_at=coalesce(started_at,now()),
              expires_at=case when started_at is null then now()+($3::int * interval '1 second') else expires_at end,
-             energy_spent_at=case when started_at is null and $4::uuid is null then now() else energy_spent_at end,
+             energy_spent_at=case when started_at is null and $5::boolean then now() else energy_spent_at end,
              ad_view_id=case when started_at is null then $4::uuid else ad_view_id end
        where id=$1 and user_id=$2
        returning id,type,difficulty,payload,issued_at,started_at,expires_at,(extract(epoch from(now()-started_at))*1000)::int elapsed_ms`,
-      [id, userId, economyConfig().taskWindowSeconds, adViewId],
+      [id, userId, economyConfig().taskWindowSeconds, adViewId, paidWithEnergy],
     )
     const row = rows.rows[0]
     return {
@@ -175,7 +205,7 @@ export async function startChallenge(
       challenge: toPublic(row),
       elapsedMs: Math.max(0, row.elapsed_ms),
       energy: await readEnergy(userId, tx),
-      paidBy: (adViewId === null ? 'energy' : 'ad') as TaskPayment,
+      paidBy: (adViewId !== null ? 'ad' : paidWithEnergy ? 'energy' : 'gaspol') as TaskPaidBy,
     }
   })
 }

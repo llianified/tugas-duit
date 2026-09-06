@@ -91,6 +91,12 @@ export interface WithdrawalEligibility {
   cooldownEndsAt: number | null
   /** Jeda yang berlaku untuk user ini: premium lebih pendek, jadi tidak boleh ditulis tetap di UI. */
   cooldownDays: number
+  /** Jedanya sedang dilepas Tarik Sekarang yang sudah dibeli. Dipakai untuk menyebutkan bahwa yang
+   * dibayar sedang bekerja — formulir yang tiba-tiba terbuka tanpa keterangan terbaca seperti
+   * jedanya memang habis, dan pembelinya tidak pernah tahu apa yang ia dapat. */
+  cooldownWaived: boolean
+  /** Pengajuan yang masih ditunggu keputusan admin. */
+  processingCount: number
 }
 
 /** Satu penarikan yang benar-benar sudah dibayar, nama penerimanya sudah dimask di server. */

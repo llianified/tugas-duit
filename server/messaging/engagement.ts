@@ -1,9 +1,12 @@
 import { creditsToRupiah, withdrawalMinimumCredits } from '../../domain/economy/economy.ts'
-import { validateEconomyConfig, setActiveEconomyConfig } from '../../domain/economy/economy-config.ts'
+import { starReward, validateEconomyConfig, setActiveEconomyConfig } from '../../domain/economy/economy-config.ts'
 import { maxEnergy, projectEnergy } from '../../domain/economy/energy.ts'
 import { isPremiumActive, withdrawalCooldownMs } from '../../domain/economy/premium.ts'
 import { projectRewardPool, rewardPoolCapacity } from '../../domain/economy/reward-pool.ts'
+import { SEASON_ANCHOR, leaderboardSeasonDays } from '../../domain/progression/leaderboard.ts'
+import { isMissionAvailable, missionDefinition } from '../../domain/progression/missions.ts'
 import { getRank } from '../../domain/progression/progression.ts'
+import { storeCatalog, storeEnabled } from '../../domain/store/store.ts'
 import { formatCredits, formatRupiah } from '../../shared/lib/format.ts'
 import { query } from '../platform/db.ts'
 import { payoutRequiresPremium, requiredActiveReferrals } from '../payout/payout-rules.ts'
@@ -13,12 +16,16 @@ export type EngagementKind =
   | 'withdraw_ready'
   | 'rank_up'
   | 'streak_risk'
+  | 'mission_ready'
   | 'commission_digest'
   | 'referral_joined'
+  | 'season_ending'
   | 'winback_7'
   | 'winback_3'
   | 'pool_full'
+  | 'store_idle'
   | 'energy_full'
+  | 'daily_invite'
 
 const HOUR_FIRST = 8
 const HOUR_LAST = 20
@@ -32,6 +39,10 @@ export const ENGAGEMENT_HOURS = {
 } as const
 const ENERGY_IDLE_HOURS = 3
 const POOL_IDLE_HOURS = 6
+
+/** Sisa misi harian yang masih pantas jadi ajakan. Lebih dari ini kalimatnya berhenti terbaca
+ * seperti "tinggal dikit lagi" dan mulai terbaca seperti daftar pekerjaan. */
+const MISSION_NUDGE_LEFT = 2
 const STREAK_LOOKBACK_DAYS = 120
 const MAX_SENDS_PER_RUN = 500
 const SEND_GAP_MS = 60
@@ -83,6 +94,8 @@ const CANDIDATE_SQL = `with notified as (
     (select count(*) from task_completions tc
       where tc.user_id=p.id and (tc.completed_at at time zone 'Asia/Jakarta')::date = ${TODAY})::int
       tasks_today,
+    (select count(*) from task_completions tc
+      where tc.user_id=p.id and tc.completed_at > now() - interval '7 days')::int tasks_recent,
     (select count(distinct rc.downline_id) from referral_commissions rc where rc.upline_id=p.id)::int
       active_referrals,
     (select max(w.requested_at) from withdrawals w where w.user_id=p.id) last_withdrawal_at,
@@ -129,6 +142,9 @@ export type CandidateRow = {
   completed_count_before: number
   last_task_at: Date | null
   tasks_today: number
+  /** Soal seminggu terakhir. Dipakai `season_ending`: papan peringkat cuma jadi alasan untuk
+   * kembali bagi orang yang memang sedang ikut musimnya. */
+  tasks_recent: number
   active_referrals: number
   last_withdrawal_at: Date | null
   processing_withdrawals: number
@@ -180,6 +196,65 @@ function withdrawReady(row: CandidateRow, balance: number, premium: boolean): bo
   return row.last_withdrawal_at.getTime() + withdrawalCooldownMs(premium) <= row.now.getTime()
 }
 
+/** Ajakan penutup yang menyebut angka, bukan "yuk main lagi".
+ *
+ * Perkiraannya dari reward Sedang 2★ — bukan hasil terbaik, bukan yang terburuk — dan DIJEPIT sisa
+ * stok reward. Jepitan itu yang membuatnya jujur: stok yang tinggal sedikit membuat janji besar jadi
+ * kalimat yang dibantah aplikasi sendiri begitu user membukanya. */
+function invite(poolCredits: number, count = 3): string {
+  const estimate = Math.min(Math.max(0, poolCredits), starReward('Medium', 2) * count)
+  if (estimate <= 0) return 'Buka app-nya bentar, cek stok reward kamu ya.'
+  return `kerjain ${formatCredits(count)} soal aja, kira-kira ${money(estimate)}.`
+}
+
+/** Sisa misi "Selesaikan soal" hari ini, atau `null` kalau tidak ada yang pantas dikabari.
+ *
+ * `isMissionAvailable` ikut diperiksa karena misi harian DIUNDI (migrasi 0048): menyebut misi yang
+ * tidak keluar hari ini adalah pesan yang salah, dan user yang membukanya tidak akan menemukan
+ * apa pun yang cocok dengan kalimatnya. */
+function dailyTasksMissionLeft(
+  row: CandidateRow,
+  today: string,
+): { remaining: number; target: number; reward: number } | null {
+  if (row.tasks_today <= 0) return null
+  if (!isMissionAvailable('tasks', today)) return null
+
+  const definition = missionDefinition('tasks')
+  const remaining = definition.target - row.tasks_today
+  if (remaining <= 0 || remaining > MISSION_NUDGE_LEFT) return null
+  return { remaining, target: definition.target, reward: definition.reward }
+}
+
+/** Musimnya berakhir saat hari WIB berganti nanti malam. Dihitung di sini, bukan ditanyakan ke
+ * database, karena batas musim memang turunan tanggal — sama seperti undian misi harian — dan
+ * anchor Senin-nya membuat hasilnya identik dengan `seasonBoundsSql` di `server/task/leaderboard.ts`. */
+function seasonEndsToday(now: Date): boolean {
+  const days = leaderboardSeasonDays()
+  if (days <= 0) return false
+  const elapsed = daysBetweenWib(SEASON_ANCHOR, wibDayKey(now))
+  return ((elapsed % days) + days) % days === days - 1
+}
+
+const daysBetweenWib = (from: string, to: string) =>
+  Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000)
+
+/** Kunci dedup mingguan: ember tujuh hari yang dihitung dari tanggal WIB, bukan nomor minggu ISO.
+ * Yang dibutuhkan cuma "sudah pernah minggu ini atau belum", dan aturan minggu ISO menambah kasus
+ * pinggir pergantian tahun tanpa menambah satu pun jawaban yang berbeda. */
+const weekKey = (now: Date) =>
+  `W${Math.floor(daysBetweenWib('1970-01-01', wibDayKey(now)) / 7)}`
+
+/** Ajakan belanja hanya untuk saldo yang benar-benar bisa membeli sesuatu di rak hari ini. Menyuruh
+ * orang melihat rak yang seluruh isinya di luar jangkauannya adalah cara tercepat membuat pesan bot
+ * berhenti dibuka. */
+function storeNudgeFits(row: CandidateRow, balance: number): boolean {
+  if (!storeEnabled() || row.tasks_today > 0) return false
+  const affordable = storeCatalog()
+    .map((item) => item.priceCredits)
+    .filter((price): price is number => price !== null)
+  return affordable.length > 0 && balance >= Math.min(...affordable)
+}
+
 export function pickMessage(row: CandidateRow, streak: number): Message | null {
   const now = row.now
   const today = wibDayKey(now)
@@ -214,6 +289,8 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
         `Sekarang ada ${money(balance)} di akun kamu, dan syaratnya udah kelar semua. Tinggal ajukan.`,
         '',
         `Catatan: sekali diajukan, penarikan berikutnya baru kebuka ${formatCredits(Math.round(withdrawalCooldownMs(premium) / 86_400_000))} hari lagi — jadi pikirin dulu mau narik berapa.`,
+        '',
+        `Sambil nunggu diproses, ${invite(pool.current)}`,
       ].join('\n'),
     }
   }
@@ -222,11 +299,13 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
     return {
       kind: 'rank_up',
       dedupeKey: String(rank.tier),
-      buttonLabel: '🎮 Buka app',
+      buttonLabel: '🏅 Coba stok barunya',
       text: [
         `<b>Rank kamu naik jadi ${escapeHtml(rank.name)} 🏅</b>`,
         '',
         `${formatCredits(row.completed_count)} soal kelar. Daya tampung stok reward kamu ikut naik, jadi sekali duduk bisa ngumpulin lebih banyak sebelum stoknya habis.`,
+        '',
+        `Buktiin sekarang: ${invite(pool.current, 5)}`,
       ].join('\n'),
     }
   }
@@ -235,7 +314,7 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
     return {
       kind: 'streak_risk',
       dedupeKey: today,
-      buttonLabel: '🔥 Selamatin streak',
+      buttonLabel: '🔥 Kerjain 1 soal',
       text: [
         `<b>Streak ${formatCredits(streak)} hari kamu hampir putus 🔥</b>`,
         '',
@@ -246,15 +325,36 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
     }
   }
 
+  /** Ambangnya "tinggal sedikit", bukan "belum kelar". Misi yang masih menyisakan empat soal bukan
+   * ajakan, cuma laporan — dan pesan yang isinya laporan menghabiskan satu-satunya jatah kirim hari
+   * itu tanpa memindahkan siapa pun. */
+  const missionLeft = dailyTasksMissionLeft(row, today)
+  if (missionLeft !== null) {
+    return {
+      kind: 'mission_ready',
+      dedupeKey: today,
+      buttonLabel: `🎯 Kelarin ${formatCredits(missionLeft.remaining)} soal lagi`,
+      text: [
+        `<b>Misi harian kamu tinggal ${formatCredits(missionLeft.remaining)} soal 🎯</b>`,
+        '',
+        `${formatCredits(row.tasks_today)} dari ${formatCredits(missionLeft.target)} udah kelar hari ini. Kelarin sisanya sebelum ganti hari, hadiahnya ${formatCredits(missionLeft.reward)} energi.`,
+        '',
+        'Besok misinya diundi ulang, jadi yang hari ini nggak nunggu.',
+      ].join('\n'),
+    }
+  }
+
   if (row.commission_today > 0) {
     return {
       kind: 'commission_digest',
       dedupeKey: today,
-      buttonLabel: '💰 Cek saldo',
+      buttonLabel: '💰 Tambahin sendiri',
       text: [
         '<b>Komisi dari teman kamu masuk 🎉</b>',
         '',
         `Hari ini kamu dapat ${money(row.commission_today)} dari soal yang dikerjain teman-teman kamu. Tanpa ngapa-ngapain.`,
+        '',
+        `Ditambahin dikit lagi? ${invite(pool.current)}`,
       ].join('\n'),
     }
   }
@@ -263,11 +363,31 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
     return {
       kind: 'referral_joined',
       dedupeKey: today,
-      buttonLabel: '👥 Lihat referral',
+      buttonLabel: '🎮 Main bareng',
       text: [
         `<b>${formatCredits(row.new_referrals_today)} teman baru pakai kode kamu 👋</b>`,
         '',
         'Begitu mereka mulai ngerjain soal, komisinya ngalir ke kamu otomatis. Sekalian colek mereka biar cepet mulai ya.',
+        '',
+        `Kamu juga jangan diem: ${invite(pool.current)}`,
+      ].join('\n'),
+    }
+  }
+
+  /** Musim papan peringkat cuma jadi alasan untuk kembali bagi orang yang memang sedang ikut. User
+   * yang seminggu ini tidak menyentuh satu soal pun tidak punya posisi untuk dipertahankan, dan
+   * mengabarinya soal musim yang habis cuma bunyi. */
+  if (seasonEndsToday(now) && row.tasks_recent > 0 && row.tasks_today === 0) {
+    return {
+      kind: 'season_ending',
+      dedupeKey: today,
+      buttonLabel: '🏆 Naikin posisi',
+      text: [
+        '<b>Musim papan peringkat habis malam ini 🏆</b>',
+        '',
+        'Besok hitungannya balik dari nol buat semua orang. Posisi kamu sekarang masih bisa digeser.',
+        '',
+        invite(pool.current, 5),
       ].join('\n'),
     }
   }
@@ -282,7 +402,7 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
         '',
         `Saldo kamu masih aman ${money(balance)}, energi udah penuh dari kemarin-kemarin.`,
         '',
-        'Balik bentar aja, beberapa soal udah nambah saldo lagi.',
+        `Balik bentar aja: ${invite(pool.current)}`,
       ].join('\n'),
     }
   }
@@ -291,13 +411,13 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
     return {
       kind: 'winback_3',
       dedupeKey: wibDayKey(row.last_task_at ?? now),
-      buttonLabel: '👀 Intip app',
+      buttonLabel: '👀 Ambil stoknya',
       text: [
         '<b>Udah 3 hari nggak mampir 👀</b>',
         '',
         `Energi kamu ${formatCredits(energy.current)}/${formatCredits(energy.max)} dan stok reward-nya nunggu dipakai.`,
         '',
-        'Lumayan buat nambah saldo sambil rebahan.',
+        `Lumayan buat nambah saldo sambil rebahan. ${invite(pool.current)}`,
       ].join('\n'),
     }
   }
@@ -312,7 +432,26 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
         '',
         `Ada ${money(pool.current)} yang siap kamu ambil sekarang.`,
         '',
-        'Selama masih penuh, stoknya berhenti nambah — jadi sayang kalau didiemin.',
+        `Selama masih penuh, stoknya berhenti nambah — jadi sayang kalau didiemin. ${invite(pool.current, 5)}`,
+      ].join('\n'),
+    }
+  }
+
+  /** Ajakan belanja, dan satu-satunya pesan di daftar ini yang tidak menyuruh mengerjakan soal.
+   * Sasarannya sempit dengan sengaja: saldo yang cukup untuk membeli sesuatu, penarikan yang belum
+   * kebuka, dan tidak ada kabar lain yang lebih pantas hari itu. Kunci dedup-nya mingguan, bukan
+   * harian — ajakan belanja yang datang tiap hari berhenti jadi ajakan dan mulai jadi gangguan. */
+  if (storeNudgeFits(row, balance)) {
+    return {
+      kind: 'store_idle',
+      dedupeKey: weekKey(now),
+      buttonLabel: '🛍️ Lihat isi rak',
+      text: [
+        `<b>Saldo ${money(balance)} kamu bisa dipakai sekarang 🛍️</b>`,
+        '',
+        'Penarikan belum kebuka, tapi saldonya nggak harus nganggur: di Toko TD bisa ditukar jadi energi, pass biar soal nggak makan energi, premium, atau bingkai buat papan peringkat.',
+        '',
+        'Yang nggak mau motong saldo bisa bayar pakai QRIS.',
       ].join('\n'),
     }
   }
@@ -321,13 +460,32 @@ export function pickMessage(row: CandidateRow, streak: number): Message | null {
     return {
       kind: 'energy_full',
       dedupeKey: today,
-      buttonLabel: '⚡ Pakai energinya',
+      buttonLabel: '⚡ Habisin energinya',
       text: [
         '<b>Energi kamu penuh lagi ⚡</b>',
         '',
         `${formatCredits(energy.current)}/${formatCredits(energy.max)} energi siap dipakai. Energi yang udah penuh berhenti ngisi, jadi mending langsung dihabisin.`,
         '',
-        'Pecahin soal, TD-nya masuk.',
+        invite(pool.current, Math.max(1, energy.current)),
+      ].join('\n'),
+    }
+  }
+
+  /** Jaring terakhir, dan satu-satunya ajakan yang tidak menunggu keadaan khusus apa pun. Tanpa ini
+   * user yang hari ini belum menyentuh soal — tapi energinya belum penuh, stoknya belum penuh,
+   * streak-nya belum dua hari — tidak menerima satu pun ajakan main, padahal ia persis orang yang
+   * paling mudah diajak balik. */
+  if (row.tasks_today === 0) {
+    return {
+      kind: 'daily_invite',
+      dedupeKey: today,
+      buttonLabel: '🎮 Mulai sekarang',
+      text: [
+        '<b>Hari ini belum kelar satu soal pun 🎮</b>',
+        '',
+        `Energi kamu ${formatCredits(energy.current)}/${formatCredits(energy.max)} dan stok reward-nya ${money(pool.current)}.`,
+        '',
+        invite(pool.current),
       ].join('\n'),
     }
   }

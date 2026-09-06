@@ -8,6 +8,8 @@ const entry = (position: number, credits: number, displayName: string): Leaderbo
   taskCount: 0,
   credits,
   you: false,
+  frame: null,
+  title: null,
   premium: false,
   photoUrl: null,
   founder: false,

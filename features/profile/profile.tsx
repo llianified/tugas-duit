@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { creditsToRupiah } from '@/domain/economy/economy'
 import { prestigeBadges, type PrestigeKey } from '@/domain/progression/prestige'
+import { titleLabel, type EquippedCosmetics } from '@/domain/store/cosmetics'
 import { EarningsChart } from '@/features/profile/earnings-chart'
 import { StreakStrip } from '@/features/profile/streak-strip'
 import { ProfileAvatar } from '@/shared/components/profile-avatar'
@@ -10,6 +11,7 @@ import { TierGlyph } from '@/shared/components/tier-glyph'
 import type { UserStats } from '@/domain/progression/stats'
 import { VIEW_TITLE } from '@/navigation/app-view'
 import { DataList, DataListRow } from '@/shared/components/data-list'
+import { MetaBadge } from '@/shared/components/meta-badge'
 import { GlyphCrown } from '@/shared/components/glyph'
 import { TokenMark } from '@/shared/components/token-mark'
 import { PageHeader } from '@/shared/components/page-header'
@@ -66,12 +68,16 @@ export function ProfileView({
   stats,
   premium,
   founder,
+  cosmetics,
   onOpenPhotoNote,
 }: {
   user: SessionUser
   stats: UserStats
   premium: PremiumState | null
   founder: boolean
+  /** Bingkai dan gelar yang sedang dipakai. Halaman ini tempat pemiliknya melihat sendiri apa yang
+   * dilihat orang lain di papan peringkat. */
+  cosmetics: EquippedCosmetics
   onOpenPhotoNote: () => void
 }) {
   const [range, setRange] = useState<RangeKey>('30')
@@ -111,6 +117,7 @@ export function ProfileView({
         >
           <ProfileAvatar
             photoUrl={user.photoUrl}
+            frame={cosmetics.frame}
             className={cn(
               'size-[4.5rem]',
               isPremium
@@ -135,7 +142,12 @@ export function ProfileView({
             <span className="truncate">{user.firstName}</span>
             {isPremium ? <GlyphCrown className="premium-glint size-4 shrink-0 text-premium" /> : null}
           </p>
-          <p className="truncate text-[15px] leading-snug text-muted-foreground">{handle}</p>
+          <p className="flex min-w-0 items-center gap-1.5 text-[15px] leading-snug text-muted-foreground">
+            <span className="truncate">{handle}</span>
+            {titleLabel(cosmetics.title) ? (
+              <MetaBadge tone="neutral">{titleLabel(cosmetics.title)}</MetaBadge>
+            ) : null}
+          </p>
 
           {/* Keterangan lencana dulu ditaruh di `title=`: di WebView Telegram tidak ada
               hover, jadi ia tidak pernah terbaca. Sekarang chip-nya sendiri yang jadi

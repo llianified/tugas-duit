@@ -7,6 +7,7 @@ import type { PremiumMonths, PremiumPlan } from '@/domain/economy/premium'
 import { premiumBenefitList } from '@/features/premium/benefits'
 import { ActionButton } from '@/shared/components/action-button'
 import { GlyphCheck, GlyphCross, GlyphCrown, GlyphSpinner } from '@/shared/components/glyph'
+import { DetailRow, QrisPanel } from '@/shared/components/qris-panel'
 import { SectionLabel } from '@/shared/components/section-label'
 import { userFacingMessage } from '@/shell/api-client'
 import {
@@ -15,7 +16,7 @@ import {
   type PremiumState,
 } from '@/shell/session-api'
 import { useToast } from '@/shell/toast'
-import { formatCredits, formatLongCountdown, formatRupiah, formatShortDate } from '@/shared/lib/format'
+import { formatCredits, formatRupiah, formatShortDate } from '@/shared/lib/format'
 import { cn } from '@/shared/lib/utils'
 
 /** Jeda polling status pembayaran, terikat plafon `/api/session`: 100 permintaan per jam per user, dan SELURUH aplikasi memakai jatah yang sama. Bentuk sebelumnya memoll tiap 6 detik tanpa henti — 600 permintaan per jam, jadi plafonnya habis dalam sepuluh menit dan yang ikut mati bukan cuma lembar ini melainkan setiap penyegaran saldo, energi, dan stok reward di seluruh app, untuk user yang justru baru saja membayar. Kegagalannya pun diam: SWR menahan data lama sehingga `sessionFailed` tidak pernah menyala. Yang sebenarnya menangkap pembayaran bukan polling rapat melainkan `revalidateOnFocus` pada SWR sesi — user membayar di aplikasi banknya lalu kembali, dan kembalinya itu sudah memicu satu penyegaran. */
@@ -215,29 +216,37 @@ function PlanPanel({
   return (
     <>
       <SectionLabel as="h3">Pilih paket</SectionLabel>
+      {/* Tiga kolom, berapa pun jumlah paketnya. Yang tidak genap tiga dulu tidak pernah ada —
+          paketnya persis tiga — dan begitu 6 dan 12 bulan masuk, baris terakhir tinggal dua
+          perangko yang berhenti di dua pertiga lebar dan terbaca seperti tata letak yang putus.
+          Sisa baris terakhir ditutup dengan melebarkan perangko paling akhir, dan kebetulan yang
+          melebar itu paket terpanjang — yang memang paling ingin dilihat. */}
       <div
         role="radiogroup"
         aria-label="Paket premium"
         onKeyDown={move}
         className="stack-gap-t grid grid-cols-3 items-stretch gap-2"
       >
-        {premium.plans.map((item) => (
+        {premium.plans.map((item, index) => (
           <PlanStamp
             key={item.months}
             plan={item}
             checked={item.months === selected}
             onSelect={() => onSelect(item.months)}
+            className={
+              index === premium.plans.length - 1 ? LAST_SPAN[premium.plans.length % 3] : undefined
+            }
           />
         ))}
       </div>
 
       <dl className="stack-gap-t space-y-1.5 rounded-lg border border-dashed border-border bg-muted/40 p-3">
-        <Row label="Total bayar" value={formatRupiah(plan.priceIdr)} strong />
-        <Row label="Per bulan" value={`${formatRupiah(plan.pricePerMonthIdr)}/bln`} />
+        <DetailRow label="Total bayar" value={formatRupiah(plan.priceIdr)} strong />
+        <DetailRow label="Per bulan" value={`${formatRupiah(plan.pricePerMonthIdr)}/bln`} />
         {plan.savingIdr > 0 ? (
           <>
-            <Row label="Harga normal" value={formatRupiah(plan.baselineIdr)} struck />
-            <Row
+            <DetailRow label="Harga normal" value={formatRupiah(plan.baselineIdr)} struck />
+            <DetailRow
               label={`Hemat ${formatCredits(plan.savingPercent)}%`}
               value={formatRupiah(plan.savingIdr)}
               accent
@@ -269,14 +278,25 @@ function PlanPanel({
 }
 
 /** Satu paket, satu perangko kecil. Bentuknya sengaja bentuk yang sama dengan kartu yang membuka lembar ini: yang diketuk di beranda perangko, jadi yang dipilih di sini perangko juga. Bidang bertintanya yang menyatakan pilihan — lihat `.stamp-chip` di `globals.css` soal kenapa bukan cincin. */
+/** Berapa kolom yang harus ditelan perangko terakhir supaya baris terakhir penuh, dikunci sisa
+ * bagi tiga. Ditulis utuh dan bukan dirakit dari string: kelas Tailwind yang disusun saat berjalan
+ * tidak ikut terpindai, jadi `col-span-${n}` akan hilang dari CSS produksi tanpa satu pun error. */
+const LAST_SPAN: Record<number, string | undefined> = {
+  0: undefined,
+  1: 'col-span-3',
+  2: 'col-span-2',
+}
+
 function PlanStamp({
   plan,
   checked,
   onSelect,
+  className,
 }: {
   plan: PremiumPlan
   checked: boolean
   onSelect: () => void
+  className?: string
 }) {
   return (
     <button
@@ -285,7 +305,7 @@ function PlanStamp({
       aria-checked={checked}
       tabIndex={checked ? 0 : -1}
       onClick={onSelect}
-      className="focus-ring transition-ui press-scale-soft flex rounded-md"
+      className={cn('focus-ring transition-ui press-scale-soft flex rounded-md', className)}
     >
       <span className="stamp stamp-chip min-w-0 flex-1" data-selected={checked}>
         <span className="home-tag stamp-tag">
@@ -304,41 +324,15 @@ function PlanStamp({
 }
 
 function PaymentPanel({ invoice }: { invoice: PremiumInvoice }) {
-  const secondsLeft = useSecondsLeft(invoice.expiresAt)
-
   return (
-    <>
-      {/* `.qr-plate`, bukan `bg-card`: pelatnya harus tetap terang di tema gelap supaya QR-nya bisa dipindai. Lihat `--qr-plate` di `globals.css`. */}
-      {invoice.qrisUrl ? (
-        <div className="qr-plate flex justify-center rounded-lg p-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={invoice.qrisUrl}
-            alt={`Kode QRIS untuk pesanan ${invoice.orderId}`}
-            className="size-52 max-w-full object-contain"
-          />
-        </div>
-      ) : (
-        <p className="text-sm text-destructive">
-          QR-nya gagal muncul. Tutup dulu, terus coba lagi.
-        </p>
-      )}
-
-      <dl className="stack-gap-t space-y-1.5 rounded-lg border border-dashed border-border bg-muted/40 p-3">
-        <Row label="Bayar tepat" value={formatRupiah(invoice.totalAmountIdr)} strong />
-        <Row label="Harga paket" value={formatRupiah(invoice.amountIdr)} />
-        <Row label="Kode pesanan" value={invoice.orderId} />
-        <Row
-          label="Berlaku"
-          value={secondsLeft > 0 ? formatLongCountdown(secondsLeft) : 'Sudah lewat'}
-        />
-      </dl>
-
-      <p className="stack-gap-t text-[11px] leading-relaxed text-muted-foreground text-pretty">
-        Bayar <span className="font-semibold text-foreground">persis</span> sesuai nominal. Angka
-        belakangnya kode unik. Status dicek otomatis.
-      </p>
-    </>
+    <QrisPanel
+      qrisUrl={invoice.qrisUrl}
+      orderId={invoice.orderId}
+      amountIdr={invoice.amountIdr}
+      totalAmountIdr={invoice.totalAmountIdr}
+      expiresAt={invoice.expiresAt}
+      priceLabel="Harga paket"
+    />
   )
 }
 
@@ -423,48 +417,4 @@ function ActivatedPanel({ premium }: { premium: PremiumState }) {
       </ul>
     </>
   )
-}
-
-function Row({
-  label,
-  value,
-  strong,
-  struck,
-  accent,
-}: {
-  label: string
-  value: string
-  strong?: boolean
-  struck?: boolean
-  accent?: boolean
-}) {
-  return (
-    <div className="flex items-baseline justify-between gap-3">
-      <dt className={cn('text-xs', accent ? 'font-semibold text-premium' : 'text-muted-foreground')}>
-        {label}
-      </dt>
-      <dd
-        className={cn(
-          'truncate text-right tabular-nums',
-          strong
-            ? 'text-base font-bold text-foreground'
-            : accent
-              ? 'text-xs font-semibold text-premium'
-              : 'text-xs text-foreground',
-          struck && 'text-muted-foreground line-through',
-        )}
-      >
-        {value}
-      </dd>
-    </div>
-  )
-}
-
-function useSecondsLeft(expiresAt: number): number {
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1_000)
-    return () => clearInterval(timer)
-  }, [])
-  return Math.max(0, Math.ceil((expiresAt - now) / 1_000))
 }

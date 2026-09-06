@@ -60,6 +60,13 @@ const HISTORIC: EconomyConfig = {
   arcadeEnergyPrizeAmount: 1, arcadeEnergyPrizeWeight: 2, arcadeBlankWeight: 1,
   storeEnabled: 1, storeEnergyPriceCredits: 10,
   storeEnergyAmount: 3, storePremiumMonthPriceCredits: 250,
+  // Migrasi 0058: paket premium panjang, dua barang berbayar baru, dan rak kosmetik.
+  premiumPrice6Idr: 79_900, premiumPrice12Idr: 139_900,
+  storeGaspolMinutes: 60, storeGaspolPriceCredits: 40, storeGaspolPriceIdr: 3_000,
+  storeWithdrawSkipPriceCredits: 80, storeWithdrawSkipPriceIdr: 5_000,
+  storeCosmeticsEnabled: 1,
+  storeFramePriceCredits: 100, storeFramePriceIdr: 7_000,
+  storeTitlePriceCredits: 75, storeTitlePriceIdr: 5_000,
 }
 
 const withField = (patch: Partial<EconomyConfig>) => ({ ...DEFAULT_ECONOMY_CONFIG, ...patch })

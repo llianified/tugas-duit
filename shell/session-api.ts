@@ -1,6 +1,7 @@
 'use client'
 
 import type { AdProvider } from '@/domain/ads/ads'
+import type { EquippedCosmetics } from '@/domain/store/cosmetics'
 import { setActiveEconomyConfig, type EconomyConfig } from '@/domain/economy/economy-config'
 import type { EnergyState } from '@/domain/economy/energy'
 import type { PremiumMonths, PremiumPerks, PremiumPlan } from '@/domain/economy/premium'
@@ -36,6 +37,10 @@ export type SessionResponse = {
   }
   ads?: AdsState
   premium?: PremiumState
+  /** Sampai kapan Pass Gaspol berlaku. `null` = tidak sedang punya. */
+  gaspolUntil?: number | null
+  /** Kosmetik yang sedang dipakai. Yang dimiliki tapi belum dipasang tinggal di potret toko. */
+  cosmetics?: EquippedCosmetics
   channelBonus?: ChannelBonusState
   channelGate?: ChannelGateState
   botAppUrl?: string | null
@@ -92,6 +97,11 @@ export async function verifyChannelMembership() {
 }
 
 export type TaskPayment = 'energy' | 'ad'
+
+/** Yang benar-benar membayar ongkos masuk, dan itu bukan selalu yang diminta klien: Pass Gaspol
+ * yang sedang berjalan membayarkannya tanpa pernah diminta. Dipisah dari `TaskPayment` supaya
+ * permintaan tetap cuma punya dua bentuk yang sah. */
+export type TaskPaidBy = TaskPayment | 'gaspol'
 
 export type AdsState = {
   /** Tiket berhadiah (opt-in). Tetap `true` untuk premium. */
@@ -184,7 +194,7 @@ export type StartTaskResponse = {
   challenge: Challenge
   elapsedMs: number
   energy: EnergyState & { now: number }
-  paidBy: TaskPayment
+  paidBy: TaskPaidBy
 }
 
 async function fetchSession(): Promise<SessionResponse> {

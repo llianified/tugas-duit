@@ -4,6 +4,7 @@ import { isPremiumActive, premiumDaysLeft, premiumPerks, premiumPlans } from '@/
 import { loadEconomyConfig } from '@/server/economy/economy-config'
 import { readAdsState } from '@/server/ads/ads'
 import { FOUNDER_MAX_USER_ID } from '@/domain/progression/prestige'
+import { readEquipped } from '@/domain/store/cosmetics'
 import { readChannelGateState } from '@/server/integrations/channel'
 import { isPreviewShell, query } from '@/server/platform/db'
 import { readEnergy } from '@/server/economy/energy'
@@ -92,6 +93,15 @@ export async function GET(request: Request) {
           perks: premiumPerks(),
           invoice,
         },
+        /** Jendela Pass Gaspol yang sedang berjalan, atau `null`. Dikirim di potret sesi karena dua
+         * hal di klien bergantung padanya: penjaga energi di `use-task-flow` yang harus berhenti
+         * menahan, dan pengumuman di beranda yang memberitahu bahwa yang dibayar sedang bekerja. */
+        gaspolUntil:
+          user.gaspolUntil && user.gaspolUntil.getTime() > now ? user.gaspolUntil.getTime() : null,
+        /** Yang DIPAKAI, bukan yang dimiliki. Daftar kepemilikan tinggal di potret toko, tempat ia
+         * memang dibutuhkan; yang perlu diketahui setiap layar cuma bingkai dan gelar yang sedang
+         * terpasang. */
+        cosmetics: readEquipped(user.equippedFrame, user.equippedTitle),
         channelBonus: {
           enabled: channelBonusEnabled(),
           url: env.telegramChannelUrl,

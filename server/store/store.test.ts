@@ -225,38 +225,40 @@ describe('TOKO-3 — Pass Gaspol dan Tarik Sekarang', () => {
   })
 })
 
-/** TOKO-4 — kepemilikan kosmetik: dibeli sekali, dipakai sesuka hati, tidak bisa dipasang tanpa
- * dibeli. Yang dipasang tampil di papan peringkat — satu-satunya permukaan publik aplikasi ini —
- * jadi penjagaannya di server, bukan di tombol. */
+/** TOKO-4 — kepemilikan dan pemasangan kosmetik.
+ *
+ * Kosmetik tidak punya harga TD sama sekali, jadi jalur belinya QRIS dan diuji di
+ * `server/shop/cash-order.test.ts`. Yang diuji di sini apa yang terjadi SESUDAH ia dimiliki —
+ * dipasang, dilepas, dan tidak bisa dipakai orang yang belum membelinya. Yang dipasang tampil di
+ * papan peringkat, satu-satunya permukaan publik aplikasi ini, jadi penjagaannya di server dan
+ * bukan di tombol. Kepemilikannya disemai langsung: itu persiapan, bukan perilaku yang diperiksa. */
 describe('TOKO-4 — kepemilikan dan pemasangan kosmetik', () => {
-  it('mencatat kepemilikan lalu langsung memasangnya', async () => {
-    const { buyStoreItem } = await import('./store')
+  const beriKosmetik = async (userId: number, key: string) => {
     const { query } = await import('../platform/db')
-    const userId = await makeUser({ balance: 1_000 })
+    await query('insert into user_cosmetics(user_id, cosmetic_key) values($1,$2)', [userId, key])
+  }
 
-    expect(await buyStoreItem(userId, 'frame_emas', crypto.randomUUID())).toMatchObject({ ok: true })
+  /** Penjaga arah rak: kosmetik satu-satunya barang yang tidak menyentuh ekonomi, jadi menjualnya
+   * lewat saldo menukar liabilitas dengan sesuatu yang seharusnya jadi pemasukan bersih. */
+  it('menolak menebus kosmetik pakai TD, berapa pun saldonya', async () => {
+    const { buyStoreItem } = await import('./store')
+    const userId = await makeUser({ balance: 1_000_000 })
 
-    const owned = await query<{ cosmetic_key: string }>(
-      'select cosmetic_key from user_cosmetics where user_id=$1',
-      [userId],
-    )
-    expect(owned.map((row) => row.cosmetic_key)).toEqual(['frame_emas'])
-
-    const equipped = await query<{ equipped_frame: string | null }>(
-      'select equipped_frame from users where id=$1',
-      [userId],
-    )
-    expect(equipped[0].equipped_frame).toBe('frame_emas')
+    expect(await buyStoreItem(userId, 'frame_emas', crypto.randomUUID())).toEqual({
+      ok: false,
+      reason: 'payment_unavailable',
+    })
+    expect(Number((await readUser(userId)).balance_credits)).toBe(1_000_000)
   })
 
-  it('menolak pembelian kedua untuk barang yang sudah dimiliki', async () => {
-    const { buyStoreItem } = await import('./store')
-    const userId = await makeUser({ balance: 1_000 })
+  it('memasang kosmetik yang dimiliki', async () => {
+    const { equipCosmetic } = await import('./store')
+    const userId = await makeUser({ balance: 0 })
+    await beriKosmetik(userId, 'frame_langit')
 
-    await buyStoreItem(userId, 'title_sultan', crypto.randomUUID())
-    expect(await buyStoreItem(userId, 'title_sultan', crypto.randomUUID())).toEqual({
-      ok: false,
-      reason: 'already_owned',
+    expect(await equipCosmetic(userId, 'frame', 'frame_langit')).toEqual({
+      ok: true,
+      equipped: { frame: 'frame_langit', title: null },
     })
   })
 
@@ -273,10 +275,10 @@ describe('TOKO-4 — kepemilikan dan pemasangan kosmetik', () => {
   /** Gelar yang dipasang ke slot bingkai lolos pemeriksaan kepemilikan tapi tidak akan pernah
    * tergambar — penolakan yang harus terjadi di server, bukan diserahkan ke penyaji. */
   it('menolak kosmetik yang jenisnya tidak cocok dengan slotnya', async () => {
-    const { buyStoreItem, equipCosmetic } = await import('./store')
-    const userId = await makeUser({ balance: 1_000 })
+    const { equipCosmetic } = await import('./store')
+    const userId = await makeUser({ balance: 0 })
+    await beriKosmetik(userId, 'title_kilat')
 
-    await buyStoreItem(userId, 'title_kilat', crypto.randomUUID())
     expect(await equipCosmetic(userId, 'frame', 'title_kilat')).toEqual({
       ok: false,
       reason: 'unknown_slot',
@@ -284,11 +286,12 @@ describe('TOKO-4 — kepemilikan dan pemasangan kosmetik', () => {
   })
 
   it('melepas yang sedang dipakai tanpa menghapus kepemilikannya', async () => {
-    const { buyStoreItem, equipCosmetic } = await import('./store')
+    const { equipCosmetic } = await import('./store')
     const { query } = await import('../platform/db')
-    const userId = await makeUser({ balance: 1_000 })
+    const userId = await makeUser({ balance: 0 })
+    await beriKosmetik(userId, 'frame_zamrud')
+    await equipCosmetic(userId, 'frame', 'frame_zamrud')
 
-    await buyStoreItem(userId, 'frame_langit', crypto.randomUUID())
     expect(await equipCosmetic(userId, 'frame', null)).toEqual({
       ok: true,
       equipped: { frame: null, title: null },

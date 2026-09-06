@@ -14,11 +14,16 @@
  * langganan yang selama ini dibayar tunai. Kosmetik lolos karena ia tidak menyentuh apa pun.
  *
  * **Dua harga, satu barang.** `priceCredits` menebus pakai saldo, `priceIdr` membayar pakai QRIS,
- * dan sebuah barang boleh punya salah satu, keduanya, atau — untuk premium — hanya yang pertama
- * karena jalur tunainya sudah punya lembarnya sendiri. Harga TD SELALU bernilai lebih besar
- * daripada harga Rupiah-nya; `validateEconomyConfig` yang menegakkannya. Alasannya bukan gengsi:
- * TD adalah liabilitas yang kalau tidak dibelanjakan akan ditarik jadi Rupiah, jadi menebus pakai
- * TD memang harus lebih mahal supaya toko menyerap saldo alih-alih menggantikan pemasukan tunai. */
+ * dan sebuah barang boleh punya salah satu atau keduanya. Yang punya keduanya wajib bernilai lebih
+ * besar di sisi TD; `validateEconomyConfig` yang menegakkannya. Alasannya bukan gengsi: TD adalah
+ * liabilitas yang kalau tidak dibelanjakan akan ditarik jadi Rupiah, jadi menebus pakai TD memang
+ * harus lebih mahal supaya toko menyerap saldo alih-alih menggantikan pemasukan tunai.
+ *
+ * Dua barang berdiri di ujung yang berlawanan. Premium hanya bisa ditebus TD di sini — jalur
+ * tunainya sudah punya lembarnya sendiri dengan lima paket, dan tombol Rupiah kedua di rak ini cuma
+ * menjual paket termahal per bulan kepada orang yang tidak melihat pembandingnya. Kosmetik hanya
+ * bisa dibayar QRIS — ia satu-satunya barang yang tidak menyentuh ekonomi sama sekali, jadi
+ * menjualnya lewat TD menukar liabilitas dengan sesuatu yang seharusnya jadi pemasukan bersih. */
 
 import { economyConfig } from '@/domain/economy/economy-config'
 import type { PremiumMonths } from '@/domain/economy/premium'
@@ -137,7 +142,12 @@ function buildCatalog(includeCosmetics: boolean): StoreItem[] {
       section: 'cosmetic',
       title: item.name,
       detail: item.detail,
-      priceCredits: frame ? config.storeFramePriceCredits : config.storeTitlePriceCredits,
+      /** Kosmetik TIDAK punya harga TD, dan itu keputusan pemilik repo. Alasannya bukan harga
+       * melainkan arah: setiap barang lain di rak ini menyerap saldo — TD masuk, liabilitas
+       * berkurang. Kosmetik satu-satunya yang tidak menyentuh ekonomi sama sekali, jadi menjualnya
+       * lewat TD cuma menukar liabilitas dengan barang yang marginnya utuh kalau dibayar tunai.
+       * Dijual hanya lewat QRIS, ia jadi pemasukan bersih; dijual lewat TD, ia jadi diskon. */
+      priceCredits: null,
       priceIdr: frame ? config.storeFramePriceIdr : config.storeTitlePriceIdr,
       effect: { kind: 'cosmetic', cosmetic: item.key },
     })

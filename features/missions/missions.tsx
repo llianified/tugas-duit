@@ -62,7 +62,21 @@ export function MissionsView({
       </div>
 
       {turboReachable || arenaReachable || storeReachable ? (
+        /* Toko di atas, Turbo Reward di bawah — kebalikan dari urutan sebelumnya. Turbo Reward
+           adalah flag komunikasi (lihat migrasi 0037): ia mengumumkan sesuatu yang sudah berlaku,
+           jadi membacanya tidak menuntut satu ketukan pun. Toko sebaliknya — satu-satunya kartu di
+           deret ini yang membuka rak berisi barang yang bisa dibeli, dan sejak migrasi 0058 ia juga
+           satu-satunya pintu pemasukan tunai di luar premium. Yang menuntut aksi berdiri lebih dulu
+           daripada yang cuma perlu dibaca. */
         <section aria-label="Pilihan hadiah lainnya" className="region-t flex flex-col gap-3">
+          {storeReachable ? (
+            <StoreCard poolEmpty={rewardPoolCredits === 0} onOpen={() => setStoreOpen(true)} />
+          ) : null}
+
+          {arenaReachable ? (
+            <ArcadeCard poolEmpty={rewardPoolCredits === 0} onOpen={onOpenArcade} />
+          ) : null}
+
           {turboReachable ? (
             <TurboRewardCard
               config={economy}
@@ -71,14 +85,6 @@ export function MissionsView({
               rewardPoolRegenCredits={rewardPoolRegenCredits}
               rewardPoolSecondsToNext={rewardPoolSecondsToNext}
             />
-          ) : null}
-
-          {arenaReachable ? (
-            <ArcadeCard poolEmpty={rewardPoolCredits === 0} onOpen={onOpenArcade} />
-          ) : null}
-
-          {storeReachable ? (
-            <StoreCard poolEmpty={rewardPoolCredits === 0} onOpen={() => setStoreOpen(true)} />
           ) : null}
         </section>
       ) : null}

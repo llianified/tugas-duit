@@ -162,6 +162,44 @@ describe('SHOP-1 — pelunasan pesanan tunai', () => {
     expect(lagi[0].gaspol_until.getTime()).toBe(sesudah[0].gaspol_until.getTime())
   })
 
+  /** Kosmetik satu-satunya barang yang HANYA bisa dibayar QRIS, jadi jalur ini satu-satunya cara
+   * ia berpindah tangan — dan pelunasannya harus mencatat kepemilikan sekaligus memasangnya, karena
+   * yang beli bingkai ingin melihatnya sekarang, bukan mencari tombol pasang di layar lain. */
+  it('mencatat kepemilikan kosmetik dan langsung memasangnya', async () => {
+    const { settleCashOrder } = await import('./cash-order')
+    const { query } = await import('../platform/db')
+    const userId = await makeUser()
+    const order = await openOrder(userId, 'frame_emas')
+
+    expect(
+      await settleCashOrder(order.orderId, `sig-${order.orderId}`, 'webhook', order.totalAmountIdr),
+    ).toMatchObject({ settled: true, itemKey: 'frame_emas' })
+
+    const owned = await query<{ cosmetic_key: string }>(
+      'select cosmetic_key from user_cosmetics where user_id=$1',
+      [userId],
+    )
+    expect(owned.map((row) => row.cosmetic_key)).toEqual(['frame_emas'])
+
+    const equipped = await query<{ equipped_frame: string | null }>(
+      'select equipped_frame from users where id=$1',
+      [userId],
+    )
+    expect(equipped[0].equipped_frame).toBe('frame_emas')
+  })
+
+  it('menolak menerbitkan QR untuk kosmetik yang sudah dimiliki', async () => {
+    const { startCashCheckout, settleCashOrder } = await import('./cash-order')
+    const userId = await makeUser()
+    const order = await openOrder(userId, 'title_sultan')
+    await settleCashOrder(order.orderId, `sig-${order.orderId}`, 'webhook', order.totalAmountIdr)
+
+    expect(await startCashCheckout(userId, 'title_sultan')).toEqual({
+      ok: false,
+      reason: 'already_owned',
+    })
+  })
+
   it('membalas pesanan yang tidak dikenal tanpa membocorkan bahwa ia tidak ada', async () => {
     const { settleCashOrder } = await import('./cash-order')
     expect(await settleCashOrder('TDS-TIDAK-ADA', 'sig-apa-saja', 'webhook', 1_000)).toEqual({

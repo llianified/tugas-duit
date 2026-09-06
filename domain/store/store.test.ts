@@ -147,10 +147,25 @@ describe('TOKO-5 — barang baru dan dua cara bayar', () => {
     ).toBe('withdrawal_processing')
   })
 
+  /** Kosmetik satu-satunya barang yang TIDAK punya harga TD: ia tidak menyentuh ekonomi, jadi
+   * menjualnya lewat saldo menukar liabilitas dengan sesuatu yang seharusnya pemasukan bersih. */
+  it('cuma menjual kosmetik lewat QRIS, tidak pernah lewat saldo', () => {
+    expect(storePrice(storeItem('frame_emas'), 'credits')).toBeNull()
+    expect(storePrice(storeItem('frame_emas'), 'cash')).toBe(
+      DEFAULT_ECONOMY_CONFIG.storeFramePriceIdr,
+    )
+    expect(storePrice(storeItem('title_sultan'), 'cash')).toBe(
+      DEFAULT_ECONOMY_CONFIG.storeTitlePriceIdr,
+    )
+    expect(storePurchaseRefusal(storeItem('frame_emas'), keadaan(), 'credits')).toBe(
+      'payment_unavailable',
+    )
+  })
+
   it('menolak kosmetik yang sudah dimiliki', () => {
-    expect(storePurchaseRefusal(storeItem('frame_emas'), keadaan())).toBeNull()
+    expect(storePurchaseRefusal(storeItem('frame_emas'), keadaan(), 'cash')).toBeNull()
     expect(
-      storePurchaseRefusal(storeItem('frame_emas'), keadaan({ ownedCosmetics: ['frame_emas'] })),
+      storePurchaseRefusal(storeItem('frame_emas'), keadaan({ ownedCosmetics: ['frame_emas'] }), 'cash'),
     ).toBe('already_owned')
   })
 

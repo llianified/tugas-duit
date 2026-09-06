@@ -65,8 +65,7 @@ const HISTORIC: EconomyConfig = {
   storeGaspolMinutes: 60, storeGaspolPriceCredits: 40, storeGaspolPriceIdr: 3_000,
   storeWithdrawSkipPriceCredits: 80, storeWithdrawSkipPriceIdr: 5_000,
   storeCosmeticsEnabled: 1,
-  storeFramePriceCredits: 100, storeFramePriceIdr: 7_000,
-  storeTitlePriceCredits: 75, storeTitlePriceIdr: 5_000,
+  storeFramePriceIdr: 7_000, storeTitlePriceIdr: 5_000,
 }
 
 const withField = (patch: Partial<EconomyConfig>) => ({ ...DEFAULT_ECONOMY_CONFIG, ...patch })

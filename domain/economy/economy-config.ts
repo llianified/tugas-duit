@@ -118,9 +118,7 @@ export interface EconomyConfig {
   storeWithdrawSkipPriceCredits: number
   storeWithdrawSkipPriceIdr: number
   storeCosmeticsEnabled: number
-  storeFramePriceCredits: number
   storeFramePriceIdr: number
-  storeTitlePriceCredits: number
   storeTitlePriceIdr: number
 }
 
@@ -242,9 +240,7 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   storeWithdrawSkipPriceCredits: 80,
   storeWithdrawSkipPriceIdr: 5_000,
   storeCosmeticsEnabled: 1,
-  storeFramePriceCredits: 100,
   storeFramePriceIdr: 7_000,
-  storeTitlePriceCredits: 75,
   storeTitlePriceIdr: 5_000,
 }
 
@@ -811,26 +807,14 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
     min: 0, max: 1, riskyWhen: 'never',
   },
   {
-    key: 'storeFramePriceCredits', group: 'store', label: 'Harga TD · Bingkai', unit: 'TD',
-    description: 'Berlaku untuk semua bingkai. Satu harga, bukan satu per barang: bingkai tidak punya beda manfaat, cuma beda warna.',
-    impact: 'Menurunkannya mengurangi TD yang terserap per pembelian.',
-    min: 1, max: 1_000_000, riskyWhen: 'lower',
-  },
-  {
     key: 'storeFramePriceIdr', group: 'store', label: 'Harga QRIS · Bingkai', unit: 'Rp',
-    description: 'Yang ditagih lewat QRIS untuk satu bingkai, sebelum kode unik ditambahkan gateway.',
+    description: 'Yang ditagih lewat QRIS untuk satu bingkai, sebelum kode unik ditambahkan gateway. Berlaku untuk semua bingkai — satu harga, bukan satu per barang, karena bingkai tidak punya beda manfaat, cuma beda warna. Kosmetik sengaja tidak punya harga TD sama sekali.',
     impact: 'Menaikkannya menambah pemasukan tanpa menambah liabilitas apa pun; yang turun cuma jumlah pembelinya.',
     min: 1_000, max: 10_000_000, riskyWhen: 'never',
   },
   {
-    key: 'storeTitlePriceCredits', group: 'store', label: 'Harga TD · Gelar', unit: 'TD',
-    description: 'Berlaku untuk semua gelar.',
-    impact: 'Menurunkannya mengurangi TD yang terserap per pembelian.',
-    min: 1, max: 1_000_000, riskyWhen: 'lower',
-  },
-  {
     key: 'storeTitlePriceIdr', group: 'store', label: 'Harga QRIS · Gelar', unit: 'Rp',
-    description: 'Yang ditagih lewat QRIS untuk satu gelar, sebelum kode unik ditambahkan gateway.',
+    description: 'Yang ditagih lewat QRIS untuk satu gelar, sebelum kode unik ditambahkan gateway. Berlaku untuk semua gelar.',
     impact: 'Menaikkannya menambah pemasukan tanpa menambah liabilitas apa pun.',
     min: 1_000, max: 10_000_000, riskyWhen: 'never',
   },
@@ -1085,12 +1069,6 @@ export function validateEconomyConfig(
   const dualPriced: [EconomyConfigKey, EconomyConfigKey, string][] = [
     ['storeGaspolPriceCredits', 'storeGaspolPriceIdr', 'Pass Gaspol'],
     ['storeWithdrawSkipPriceCredits', 'storeWithdrawSkipPriceIdr', 'Tarik Sekarang'],
-    ...(config.storeCosmeticsEnabled > 0
-      ? ([
-          ['storeFramePriceCredits', 'storeFramePriceIdr', 'Bingkai'],
-          ['storeTitlePriceCredits', 'storeTitlePriceIdr', 'Gelar'],
-        ] as [EconomyConfigKey, EconomyConfigKey, string][])
-      : []),
   ]
   if (config.storeEnabled > 0) {
     for (const [creditsKey, idrKey, label] of dualPriced) {

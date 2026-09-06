@@ -139,6 +139,38 @@ describe('batas arsitektur', () => {
     expect(violations, violations.join('\n')).toEqual([])
   })
 
+  /** SWR mengunci cache-nya pada KEY, bukan pada fetcher. Dua pemakai key yang sama dengan fetcher
+   * berbeda karena itu saling menimpa, dan yang menang berpindah-pindah mengikuti siapa yang
+   * memenangkan revalidasi. `/api/missions` pernah begitu: shell memakai `fetchJson` polos
+   * sementara kartu misi memakai fetcher yang menambahkan `receivedAt`, jadi revalidasi yang
+   * dimenangkan shell menulis potret tanpa `receivedAt` — dan hitung mundur konfirmasi misi sosial
+   * berubah jadi `NaN`, membuka tombol konfirmasi sebelum jedanya lewat. Bentuk kegagalannya diam:
+   * TypeScript tetap puas karena tiap hook mendeklarasikan tipenya sendiri.
+   *
+   * Yang dijaga di sini satu hal yang bisa dilihat mesin — key-nya cuma boleh ditulis di satu
+   * tempat, berdampingan dengan fetcher-nya. */
+  it('menyajikan tiap key SWR bersama satu fetcher', async () => {
+    const owner = path.join(ROOT, 'shell', 'session-api.ts')
+    const shared = ["'/api/missions'"]
+    const violations: string[] = []
+
+    for (const root of ['shell', 'features'] as const) {
+      for (const file of await sourceFiles(path.join(ROOT, root))) {
+        if (file === owner || file.includes('.test.')) continue
+        const source = await readFile(file, 'utf8')
+        for (const key of shared) {
+          if (source.includes(key)) {
+            violations.push(
+              `${path.relative(ROOT, file)} menulis ${key} langsung — pakai konstanta dan fetcher dari shell/session-api.ts`,
+            )
+          }
+        }
+      }
+    }
+
+    expect(violations, violations.join('\n')).toEqual([])
+  })
+
   it('mencegah source produksi mengimpor fixture test', async () => {
     const violations: string[] = []
 

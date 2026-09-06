@@ -2,14 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import useSWR from 'swr'
-import { fetchJson, sendJson, userFacingMessage } from '@/shell/api-client'
-import type { MissionsResponse } from '@/shell/session-api'
+import { sendJson, userFacingMessage } from '@/shell/api-client'
+import { fetchMissions, MISSIONS_KEY, type TimedMissionsResponse } from '@/shell/session-api'
 import { hapticSuccess, hapticTap } from '@/shared/lib/haptic'
 import { useToast } from '@/shell/toast'
 
 type ClaimResponse = { energyGranted: number; energy: number; energyMax: number }
 type ActionStartResponse = { confirmAt: number; serverNow: number }
-type TimedMissionsResponse = MissionsResponse & { receivedAt: number }
 
 export interface MissionClockAnchor {
   serverNow: number
@@ -18,11 +17,6 @@ export interface MissionClockAnchor {
 
 export interface MissionActionTiming extends MissionClockAnchor {
   confirmAt: number
-}
-
-async function fetchMissions(url: string): Promise<TimedMissionsResponse> {
-  const response = await fetchJson<MissionsResponse>(url)
-  return { ...response, receivedAt: Date.now() }
 }
 
 /** Misi tetap punya endpoint sendiri, tetapi datanya berbagi cache SWR dengan shell supaya kartu dan indikator nav selalu membaca potret yang sama. Dipisah dari komponennya supaya kartu misi tinggal menggambar: refresh, klaim, haptic, dan toast hidup di sini, dan `MissionCard` hanya menerima state yang sudah jadi. */
@@ -43,7 +37,7 @@ export function useMissions({
   const [starting, setStarting] = useState<string | null>(null)
   const previousRefreshKey = useRef(refreshKey)
   const showError = useToast()
-  const { data, error, mutate } = useSWR<TimedMissionsResponse>('/api/missions', fetchMissions, {
+  const { data, error, mutate } = useSWR<TimedMissionsResponse>(MISSIONS_KEY, fetchMissions, {
     revalidateOnMount: true,
   })
 

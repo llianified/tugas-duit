@@ -1,8 +1,7 @@
 
 import { getMaxReward, type StarCount } from '@/domain/progression/stars'
 import { mathCeiling, mathDigits, selectOptionCount, textLength } from '@/domain/economy/economy-config'
-
-type CaptchaType = 'text' | 'math' | 'select' | 'order' | 'count'
+import { CAPTCHA_TYPES, type CaptchaType } from './captcha-types'
 
 /** Aturan main di dalam satu tipe soal. Ditambahkan karena isinya yang habis, bukan ekonominya:
  * tiga tipe kali tiga kesulitan cuma sembilan bentuk, dan user yang bertahan sampai hari ke-14
@@ -136,8 +135,6 @@ export const CHALLENGE_TITLE: Record<CaptchaType, string> = {
   order: 'Urutkan Angka',
   count: 'Hitung Bentuk',
 }
-
-const CAPTCHA_TYPES: CaptchaType[] = ['text', 'math', 'select', 'order', 'count']
 
 const DIFFICULTIES: Difficulty[] = ['Easy', 'Medium', 'Hard']
 

@@ -127,6 +127,24 @@ export type TaskResponse = { challenge: Challenge }
 export type HistoryResponse = { entries: HistoryEntry[]; nextCursor: string | null }
 export type StatsResponse = { stats: UserStats }
 export type MissionsResponse = { missions: MissionProgress[]; serverNow: number }
+
+/** Potret misi beserta jam perangkat saat ia mendarat. Pasangan `serverNow`/`receivedAt` inilah
+ * yang membuat hitung mundur konfirmasi misi sosial bisa berjalan tanpa mempercayai jam perangkat.
+ * `MISSIONS_KEY` dan `fetchMissions` tinggal berdampingan di sini karena keduanya wajib dipakai
+ * bersama: SWR mengunci cache-nya pada key saja, jadi dua pemakai key yang sama dengan fetcher
+ * berbeda akan saling menimpa. Bentuk lamanya begitu — shell memakai `fetchJson` polos sementara
+ * kartu misi memakai fetcher yang menambahkan `receivedAt` — sehingga revalidasi yang dimenangkan
+ * shell (`revalidateOnFocus`, persis yang terjadi saat user balik dari tab X atau TikTok) menulis
+ * potret tanpa `receivedAt`. Hasilnya `secondsUntilConfirmation` menghitung `NaN`, tombol
+ * konfirmasi terbuka sebelum jedanya lewat, dan server menolaknya dengan `action_cooldown`. */
+export type TimedMissionsResponse = MissionsResponse & { receivedAt: number }
+
+export const MISSIONS_KEY = '/api/missions'
+
+export async function fetchMissions(url: string): Promise<TimedMissionsResponse> {
+  const response = await fetchJson<MissionsResponse>(url)
+  return { ...response, receivedAt: Date.now() }
+}
 export type LeaderboardResponse = { board: LeaderboardBoard }
 export type ActivityResponse = { entries: ActivityEntry[] }
 export type ReferralResponse = {

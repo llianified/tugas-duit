@@ -1,5 +1,6 @@
 
 import { minInAppWindowSeconds } from '@/domain/ads/in-app-ads'
+import { CAPTCHA_TYPES } from '@/domain/task/captcha-types'
 import type { Difficulty } from '@/domain/task/challenge'
 import type { StarCount } from '@/domain/progression/stars'
 
@@ -794,6 +795,11 @@ export function validateEconomyConfig(
     ['maxPayoutIdr', 'Maksimum penarikan'],
     ['rewardPoolCapIdr', 'Kapasitas kolam dasar'],
     ['dailyCommissionCapIdr', 'Plafon komisi harian'],
+    /** Terlewat sampai migrasi 0056. `dailyCommissionCreditCap()` membaginya sama seperti plafon
+     * biasa, dan hasil pecahan mengalir ke `consumeCommissionQuota` lalu menabrak kolom integer
+     * `daily_quotas.commission_credits` — di dalam transaksi `submitAnswer`, jadi yang batal
+     * seluruh penyelesaian soal, bukan komisinya saja. */
+    ['premiumDailyCommissionCapIdr', 'Plafon komisi harian premium'],
   ]
   for (const [key, label] of divisible) {
     if (config[key] % config.creditValueIdr !== 0) {
@@ -875,9 +881,13 @@ export function validateEconomyConfig(
       `Target misi "Ronde Arena" tidak boleh melebihi jatah main harian (${config.arcadeMaxPlaysPerDay}).`
   }
 
-  /** Cuma ada tiga jenis soal — Ketik Ulang, Hitung, dan Pilih Bentuk. */
-  if (config.missionVarietyTarget > 3) {
-    errors.missionVarietyTarget = 'Cuma ada 3 jenis soal, jadi targetnya tidak bisa lebih dari 3.'
+  /** Diturunkan dari `CAPTCHA_TYPES`, bukan ditulis tangan. Angkanya dulu 3 dengan komentar yang
+   * menyebut Ketik Ulang, Hitung, dan Pilih Bentuk; migrasi 0050 menambahkan Urutkan Angka dan
+   * Hitung Bentuk tanpa menyentuh baris ini, jadi panel menolak target 4 dan 5 yang sebenarnya
+   * sah — dan menolaknya dengan alasan yang sudah tidak benar. */
+  if (config.missionVarietyTarget > CAPTCHA_TYPES.length) {
+    errors.missionVarietyTarget =
+      `Cuma ada ${CAPTCHA_TYPES.length} jenis soal, jadi targetnya tidak bisa lebih dari ${CAPTCHA_TYPES.length}.`
   }
 
   /** Hadiah misi harus muat di kapasitas energi biasa, bukan premium: `claimMission` menolak klaim yang hadiahnya terpotong, jadi hadiah yang lebih besar dari kapasitas membuat misinya tidak pernah bisa diambil user non-premium — gagal diam-diam, karena yang terlihat cuma tombol klaim yang selalu menolak. */

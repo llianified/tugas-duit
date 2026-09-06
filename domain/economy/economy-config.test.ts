@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { CAPTCHA_TYPES } from '@/domain/task/captcha-types'
 import {
   DEFAULT_ECONOMY_CONFIG,
   ECONOMY_FIELDS,
@@ -182,6 +183,39 @@ describe('validation — aturan antar-field', () => {
     if (!result.ok) {
       expect(result.errors.withdrawalMinimumIdr).toBeTruthy()
     }
+  })
+
+  /** Plafon komisi PREMIUM ikut dibagi `creditValueIdr` oleh `dailyCommissionCreditCap`, persis
+   * seperti plafon biasa — tapi ia tidak ikut daftar kelipatan sampai migrasi 0056. Nilai pecahan
+   * yang lolos dari sini berakhir sebagai `payable` pecahan di `consumeCommissionQuota`, dan kolom
+   * `daily_quotas.commission_credits` menolaknya dengan `invalid input syntax for type integer`
+   * — di dalam transaksi `submitAnswer`, jadi setiap downline upline itu dijawab 500 sampai hari
+   * WIB berganti. */
+  it('menolak plafon komisi premium yang tidak habis dibagi kurs', () => {
+    const result = validateEconomyConfig(withField({ premiumDailyCommissionCapIdr: 12_050 }))
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.premiumDailyCommissionCapIdr).toBeTruthy()
+  })
+
+  it('menerima plafon komisi premium yang pas kelipatan kursnya', () => {
+    expect(validateEconomyConfig(withField({ premiumDailyCommissionCapIdr: 12_100 })).ok).toBe(true)
+  })
+
+  /** Batas atasnya diturunkan dari `CAPTCHA_TYPES`, bukan ditulis tangan. Angkanya pernah dipatok 3
+   * dan tertinggal saat migrasi 0050 menambahkan Urutkan Angka dan Hitung Bentuk, jadi panel
+   * menolak target yang sebenarnya sah — dengan alasan yang sudah tidak benar. */
+  it('menerima target misi variety setinggi jumlah jenis soal yang ada', () => {
+    expect(
+      validateEconomyConfig(withField({ missionVarietyTarget: CAPTCHA_TYPES.length })).ok,
+    ).toBe(true)
+  })
+
+  it('menolak target misi variety di atas jumlah jenis soal', () => {
+    const result = validateEconomyConfig(
+      withField({ missionVarietyTarget: CAPTCHA_TYPES.length + 1 }),
+    )
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.missionVarietyTarget).toBeTruthy()
   })
 
   it('menerima kurs baru yang seluruh turunannya tetap bulat', () => {

@@ -5,7 +5,8 @@ type LedgerKind = 'task'|'commission'|'withdrawal_hold'|'withdrawal_refund'|'adj
 export async function appendLedger(tx: PoolClient, entry: { userId:number; kind:LedgerKind; amount:number; idempotencyKey:string; referenceId?:string; note?:string }): Promise<{ balance:number; ledgerId:number }> {
   const locked = await tx.query<{ balance_credits:string }>('select balance_credits from users where id=$1 for update', [entry.userId])
   if (!locked.rows[0]) throw new Error('User tidak ditemukan')
-  const existing = await tx.query<{ id:string }>('select id from credit_ledger where idempotency_key=$1', [entry.idempotencyKey])
+  /** Dicari dalam lingkup user yang sama, bukan seluruh tabel. `idempotency_key` unik global, jadi pencarian tanpa `user_id` membuat kunci milik orang lain ikut menjawab "sudah pernah dibayar" — dan yang dikembalikannya saldo PEMANGGIL, sehingga permintaan yang tidak pernah dibukukan terbaca sukses. Kunci yang datang dari klien (`adjustment:`, `store:`) karena itu ikut membawa id usernya, supaya bentrok lintas user tidak bisa terjadi sejak awal alih-alih ditangkap belakangan sebagai pelanggaran unique. */
+  const existing = await tx.query<{ id:string }>('select id from credit_ledger where idempotency_key=$1 and user_id=$2', [entry.idempotencyKey, entry.userId])
   if (existing.rows[0]) return { balance:Number(locked.rows[0].balance_credits), ledgerId:Number(existing.rows[0].id) }
   const updated = await tx.query<{ balance_credits:string }>('update users set balance_credits=balance_credits+$2,updated_at=now() where id=$1 returning balance_credits', [entry.userId, entry.amount])
   const balance = Number(updated.rows[0].balance_credits)
@@ -25,11 +26,12 @@ export async function recordAdjustment(input: {
   return transaction(async (tx) => {
     const found = await tx.query<{ id: string }>('select id from users where public_id=$1', [input.userPublicId])
     if (!found.rows[0]) return null
+    const userId = Number(found.rows[0].id)
     return appendLedger(tx, {
-      userId: Number(found.rows[0].id),
+      userId,
       kind: 'adjustment',
       amount: input.credits,
-      idempotencyKey: `adjustment:${input.requestId}`,
+      idempotencyKey: `adjustment:${userId}:${input.requestId}`,
       referenceId: String(input.adminId),
       note: `${input.note} — oleh ${input.adminName} (#${input.adminId})`,
     })

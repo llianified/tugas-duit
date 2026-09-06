@@ -18,7 +18,9 @@ async function makeUser(name: string): Promise<{ id: number; publicId: string }>
   return { id: Number(rows[0].id), publicId: rows[0].public_id }
 }
 
-async function completeTask(userId: number, reward: number) {
+/** Menaruh satu penyelesaian pada titik waktu tertentu. Semua pemanggilnya memakai waktu yang
+ * dihitung RELATIF terhadap batas musim, bukan relatif `now()` — lihat `seasonStart`. */
+async function completeTaskAtTime(userId: number, reward: number, at: Date) {
   const { query } = await import('../platform/db')
   const rows = await query<{ id: string }>(
     `insert into challenges(user_id,type,difficulty,payload,answer_hash,max_reward,expires_at,submitted_at,solved)
@@ -27,25 +29,43 @@ async function completeTask(userId: number, reward: number) {
   )
   await query(
     `insert into task_completions(user_id,challenge_id,type,difficulty,elapsed_ms,stars,reward,completed_at)
-     values($1,$2,'text','Easy',1000,3,$3,now())`,
-    [userId, rows[0].id, reward],
+     values($1,$2,'text','Easy',1000,3,$3,$4)`,
+    [userId, rows[0].id, reward, at],
   )
 }
 
-/** Menaruh satu penyelesaian pada titik waktu tertentu, supaya batas musim bisa diuji tanpa
- * menunggu musimnya benar-benar berganti. */
-async function completeTaskAt(userId: number, reward: number, daysAgo: number) {
-  const { query } = await import('../platform/db')
-  const rows = await query<{ id: string }>(
-    `insert into challenges(user_id,type,difficulty,payload,answer_hash,max_reward,expires_at,submitted_at,solved)
-     values($1,'text','Easy','{}'::jsonb,'\\x00'::bytea,$2,now(),now(),true) returning id`,
-    [userId, reward],
-  )
-  await query(
-    `insert into task_completions(user_id,challenge_id,type,difficulty,elapsed_ms,stars,reward,completed_at)
-     values($1,$2,'text','Easy',1000,3,$3,now() - ($4::int * interval '1 day'))`,
-    [userId, rows[0].id, reward, daysAgo],
-  )
+/** Awal musim berjalan MENURUT kueri papan itu sendiri, dibaca lewat API publiknya.
+ *
+ * Ini yang membuat berkas ini berhenti bergantung pada tanggal. Bentuk lamanya menaruh penyelesaian
+ * di `now()` dan menganggapnya pasti masuk musim berjalan — anggapan yang benar di Postgres asli,
+ * tapi tidak di PGlite yang dipakai uji: `at time zone 'Asia/Jakarta'` di sana membalik arah
+ * konversinya (menjawab +7 jam, bukan −7), jadi selama ±13 jam setelah musim berganti batasnya
+ * jatuh di MASA DEPAN dan seluruh penyelesaian tersaring keluar. Papan jadi kosong, `you` jadi
+ * null, dan tiga uji di berkas ini gagal — tapi hanya kalau CI kebetulan jalan di jendela itu,
+ * yaitu sekitar 8% waktu. Persis itu yang terjadi pada run yang menggagalkan CI di commit
+ * sebelumnya.
+ *
+ * Yang diuji sekarang ATURAN jendelanya — yang jatuh sesudah batas dihitung, yang jatuh sebelumnya
+ * tidak — bukan di mana batas itu mendarat pada jam dinding hari ini. Aturan itu yang jadi milik
+ * papan; letak batasnya milik aritmetika tanggal, dan menegakkannya lewat `now()` cuma membuat uji
+ * ini melaporkan kekurangan PGlite sebagai kerusakan kode produksi. */
+async function seasonStart(): Promise<Date> {
+  const { getLeaderboard } = await import('./leaderboard')
+  const board = await getLeaderboard(0)
+  if (board.seasonStartedAt === null) throw new Error('musim sedang mati, batasnya tidak ada')
+  return new Date(board.seasonStartedAt)
+}
+
+/** Satu menit setelah musim dimulai: sedekat mungkin dengan batasnya, dan pasti di dalamnya. */
+async function completeTask(userId: number, reward: number) {
+  const start = await seasonStart()
+  await completeTaskAtTime(userId, reward, new Date(start.getTime() + 60_000))
+}
+
+/** Satu hari sebelum musim dimulai: pasti di luar jendela, berapa pun panjang musimnya. */
+async function completeTaskBeforeSeason(userId: number, reward: number) {
+  const start = await seasonStart()
+  await completeTaskAtTime(userId, reward, new Date(start.getTime() - 86_400_000))
 }
 
 /** Potret papan dipakai bersama seluruh pemirsa selama 60 detik. Yang tidak boleh ikut dipakai bersama adalah baris "kamu": satu kekeliruan di sana membuat seorang user melihat posisi, saldo, dan nama orang lain sebagai miliknya. */
@@ -113,8 +133,8 @@ describe('LB-SEASON — papan hanya menghitung musim berjalan', () => {
        * bukan jendela musimnya. */
       const lama = await makeUser('Musim lalu')
       const kini = await makeUser('Musim ini')
-      await completeTaskAt(lama.id, 500, 30)
-      await completeTaskAt(kini.id, 7, 0)
+      await completeTaskBeforeSeason(lama.id, 500)
+      await completeTask(kini.id, 7)
 
       const board = await getLeaderboard(kini.id)
       expect(board.seasonStartedAt).not.toBeNull()
@@ -136,7 +156,9 @@ describe('LB-SEASON — papan hanya menghitung musim berjalan', () => {
     try {
       setActiveEconomyConfig({ ...sebelumnya, leaderboardSeasonDays: 0 })
       const user = await makeUser('Sepanjang masa')
-      await completeTaskAt(user.id, 500, 30)
+      /** Musimnya mati, jadi tidak ada batas untuk dijadikan acuan — dan memang tidak perlu:
+       * yang diuji justru bahwa penyelesaian setua apa pun tetap dihitung. */
+      await completeTaskAtTime(user.id, 500, new Date(Date.now() - 30 * 86_400_000))
 
       const board = await getLeaderboard(user.id)
       expect(board.seasonStartedAt).toBeNull()

@@ -73,11 +73,9 @@ export interface EconomyConfig {
   missionVarietyTarget: number
   missionVarietyReward: number
   missionDailyCount: number
-  missionTwitterFollowReward: number
-  missionTwitterLikeRepostReward: number
-  missionTwitterPostReward: number
   missionFacebookPostReward: number
   missionWhatsappShareReward: number
+  missionWhatsappChannelReward: number
   missionTiktokFollowReward: number
   referralCommissionPercent: number
   dailyCommissionCapIdr: number
@@ -185,11 +183,9 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   missionVarietyTarget: 3,
   missionVarietyReward: 2,
   missionDailyCount: 3,
-  missionTwitterFollowReward: 1,
-  missionTwitterLikeRepostReward: 1,
-  missionTwitterPostReward: 1,
   missionFacebookPostReward: 1,
   missionWhatsappShareReward: 1,
+  missionWhatsappChannelReward: 1,
   missionTiktokFollowReward: 1,
   referralCommissionPercent: 10,
   dailyCommissionCapIdr: 6_000,
@@ -611,11 +607,9 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
   },
   ...(
     [
-      ['missionTwitterFollowReward', 'Follow Twitter', 'sekali per akun'],
-      ['missionTwitterLikeRepostReward', 'Like & Retweet di X', 'sekali per akun'],
-      ['missionTwitterPostReward', 'Post Twitter', 'sekali per hari WIB'],
       ['missionFacebookPostReward', 'Post Facebook', 'sekali per hari WIB'],
       ['missionWhatsappShareReward', 'Bagikan ke WhatsApp', 'sekali per hari WIB'],
+      ['missionWhatsappChannelReward', 'Join channel WhatsApp', 'sekali per akun'],
       ['missionTiktokFollowReward', 'Follow TikTok', 'sekali per akun'],
     ] as [EconomyConfigKey, string, string][]
   ).map(([key, label, cadence]): EconomyFieldMeta => ({
@@ -898,11 +892,9 @@ export function validateEconomyConfig(
     ['missionHardReward', 'Task Sulit'],
     ['missionArcadeReward', 'Ronde Arena'],
     ['missionVarietyReward', 'Jenis soal berbeda'],
-    ['missionTwitterFollowReward', 'Follow Twitter'],
-    ['missionTwitterLikeRepostReward', 'Like & Retweet di X'],
-    ['missionTwitterPostReward', 'Post Twitter'],
     ['missionFacebookPostReward', 'Post Facebook'],
     ['missionWhatsappShareReward', 'Bagikan ke WhatsApp'],
+    ['missionWhatsappChannelReward', 'Join channel WhatsApp'],
     ['missionTiktokFollowReward', 'Follow TikTok'],
   ]
   for (const [key, label] of missionRewards) {

@@ -44,9 +44,8 @@ const HISTORIC: EconomyConfig = {
   missionArcadeTarget: 2, missionArcadeReward: 2,
   missionVarietyTarget: 3, missionVarietyReward: 2,
   missionDailyCount: 3,
-  missionTwitterFollowReward: 1, missionTwitterLikeRepostReward: 1,
-  missionTwitterPostReward: 1, missionFacebookPostReward: 1,
-  missionWhatsappShareReward: 1, missionTiktokFollowReward: 1,
+  missionFacebookPostReward: 1, missionWhatsappShareReward: 1,
+  missionWhatsappChannelReward: 1, missionTiktokFollowReward: 1,
   maxPayoutIdr: 2_000_000_000, referralCommissionPercent: 10, dailyCommissionCapIdr: 6_000,
   rankTier2Tasks: 100, rankTier3Tasks: 300, rankTier4Tasks: 700, rankTier5Tasks: 1_500,
   channelJoinBonusCredits: 25, channelGateEnabled: 1,
@@ -283,11 +282,9 @@ describe('invarian setelan panel yang baru dipindah dari kode', () => {
   })
 
   it.each([
-    'missionTwitterFollowReward',
-    'missionTwitterLikeRepostReward',
-    'missionTwitterPostReward',
     'missionFacebookPostReward',
     'missionWhatsappShareReward',
+    'missionWhatsappChannelReward',
     'missionTiktokFollowReward',
   ] as const)('menerapkan batas kapasitas yang sama pada %s', (rewardKey) => {
     const result = validateEconomyConfig(withField({ maxEnergy: 5, [rewardKey]: 6 }))

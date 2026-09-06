@@ -21,24 +21,21 @@ import { Surface } from '@/shared/components/surface'
 import { formatCredits } from '@/shared/lib/format'
 import { useToast } from '@/shell/toast'
 
-const X_FOLLOW_URL = 'https://twitter.com/intent/follow?screen_name=tugasduit'
-export const X_LIKE_REPOST_URL = 'https://x.com/TugasDuit/status/2095765886091276589'
 export const FACEBOOK_HOME_URL = 'https://www.facebook.com/'
 export const TIKTOK_PROFILE_URL = 'https://www.tiktok.com/@tugas.duit'
 /** Pemilih kontak dan grup, bukan Status: WhatsApp tidak punya tautan yang membuka komposer Status
  * di semua perangkat, jadi misi yang menjanjikan Status akan menyuruh langkah yang tombolnya
  * sendiri tidak bisa antar. */
 export const WHATSAPP_SHARE_URL = 'https://wa.me/'
+/** Tautan undangan channel. Berbeda dari `WHATSAPP_SHARE_URL` yang membuka pemilih kontak: yang
+ * ini mendarat langsung di layar join, jadi tombolnya bisa mengantar sampai selesai. */
+export const WHATSAPP_CHANNEL_URL = 'https://whatsapp.com/channel/0029VbDp5rQIHphAKWaXDd1b'
 const AD_COPY = 'Kerjain soal singkat, kumpulin energi, dapetin reward'
 
 /** Tanpa mention, untuk platform yang akun Tugas Duit-nya tidak disebut di dalam teks. Satu sumber
  * supaya dua platform tidak pelan-pelan menyimpang jadi dua kalimat iklan yang berbeda. */
 function buildPlainShareText(referralShareUrl: string): string {
   return `${AD_COPY} bareng Tugas Duit.\n\nCoba aplikasinya: ${referralShareUrl}`
-}
-
-export function buildTwitterShareText(referralShareUrl: string): string {
-  return `${AD_COPY} bareng @Tugasduit.\n\nCoba aplikasinya: ${referralShareUrl}`
 }
 
 export function buildFacebookShareText(referralShareUrl: string): string {
@@ -72,36 +69,20 @@ export function secondsUntilConfirmation(
 }
 
 export function contentFor(action: SocialMissionAction) {
-  if (action === 'twitter_follow') {
-    return {
-      instruction: 'Buka profil @tugasduit di X, terus tekan Follow.',
-      actionLabel: 'Buka profil X',
-      confirmation: 'Udah follow @tugasduit?',
-      confirmLabel: 'Udah follow',
-    }
-  }
-  if (action === 'twitter_like_repost') {
-    return {
-      instruction: 'Buka postingan Tugas Duit di X, terus Like dan Retweet postingan itu.',
-      actionLabel: 'Buka postingan di X',
-      confirmation: 'Udah di-Like dan di-Retweet?',
-      confirmLabel: 'Udah keduanya',
-    }
-  }
-  if (action === 'twitter_post') {
-    return {
-      instruction: 'Tekan tombol di bawah, terus posting ke X.',
-      actionLabel: 'Buat post di Twitter',
-      confirmation: 'Postingannya udah terbit?',
-      confirmLabel: 'Udah diposting',
-    }
-  }
   if (action === 'whatsapp_share') {
     return {
       instruction: 'Tekan tombol di bawah, terus pilih grup atau kontak yang mau dikirimi.',
       actionLabel: 'Kirim ke WhatsApp',
       confirmation: 'Pesannya udah kekirim?',
       confirmLabel: 'Udah kekirim',
+    }
+  }
+  if (action === 'whatsapp_channel') {
+    return {
+      instruction: 'Tekan tombol di bawah, terus tekan Ikuti di channel Tugas Duit.',
+      actionLabel: 'Buka channel WhatsApp',
+      confirmation: 'Udah join channelnya?',
+      confirmLabel: 'Udah join',
     }
   }
   if (action === 'tiktok_follow') {
@@ -153,15 +134,11 @@ export function SocialMissionSheet({
   const [copied, setCopied] = useState(false)
   const showError = useToast()
   const needsReferralLink =
-    mission.action === 'twitter_post' ||
-    mission.action === 'facebook_post' ||
-    mission.action === 'whatsapp_share'
+    mission.action === 'facebook_post' || mission.action === 'whatsapp_share'
   const shareText =
-    mission.action === 'twitter_post'
-      ? buildTwitterShareText(referralShareUrl)
-      : mission.action === 'whatsapp_share'
-        ? buildWhatsappShareText(referralShareUrl)
-        : buildFacebookShareText(referralShareUrl)
+    mission.action === 'whatsapp_share'
+      ? buildWhatsappShareText(referralShareUrl)
+      : buildFacebookShareText(referralShareUrl)
 
   useEffect(() => {
     if (timing === null) return
@@ -180,14 +157,8 @@ export function SocialMissionSheet({
     const startRequest = onStart()
     let copyRequest: Promise<void> | null = null
 
-    if (mission.action === 'twitter_follow') {
-      openExternal(X_FOLLOW_URL)
-    } else if (mission.action === 'twitter_like_repost') {
-      openExternal(X_LIKE_REPOST_URL)
-    } else if (mission.action === 'twitter_post') {
-      const intent = new URL('https://twitter.com/intent/tweet')
-      intent.searchParams.set('text', shareText)
-      openExternal(intent.toString())
+    if (mission.action === 'whatsapp_channel') {
+      openExternal(WHATSAPP_CHANNEL_URL)
     } else if (mission.action === 'tiktok_follow') {
       openExternal(TIKTOK_PROFILE_URL)
     } else if (mission.action === 'whatsapp_share') {

@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildFacebookShareText,
-  buildTwitterShareText,
   buildWhatsappShareText,
   contentFor,
   FACEBOOK_HOME_URL,
   secondsUntilConfirmation,
   TIKTOK_PROFILE_URL,
+  WHATSAPP_CHANNEL_URL,
   WHATSAPP_SHARE_URL,
-  X_LIKE_REPOST_URL,
 } from './social-mission-sheet'
 
 const REFERRAL_URL = 'https://t.me/tugasduitbot/app?startapp=REF123'
@@ -16,28 +15,11 @@ const REFERRAL_URL = 'https://t.me/tugasduitbot/app?startapp=REF123'
 /** Yang dikunci di sini isi teknisnya — mention, link referral, tujuan tautan — BUKAN kalimat instruksinya. Versi sebelumnya menyamakan `instruction` dengan string persis, jadi setiap perbaikan penulisan menggagalkan test yang sebenarnya tidak menguji apa pun soal itu. Bentuk kalimatnya dijaga `COPY-1` di `tests/copy.test.ts`, yang menguji aturannya, bukan kata-katanya. */
 describe('pesan misi sosial', () => {
   const SOCIAL_ACTIONS = [
-    'twitter_follow',
-    'twitter_like_repost',
-    'twitter_post',
     'facebook_post',
     'whatsapp_share',
+    'whatsapp_channel',
     'tiktok_follow',
   ] as const
-
-  it('menyertakan mention dan link referral user pada template Twitter', () => {
-    const text = buildTwitterShareText(REFERRAL_URL)
-
-    expect(text).toContain('@Tugasduit')
-    expect(text).toContain(REFERRAL_URL)
-  })
-
-  it('menyatukan Like dan Retweet pada satu postingan X', () => {
-    expect(X_LIKE_REPOST_URL).toBe(
-      'https://x.com/TugasDuit/status/2095765886091276589',
-    )
-    expect(contentFor('twitter_like_repost').instruction).toMatch(/like/i)
-    expect(contentFor('twitter_like_repost').instruction).toMatch(/retweet/i)
-  })
 
   it('menyertakan link referral user dan membuka beranda Facebook', () => {
     const text = buildFacebookShareText(REFERRAL_URL)
@@ -54,6 +36,17 @@ describe('pesan misi sosial', () => {
     /** Tautannya membawa teksnya sendiri, jadi tidak ada langkah salin-tempel seperti Facebook. */
     expect(WHATSAPP_SHARE_URL).toBe('https://wa.me/')
     expect(new URL(WHATSAPP_SHARE_URL).searchParams.get('text')).toBeNull()
+  })
+
+  /** Tautan undangan channel, bukan pemilih kontak seperti `WHATSAPP_SHARE_URL`. Yang dipaku
+   * alamatnya: channel yang salah mengirim orang ke tempat yang bukan milik Tugas Duit, dan
+   * misinya tetap bisa dikonfirmasi karena tidak ada yang memverifikasi. */
+  it('menunjuk channel WhatsApp Tugas Duit, bukan pemilih kontak', () => {
+    expect(WHATSAPP_CHANNEL_URL).toBe(
+      'https://whatsapp.com/channel/0029VbDp5rQIHphAKWaXDd1b',
+    )
+    expect(WHATSAPP_CHANNEL_URL).not.toBe(WHATSAPP_SHARE_URL)
+    expect(contentFor('whatsapp_channel').instruction).toMatch(/channel/i)
   })
 
   /** Yang dipaku handle-nya, bukan kalimatnya: profil yang salah mengirim orang ke akun yang bukan

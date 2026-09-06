@@ -206,14 +206,14 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
     const { claimMission, startMissionAction } = await import('./missions')
     const userId = await makeUser(0)
 
-    expect(await claimMission(userId, 'twitter_post')).toEqual({
+    expect(await claimMission(userId, 'whatsapp_share')).toEqual({
       ok: false,
       reason: 'action_required',
     })
 
-    const started = await startMissionAction(userId, 'twitter_post')
+    const started = await startMissionAction(userId, 'whatsapp_share')
     expect(started).toMatchObject({ ok: true })
-    expect(await claimMission(userId, 'twitter_post')).toEqual({
+    expect(await claimMission(userId, 'whatsapp_share')).toEqual({
       ok: false,
       reason: 'action_cooldown',
     })
@@ -241,59 +241,59 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
     })
   })
 
-  it('menganggap follow yang pernah diklaim sebagai selesai untuk selamanya', async () => {
+  it('menganggap follow TikTok yang pernah diklaim sebagai selesai untuk selamanya', async () => {
     const { claimMission, readMissions, startMissionAction } = await import('./missions')
     const { query } = await import('../platform/db')
     const userId = await makeUser(0)
 
-    await startMissionAction(userId, 'twitter_follow')
+    await startMissionAction(userId, 'tiktok_follow')
     await query(
       `update social_mission_attempts
         set started_at=now()-interval '11 seconds'
-        where user_id=$1 and mission_key='twitter_follow'`,
+        where user_id=$1 and mission_key='tiktok_follow'`,
       [userId],
     )
-    expect(await claimMission(userId, 'twitter_follow')).toMatchObject({ ok: true })
+    expect(await claimMission(userId, 'tiktok_follow')).toMatchObject({ ok: true })
 
     await query(
       `update mission_claims
         set quota_date=(now() at time zone 'Asia/Jakarta')::date-1
-        where user_id=$1 and mission_key='twitter_follow'`,
+        where user_id=$1 and mission_key='tiktok_follow'`,
       [userId],
     )
-    const follow = (await readMissions(userId)).find((mission) => mission.key === 'twitter_follow')
+    const follow = (await readMissions(userId)).find((mission) => mission.key === 'tiktok_follow')
     expect(follow).toMatchObject({ claimed: true, cadence: 'once' })
-    expect(await startMissionAction(userId, 'twitter_follow')).toEqual({
+    expect(await startMissionAction(userId, 'tiktok_follow')).toEqual({
       ok: false,
       reason: 'already_claimed',
     })
   })
 
-  it('menganggap Like & Retweet yang pernah diklaim sebagai selesai untuk selamanya', async () => {
+  it('menganggap join channel WhatsApp yang pernah diklaim sebagai selesai untuk selamanya', async () => {
     const { claimMission, readMissions, startMissionAction } = await import('./missions')
     const { query } = await import('../platform/db')
     const userId = await makeUser(0)
 
-    await startMissionAction(userId, 'twitter_like_repost')
+    await startMissionAction(userId, 'whatsapp_channel')
     await query(
       `update social_mission_attempts
         set started_at=now()-interval '11 seconds'
-        where user_id=$1 and mission_key='twitter_like_repost'`,
+        where user_id=$1 and mission_key='whatsapp_channel'`,
       [userId],
     )
-    expect(await claimMission(userId, 'twitter_like_repost')).toMatchObject({ ok: true })
+    expect(await claimMission(userId, 'whatsapp_channel')).toMatchObject({ ok: true })
 
     await query(
       `update mission_claims
         set quota_date=(now() at time zone 'Asia/Jakarta')::date-1
-        where user_id=$1 and mission_key='twitter_like_repost'`,
+        where user_id=$1 and mission_key='whatsapp_channel'`,
       [userId],
     )
     const mission = (await readMissions(userId)).find(
-      (item) => item.key === 'twitter_like_repost',
+      (item) => item.key === 'whatsapp_channel',
     )
     expect(mission).toMatchObject({ claimed: true, cadence: 'once' })
-    expect(await startMissionAction(userId, 'twitter_like_repost')).toEqual({
+    expect(await startMissionAction(userId, 'whatsapp_channel')).toEqual({
       ok: false,
       reason: 'already_claimed',
     })
@@ -341,8 +341,8 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
     const { readMissions, startMissionAction } = await import('./missions')
     const userId = await makeUser(0)
 
-    const first = await startMissionAction(userId, 'twitter_post')
-    const second = await startMissionAction(userId, 'twitter_post')
+    const first = await startMissionAction(userId, 'whatsapp_share')
+    const second = await startMissionAction(userId, 'whatsapp_share')
     expect(first).toMatchObject({ ok: true })
     expect(second).toMatchObject({ ok: true })
     if (!first.ok || !second.ok) throw new Error('aksi sosial gagal dimulai')
@@ -350,7 +350,7 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
     expect(second.confirmAt).toBe(first.confirmAt)
     expect(first.confirmAt).toBeGreaterThan(first.serverNow)
     const reloaded = (await readMissions(userId)).find(
-      (mission) => mission.key === 'twitter_post',
+      (mission) => mission.key === 'whatsapp_share',
     )
     expect(reloaded?.confirmAt).toBe(first.confirmAt)
   })
@@ -360,20 +360,20 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
     const { query } = await import('../platform/db')
     const userId = await makeUser(0)
 
-    await startMissionAction(userId, 'twitter_post')
+    await startMissionAction(userId, 'whatsapp_share')
     await query(
       `update social_mission_attempts
         set quota_date=(now() at time zone 'Asia/Jakarta')::date-1,
             started_at=now()-interval '1 day'
-        where user_id=$1 and mission_key='twitter_post'`,
+        where user_id=$1 and mission_key='whatsapp_share'`,
       [userId],
     )
 
     const expired = (await readMissions(userId)).find(
-      (mission) => mission.key === 'twitter_post',
+      (mission) => mission.key === 'whatsapp_share',
     )
     expect(expired?.confirmAt).toBeNull()
-    expect(await claimMission(userId, 'twitter_post')).toEqual({
+    expect(await claimMission(userId, 'whatsapp_share')).toEqual({
       ok: false,
       reason: 'action_required',
     })
@@ -416,17 +416,17 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
     const userId = await makeUser(0)
     setActiveEconomyConfig({
       ...DEFAULT_ECONOMY_CONFIG,
-      missionTwitterFollowReward: 1,
-      missionTwitterLikeRepostReward: 1,
-      missionTwitterPostReward: 1,
       missionFacebookPostReward: 2,
+      missionWhatsappShareReward: 1,
+      missionWhatsappChannelReward: 1,
+      missionTiktokFollowReward: 1,
     })
 
     const socialKeys = [
-      'twitter_follow',
-      'twitter_like_repost',
-      'twitter_post',
       'facebook_post',
+      'whatsapp_share',
+      'whatsapp_channel',
+      'tiktok_follow',
     ] as const
 
     try {
@@ -451,9 +451,9 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
       )
       expect(grants.map((row) => [row.mission_key, Number(row.energy_granted)])).toEqual([
         ['facebook_post', 2],
-        ['twitter_follow', 1],
-        ['twitter_like_repost', 1],
-        ['twitter_post', 1],
+        ['tiktok_follow', 1],
+        ['whatsapp_channel', 1],
+        ['whatsapp_share', 1],
       ])
       expect(await readEnergyValue(userId)).toBe(5)
 

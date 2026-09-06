@@ -163,7 +163,9 @@ describe('ECON-7 — reward sosial lama dipisah menjadi tiga key runtime', () =>
 
     await runSocialRewardRepair()
 
-    const stored = await readStored()
+    /** Migrasi 0045 tetap menulis key X — ia sejarah, dan yang diuji di sini perilakunya saat itu.
+     * Key-nya sudah pensiun dari `EconomyConfig` sejak 0057, jadi dibaca sebagai field mentah. */
+    const stored = (await readStored()) as EconomyConfig & Record<string, number>
     expect(stored.missionTwitterFollowReward).toBe(2)
     expect(stored.missionTwitterPostReward).toBe(3)
     expect(stored.missionFacebookPostReward).toBe(3)

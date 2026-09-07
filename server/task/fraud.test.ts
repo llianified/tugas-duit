@@ -1,6 +1,5 @@
-import { readFile } from 'node:fs/promises'
-import path from 'node:path'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { maintenanceCronSchedule } from '../../tests/maintenance-workflow'
 import { SWEEP_THRESHOLDS } from './fraud'
 
 beforeAll(async () => {
@@ -243,14 +242,11 @@ describe('FRAUD-4 — rentang sapuan tidak boleh lebih pendek dari kadensi cron'
     throw new Error(`Jadwal cron '${schedule}' belum dikenali FRAUD-4 — tambahkan bentuknya di sini.`)
   }
 
-  it('menyisakan margin di atas periode cron di vercel.json', async () => {
-    const raw = await readFile(path.join(process.cwd(), 'vercel.json'), 'utf8')
-    const crons = (JSON.parse(raw) as { crons: { path: string; schedule: string }[] }).crons
-    const maintenance = crons.find((cron) => cron.path === '/api/cron/maintenance')
+  it('menyisakan margin di atas periode workflow maintenance', async () => {
+    const schedule = await maintenanceCronSchedule()
 
-    expect(maintenance).toBeDefined()
     expect(SWEEP_THRESHOLDS.referralBurstLookbackMinutes).toBeGreaterThan(
-      periodeMenit(maintenance!.schedule),
+      periodeMenit(schedule),
     )
     expect(SWEEP_THRESHOLDS.referralBurstLookbackMinutes).toBeGreaterThan(
       SWEEP_THRESHOLDS.referralBurstWindowMinutes,

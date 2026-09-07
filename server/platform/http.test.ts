@@ -2,35 +2,32 @@ import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-describe('HTTP-1 — clientIp mendahulukan header yang ditulis platform', () => {
-  it('memakai x-vercel-forwarded-for meski x-forwarded-for dikarang', async () => {
+describe('HTTP-1 — clientIp memakai hop terminal yang ditulis proxy', () => {
+  it.each([
+    ['203.0.113.7', '203.0.113.7'],
+    ['2001:db8::7', '2001:db8::7'],
+    ['9.9.9.9, 198.51.100.4', '198.51.100.4'],
+  ])('membaca %s sebagai %s', async (header, expected) => {
     const { clientIp } = await import('./http')
     const request = new Request('https://tugasduit.example/api/session', {
-      headers: {
-        'x-forwarded-for': '9.9.9.9',
-        'x-vercel-forwarded-for': '203.0.113.7',
-      },
+      headers: { 'x-forwarded-for': header },
     })
 
-    expect(clientIp(request)).toBe('203.0.113.7')
+    expect(clientIp(request)).toBe(expected)
   })
 
-  it('jatuh ke x-forwarded-for kalau platform tidak menuliskan apa pun', async () => {
+  it('tidak jatuh ke nilai kiri kalau hop terminal rusak', async () => {
     const { clientIp } = await import('./http')
     const request = new Request('https://tugasduit.example/api/session', {
-      headers: { 'x-forwarded-for': '198.51.100.4, 10.0.0.1' },
-    })
-
-    expect(clientIp(request)).toBe('198.51.100.4')
-  })
-
-  it('menandai nilai yang bukan alamat IP alih-alih memakainya sebagai bucket', async () => {
-    const { clientIp } = await import('./http')
-    const request = new Request('https://tugasduit.example/api/session', {
-      headers: { 'x-vercel-forwarded-for': 'bukan-ip' },
+      headers: { 'x-forwarded-for': '198.51.100.4, bukan-ip' },
     })
 
     expect(clientIp(request)).toBe('malformed')
+  })
+
+  it('memakai bucket unknown saat header tidak tersedia', async () => {
+    const { clientIp } = await import('./http')
+    expect(clientIp(new Request('https://tugasduit.example/api/session'))).toBe('unknown')
   })
 })
 

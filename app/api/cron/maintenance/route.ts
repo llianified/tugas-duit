@@ -5,9 +5,8 @@ import { matchesSecret } from '@/server/platform/secret'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 60
 
-/** Pengganti cron Railway (`pnpm db:cleanup` tiap jam) setelah pindah ke Vercel, yang memicu pekerjaan terjadwal lewat HTTP, bukan proses terpisah. Vercel Cron mengirim `Authorization: Bearer $CRON_SECRET`. Bentuk yang sama dipakai pemicu eksternal, jadi route ini tidak perlu tahu siapa yang memanggilnya — plan Hobby membatasi cron bawaan ke sekali sehari, sedangkan `rate_limits` menumpuk per jam, jadi pemicu luar memang jalur yang wajar di sana. Tanpa CRON_SECRET route ini menolak semua orang, bukan membuka diri: kalau env-nya belum diset, yang benar adalah cron tidak jalan, bukan siapa pun bisa memicunya. */
+/** GitHub Actions memanggil endpoint ini sesuai jadwal dan membawa `Authorization: Bearer $CRON_SECRET`. Route sengaja tidak bergantung pada identitas pemicu; tanpa rahasia yang dikonfigurasi ia menolak semua pemanggil. */
 export async function GET(request: Request) {
   try {
     const expected = env.cronSecretOrNull

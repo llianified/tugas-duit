@@ -10,7 +10,6 @@
     "dev": "next dev",
     "build": "next build",
     "deploy-build": "node --experimental-strip-types scripts/migrate.ts --deploy && next build",
-    "vercel-build": "pnpm deploy-build",
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",
@@ -23,7 +22,6 @@
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "@electric-sql/pglite": "^0.5.8",
-    "@vercel/analytics": "2.0.1",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "motion": "^13.2.0",

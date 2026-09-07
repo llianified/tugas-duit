@@ -5,7 +5,7 @@
 
 ## Konteks
 
-Aplikasi dibuka di dalam iframe milik situs lain: Telegram Web pada penggunaan nyata dan v0 pada preview. Cookie sesi karena itu diperlakukan sebagai cookie pihak ketiga. `SameSite=None` saja tidak cukup pada browser yang membuang atau membatasi cookie pihak ketiga; gejalanya adalah login preview berhasil tetapi request sesi berikutnya kembali tanpa user.
+Aplikasi dibuka di dalam iframe milik situs lain: Telegram Web pada penggunaan nyata dan host development pada preview. Cookie sesi karena itu diperlakukan sebagai cookie pihak ketiga. `SameSite=None` saja tidak cukup pada browser yang membuang atau membatasi cookie pihak ketiga; gejalanya adalah login preview berhasil tetapi request sesi berikutnya kembali tanpa user.
 
 Token sesi mentah tidak boleh disimpan di database. JavaScript produksi juga tidak boleh memperoleh token tersebut. Di sisi lain, preview perlu jalur cadangan yang tidak bergantung pada cookie jar agar tetap bisa diuji pada Safari, Firefox, dan konfigurasi yang memblokir cookie pihak ketiga.
 
@@ -21,6 +21,6 @@ Token sesi mentah tidak boleh disimpan di database. JavaScript produksi juga tid
 
 ## Konsekuensi
 
-Chrome modern dapat memakai cookie CHIPS secara langsung. Browser yang tetap menolak cookie pihak ketiga masih dapat menjalankan preview lewat header cadangan, tanpa melonggarkan produksi. Preview v0 dan Telegram Web memiliki partisi sesi berbeda dan dapat meminta login ulang secara independen; ini disengaja.
+Chrome modern dapat memakai cookie CHIPS secara langsung. Browser yang tetap menolak cookie pihak ketiga masih dapat menjalankan preview lewat header cadangan, tanpa melonggarkan produksi. Setiap top-level site memiliki partisi sesi sendiri dan dapat meminta login ulang secara independen; ini disengaja.
 
 Suite tes tidak memakai jalur header preview, sehingga tes sesi tetap membuktikan perilaku cookie utama. Setiap perubahan atribut cookie harus memperbarui jalur create dan destroy sekaligus serta mempertahankan pengujian keduanya di `server/auth/session.test.ts`.

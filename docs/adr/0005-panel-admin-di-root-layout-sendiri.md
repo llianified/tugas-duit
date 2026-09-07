@@ -13,7 +13,7 @@ Saklar mati iklan (`adsMaxViewsPerDay = 0`) menutup fiturnya, bukan pemuatan skr
 
 ## Keputusan
 
-1. `app/layout.tsx` dipecah menjadi dua root layout lewat route group: `app/(miniapp)/layout.tsx` membawa SDK Telegram, SDK Monetag, hint iklan, Analytics, dan Speed Insights; `app/(admin)/layout.tsx` tidak membawa satu pun script berorigin luar. Font tetap `next/font` karena berkasnya di-host sendiri, bukan ditarik dari Google saat runtime.
+1. `app/layout.tsx` dipecah menjadi dua root layout lewat route group: `app/(miniapp)/layout.tsx` membawa SDK Telegram, SDK Monetag, dan hint iklan; `app/(admin)/layout.tsx` tidak membawa satu pun script berorigin luar. Font tetap `next/font` karena berkasnya di-host sendiri, bukan ditarik dari Google saat runtime.
 2. `proxy.ts` mencabangkan CSP berdasarkan pathname. Permukaan admin — halaman `/admin/*` maupun API `/api/admin/*` — memakai `script-src 'self' 'nonce-…' 'strict-dynamic'` tanpa host iklan, `img-src`/`media-src`/`frame-src`/`connect-src` tanpa `https:` terbuka, dan `frame-ancestors 'none'`.
 3. `frame-ancestors 'none'` hanya dilonggarkan ke daftar host preview di luar produksi, mengikuti pola `DEV_FRAME_ANCESTORS` yang sudah ada.
 4. `proxy.test.ts` menahan ketiganya: tidak ada host iklan di `script-src` admin, `frame-ancestors 'none'`, dan root layout admin tidak merender satu pun `src="https://…"`.

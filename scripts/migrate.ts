@@ -34,7 +34,7 @@ if (deployMode) {
   console.log(`[migrate] platform ${decision.platform}, deploy produksi — migrasi dijalankan`)
 }
 
-/** Di jalur otomatis endpoint langsung tidak boleh ditebak. `databaseUrlForMigrations` sengaja jatuh ke DATABASE_URL kalau yang unpooled tidak ada, dan itu benar untuk pemakaian manual — tapi DATABASE_URL dari integrasi Neon–Vercel adalah endpoint POOLED, dan `pg_advisory_lock` di pooler mode transaksi tidak menjamin apa pun. Lebih baik build-nya gagal berisik daripada dua deploy bersamaan memigrasi tanpa kunci yang benar-benar memegang. */
+/** Di jalur otomatis endpoint langsung tidak boleh ditebak. `databaseUrlForMigrations` sengaja jatuh ke DATABASE_URL kalau yang unpooled tidak ada, dan itu benar untuk pemakaian manual — tetapi runtime Render memakai endpoint POOLED, dan `pg_advisory_lock` di pooler mode transaksi tidak menjamin apa pun. Lebih baik build gagal berisik daripada dua deploy bersamaan memigrasi tanpa kunci yang benar-benar memegang. */
 if (deployMode && !process.env.DATABASE_URL_UNPOOLED?.trim()) {
   console.error(
     '[migrate] DATABASE_URL_UNPOOLED belum diset di environment Production. Migrasi otomatis butuh endpoint langsung (tanpa -pooler), bukan yang pooled.',

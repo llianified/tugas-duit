@@ -1,8 +1,5 @@
-# Setelan deploy Render, pengganti Vercel.
-#
-# Perintah build-nya SATU dengan yang dipakai Vercel: `pnpm deploy-build` di package.json.
-# Sengaja tidak diduplikasi di sini — dua salinan perintah build berarti dua platform yang
-# pelan-pelan menyimpang, dan yang menyimpang di jalur ini adalah "migrasi jalan atau tidak".
+# Setelan deploy Render.
+# Jalur build dipusatkan di `pnpm deploy-build` agar migrasi selalu mendahului build aplikasi.
 
 services:
   - type: web

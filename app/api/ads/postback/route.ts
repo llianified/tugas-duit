@@ -10,7 +10,7 @@ import { env } from '@/server/platform/env'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-/** Monetag mengirim GET dan tidak bisa membawa header, jadi rahasianya terpaksa ikut di query. Konsekuensinya nilai ini ikut tercatat di log akses Vercel — ia rahasia yang bisa dibaca siapa pun yang bisa membaca log, bukan kredensial kelas satu. Yang menahan kerugiannya: rahasia ini tidak membuka data apa pun, hanya bisa mengonfirmasi tiket yang ID-nya sudah harus diketahui lebih dulu, dan menggantinya cukup dengan mengubah env lalu menempel ulang URL-nya di dashboard. */
+/** Monetag mengirim GET dan tidak bisa membawa header, jadi rahasianya terpaksa ikut di query. Konsekuensinya nilai ini ikut tercatat di log akses layanan — ia rahasia yang bisa dibaca siapa pun yang bisa membaca log, bukan kredensial kelas satu. Yang menahan kerugiannya: rahasia ini tidak membuka data apa pun, hanya bisa mengonfirmasi tiket yang ID-nya sudah harus diketahui lebih dulu, dan menggantinya cukup dengan mengubah env lalu menempel ulang URL-nya di dashboard. */
 const SECRET_PARAM = 'k'
 
 /** Volume normalnya kecil (paling banyak dua event per tayangan), jadi plafon ini bukan pengatur tempo Monetag melainkan penahan kalau URL-nya bocor dan dihantam dari luar. */

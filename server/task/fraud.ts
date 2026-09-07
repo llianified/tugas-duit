@@ -97,7 +97,7 @@ const NO_WRONG_MIN_SOLVED = 200
 const NO_WRONG_MAX_ERROR_RATIO = 0.01
 
 /** Rentang yang disapu harus LEBIH PANJANG dari periode cron, kalau tidak detektornya buta di sela antar-jalan. Versi lama memakai jendela 10 menit sementara cron jalan tiap jam (`railway.cron.json`), jadi 50 dari 60 menit tidak pernah terlihat — burst 34 akun pada 25 Agu 09:13–09:16 lolos bukan karena ambangnya kurang, tapi karena tidak ada satu pun eksekusi yang jendelanya menutupi menit-menit itu. Tiga jam memberi ruang untuk cron yang telat atau satu-dua eksekusi yang terlewat. */
-/** Harus lebih panjang daripada jarak antar-jalan cron, plus margin. Kalau lebih pendek, selisihnya jadi lubang buta permanen: sapuan tidak akan pernah melihat apa yang terjadi di antara dua jalan. 25 jam menutupi cron harian di `vercel.json` dengan margin satu jam. FRAUD-4 mengunci kaitan ini — kalau jadwal cron-nya dipercepat lagi, test itu yang memberi tahu berapa nilai yang masih sah. */
+/** Harus lebih panjang daripada jarak antar-jalan cron, plus margin. Kalau lebih pendek, selisihnya jadi lubang buta permanen: sapuan tidak akan pernah melihat apa yang terjadi di antara dua jalan. 25 jam menutupi workflow harian di `.github/workflows/maintenance.yml` dengan margin satu jam. FRAUD-4 mengunci kaitan ini — kalau jadwal cron-nya dipercepat lagi, test itu yang memberi tahu berapa nilai yang masih sah. */
 const REFERRAL_BURST_LOOKBACK_MINUTES = 1_500
 
 /** Kerapatan yang dicari tetap sama seperti dulu — sekian pendaftar dalam sepuluh menit — hanya saja sekarang dicari di SETIAP titik sepanjang rentang sapuan, bukan hanya di sepuluh menit terakhir. Melebarkan jendelanya saja akan menumpulkan artinya: 20 pendaftar dalam tiga jam itu wajar, 20 dalam sepuluh menit tidak. */

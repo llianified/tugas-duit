@@ -137,7 +137,7 @@ describe('RL-3 — reservasi token menekan jumlah write tanpa melonggarkan plafo
 })
 
 describe('RL-4 — plafon efektif saat lease tersebar ke beberapa instance', () => {
-  /** Lease disimpan di memori modul, jadi "instance kedua" berarti salinan modul kedua: `resetModules()` membuat `import` berikutnya mengevaluasi ulang `ratelimit.ts` dengan `Map` lease yang benar-benar baru. Databasenya tetap satu — PGlite di-cache di `globalThis` (`preview-db.ts`), jadi ia lolos dari reset dan kedua salinan menulis ke tabel `rate_limits` yang sama, persis seperti dua instance serverless yang berbagi satu Postgres. */
+  /** Lease disimpan di memori modul, jadi "proses kedua" berarti salinan modul kedua: `resetModules()` membuat `import` berikutnya mengevaluasi ulang `ratelimit.ts` dengan `Map` lease yang benar-benar baru. Databasenya tetap satu — PGlite di-cache di `globalThis` (`preview-db.ts`), jadi ia lolos dari reset dan kedua salinan menulis ke tabel `rate_limits` yang sama, persis seperti dua proses aplikasi yang berbagi satu Postgres. */
   const instanceBaru = async () => {
     vi.resetModules()
     return import('./ratelimit')

@@ -24,7 +24,7 @@ if (process.env.NODE_ENV !== 'production') {
   const onBoard = QWERTY_ROWS.join('')
   const sorted = (value: string) => [...value].sort().join('')
   if (sorted(onBoard) !== sorted(TEXT_CHARS)) {
-    console.error('[v0] Susunan papan tidak sama dengan TEXT_CHARS', {
+    console.error('[captcha] Susunan papan tidak sama dengan TEXT_CHARS', {
       board: onBoard,
       chars: TEXT_CHARS,
     })
@@ -32,7 +32,7 @@ if (process.env.NODE_ENV !== 'production') {
   for (const row of QWERTY_ROWS) {
     const offset = rowOffset(row)
     if (offset < 0 || offset >= ROW_START_CLASS.length) {
-      console.error('[v0] Baris papan tidak bisa dipusatkan di 18 setengah-kolom', {
+      console.error('[captcha] Baris papan tidak bisa dipusatkan di 18 setengah-kolom', {
         row,
         offset,
       })

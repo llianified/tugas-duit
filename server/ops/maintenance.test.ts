@@ -1,6 +1,5 @@
-import { readFile } from 'node:fs/promises'
-import path from 'node:path'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { maintenanceCronSchedule } from '../../tests/maintenance-workflow'
 import { ENGAGEMENT_HOURS } from '../messaging/engagement'
 import { matchesSecret } from '../platform/secret'
 
@@ -121,14 +120,10 @@ describe('MAINT-4 — isi soal selesai dilepas, soal aktif tidak', () => {
 })
 
 describe('MAINT-2 — jadwal cron jatuh di dalam jam kirim WIB', () => {
-  /** `runEngagementNotifications` diam total di luar 08:00–20:00 WIB. Di Railway hal ini tidak pernah jadi soal karena cron-nya tiap jam, jadi selalu ada jalan yang jatuh di dalam jendela. Vercel plan Hobby membatasi cron ke sekali sehari, dan sekali sehari di jam yang salah berarti pesan bot tidak pernah terkirim — tanpa error, tanpa jejak. */
+  /** Sekali jalan per hari di jam yang salah membuat notifikasi diam total tanpa error. */
   it('memicu pemeliharaan pada jam yang masih mengirim pesan', async () => {
-    const raw = await readFile(path.join(process.cwd(), 'vercel.json'), 'utf8')
-    const crons = (JSON.parse(raw) as { crons: { path: string; schedule: string }[] }).crons
-    const maintenance = crons.find((cron) => cron.path === '/api/cron/maintenance')
-    expect(maintenance).toBeDefined()
-
-    const [, jamUtc] = maintenance!.schedule.trim().split(/\s+/)
+    const schedule = await maintenanceCronSchedule()
+    const [, jamUtc] = schedule.trim().split(/\s+/)
     expect(jamUtc).toMatch(/^\d+$/)
 
     const jamWib = (Number(jamUtc) + 7) % 24

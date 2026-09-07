@@ -1,4 +1,3 @@
-import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { headers } from 'next/headers'
 import { Geist, Plus_Jakarta_Sans } from 'next/font/google'
@@ -23,7 +22,6 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: 'Tugas Duit',
   description: 'Kerjakan soal, kumpulkan TD, lalu tarik jadi Rupiah.',
-  generator: 'v0.app',
   icons: {
     icon: [{ url: '/icon.png', sizes: '512x512', type: 'image/png' }],
     apple: [{ url: '/apple-icon', sizes: '180x180', type: 'image/png' }],
@@ -72,7 +70,6 @@ export default async function RootLayout({
           data-sdk={monetagSdkName(monetagZoneId)}
         />
         {children}
-        {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
   )

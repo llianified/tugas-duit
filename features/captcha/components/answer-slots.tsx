@@ -1,6 +1,6 @@
 'use client'
 
-import { OTPFieldPreview as OTPField } from '@base-ui/react/otp-field'
+import { OTPField } from '@base-ui/react/otp-field'
 import { useEffect, useRef } from 'react'
 import { VIEW_IN_DURATION_MS } from '@/shared/lib/motion'
 

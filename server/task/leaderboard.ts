@@ -44,7 +44,18 @@ interface Snapshot {
 /** Awal musim berjalan, dihitung Postgres dengan alasan yang sama seperti undian misi harian:
  * `completed_at` dibandingkan dengan batas ini, jadi keduanya harus datang dari jam yang sama.
  * Anchor hari Senin membuat musim sepanjang berapa pun hari selalu berganti di batas yang sama
- * untuk semua orang, bukan bergeser mengikuti kapan fiturnya dinyalakan. */
+ * untuk semua orang, bukan bergeser mengikuti kapan fiturnya dinyalakan.
+ *
+ * `::timestamp` di depan `at time zone` MENANGGUNG SELURUH kebenaran batas ini, dan tanpanya
+ * ekspresi ini tetap jalan sambil menjawab salah. `date at time zone` ambigu — `date` bisa dicast
+ * ke `timestamp` maupun `timestamptz` — dan Postgres memilih `timestamptz` karena itu tipe
+ * preferred di kategori datetime. Yang terpanggil jadi `timezone(text, timestamptz)`: tanggalnya
+ * dibaca sebagai tengah malam UTC lalu dikonversi ke jam dinding Jakarta, sehingga batasnya
+ * mendarat pukul 07:00 sebagai timestamp polos — 14 jam SESUDAH tengah malam WIB yang dimaksud,
+ * dan bukan lagi titik waktu. Akibatnya papan kosong total dari 00:00 sampai 14:00 WIB di tiap
+ * hari pergantian musim: seluruh penyelesaian tersaring keluar karena batasnya masih di masa
+ * depan. Itu terjadi di produksi (Neon), bukan cuma di PGlite, dan sempat salah dibaca sebagai
+ * kekurangan PGlite. `LB-SEASON` memakunya. */
 const seasonBoundsSql = (days: string, anchor: string) => `
   select started_at,
          case when started_at is null then null
@@ -53,7 +64,7 @@ const seasonBoundsSql = (days: string, anchor: string) => `
       select case when ${days}::int <= 0 then null else (
         (${anchor}::date + (floor(
            (((now() at time zone 'Asia/Jakarta')::date - ${anchor}::date))::numeric / ${days}::int
-         ) * ${days}::int)::int)
+         ) * ${days}::int)::int)::timestamp
           at time zone 'Asia/Jakarta'
       ) end as started_at
     ) as season`

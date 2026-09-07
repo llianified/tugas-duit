@@ -36,19 +36,22 @@ async function completeTaskAtTime(userId: number, reward: number, at: Date) {
 
 /** Awal musim berjalan MENURUT kueri papan itu sendiri, dibaca lewat API publiknya.
  *
- * Ini yang membuat berkas ini berhenti bergantung pada tanggal. Bentuk lamanya menaruh penyelesaian
- * di `now()` dan menganggapnya pasti masuk musim berjalan — anggapan yang benar di Postgres asli,
- * tapi tidak di PGlite yang dipakai uji: `at time zone 'Asia/Jakarta'` di sana membalik arah
- * konversinya (menjawab +7 jam, bukan −7), jadi selama ±13 jam setelah musim berganti batasnya
- * jatuh di MASA DEPAN dan seluruh penyelesaian tersaring keluar. Papan jadi kosong, `you` jadi
- * null, dan tiga uji di berkas ini gagal — tapi hanya kalau CI kebetulan jalan di jendela itu,
- * yaitu sekitar 8% waktu. Persis itu yang terjadi pada run yang menggagalkan CI di commit
- * sebelumnya.
+ * Ini yang membuat pemanggilnya berhenti bergantung pada tanggal. Bentuk lamanya menaruh
+ * penyelesaian di `now()` dan menganggapnya pasti masuk musim berjalan — anggapan yang runtuh
+ * selama 14 jam pertama tiap musim, ketika batasnya jatuh di MASA DEPAN dan seluruh penyelesaian
+ * tersaring keluar. Papan jadi kosong, `you` jadi null, dan tiga uji di berkas ini gagal, tapi
+ * hanya kalau CI kebetulan jalan di jendela itu — sekitar 8% waktu.
  *
- * Yang diuji sekarang ATURAN jendelanya — yang jatuh sesudah batas dihitung, yang jatuh sebelumnya
- * tidak — bukan di mana batas itu mendarat pada jam dinding hari ini. Aturan itu yang jadi milik
- * papan; letak batasnya milik aritmetika tanggal, dan menegakkannya lewat `now()` cuma membuat uji
- * ini melaporkan kekurangan PGlite sebagai kerusakan kode produksi. */
+ * Catatan di sini dulu menyalahkan PGlite: konon `at time zone 'Asia/Jakarta'` di sana membalik
+ * arah konversinya, sementara Postgres asli benar. Itu KELIRU, dan kekeliruannya mahal — ia
+ * membuat satu-satunya gejala yang pernah muncul dibaca sebagai kekurangan alat uji, lalu ujinya
+ * ditulis ulang supaya berhenti melihatnya. Bug-nya bertahan di produksi sampai papan Neon
+ * ketahuan kosong dengan 131.763 penyelesaian di tabelnya. Penyebab sebenarnya bukan mesinnya
+ * melainkan resolusi tipe Postgres yang berlaku di keduanya — lihat `seasonBoundsSql`.
+ *
+ * Yang diuji lewat helper ini tetap ATURAN jendelanya: yang jatuh sesudah batas dihitung, yang
+ * sebelumnya tidak. Letak batasnya diuji terpisah dan langsung, karena justru itu yang dulu tidak
+ * dijaga siapa pun. */
 async function seasonStart(): Promise<Date> {
   const { getLeaderboard } = await import('./leaderboard')
   const board = await getLeaderboard(0)
@@ -143,6 +146,58 @@ describe('LB-SEASON — papan hanya menghitung musim berjalan', () => {
       /** 500 credit dari 30 hari lalu ada di musim lain, jadi pemiliknya tidak muncul sama sekali
        * — bukan muncul dengan nol. */
       expect(board.entries.some((entry) => entry.id === lama.publicId)).toBe(false)
+    } finally {
+      setActiveEconomyConfig(sebelumnya)
+    }
+  })
+
+  /** Batas musim harus mendarat TEPAT di tengah malam WIB. Uji lain di berkas ini sengaja tidak
+   * memeriksanya — semuanya menghitung waktu relatif terhadap batas yang dijawab kueri itu
+   * sendiri, jadi batas yang meleset pun tetap konsisten dengan dirinya dan lolos. Justru di
+   * celah itu bug-nya hidup: `date at time zone` memanggil `timezone(text, timestamptz)` karena
+   * `timestamptz` tipe preferred, sehingga tanggalnya dibaca sebagai tengah malam UTC dan batasnya
+   * mendarat pukul 07:00 sebagai timestamp polos — 14 jam terlambat. Papan lalu kosong total dari
+   * 00:00 sampai 14:00 WIB tiap hari pergantian musim, ~8% waktu, dan itu terjadi di produksi.
+   *
+   * Yang dipaku di sini letak batasnya, bukan aturan jendelanya, karena letak itulah yang tidak
+   * dijaga siapa pun. */
+  it('menaruh batas musim tepat di tengah malam WIB, tidak pernah di masa depan', async () => {
+    const { setActiveEconomyConfig, economyConfig } = await import('@/domain/economy/economy-config')
+    const { getLeaderboard } = await import('./leaderboard')
+    const sebelumnya = economyConfig()
+    const days = 7
+
+    try {
+      setActiveEconomyConfig({ ...sebelumnya, leaderboardSeasonDays: days })
+      const user = await makeUser('Batas musim')
+      const board = await getLeaderboard(user.id)
+
+      const startedAt = board.seasonStartedAt
+      const endsAt = board.seasonEndsAt
+      if (startedAt === null || endsAt === null) throw new Error('musim mati, batasnya tidak ada')
+
+      /** Gejala paling langsung dari batas yang meleset: musim yang "sedang berjalan" ternyata
+       * belum dimulai, dan tiap penyelesaian tersaring keluar karena jatuh sebelum batasnya. */
+      expect(startedAt).toBeLessThanOrEqual(Date.now())
+      expect(endsAt).toBeGreaterThan(Date.now())
+
+      /** Jam dinding Jakarta di titik itu harus 00:00:00 pas. `h23` dipakai, bukan `hour12:false`,
+       * karena yang terakhir mencetak tengah malam sebagai "24" di sebagian ICU. */
+      const jam = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Jakarta',
+        hourCycle: 'h23',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }).format(new Date(startedAt))
+      expect(jam).toBe('00:00:00')
+      expect(new Date(startedAt).getUTCMilliseconds()).toBe(0)
+
+      /** Panjang musimnya persis sepanjang yang disetel — dan karena itu sisa waktunya tidak
+       * pernah melebihi panjang itu. Countdown 172 jam pada musim 7 hari adalah bentuk lain dari
+       * batas yang sama melesetnya. */
+      expect(endsAt - startedAt).toBe(days * 86_400_000)
+      expect(endsAt - Date.now()).toBeLessThanOrEqual(days * 86_400_000)
     } finally {
       setActiveEconomyConfig(sebelumnya)
     }

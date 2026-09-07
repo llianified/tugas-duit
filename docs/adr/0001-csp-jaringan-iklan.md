@@ -34,7 +34,7 @@ Berbeda dari Giga.pub, chain demand OnClicka belum pernah dipanen lewat report-o
 3. `frame-src`, `img-src`, `media-src`, dan `connect-src` menerima `https:` untuk kebutuhan render kreatif Monetag.
 4. `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, dan `frame-ancestors` tetap ketat. Pelonggaran render tidak memberi izin eksekusi script pada dokumen utama.
 5. `style-src` dan `style-src-attr` mempertahankan `'unsafe-inline'`. Nonce pada `style-src` akan membuat browser mengabaikan `'unsafe-inline'`, sedangkan SDK menyuntikkan `<style>` tanpa nonce dan aplikasi memakai atribut style untuk offset animasi.
-6. Preview dan development menambahkan origin v0/localhost sebagai `frame-ancestors`, serta `ws:`/`wss:` untuk HMR. Produksi hanya boleh dibingkai oleh origin Telegram yang tercantum di `proxy.ts`.
+6. Development menambahkan localhost sebagai `frame-ancestors`, serta `ws:`/`wss:` untuk HMR. Produksi hanya boleh dibingkai oleh origin Telegram yang tercantum di `proxy.ts`.
 7. CSP dikirim pada request dan response. Header request diperlukan agar nonce yang dibaca layout sama dengan nonce dalam CSP; header response yang sama menjadi kebijakan browser.
 
 ## Operasional

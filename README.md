@@ -1,6 +1,6 @@
 # tugas-duit
 
-Telegram Mini App untuk mengerjakan soal singkat, mengumpulkan credit, dan menariknya menjadi Rupiah. Aplikasi ini berjalan di produksi pada Vercel dengan Neon PostgreSQL dan menangani saldo serta pembayaran nyata.
+Telegram Mini App untuk mengerjakan soal singkat, mengumpulkan credit, dan menariknya menjadi Rupiah. Aplikasi ini berjalan di produksi pada Render dengan Neon PostgreSQL dan menangani saldo serta pembayaran nyata.
 
 ## Fitur utama
 
@@ -89,11 +89,11 @@ Perubahan UI tidak perlu dicek lokal; CI menjalankan seluruh suite di tiap PR.
 
 ## Database dan deployment
 
-Produksi memakai endpoint Neon pooled untuk runtime serverless. Migrasi harus memakai `DATABASE_URL_UNPOOLED` karena advisory lock PostgreSQL bersifat per sesi dan tidak aman melalui transaction pooler.
+Produksi memakai endpoint Neon pooled untuk runtime service Render. Migrasi harus memakai `DATABASE_URL_UNPOOLED` karena advisory lock PostgreSQL bersifat per sesi dan tidak aman melalui transaction pooler.
 
-Script `vercel-build` menjalankan migrasi sebelum build hanya pada deployment Production. Preview deployment tidak memigrasi database produksi. Buat migrasi yang kompatibel dengan kode lama; perubahan destruktif seperti drop atau rename kolom harus dipisah ke deployment berikutnya.
+Script `deploy-build` menjalankan migrasi sebelum build pada service produksi Render. Preview pull request tidak memigrasi database produksi, dan sinyal deployment yang ambigu menggagalkan build. Buat migrasi yang kompatibel dengan kode lama; perubahan destruktif seperti drop atau rename kolom harus dipisah ke deployment berikutnya.
 
-Maintenance dijalankan melalui `/api/cron/maintenance`, dilindungi `CRON_SECRET`, dan dijadwalkan di `vercel.json`.
+Maintenance dijalankan melalui `/api/cron/maintenance`, dilindungi `CRON_SECRET`, dan dijadwalkan oleh `.github/workflows/maintenance.yml`.
 
 ## Keamanan dan invariant uang
 

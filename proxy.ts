@@ -6,13 +6,7 @@ const REPORT_PATH = '/api/csp-report'
 const REPORT_GROUP = 'csp'
 
 // Kebijakan dan prosedur audit provider iklan: docs/adr/0001-csp-jaringan-iklan.md.
-const DEV_FRAME_ANCESTORS = [
-  'https://*.vusercontent.net',
-  'https://*.v0.build',
-  'https://*.vercel.run',
-  'https://v0.app',
-  'http://localhost:*',
-]
+const DEV_FRAME_ANCESTORS = ['http://localhost:*']
 
 /** Panel admin punya kebijakannya sendiri karena ia permukaan yang berbeda: yang di sini
  * menyetujui uang, dan satu-satunya alasan Mini App melonggarkan `script-src`, `img-src`, dan

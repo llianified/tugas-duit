@@ -5,11 +5,8 @@
  * penjaganya adalah dengan tidak mengimpornya.
  *
  * Aturannya satu kalimat: migrasi otomatis hanya jalan untuk deploy PRODUKSI, dan kalau jawabannya
- * tidak bisa dipastikan ia harus BERISIK — bukan dilewati diam-diam. Bentuk lamanya cuma memeriksa
- * `VERCEL_ENV`, jadi di platform mana pun selain Vercel ia keluar dengan status 0 sambil melaporkan
- * sukses. Kode baru live di atas skema lama dan tidak ada satu pun pesan yang memberitahu; build
- * hijau, deploy hijau, dan yang pertama tahu adalah user yang layarnya error. Itu mode kegagalan
- * paling mahal di repo ini justru karena ia tidak terlihat di mana pun.
+ * tidak bisa dipastikan ia harus BERISIK — bukan dilewati diam-diam. Dengan begitu kode tidak bisa
+ * live di atas skema lama sementara build melaporkan sukses.
  */
 
 export type DeployDecision =
@@ -19,17 +16,6 @@ export type DeployDecision =
 
 /** Baca dari objek yang dikirim, bukan dari `process.env` langsung, supaya tiap cabang bisa diuji. */
 export function deployDecision(env: Record<string, string | undefined>): DeployDecision {
-  /** Vercel menjalankan build di SETIAP deploy, termasuk Preview. Tanpa penjaga ini setiap branch
-   * setengah jadi akan memigrasi database produksi. */
-  if (env.VERCEL) {
-    if (env.VERCEL_ENV === 'production') return { action: 'run', platform: 'Vercel' }
-    return {
-      action: 'skip',
-      platform: 'Vercel',
-      reason: `VERCEL_ENV=${env.VERCEL_ENV ?? '(kosong)'}, bukan production`,
-    }
-  }
-
   /** Render memakai `IS_PULL_REQUEST` untuk membedakan preview dari service sungguhan. Nilai yang
    * tidak terbaca sengaja MENGGAGALKAN build, bukan diasumsikan salah satunya: menebak `false`
    * berarti preview pull request boleh memigrasi database produksi, dan menebak `true` berarti
@@ -56,8 +42,8 @@ export function deployDecision(env: Record<string, string | undefined>): DeployD
   return {
     action: 'fail',
     reason:
-      'Platform deploy tidak dikenal — VERCEL maupun RENDER tidak terbaca di environment. ' +
-      'Migrasi otomatis menolak menebak. Jalankan `pnpm db:migrate` manual, atau tambahkan ' +
-      'platformnya ke scripts/deploy-gate.ts.',
+      'Platform deploy tidak dikenal — RENDER tidak terbaca di environment. ' +
+      'Migrasi otomatis menolak menebak. Jalankan `pnpm db:migrate` manual, atau periksa ' +
+      'environment build Render.',
   }
 }

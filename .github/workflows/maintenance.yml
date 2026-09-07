@@ -1,13 +1,11 @@
-# Pengganti Vercel Cron setelah pindah ke Render.
+# Pemicu maintenance terjadwal untuk service Render.
 #
-# Render plan Free tidak punya Cron Job maupun One-Off Job — keduanya fitur berbayar. Yang tersisa
-# sebagai pemicu terjadwal gratis adalah GitHub Actions, dan `/api/cron/maintenance` memang sudah
-# dirancang untuk dipanggil dari luar: ia cuma menuntut `Authorization: Bearer $CRON_SECRET` dan
-# tidak peduli siapa pemanggilnya.
+# Render plan Free tidak punya Cron Job maupun One-Off Job — keduanya fitur berbayar. GitHub Actions
+# memanggil endpoint yang dilindungi `Authorization: Bearer $CRON_SECRET`.
 name: Maintenance harian
 
 on:
-  # 12:00 UTC = 19:00 WIB, sama persis dengan jadwal di vercel.json.
+  # 12:00 UTC = 19:00 WIB.
   #
   # Jamnya BUKAN selera: `server/messaging/engagement.ts` hanya mengirim pesan antara 08:00-20:00
   # WIB. Jalan di luar rentang itu tetap menyelesaikan pembersihan dengan normal tapi tidak
@@ -30,18 +28,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          # INERT sampai cutover. Selama secret ini belum diisi, workflow berhenti di sini dengan
-          # sukses — bukan gagal. Selama Vercel Cron masih hidup, dua pemicu yang jalan bersamaan
-          # berarti maintenance dobel di hari yang sama; yang benar adalah workflow ini diam
-          # sampai Vercel benar-benar dimatikan.
           if [ -z "${CRON_TARGET_URL:-}" ]; then
-            echo "CRON_TARGET_URL belum diisi — maintenance dilewati (ini disengaja)."
-            echo "Isi secret itu dengan origin Render setelah Vercel Cron dimatikan."
-            exit 0
+            echo "::error::CRON_TARGET_URL belum diisi dengan origin Render."
+            exit 1
           fi
 
           if [ -z "${CRON_SECRET:-}" ]; then
-            echo "::error::CRON_TARGET_URL sudah diisi tapi CRON_SECRET belum. Endpoint-nya akan menjawab 401."
+            echo "::error::CRON_SECRET belum diisi. Endpoint maintenance akan menolak pemanggilan."
             exit 1
           fi
 

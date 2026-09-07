@@ -42,7 +42,7 @@ di situ masalahnya.
 
 ## Database
 
-Produksi pakai **Neon PostgreSQL**, app-nya di **Vercel** — sudah terdeploy, sudah ada datanya.
+Produksi pakai **Neon PostgreSQL**, app-nya di **Render** — sudah terdeploy, sudah ada datanya.
 Lihat `.env.example` untuk daftar lengkap env var.
 
 - **Jangan pernah menyarankan instal Postgres/Docker/DB lain.** Kalau perlu `DATABASE_URL` untuk
@@ -54,23 +54,23 @@ Lihat `.env.example` untuk daftar lengkap env var.
 - **Dua connection string, dua keperluan.** Runtime memakai endpoint *pooled* (`-pooler`);
   `pnpm db:migrate` memakai endpoint *langsung* lewat `DATABASE_URL_UNPOOLED`, karena
   `pg_advisory_lock` bersifat per-sesi dan pooler Neon berjalan di mode transaksi.
-- **Migrasi jalan sendiri, tapi hanya di deploy Production.** Vercel memakai script
-  `vercel-build`, yang menjalankan `scripts/migrate.ts --deploy` sebelum `next build`.
-  Flag `--deploy` itu penjaganya: migrasi dilewati kecuali `VERCEL_ENV=production`, karena
-  build ikut jalan di tiap deploy Preview dan branch setengah jadi tidak boleh memigrasi
-  database produksi. Jalur otomatis juga menolak jalan tanpa `DATABASE_URL_UNPOOLED` —
-  `pg_advisory_lock` tidak menjamin apa pun di pooler mode transaksi. Migrasi gagal =
-  build gagal, jadi kode tidak pernah live di atas skema yang belum siap.
-  `pnpm db:migrate` manual tidak membawa flag itu dan tetap jalan apa adanya.
+- **Migrasi jalan sendiri, tapi hanya di deploy Production.** Render memakai script
+  `deploy-build`, yang menjalankan `scripts/migrate.ts --deploy` sebelum `next build`.
+  Flag `--deploy` itu penjaganya: migrasi dilewati ketika `IS_PULL_REQUEST=true`, sedangkan
+  sinyal deployment yang kosong atau ambigu menggagalkan build agar branch setengah jadi tidak
+  memigrasi database produksi dan produksi tidak live di atas skema lama. Jalur otomatis juga
+  menolak jalan tanpa `DATABASE_URL_UNPOOLED` — `pg_advisory_lock` tidak menjamin apa pun di
+  pooler mode transaksi. Migrasi gagal = build gagal, jadi kode tidak pernah live di atas skema
+  yang belum siap. `pnpm db:migrate` manual tidak membawa flag itu dan tetap jalan apa adanya.
 - **Migrasi jalan sebelum kode barunya live.** Selama migrasinya aditif (tambah kolom,
   tambah tabel) itu aman. Migrasi yang merusak — drop/rename kolom yang masih dibaca kode
   lama — akan mematahkan deploy yang sedang berjalan di jendela itu, jadi pecah dua:
   tambah dulu, hapus di deploy berikutnya. Rollback deploy juga tidak me-rollback DB.
 - **Pekerjaan terjadwal lewat HTTP**, bukan proses terpisah: `app/api/cron/maintenance`,
   dijaga `CRON_SECRET`, isinya `server/ops/maintenance.ts`. `pnpm db:cleanup` menjalankan hal yang
-  persis sama dari CLI. Jadwalnya di `vercel.json` dan harus jatuh di dalam jam kirim
-  notifikasi (08:00–20:00 WIB, `server/messaging/engagement.ts`) — di luar itu pesan bot tidak terkirim
-  sama sekali.
+  persis sama dari CLI. Jadwalnya di `.github/workflows/maintenance.yml` dan harus jatuh di dalam
+  jam kirim notifikasi (08:00–20:00 WIB, `server/messaging/engagement.ts`) — di luar itu pesan bot
+  tidak terkirim sama sekali.
 
 ## Aturan keras
 

@@ -4,11 +4,10 @@ import { sweepFraudSignals } from '../task/fraud.ts'
 
 /** Angka-angka ini menyatakan kapan sebuah baris BERHENTI BERGUNA, bukan seberapa cepat ia
  * hilang. Yang menentukan yang kedua adalah jadwal sapuannya, dan jadwal yang benar-benar
- * terdaftar cuma satu: cron harian di `vercel.json` (plan Hobby membatasi cron bawaan ke sekali
- * sehari). Jadi `rate_limits` dan `used_init_data` — dua yang retensinya dihitung dalam jam —
- * pada praktiknya menahan sampai ±24 jam baris mati sebelum disapu, bukan 2 jam dan 1 jam.
- * Keduanya tetap murah dihapus karena kolom retensinya berindeks (`rate_limits_window_idx`,
- * `used_init_data_expires_idx`), dan tidak ada satu pun jalur baca yang terganggu baris mati:
+ * terdaftar cuma satu: workflow harian di `.github/workflows/maintenance.yml`. Jadi `rate_limits`
+ * dan `used_init_data` — dua yang retensinya dihitung dalam jam — pada praktiknya menahan sampai
+ * ±24 jam baris mati sebelum disapu, bukan 2 jam dan 1 jam. Keduanya tetap murah dihapus karena
+ * kolom retensinya berindeks (`rate_limits_window_idx`, `used_init_data_expires_idx`), dan tidak ada satu pun jalur baca yang terganggu baris mati:
  * `checkRateLimit` memilih per `window_start` yang tepat, dan `verifyInitData` sudah menolak
  * payload kedaluwarsa lebih dulu lewat umurnya sendiri. Yang dibayar hanya penyimpanan.
  *

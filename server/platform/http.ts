@@ -1,3 +1,4 @@
+import { isIP } from 'node:net'
 import { env } from './env'
 import { BannedError, UnauthorizedError } from '../auth/session'
 import { RateLimitedError } from './ratelimit'
@@ -68,20 +69,14 @@ export function rateLimited(retryAfter: number): Response {
   )
 }
 
-const IP_SHAPE = /^(?:\d{1,3}(?:\.\d{1,3}){3}|[0-9a-f:]{2,45})$/i
-
-/** Yang dipercaya adalah header yang DITULIS platform, bukan yang dikirim pemanggil.
- * `x-vercel-forwarded-for` diisi Vercel sendiri dan tidak bisa dikarang klien, jadi ia dibaca
- * lebih dulu. `x-forwarded-for` baru dipakai sebagai cadangan — dan entri paling kirinya adalah
- * nilai yang benar HANYA selama proxy di depan menimpanya, seperti yang Vercel lakukan; di
- * belakang proxy yang menambahkan alih-alih menimpa, nilai itu berasal dari klien. Plafon
- * per-IP di `/api/auth/telegram` dan `/api/admin/login` bersandar pada asumsi ini. */
+/** Render berada pada hop terminal rantai `x-forwarded-for`, sedangkan nilai di sebelah kiri dapat
+ * berasal dari pemanggil. Rate limit hanya memakai alamat terminal yang valid; header kosong atau
+ * rusak masuk bucket bersama agar nilai yang tidak tepercaya tidak menjadi key arbitrer. */
 export function clientIp(request: Request): string {
-  const platform = request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim()
-  const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-  const candidate = platform || forwarded || request.headers.get('x-real-ip')?.trim() || ''
+  const forwarded = request.headers.get('x-forwarded-for') ?? ''
+  const candidate = forwarded.split(',').at(-1)?.trim() ?? ''
   if (!candidate) return 'unknown'
-  return IP_SHAPE.test(candidate) ? candidate.toLowerCase() : 'malformed'
+  return isIP(candidate) ? candidate.toLowerCase() : 'malformed'
 }
 
 export function handleRouteError(error: unknown): Response {

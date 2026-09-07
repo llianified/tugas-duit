@@ -23,8 +23,7 @@ function sslConfig() {
   return { rejectUnauthorized: true }
 }
 
-/** Di server yang hidup terus, satu proses melayani semua request sehingga pool besar terbayar. Di serverless tiap instance punya pool sendiri dan jumlah instance yang hidup bersamaan tidak kita kendalikan, jadi pool besar mengalikan koneksi menganggur sampai batas Neon habis. Kecilkan di sana, dan sandarkan penggabungannya pada connection pooler Neon (host ber-`-pooler`), bukan pada pool di dalam proses ini. */
-const SERVERLESS_MAX_CLIENTS = 3
+/** Render menjalankan satu proses yang hidup terus, jadi pool proses dapat dipakai bersama semua request. Endpoint runtime tetap connection pooler Neon (host ber-`-pooler`) agar koneksi backend tidak membengkak saat service berganti instance. */
 const LONG_LIVED_MAX_CLIENTS = 10
 
 /** Connection pooler Neon memakai transaction pooling: satu koneksi backend dipakai ulang oleh banyak klien. Akibatnya `set` tingkat sesi yang tertinggal dari klien lain — sesi psql/agen yang lupa `reset`, misalnya — ikut terbawa ke request kita. Yang paling mematikan `default_transaction_read_only = on`: seluruh write gagal dengan 25006 tanpa satu baris kode pun berubah, dan `select` tetap jalan sehingga health check ikut menipu. Menaruhnya di startup packet (`options: '-c ...'`) ditolak pooler-nya, jadi satu- satunya jalan adalah menegaskan ulang lewat `set` tiap koneksi baru terbentuk. Murah: sekali per koneksi fisik, bukan per query. */
@@ -45,10 +44,7 @@ function getPool(): Pool {
   const cached = globalForDb.pool ?? localPool
   if (cached) return cached
 
-  const created = createPool(
-    env.databaseUrl,
-    process.env.VERCEL ? SERVERLESS_MAX_CLIENTS : LONG_LIVED_MAX_CLIENTS,
-  )
+  const created = createPool(env.databaseUrl, LONG_LIVED_MAX_CLIENTS)
 
   localPool = created
   if (process.env.NODE_ENV !== 'production') globalForDb.pool = created

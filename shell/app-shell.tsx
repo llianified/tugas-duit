@@ -163,6 +163,7 @@ function AppShellInner() {
               user={session.user}
               stats={session.stats}
               premium={session.premium}
+              frame={session.cosmetics.frame}
               showProfile={effectiveView !== 'captcha'}
               taskDifficulty={activeChallenge?.difficulty ?? null}
               taskReward={liveTaskReward}
@@ -182,6 +183,7 @@ function AppShellInner() {
             <NavPill
               activeView={effectiveView}
               photoUrl={session.user?.photoUrl ?? null}
+              frame={session.cosmetics.frame}
               missionsNeedAttention={session.missionsNeedAttention}
               onSelect={session.selectView}
             />

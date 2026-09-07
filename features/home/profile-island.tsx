@@ -1,6 +1,7 @@
 'use client'
 
 import { IslandDivider, IslandPill, IslandStat } from '@/features/home/island-pill'
+import type { CosmeticKey } from '@/domain/store/cosmetics'
 import { ProfileAvatar } from '@/shared/components/profile-avatar'
 import type { UserStats } from '@/domain/progression/stats'
 import type { PremiumState, SessionResponse } from '@/shell/session-api'
@@ -14,6 +15,7 @@ export function ProfileIsland({
   user,
   stats,
   premium = null,
+  frame = null,
   isOpen,
   promoted = false,
   onToggle,
@@ -23,6 +25,11 @@ export function ProfileIsland({
   user: SessionUser
   stats: UserStats
   premium?: PremiumState | null
+  /** Bingkai yang sedang dipakai. Avatar di pill ini yang paling sering dilihat pemiliknya sendiri
+   * — papan peringkat bisa kosong sepanjang musim, pill ini tidak pernah — jadi di sinilah bingkai
+   * yang sudah dibayar paling perlu terbaca. Tata letak pill tidak bergeser: bingkainya padding ke
+   * dalam, ukuran luar avatarnya tetap `--brand-pill-h` dikurangi 2px seperti sebelumnya. */
+  frame?: CosmeticKey | null
   isOpen: boolean
   /** Saat island lain terbuka, pill ini yang mengisi pita: pindah ke tengah dan melebar jadi kapsul bernama. */
   promoted?: boolean
@@ -41,6 +48,7 @@ export function ProfileIsland({
         <span className="flex min-w-0 items-center">
           <ProfileAvatar
             photoUrl={user.photoUrl}
+            frame={frame}
             className="island-pill-avatar"
             glyphClassName="size-4"
           />
@@ -66,7 +74,12 @@ export function ProfileIsland({
       <IslandStat
         label={
           <span className="flex min-w-0 items-center gap-2">
-            <ProfileAvatar photoUrl={user.photoUrl} className="size-5" glyphClassName="size-3" />
+            <ProfileAvatar
+              photoUrl={user.photoUrl}
+              frame={frame}
+              className="size-5"
+              glyphClassName="size-3"
+            />
             <span className="truncate text-xs font-semibold text-foreground">
               {user.firstName}
             </span>

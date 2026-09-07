@@ -120,6 +120,10 @@ export function AppViewRouter({
         onClaimed={session.refreshSession}
         onOpenArcade={session.openArcade}
         referralShareUrl={session.referralShareUrl}
+        storeViewer={{
+          firstName: session.user?.firstName || 'Kamu',
+          photoUrl: session.user?.photoUrl ?? null,
+        }}
       />
     )
   }

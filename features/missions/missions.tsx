@@ -8,7 +8,7 @@ import { ArcadeCard } from '@/features/arcade/arcade-card'
 import { TurboRewardCard } from '@/features/home/turbo-reward-card'
 import { MissionCard } from '@/features/missions/mission-card'
 import { StoreCard } from '@/features/store/store-card'
-import { StoreSheet } from '@/features/store/store-sheet'
+import { StoreSheet, type StoreViewer } from '@/features/store/store-sheet'
 import { PageHeader } from '@/shared/components/page-header'
 import { VIEW_TITLE } from '@/navigation/app-view'
 
@@ -23,6 +23,7 @@ export function MissionsView({
   onClaimed,
   onOpenArcade,
   referralShareUrl,
+  storeViewer,
 }: {
   refreshKey: number
   economy: EconomyConfig
@@ -33,6 +34,9 @@ export function MissionsView({
   onClaimed: () => Promise<unknown>
   onOpenArcade: () => void
   referralShareUrl: string
+  /** Cuma diteruskan ke lembar toko, yang memakainya untuk menggambar pratinjau kosmetik dengan
+   * avatar user sendiri. */
+  storeViewer: StoreViewer
 }) {
   const [storeOpen, setStoreOpen] = useState(false)
   const turboReachable = economy.turboRewardEnabled === 1
@@ -92,7 +96,12 @@ export function MissionsView({
       <div className="flex-1" />
 
       {storeReachable ? (
-        <StoreSheet open={storeOpen} onOpenChange={setStoreOpen} onBought={onClaimed} />
+        <StoreSheet
+          open={storeOpen}
+          onOpenChange={setStoreOpen}
+          onBought={onClaimed}
+          viewer={storeViewer}
+        />
       ) : null}
     </div>
   )

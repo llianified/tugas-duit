@@ -1756,6 +1756,64 @@
     animation: premium-glint 4.5s ease-in-out infinite;
   }
 
+  /* Bingkai kosmetik yang bergerak. Bingkai satu-satunya barang toko yang tidak menambah satu pun
+     credit — yang dibayar orang murni penampakannya — dan gradien DIAM setebal 2px praktis tidak
+     terbaca sebagai barang berbayar, apalagi pada avatar 1.5rem di nav pill. Yang digeser
+     `background-position` di atas gradien yang ukurannya dilebihkan, bukan `background-image` yang
+     dirakit ulang: gradiennya tetap satu dan tinggal digeser, jadi tidak ada gradien baru yang
+     harus dihitung ulang tiap frame di WebView Telegram. Warnanya TIDAK di sini — gradien dan
+     warna cahayanya datang dari `shared/components/profile-avatar.tsx`, satu-satunya tempat yang
+     tahu bingkai mana berwarna apa. */
+  .cos-frame {
+    position: relative;
+    background-size: 220% 220%;
+    animation: cos-frame-drift var(--cos-frame-dur, 6s) ease-in-out infinite;
+  }
+  @keyframes cos-frame-drift {
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+  .cos-frame-emas {
+    --cos-frame-dur: 3.6s;
+  }
+  .cos-frame-langit {
+    --cos-frame-dur: 7s;
+  }
+  .cos-frame-zamrud {
+    --cos-frame-dur: 5.5s;
+  }
+  /* Api satu-satunya yang tidak cuma bergeser: nyala yang tenang bukan nyala.
+     Kedipnya `box-shadow` dan bukan `filter` — filter ikut mengenai seluruh isi lingkaran, jadi
+     foto orangnya yang ikut terang-redup. Dan ia digambar di lapisan sendiri, bukan di avatarnya:
+     avatar yang sama sudah memakai `box-shadow` untuk ring premium dan ring peringkat, dan animasi
+     menang atas deklarasi biasa berapa pun spesifisitasnya — kedipnya akan MENGHAPUS ring itu di
+     tiap frame. */
+  .cos-frame-api {
+    --cos-frame-dur: 1.9s;
+  }
+  .cos-frame-api::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 9999px;
+    pointer-events: none;
+    animation: cos-frame-flicker 2.6s ease-in-out infinite;
+  }
+  @keyframes cos-frame-flicker {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+    45% {
+      box-shadow: 0 0 7px 1px var(--cos-frame-glow, transparent);
+    }
+  }
+
   .channel-popup {
     transition:
       opacity 120ms ease-out,
@@ -1808,6 +1866,14 @@
     .premium-sheen::after,
     .premium-glint,
     .token-beat {
+      animation: none;
+    }
+    /* Bingkainya tetap tergambar — itu barang yang dibayar — cuma berhenti bergerak. */
+    .cos-frame {
+      animation: none;
+      background-position: 50% 50%;
+    }
+    .cos-frame-api::after {
       animation: none;
     }
     /* Bingkisan tetap terbaca sebagai bingkisan yang SUDAH dibuka: tutupnya lepas dan angkanya

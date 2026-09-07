@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import type { CosmeticKey } from '@/domain/store/cosmetics'
-import { cosmetic } from '@/domain/store/cosmetics'
+import { cosmetic, titleLabel } from '@/domain/store/cosmetics'
 import type { StoreItem, StoreSection } from '@/domain/store/store'
 import {
   itemBlocker,
@@ -27,6 +27,7 @@ import {
   GlyphWithdraw,
 } from '@/shared/components/glyph'
 import { MetaBadge } from '@/shared/components/meta-badge'
+import { ProfileAvatar } from '@/shared/components/profile-avatar'
 import { QrisPanel } from '@/shared/components/qris-panel'
 import { SectionLabel } from '@/shared/components/section-label'
 import { SheetIcon } from '@/shared/components/sheet-icon'
@@ -49,30 +50,47 @@ const SECTION_LABEL: Record<StoreSection, string> = {
 
 const SECTION_ORDER: StoreSection[] = ['boost', 'cosmetic']
 
+/** Pemilik akun yang sedang berdiri di depan rak. Dipakai HANYA oleh pratinjau kosmetik, dan
+ * dioper dari sesi alih-alih ikut menumpang `/api/store`: yang dibutuhkan cuma dua nilai yang
+ * sudah ada di payload sesi, dan menambahkannya ke potret toko berarti mengubah kontrak API untuk
+ * data yang klien sudah pegang. */
+export interface StoreViewer {
+  firstName: string
+  photoUrl: string | null
+}
+
 /** Lembar bawah, sama seperti premium dan misi sosial: yang dilakukan di sini dipilih lalu
  * dikonfirmasi, dua aksi yang berakhir di jempol. */
 export function StoreSheet({
   open,
   onOpenChange,
   onBought,
+  viewer,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onBought: () => Promise<unknown>
+  viewer: StoreViewer
 }) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Backdrop className="animate-in fade-in data-[ending-style]:animate-out data-[ending-style]:fade-out fixed inset-0 z-40 bg-scrim duration-150" />
         <Dialog.Popup className="sheet-popup">
-          <StoreSheetBody onBought={onBought} />
+          <StoreSheetBody onBought={onBought} viewer={viewer} />
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
   )
 }
 
-function StoreSheetBody({ onBought }: { onBought: () => Promise<unknown> }) {
+function StoreSheetBody({
+  onBought,
+  viewer,
+}: {
+  onBought: () => Promise<unknown>
+  viewer: StoreViewer
+}) {
   const { store, busy, payment, order, buy, payWithCash, equip, refreshOrder, closeOrder } =
     useStore({ onBought })
   const showToast = useToast()
@@ -157,6 +175,7 @@ function StoreSheetBody({ onBought }: { onBought: () => Promise<unknown> }) {
         ) : (
           <Rack
             store={store}
+            viewer={viewer}
             busy={busy}
             payment={payment}
             onBuy={(key) => void buy(key)}
@@ -213,6 +232,7 @@ function PaymentFoot({
  * sendiri, keduanya jelas menjawab pertanyaan yang berbeda. */
 function Rack({
   store,
+  viewer,
   busy,
   payment,
   onBuy,
@@ -220,6 +240,7 @@ function Rack({
   onEquip,
 }: {
   store: StoreSnapshot
+  viewer: StoreViewer
   busy: string | null
   payment: 'credits' | 'cash'
   onBuy: (key: StoreItem['key']) => void
@@ -243,6 +264,7 @@ function Rack({
                   key={item.key}
                   item={item}
                   store={store}
+                  viewer={viewer}
                   busy={busy === item.key}
                   payment={payment}
                   onBuy={() => onBuy(item.key)}
@@ -301,6 +323,7 @@ function itemGlyph(item: StoreItem) {
 function StoreRow({
   item,
   store,
+  viewer,
   busy,
   payment,
   onBuy,
@@ -309,6 +332,7 @@ function StoreRow({
 }: {
   item: StoreItem
   store: StoreSnapshot
+  viewer: StoreViewer
   busy: boolean
   payment: 'credits' | 'cash'
   onBuy: () => void
@@ -319,6 +343,7 @@ function StoreRow({
     item.effect.kind === 'cosmetic' && store.owned.includes(item.effect.cosmetic)
       ? item.effect.cosmetic
       : null
+  const preview = item.effect.kind === 'cosmetic' ? item.effect.cosmetic : null
 
   return (
     <li>
@@ -342,6 +367,8 @@ function StoreRow({
           ) : null}
         </div>
 
+        {preview ? <CosmeticPreview cosmeticKey={preview} viewer={viewer} /> : null}
+
         {owned ? (
           <EquipRow cosmeticKey={owned} store={store} onEquip={onEquip} />
         ) : (
@@ -356,6 +383,39 @@ function StoreRow({
         )}
       </Surface>
     </li>
+  )
+}
+
+/** Barangnya sendiri, bukan ikonnya. Sebelum ini tujuh kosmetik dijual dengan dua ikon abu-abu
+ * yang sama — satu siluet orang untuk semua bingkai, satu piala untuk semua gelar — jadi tidak ada
+ * satu pun cara mengetahui bedanya Bingkai Api dan Bingkai Zamrud sebelum salah satunya dibayar.
+ * Untuk barang yang seluruh nilainya penampakan, itu menjual sesuatu yang tidak diperlihatkan.
+ *
+ * Bentuknya sengaja meniru satu baris papan peringkat — avatar, nama, chip gelar — karena di
+ * situlah barangnya nanti dipakai orang lain melihatnya. Fotonya foto user sendiri: yang membuat
+ * bingkai laku bukan gradiennya melainkan gradien itu di sekeliling wajahnya sendiri. */
+function CosmeticPreview({
+  cosmeticKey,
+  viewer,
+}: {
+  cosmeticKey: CosmeticKey
+  viewer: StoreViewer
+}) {
+  const label = titleLabel(cosmeticKey)
+
+  return (
+    <div className="mt-3 flex items-center gap-2.5 rounded-lg bg-track-surface px-2.5 py-2">
+      <ProfileAvatar
+        photoUrl={viewer.photoUrl}
+        frame={cosmetic(cosmeticKey).kind === 'frame' ? cosmeticKey : null}
+        className="size-9"
+        glyphClassName="size-4"
+      />
+      <span className="flex min-w-0 items-center gap-1.5 text-[13px] font-semibold tracking-tight text-foreground">
+        <span className="truncate">{viewer.firstName}</span>
+        {label ? <MetaBadge tone="neutral">{label}</MetaBadge> : null}
+      </span>
+    </div>
   )
 }
 

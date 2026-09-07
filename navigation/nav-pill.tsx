@@ -1,6 +1,7 @@
 'use client'
 
 import type { CSSProperties, ReactNode } from 'react'
+import type { CosmeticKey } from '@/domain/store/cosmetics'
 import { hapticSelect } from '@/shared/lib/haptic'
 import { GlyphBolt, GlyphHome, GlyphTrophy, GlyphUsers } from '@/shared/components/glyph'
 import { ProfileAvatar } from '@/shared/components/profile-avatar'
@@ -26,11 +27,17 @@ const NAV_SLOTS: readonly NavSlot[] = [
 export function NavPill({
   activeView,
   photoUrl,
+  frame = null,
   missionsNeedAttention,
   onSelect,
 }: {
   activeView: AppView
   photoUrl: string | null
+  /** Bingkai yang dipakai user. Slot Profil adalah avatar miliknya sendiri yang paling sering ia
+   * lihat, jadi bingkai yang tidak sampai ke sini membuat barang yang sudah dibayar terasa tidak
+   * pernah datang. Ukuran slotnya tidak berubah — `ProfileAvatar` menggambar bingkai sebagai
+   * padding ke dalam, bukan border. */
+  frame?: CosmeticKey | null
   missionsNeedAttention: boolean
   onSelect: (view: AppView) => void
 }) {
@@ -54,6 +61,7 @@ export function NavPill({
             slot={slot}
             activeView={visualActiveView}
             photoUrl={photoUrl}
+            frame={frame}
             missionsNeedAttention={missionsNeedAttention}
             onSelect={onSelect}
           />
@@ -83,12 +91,14 @@ function NavPillItem({
   slot,
   activeView,
   photoUrl,
+  frame,
   missionsNeedAttention,
   onSelect,
 }: {
   slot: NavSlot
   activeView: AppView
   photoUrl: string | null
+  frame: CosmeticKey | null
   missionsNeedAttention: boolean
   onSelect: (view: AppView) => void
 }) {
@@ -116,6 +126,7 @@ function NavPillItem({
         ) : (
           <ProfileAvatar
             photoUrl={photoUrl}
+            frame={frame}
             className="nav-pill-avatar"
             glyphClassName="size-4"
           />

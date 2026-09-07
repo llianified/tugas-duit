@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import type { CosmeticKey } from '@/domain/store/cosmetics'
 import type { Difficulty } from '@/domain/task/challenge'
 import type { EnergyFill } from '@/domain/economy/energy'
 import { getStarReward } from '@/domain/progression/stars'
@@ -16,6 +17,7 @@ export function ProgressionBadges({
   user = null,
   stats = null,
   premium = null,
+  frame = null,
   showProfile = false,
   taskDifficulty = null,
   taskReward = null,
@@ -32,6 +34,8 @@ export function ProgressionBadges({
   user?: SessionResponse['user']
   stats?: UserStats | null
   premium?: PremiumState | null
+  /** Diteruskan apa adanya ke `ProfileIsland`; komponen ini cuma jalannya. */
+  frame?: CosmeticKey | null
   showProfile?: boolean
   taskDifficulty?: Difficulty | null
   taskReward?: number | null
@@ -68,6 +72,7 @@ export function ProgressionBadges({
           user={user}
           stats={stats}
           premium={premium}
+          frame={frame}
           isOpen={profileOpen}
           promoted={rankOpen || difficultyOpen}
           onToggle={() => setOpenPanel(profileOpen ? null : 'profile')}

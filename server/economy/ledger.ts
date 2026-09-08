@@ -1,5 +1,5 @@
 import type { PoolClient } from 'pg'
-import { transaction } from '../platform/db'
+import { transaction } from '../platform/db.ts'
 type LedgerKind = 'task'|'commission'|'withdrawal_hold'|'withdrawal_refund'|'adjustment'|'purchase'
 
 export async function appendLedger(tx: PoolClient, entry: { userId:number; kind:LedgerKind; amount:number; idempotencyKey:string; referenceId?:string; note?:string }): Promise<{ balance:number; ledgerId:number }> {

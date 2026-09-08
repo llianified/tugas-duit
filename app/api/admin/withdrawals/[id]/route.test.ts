@@ -79,4 +79,19 @@ describe('PATCH /api/admin/withdrawals/:id', () => {
     expect(response.status).toBe(409)
     await expect(response.json()).resolves.toMatchObject({ error: { code: 'ALREADY_SETTLED' } })
   })
+
+  it('tidak mengirim notifikasi ketika Premium kedaluwarsa dan withdrawal dihapus', async () => {
+    mocks.requireUser.mockResolvedValue({ id: 7, isAdmin: true })
+    const { PayoutError } = await import('@/server/payout/payout')
+    mocks.settlePayout.mockRejectedValue(new PayoutError('PREMIUM_EXPIRED_REFUNDED', 409))
+
+    const response = await PATCH(request({ action: 'paid' }), context)
+
+    expect(response.status).toBe(409)
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: 'PREMIUM_EXPIRED_REFUNDED' },
+    })
+    expect(mocks.notifyWithdrawalPaid).not.toHaveBeenCalled()
+    expect(mocks.notifyWithdrawalRejected).not.toHaveBeenCalled()
+  })
 })

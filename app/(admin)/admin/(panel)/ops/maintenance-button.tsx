@@ -9,6 +9,7 @@ type Summary = {
   challenges: number
   rateLimits: number
   sessions: number
+  inactivePremiumWithdrawals: number
   balanceDrift: number
   notified: Record<string, number>
 }
@@ -51,6 +52,7 @@ export function MaintenanceButton() {
       {summary ? (
         <dl className="grid grid-cols-2 gap-2 text-sm">
           <Fact label="Selisih saldo" value={formatCredits(summary.balanceDrift)} urgent={summary.balanceDrift > 0} />
+          <Fact label="Penarikan direfund" value={formatCredits(summary.inactivePremiumWithdrawals)} />
           <Fact label="Soal dihapus" value={formatCredits(summary.challenges)} />
           <Fact label="Sesi dihapus" value={formatCredits(summary.sessions)} />
           <Fact

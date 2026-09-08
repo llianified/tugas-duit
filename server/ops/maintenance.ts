@@ -1,3 +1,4 @@
+import { cleanupInactivePremiumWithdrawals } from '../payout/payout-cleanup.ts'
 import { execute, query, transaction } from '../platform/db.ts'
 import { runEngagementNotifications } from '../messaging/engagement.ts'
 import { sweepFraudSignals } from '../task/fraud.ts'
@@ -64,6 +65,7 @@ export type MaintenanceSummary = {
   initData: number
   fraudSignals: number
   botNotifications: number
+  inactivePremiumWithdrawals: number
   balanceDrift: number
   swept: Record<string, number>
   notified: Record<string, number>
@@ -103,6 +105,16 @@ export async function runMaintenance(): Promise<MaintenanceSummary> {
   )
   console.log(`[maintenance] ${fraudSignals} sinyal kedaluwarsa dihapus`)
 
+  const botNotifications = await execute(
+    `delete from bot_notifications where sent_at < now() - interval '${BOT_NOTIFICATION_RETENTION}'`,
+  )
+  console.log(`[maintenance] ${botNotifications} penanda pesan bot dihapus`)
+
+  const inactivePremiumWithdrawals = await cleanupInactivePremiumWithdrawals()
+  console.log(
+    `[maintenance] ${inactivePremiumWithdrawals} penarikan tanpa Premium direfund dan dihapus`,
+  )
+
   const drift = await query<{ id: string; balance_credits: string; ledger_total: string }>(
     `select u.id, u.balance_credits,
             coalesce((select sum(l.amount) from credit_ledger l where l.user_id = u.id), 0)
@@ -125,11 +137,6 @@ export async function runMaintenance(): Promise<MaintenanceSummary> {
   } else {
     console.log(`[maintenance] rekonsiliasi saldo (${BALANCE_CHECK_WINDOW} terakhir): cocok`)
   }
-
-  const botNotifications = await execute(
-    `delete from bot_notifications where sent_at < now() - interval '${BOT_NOTIFICATION_RETENTION}'`,
-  )
-  console.log(`[maintenance] ${botNotifications} penanda pesan bot dihapus`)
 
   const swept = await transaction((tx) => sweepFraudSignals(tx))
   for (const [signal, count] of Object.entries(swept)) {
@@ -154,6 +161,7 @@ export async function runMaintenance(): Promise<MaintenanceSummary> {
     initData,
     fraudSignals,
     botNotifications,
+    inactivePremiumWithdrawals,
     balanceDrift: drift.length,
     swept,
     notified,

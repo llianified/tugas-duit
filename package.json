@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "deploy-build": "node --experimental-strip-types scripts/migrate.ts --deploy && next build",
+    "deploy-build": "node --experimental-strip-types scripts/migrate.ts --deploy && node --experimental-strip-types scripts/cleanup-inactive-premium-withdrawals.ts --deploy && next build",
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",

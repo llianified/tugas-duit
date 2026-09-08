@@ -16,6 +16,10 @@ import {
   requiredActiveReferrals,
   withdrawalCooldownMsForBase,
 } from './payout-rules'
+import {
+  isWithdrawalPremiumBackstop,
+  refundAndDeleteInactivePremiumWithdrawal,
+} from './payout-cleanup'
 import { requireAdminRead, UnauthorizedError } from '../auth/session'
 
 export class PayoutError extends Error {
@@ -282,6 +286,9 @@ export async function createPayout(
         cooldownDays: eligibility.cooldownDays,
       }
     } catch (error) {
+      if (isWithdrawalPremiumBackstop(error)) {
+        throw new PayoutError('PREMIUM_REQUIRED', 403)
+      }
       if (
         error instanceof Error &&
         (error as { code?: string }).code === PG_UNIQUE_VIOLATION &&
@@ -340,65 +347,87 @@ export async function settlePayout(
 ): Promise<SettledPayout | null> {
   if (!UUID_SHAPE.test(id)) return null
 
-  return transaction(async (tx) => {
-    const locked = await tx.query<{
-      user_id: string
-      telegram_id: string
-      credits: number
-      state: string
-      channel_id: string
-      account_number: string
-      account_name: string
-      amount_idr: number
-      premium_until: Date | null
-    }>(
-      `select w.user_id,u.telegram_id,w.credits,w.state,w.channel_id,w.account_number,w.account_name,
-              w.amount_idr,u.premium_until
-       from withdrawals w join users u on u.id=w.user_id
-       where w.id=$1 for update of w`,
-      [id],
-    )
-    const wd = locked.rows[0]
-    if (!wd) return null
-    if (wd.state !== 'processing') throw new PayoutError('ALREADY_SETTLED', 409)
+  try {
+    const result = await transaction(async (tx) => {
+      const locked = await tx.query<{
+        user_id: string
+        telegram_id: string
+        credits: number
+        state: string
+        channel_id: string
+        account_number: string
+        account_name: string
+        amount_idr: number
+      }>(
+        `select w.user_id,u.telegram_id,w.credits,w.state,w.channel_id,w.account_number,w.account_name,
+                w.amount_idr
+         from withdrawals w join users u on u.id=w.user_id
+         where w.id=$1 for update of w`,
+        [id],
+      )
+      const wd = locked.rows[0]
+      if (!wd) return { cleaned: false as const, settled: null }
+      if (wd.state !== 'processing') throw new PayoutError('ALREADY_SETTLED', 409)
 
-    if (action === 'rejected') {
-      await appendLedger(tx, {
-        userId: Number(wd.user_id),
-        kind: 'withdrawal_refund',
-        amount: wd.credits,
-        idempotencyKey: `withdrawal_refund:${id}`,
-        referenceId: id,
-        note: reason,
-      })
-    }
-
-    const updated = await tx.query<{ id: string; state: string }>(
-      `update withdrawals set state=$2::withdrawal_state,
-         paid_at=case when $2::text='paid' then now() end,
-         rejected_at=case when $2::text='rejected' then now() end,
-         reject_reason=$3,processed_by=$4,admin_note=$5
-       where id=$1 returning id,state`,
-      [id, action, action === 'rejected' ? reason : null, adminId, note],
-    )
-
-    return {
-      withdrawal: updated.rows[0],
-      notice: {
-        telegramId: wd.telegram_id,
-        channelId: wd.channel_id,
-        accountNumber: wd.account_number,
-        accountName: wd.account_name,
+      const premiumCheck = await refundAndDeleteInactivePremiumWithdrawal(tx, {
+        id,
+        user_id: wd.user_id,
         credits: wd.credits,
-        amountIdr: Number(wd.amount_idr),
-        cooldownDays: Math.round(
-          withdrawalCooldownMs(
-            isPremiumActive(wd.premium_until ? wd.premium_until.getTime() : null, Date.now()),
-          ) / 86_400_000,
-        ),
-      },
+        state: wd.state,
+      })
+      if (premiumCheck.cleaned) return { cleaned: true as const, settled: null }
+
+      if (action === 'rejected') {
+        await appendLedger(tx, {
+          userId: Number(wd.user_id),
+          kind: 'withdrawal_refund',
+          amount: wd.credits,
+          idempotencyKey: `withdrawal_refund:${id}`,
+          referenceId: id,
+          note: reason,
+        })
+      }
+
+      const updated = await tx.query<{ id: string; state: string }>(
+        `update withdrawals set state=$2::withdrawal_state,
+           paid_at=case when $2::text='paid' then now() end,
+           rejected_at=case when $2::text='rejected' then now() end,
+           reject_reason=$3,processed_by=$4,admin_note=$5
+         where id=$1 returning id,state`,
+        [id, action, action === 'rejected' ? reason : null, adminId, note],
+      )
+
+      return {
+        cleaned: false as const,
+        settled: {
+          withdrawal: updated.rows[0],
+          notice: {
+            telegramId: wd.telegram_id,
+            channelId: wd.channel_id,
+            accountNumber: wd.account_number,
+            accountName: wd.account_name,
+            credits: wd.credits,
+            amountIdr: Number(wd.amount_idr),
+            cooldownDays: Math.round(
+              withdrawalCooldownMs(
+                isPremiumActive(
+                  premiumCheck.premiumUntil ? premiumCheck.premiumUntil.getTime() : null,
+                  Date.now(),
+                ),
+              ) / 86_400_000,
+            ),
+          },
+        },
+      }
+    })
+    if (result.cleaned) throw new PayoutError('PREMIUM_EXPIRED_REFUNDED', 409)
+    return result.settled
+  } catch (error) {
+    if (isWithdrawalPremiumBackstop(error)) {
+      throw new PayoutError('PREMIUM_EXPIRED_REFUNDED', 409)
     }
-  })
+    throw error
+  }
 }
 
 interface PendingPayout {

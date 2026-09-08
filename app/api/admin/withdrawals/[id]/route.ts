@@ -12,6 +12,7 @@ export const dynamic = 'force-dynamic'
 
 const MESSAGE: Record<string, string> = {
   ALREADY_SETTLED: 'Pengajuan sudah diproses.',
+  PREMIUM_EXPIRED_REFUNDED: 'Premium user tidak aktif. Saldo sudah dikembalikan dan pengajuan dihapus.',
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {

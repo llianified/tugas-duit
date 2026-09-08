@@ -503,8 +503,8 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
   },
   {
     key: 'withdrawalRequiresPremium', group: 'withdrawal', label: 'Wajib premium untuk menarik', unit: '0/1',
-    description: 'Saat menyala, penarikan hanya bisa diajukan user dengan premium aktif. Syaratnya ditampilkan sejak awal bersama dua syarat lain, bukan baru muncul di langkah terakhir — user yang sudah mengumpulkan saldo dan mengajak lima teman lalu menemukan syarat berbayar yang belum pernah disebut tidak akan membacanya sebagai penawaran.',
-    impact: 'Menyalakannya menutup penarikan untuk semua user non-premium, termasuk yang saldonya sudah lewat ambang. Isi 0 untuk membukanya kembali tanpa deploy.',
+    description: 'Saat menyala, premium wajib tetap aktif sejak pengajuan sampai admin membayar. Pengajuan pending yang kehilangan premium direfund tanpa notifikasi lalu dihapus dari riwayat penarikan.',
+    impact: 'Menyalakannya menutup penarikan untuk semua user non-premium, termasuk yang saldonya sudah lewat ambang, serta mengembalikan dan menghapus pengajuan pending mereka pada maintenance/deploy berikutnya. Isi 0 untuk membuka kebijakan lama kembali tanpa deploy.',
     min: 0, max: 1, riskyWhen: 'higher',
   },
   {

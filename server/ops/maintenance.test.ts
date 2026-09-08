@@ -29,6 +29,7 @@ describe('MAINT-1 — seluruh pernyataan pemeliharaan jalan di database', () => 
       initData: expect.any(Number),
       fraudSignals: expect.any(Number),
       botNotifications: expect.any(Number),
+      inactivePremiumWithdrawals: expect.any(Number),
       balanceDrift: expect.any(Number),
     })
   /** Tenggat panjang karena ini menjalankan SATU putaran pemeliharaan penuh atas database uji yang tidak pernah dikosongkan antar-run: tujuh tabel disapu, dan biayanya naik seiring baris yang ditinggalkan run-run sebelumnya. Tenggat bawaan 5 detik membuat test ini lulus di mesin bersih lalu gagal beberapa run kemudian tanpa ada kode yang berubah — kegagalan yang tidak menunjukkan apa pun selain umur direktori datanya. */

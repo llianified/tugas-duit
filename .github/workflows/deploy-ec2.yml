@@ -21,7 +21,6 @@ jobs:
           set -e
           echo "$SSH_KEY_B64" | base64 -d > "$RUNNER_TEMP/deploy_key"
           chmod 600 "$RUNNER_TEMP/deploy_key"
-
           ssh-keygen -y -f "$RUNNER_TEMP/deploy_key" > /dev/null
 
       - name: Deploy to EC2

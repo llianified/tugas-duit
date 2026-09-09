@@ -6,7 +6,7 @@ function required(name: string): string {
 
 export const env = {
   get databaseUrl() { return required('DATABASE_URL') },
-  /** Migrasi memakai `pg_advisory_lock`, yaitu lock tingkat SESI. Connection pooler Neon berjalan di mode transaksi: koneksi yang sama bisa berpindah pemilik di antara dua transaksi, sehingga lock-nya bisa dibuka oleh sesi lain atau tidak terbuka sama sekali. Jadi migrasi wajib lewat endpoint langsung (tanpa `-pooler`), sementara runtime app justru harus lewat yang pooled. Render mengisi DATABASE_URL_UNPOOLED secara eksplisit; pemakaian manual boleh jatuh ke DATABASE_URL. */
+  /** Migrasi memakai `pg_advisory_lock`, yaitu lock tingkat SESI. Connection pooler Neon berjalan di mode transaksi: koneksi yang sama bisa berpindah pemilik di antara dua transaksi, sehingga lock-nya bisa dibuka oleh sesi lain atau tidak terbuka sama sekali. Jadi migrasi wajib lewat endpoint langsung (tanpa `-pooler`), sementara runtime app justru harus lewat yang pooled. Environment produksi EC2 menyediakan DATABASE_URL_UNPOOLED secara eksplisit; pemakaian manual boleh jatuh ke DATABASE_URL. */
   get databaseUrlForMigrations() {
     return process.env.DATABASE_URL_UNPOOLED?.trim() || required('DATABASE_URL')
   },

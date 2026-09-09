@@ -23,7 +23,7 @@ function sslConfig() {
   return { rejectUnauthorized: true }
 }
 
-/** Render menjalankan satu proses yang hidup terus, jadi pool proses dapat dipakai bersama semua request. Endpoint runtime tetap connection pooler Neon (host ber-`-pooler`) agar koneksi backend tidak membengkak saat service berganti instance. */
+/** Next.js production server di EC2 adalah proses jangka panjang, jadi pool proses dapat dipakai bersama semua request. Endpoint runtime tetap connection pooler Neon (host ber-`-pooler`) agar koneksi backend tetap dibatasi. */
 const LONG_LIVED_MAX_CLIENTS = 10
 
 /** Connection pooler Neon memakai transaction pooling: satu koneksi backend dipakai ulang oleh banyak klien. Akibatnya `set` tingkat sesi yang tertinggal dari klien lain — sesi psql/agen yang lupa `reset`, misalnya — ikut terbawa ke request kita. Yang paling mematikan `default_transaction_read_only = on`: seluruh write gagal dengan 25006 tanpa satu baris kode pun berubah, dan `select` tetap jalan sehingga health check ikut menipu. Menaruhnya di startup packet (`options: '-c ...'`) ditolak pooler-nya, jadi satu- satunya jalan adalah menegaskan ulang lewat `set` tiap koneksi baru terbentuk. Murah: sekali per koneksi fisik, bukan per query. */

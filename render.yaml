@@ -1,5 +1,5 @@
-# Setelan deploy Render.
-# Jalur build dipusatkan di `pnpm deploy-build` agar migrasi selalu mendahului build aplikasi.
+# Render hanya mempertahankan domain lama sebagai redirect sementara ke production AWS EC2.
+# Service ini tidak menjalankan Next.js, tidak terhubung ke Neon, dan tidak menjalankan migrasi.
 
 services:
   - type: web
@@ -7,69 +7,8 @@ services:
     runtime: node
     plan: free
     branch: main
-
-    # WAJIB DICOCOKKAN DENGAN REGION NEON SEBELUM DEPLOY PERTAMA.
-    # Singapura dipilih sebagai dugaan paling masuk akal untuk app Indonesia, BUKAN sebagai fakta
-    # yang sudah diperiksa. Beda benua dengan database menambah 100-200ms di SETIAP query, dan
-    # app-nya akan terasa rusak berapa pun CPU yang dibeli — gejalanya mirip server kekurangan
-    # tenaga, jadi salah region gampang sekali salah didiagnosis.
-    region: singapore
-
-    # Balas 503 kalau database tidak terjawab, jadi Render tidak pernah mengarahkan trafik ke
-    # instance yang hidup tapi tidak bisa melayani.
-    healthCheckPath: /api/health
-
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm deploy-build
-    startCommand: pnpm start
-
+    buildCommand: ''
+    startCommand: node redirect-server.js
     envVars:
-      # Dipatok, bukan mengandalkan .nvmrc yang cuma berisi "22": engines menuntut >=22.12.0 dan
-      # runtime memakai `--experimental-strip-types`, yang perilakunya masih bergeser antar minor.
       - key: NODE_VERSION
         value: 22.22.2
-
-      # IS_PULL_REQUEST SENGAJA TIDAK DISETEL DI SINI.
-      # Penjaga di scripts/deploy-gate.ts menggagalkan build kalau Render tidak mengekspornya saat
-      # build, dan itu memang yang diinginkan: satu-satunya cara membuktikan Render benar
-      # mengekspornya adalah membiarkan build pertama menjawabnya sendiri. Menyetelnya di sini
-      # menutupi jawaban itu — dan lebih buruk, nilai tetap `false` berarti preview pull request
-      # (kalau nanti dinyalakan di plan berbayar) ikut memigrasi database PRODUKSI.
-      # Kalau build pertama gagal dengan pesan soal IS_PULL_REQUEST, setel `false` di dashboard
-      # environment service — bukan di berkas ini.
-
-      # Semua nilai di bawah diisi lewat dashboard Render, tidak pernah masuk repo.
-      # Daftarnya harus sama dengan .env.example.
-      - key: APP_ORIGIN # origin STABIL — ikut menyusun callback_url KlikQRIS
-        sync: false
-      - key: DATABASE_URL # endpoint pooled (-pooler)
-        sync: false
-      - key: DATABASE_URL_UNPOOLED # endpoint langsung; deploy-build gagal keras tanpanya
-        sync: false
-      - key: CRON_SECRET
-        sync: false
-      - key: TELEGRAM_BOT_TOKEN
-        sync: false
-      - key: TELEGRAM_BOT_USERNAME
-        sync: false
-      - key: TELEGRAM_WEBHOOK_SECRET
-        sync: false
-      - key: TELEGRAM_CHANNEL_ID
-        sync: false
-      - key: TELEGRAM_CHANNEL_URL
-        sync: false
-      - key: ADMIN_PASSWORD
-        sync: false
-      - key: ADMIN_TELEGRAM_ID
-        sync: false
-      - key: KLIKQRIS_API_KEY
-        sync: false
-      - key: KLIKQRIS_BASE_URL
-        sync: false
-      - key: KLIKQRIS_MERCHANT_ID
-        sync: false
-      - key: MONETAG_POSTBACK_SECRET
-        sync: false
-      - key: NEXT_PUBLIC_MONETAG_ZONE_ID
-        sync: false
-      - key: NEXT_PUBLIC_TELEGRAM_FULLSCREEN
-        sync: false

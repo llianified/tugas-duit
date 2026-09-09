@@ -1,18 +1,18 @@
-import http from "node:http";
+import http from 'node:http'
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3000
+const productionOrigin = 'https://littleoni.fun'
 
-const server = http.createServer((req, res) => {
-  const location = `https://littleoni.fun${req.url}`;
+const server = http.createServer((request, response) => {
+  const location = `${productionOrigin}${request.url || '/'}`
 
-  res.writeHead(301, {
+  response.writeHead(301, {
     Location: location,
-    "Cache-Control": "no-store",
-  });
+    'Cache-Control': 'no-store',
+  })
+  response.end()
+})
 
-  res.end();
-});
-
-server.listen(port, "0.0.0.0", () => {
-  console.log(`Redirect server listening on ${port}`);
-});
+server.listen(port, '0.0.0.0', () => {
+  console.log(`Legacy Render redirect listening on ${port}`)
+})

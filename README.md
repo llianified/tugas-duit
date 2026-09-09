@@ -1,6 +1,6 @@
 # tugas-duit
 
-Telegram Mini App untuk mengerjakan soal singkat, mengumpulkan credit, dan menariknya menjadi Rupiah. Aplikasi ini berjalan di produksi pada Render dengan Neon PostgreSQL dan menangani saldo serta pembayaran nyata.
+Telegram Mini App untuk mengerjakan soal singkat, mengumpulkan credit, dan menariknya menjadi Rupiah. Produksi berjalan di AWS EC2 pada [littleoni.fun](https://littleoni.fun), dengan Neon PostgreSQL, Nginx, dan service systemd `tugas-duit`.
 
 ## Fitur utama
 
@@ -89,11 +89,13 @@ Perubahan UI tidak perlu dicek lokal; CI menjalankan seluruh suite di tiap PR.
 
 ## Database dan deployment
 
-Produksi memakai endpoint Neon pooled untuk runtime service Render. Migrasi harus memakai `DATABASE_URL_UNPOOLED` karena advisory lock PostgreSQL bersifat per sesi dan tidak aman melalui transaction pooler.
+Produksi menjalankan Next.js production server di AWS EC2, diproksikan Nginx pada `https://littleoni.fun`, dan dikelola oleh service systemd `tugas-duit`. Runtime memakai endpoint Neon pooled, sedangkan migrasi harus memakai `DATABASE_URL_UNPOOLED` karena advisory lock PostgreSQL bersifat per sesi dan tidak aman melalui transaction pooler.
 
-Script `deploy-build` menjalankan migrasi sebelum build pada service produksi Render. Preview pull request tidak memigrasi database produksi, dan sinyal deployment yang ambigu menggagalkan build. Buat migrasi yang kompatibel dengan kode lama; perubahan destruktif seperti drop atau rename kolom harus dipisah ke deployment berikutnya.
+Deployment dijalankan di EC2: pasang dependency, jalankan `pnpm db:migrate`, buat build dengan `pnpm build`, lalu restart `tugas-duit`. Pastikan `/api/health` mengembalikan HTTP 200 sebelum menganggap deployment selesai. `deploy-build` tetap ada untuk kompatibilitas rollout lama, tetapi bukan perintah deploy EC2 atau service redirect Render. Buat migrasi yang kompatibel dengan kode lama; perubahan destruktif seperti drop atau rename kolom harus dipisah ke deployment berikutnya.
 
-Maintenance dijalankan melalui `/api/cron/maintenance`, dilindungi `CRON_SECRET`, dan dijadwalkan oleh `.github/workflows/maintenance.yml`.
+Webhook Telegram produksi adalah `https://littleoni.fun/api/telegram/webhook`. Maintenance dijalankan melalui `https://littleoni.fun/api/cron/maintenance`, dilindungi `CRON_SECRET`, dan dijadwalkan oleh `.github/workflows/maintenance.yml`.
+
+Render bukan server produksi. Service Render lama hanya menjalankan `redirect-server.js` sebagai pengalihan sementara dari domain Render lama ke `https://littleoni.fun`; konfigurasi `render.yaml` tidak boleh menjalankan aplikasi utama, migrasi, atau maintenance.
 
 ## Keamanan dan invariant uang
 

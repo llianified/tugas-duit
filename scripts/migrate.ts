@@ -12,7 +12,7 @@ const LOCK_KEY = 8_421_207
 const CONNECT_ATTEMPTS = 5
 const RETRYABLE = new Set(['ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT'])
 
-/** Dipanggil dengan `--deploy` dari `deploy-build`, dan di situ ia HANYA boleh jalan untuk deploy Production. Aturan platformnya di `deploy-gate.ts`; yang tinggal di sini cuma cara menjawabnya. `pnpm db:migrate` manual tidak membawa flag ini dan tetap jalan apa adanya. */
+/** Dipanggil dengan `--deploy` dari jalur deploy otomatis lama; production EC2 memakai `pnpm db:migrate` manual. Aturan platformnya di `deploy-gate.ts`; yang tinggal di sini cuma cara menjawabnya. */
 const deployMode = process.argv.includes('--deploy')
 
 if (deployMode) {
@@ -28,13 +28,10 @@ if (deployMode) {
     process.exit(0)
   }
 
-  /** Dicetak justru saat migrasi JADI jalan. Perpindahan platform hanya bisa dibuktikan dari log
-   * build pertama: baris inilah yang menunjukkan Render benar-benar mengekspor sinyalnya saat
-   * build, bukan cuma saat runtime. */
   console.log(`[migrate] platform ${decision.platform}, deploy produksi — migrasi dijalankan`)
 }
 
-/** Di jalur otomatis endpoint langsung tidak boleh ditebak. `databaseUrlForMigrations` sengaja jatuh ke DATABASE_URL kalau yang unpooled tidak ada, dan itu benar untuk pemakaian manual — tetapi runtime Render memakai endpoint POOLED, dan `pg_advisory_lock` di pooler mode transaksi tidak menjamin apa pun. Lebih baik build gagal berisik daripada dua deploy bersamaan memigrasi tanpa kunci yang benar-benar memegang. */
+/** Jalur otomatis wajib memakai endpoint langsung; migrasi manual boleh jatuh ke DATABASE_URL. */
 if (deployMode && !process.env.DATABASE_URL_UNPOOLED?.trim()) {
   console.error(
     '[migrate] DATABASE_URL_UNPOOLED belum diset di environment Production. Migrasi otomatis butuh endpoint langsung (tanpa -pooler), bukan yang pooled.',

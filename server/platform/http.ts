@@ -69,9 +69,10 @@ export function rateLimited(retryAfter: number): Response {
   )
 }
 
-/** Render berada pada hop terminal rantai `x-forwarded-for`, sedangkan nilai di sebelah kiri dapat
- * berasal dari pemanggil. Rate limit hanya memakai alamat terminal yang valid; header kosong atau
- * rusak masuk bucket bersama agar nilai yang tidak tepercaya tidak menjadi key arbitrer. */
+/** Nginx meneruskan alamat klien pada hop terminal rantai `x-forwarded-for`, sedangkan nilai di
+ * sebelah kiri dapat berasal dari pemanggil. Rate limit hanya memakai alamat terminal yang valid;
+ * header kosong atau rusak masuk bucket bersama agar nilai yang tidak tepercaya tidak menjadi key
+ * arbitrer. */
 export function clientIp(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for') ?? ''
   const candidate = forwarded.split(',').at(-1)?.trim() ?? ''

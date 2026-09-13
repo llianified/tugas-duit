@@ -20,7 +20,7 @@
     "db:ban-user": "node --env-file-if-exists=.env.development.local --experimental-strip-types scripts/ban-user.ts"
   },
   "dependencies": {
-    "@base-ui/react": "^1.7.0",
+    "@base-ui/react": "^1.8.0",
     "@electric-sql/pglite": "^0.5.8",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",

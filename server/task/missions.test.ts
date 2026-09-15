@@ -410,16 +410,18 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
     expect(Number(claims[0].count)).toBe(1)
   })
 
-  it('membayar empat reward sosial dari key masing-masing tanpa menyentuh credit ledger', async () => {
+  it('membayar lima reward sosial dari key masing-masing tanpa menyentuh credit ledger', async () => {
     const { claimMission, startMissionAction } = await import('./missions')
     const { query } = await import('../platform/db')
     const userId = await makeUser(0)
     setActiveEconomyConfig({
       ...DEFAULT_ECONOMY_CONFIG,
+      maxEnergy: 10,
       missionFacebookPostReward: 2,
       missionWhatsappShareReward: 1,
       missionWhatsappChannelReward: 1,
       missionTiktokFollowReward: 1,
+      missionRacelyReward: 1,
     })
 
     const socialKeys = [
@@ -427,6 +429,7 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
       'whatsapp_share',
       'whatsapp_channel',
       'tiktok_follow',
+      'racely_play',
     ] as const
 
     try {
@@ -451,11 +454,12 @@ describe('MISI-1 — hadiah misi adalah energi, dan hanya sekali per hari', () =
       )
       expect(grants.map((row) => [row.mission_key, Number(row.energy_granted)])).toEqual([
         ['facebook_post', 2],
+        ['racely_play', 1],
         ['tiktok_follow', 1],
         ['whatsapp_channel', 1],
         ['whatsapp_share', 1],
       ])
-      expect(await readEnergyValue(userId)).toBe(5)
+      expect(await readEnergyValue(userId)).toBe(6)
 
       const ledger = await query<{ count: number }>(
         'select count(*)::int as count from credit_ledger where user_id=$1',

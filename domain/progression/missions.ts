@@ -10,6 +10,7 @@ export type SocialMissionKey =
   | 'whatsapp_share'
   | 'whatsapp_channel'
   | 'tiktok_follow'
+  | 'racely_play'
 export type MissionKey = AutomaticMissionKey | SocialMissionKey
 
 export const AUTOMATIC_MISSION_KEYS: readonly AutomaticMissionKey[] = [
@@ -53,6 +54,7 @@ export const MISSION_KEYS: readonly MissionKey[] = [
   'whatsapp_share',
   'whatsapp_channel',
   'tiktok_follow',
+  'racely_play',
 ]
 
 export const SOCIAL_MISSION_KEYS: readonly SocialMissionKey[] = [
@@ -60,6 +62,7 @@ export const SOCIAL_MISSION_KEYS: readonly SocialMissionKey[] = [
   'whatsapp_share',
   'whatsapp_channel',
   'tiktok_follow',
+  'racely_play',
 ]
 
 /** Irama tiap misi sosial, dipisah dari katalog supaya bisa dibaca tanpa konfigurasi ekonomi aktif.
@@ -73,6 +76,7 @@ const SOCIAL_MISSION_CADENCE: Record<SocialMissionKey, 'once' | 'daily'> = {
   whatsapp_share: 'daily',
   whatsapp_channel: 'once',
   tiktok_follow: 'once',
+  racely_play: 'once',
 }
 
 /** Misi sosial yang klaimnya berlaku sepanjang umur akun, bukan hanya hari WIB berjalan. */
@@ -171,6 +175,15 @@ function missionCatalog(): MissionDefinition[] {
       title: 'Follow TikTok Tugas Duit',
       target: 1,
       reward: config.missionTiktokFollowReward,
+    },
+    {
+      key: 'racely_play',
+      kind: 'social',
+      action: 'racely_play',
+      cadence: SOCIAL_MISSION_CADENCE.racely_play,
+      title: 'Mainkan Racely',
+      target: 1,
+      reward: config.missionRacelyReward,
     },
   ]
 }

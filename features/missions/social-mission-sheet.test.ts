@@ -4,6 +4,7 @@ import {
   buildWhatsappShareText,
   contentFor,
   FACEBOOK_HOME_URL,
+  RACELY_BOT_URL,
   secondsUntilConfirmation,
   TIKTOK_PROFILE_URL,
   WHATSAPP_CHANNEL_URL,
@@ -19,6 +20,7 @@ describe('pesan misi sosial', () => {
     'whatsapp_share',
     'whatsapp_channel',
     'tiktok_follow',
+    'racely_play',
   ] as const
 
   it('menyertakan link referral user dan membuka beranda Facebook', () => {
@@ -54,6 +56,11 @@ describe('pesan misi sosial', () => {
   it('menunjuk profil TikTok Tugas Duit dan menyebut handle-nya di instruksi', () => {
     expect(TIKTOK_PROFILE_URL).toBe('https://www.tiktok.com/@tugas.duit')
     expect(contentFor('tiktok_follow').instruction).toContain('@tugas.duit')
+  })
+
+  it('menunjuk bot Racely lewat tautan referral partner', () => {
+    expect(RACELY_BOT_URL).toBe('https://t.me/RacelyBot?start=ref_8866912764')
+    expect(contentFor('racely_play').instruction).toMatch(/partner/i)
   })
 
   it('memberi tiap misi instruksi, label aksi, dan konfirmasi yang terisi', () => {

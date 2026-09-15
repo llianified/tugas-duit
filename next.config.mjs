@@ -1,6 +1,8 @@
 const nextConfig = {
   agentRules: false,
   poweredByHeader: false,
+  // Instance EC2 produksi kecil; satu worker mencegah kernel mematikan build karena kehabisan memori.
+  experimental: { cpus: 1 },
   serverExternalPackages: ['@electric-sql/pglite'],
   /** PGlite hanya dipakai jalur preview (`isPreviewDb()`, mustahil true saat `NODE_ENV=production`), tetapi file tracer tetap menyalin ~20 MB wasm+data-nya ke setiap bundle route yang menyentuh `server/platform/db.ts`. */
   outputFileTracingExcludes: { '/*': ['**/@electric-sql/pglite*'] },

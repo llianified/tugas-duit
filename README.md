@@ -110,6 +110,7 @@ Perubahan pada saldo, payout, referral, auth, atau monetisasi harus mempertahank
 
 ## Dokumentasi keputusan
 
+- `docs/launch-readiness.md` — status dan checklist operasional sebelum peluncuran;
 - `docs/keputusan-desain.md` — perilaku yang tampak janggal tetapi disengaja;
 - `docs/adr/0001-csp-jaringan-iklan.md` — batas CSP dan prosedur audit provider iklan;
 - `docs/adr/0002-sesi-di-iframe.md` — cookie CHIPS dan fallback sesi khusus preview;

@@ -116,12 +116,14 @@ describe('missions', () => {
       missionWhatsappShareReward: 6,
       missionWhatsappChannelReward: 4,
       missionTiktokFollowReward: 7,
+      missionRacelyReward: 3,
     })
     try {
       expect(missionDefinition('facebook_post').reward).toBe(5)
       expect(missionDefinition('whatsapp_share').reward).toBe(6)
       expect(missionDefinition('whatsapp_channel').reward).toBe(4)
       expect(missionDefinition('tiktok_follow').reward).toBe(7)
+      expect(missionDefinition('racely_play').reward).toBe(3)
     } finally {
       setActiveEconomyConfig(DEFAULT_ECONOMY_CONFIG)
     }
@@ -146,8 +148,9 @@ describe('irama misi sosial punya satu sumber', () => {
     expect([...ONCE_SOCIAL_MISSION_KEYS]).toEqual(dariKatalog)
   })
 
-  it('memasukkan follow TikTok, bukan hanya peninggalan X', () => {
+  it('memasukkan follow TikTok dan Racely, bukan hanya peninggalan X', () => {
     expect(ONCE_SOCIAL_MISSION_KEYS).toContain('tiktok_follow')
+    expect(ONCE_SOCIAL_MISSION_KEYS).toContain('racely_play')
     expect(ONCE_SOCIAL_MISSION_KEYS).not.toContain('whatsapp_share')
   })
 })
@@ -170,6 +173,7 @@ describe('misi iklan mengikuti tombol mati iklan', () => {
       'whatsapp_share',
       'whatsapp_channel',
       'tiktok_follow',
+      'racely_play',
     ])
     expect(isMissionAvailable('ads')).toBe(true)
   })
@@ -191,6 +195,7 @@ describe('misi iklan mengikuti tombol mati iklan', () => {
       'whatsapp_share',
       'whatsapp_channel',
       'tiktok_follow',
+      'racely_play',
     ])
     expect(isMissionAvailable('ads')).toBe(false)
 
@@ -198,7 +203,7 @@ describe('misi iklan mengikuti tombol mati iklan', () => {
       hitung(),
       [
         'tasks', 'stars', 'hard', 'variety',
-        'facebook_post', 'whatsapp_share', 'whatsapp_channel', 'tiktok_follow',
+        'facebook_post', 'whatsapp_share', 'whatsapp_channel', 'tiktok_follow', 'racely_play',
       ],
       {},
       HARI,

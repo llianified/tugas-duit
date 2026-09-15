@@ -77,6 +77,7 @@ export interface EconomyConfig {
   missionWhatsappShareReward: number
   missionWhatsappChannelReward: number
   missionTiktokFollowReward: number
+  missionRacelyReward: number
   referralCommissionPercent: number
   dailyCommissionCapIdr: number
   rankTier2Tasks: number
@@ -197,6 +198,7 @@ export const DEFAULT_ECONOMY_CONFIG: EconomyConfig = {
   missionWhatsappShareReward: 1,
   missionWhatsappChannelReward: 1,
   missionTiktokFollowReward: 1,
+  missionRacelyReward: 1,
   referralCommissionPercent: 10,
   dailyCommissionCapIdr: 6_000,
   rankTier2Tasks: 100,
@@ -643,6 +645,7 @@ export const ECONOMY_FIELDS: readonly EconomyFieldMeta[] = [
       ['missionWhatsappShareReward', 'Bagikan ke WhatsApp', 'sekali per hari WIB'],
       ['missionWhatsappChannelReward', 'Join channel WhatsApp', 'sekali per akun'],
       ['missionTiktokFollowReward', 'Follow TikTok', 'sekali per akun'],
+      ['missionRacelyReward', 'Mainkan Racely', 'sekali per akun'],
     ] as [EconomyConfigKey, string, string][]
   ).map(([key, label, cadence]): EconomyFieldMeta => ({
     key, group: 'mission', label: `Hadiah · ${label}`, unit: 'energi',
@@ -976,6 +979,7 @@ export function validateEconomyConfig(
     ['missionWhatsappShareReward', 'Bagikan ke WhatsApp'],
     ['missionWhatsappChannelReward', 'Join channel WhatsApp'],
     ['missionTiktokFollowReward', 'Follow TikTok'],
+    ['missionRacelyReward', 'Mainkan Racely'],
   ]
   for (const [key, label] of missionRewards) {
     if (config[key] > config.maxEnergy) {

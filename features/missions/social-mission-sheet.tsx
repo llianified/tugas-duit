@@ -23,6 +23,7 @@ import { useToast } from '@/shell/toast'
 
 export const FACEBOOK_HOME_URL = 'https://www.facebook.com/'
 export const TIKTOK_PROFILE_URL = 'https://www.tiktok.com/@tugas.duit'
+export const RACELY_BOT_URL = 'https://t.me/RacelyBot?start=ref_8866912764'
 /** Pemilih kontak dan grup, bukan Status: WhatsApp tidak punya tautan yang membuka komposer Status
  * di semua perangkat, jadi misi yang menjanjikan Status akan menyuruh langkah yang tombolnya
  * sendiri tidak bisa antar. */
@@ -93,6 +94,14 @@ export function contentFor(action: SocialMissionAction) {
       confirmLabel: 'Udah follow',
     }
   }
+  if (action === 'racely_play') {
+    return {
+      instruction: 'Misi partner: buka @RacelyBot, tekan Mulai, lalu mainkan satu ronde.',
+      actionLabel: 'Buka Racely',
+      confirmation: 'Udah main Racely?',
+      confirmLabel: 'Udah main',
+    }
+  }
   return {
     instruction: 'Tekan tombol di bawah — teksnya kesalin sendiri, terus tinggal tempel di grup Facebook mana pun.',
     actionLabel: 'Salin teks dan buka Facebook',
@@ -161,6 +170,8 @@ export function SocialMissionSheet({
       openExternal(WHATSAPP_CHANNEL_URL)
     } else if (mission.action === 'tiktok_follow') {
       openExternal(TIKTOK_PROFILE_URL)
+    } else if (mission.action === 'racely_play') {
+      openExternal(RACELY_BOT_URL)
     } else if (mission.action === 'whatsapp_share') {
       const share = new URL(WHATSAPP_SHARE_URL)
       share.searchParams.set('text', shareText)
